@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Municipality Project Tracker{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h2>Admin Dashboard</h2>
+
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <h3>Total Users</h3>
+            <p class="stat-value">{{ total_users }}</p>
+        </div>
+    </div>
+
+    <div class="dashboard-links">
+        <h3>Quick Links</h3>
+        <ul>
+            <li><a href="{% url 'user_list' %}">View Users</a></li>
+            <li><a href="{% url 'user_create' %}">Create New User</a></li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

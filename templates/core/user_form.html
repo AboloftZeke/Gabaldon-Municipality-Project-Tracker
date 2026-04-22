@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} User - Municipality Project Tracker{% endblock %}
+
+{% block content %}
+<div class="user-form-container">
+    <h2>{{ action }} User</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ form.username.label_tag }}
+            {{ form.username }}
+            {% if form.username.errors %}
+                <div class="error">{{ form.username.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.email.label_tag }}
+            {{ form.email }}
+            {% if form.email.errors %}
+                <div class="error">{{ form.email.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.first_name.label_tag }}
+            {{ form.first_name }}
+            {% if form.first_name.errors %}
+                <div class="error">{{ form.first_name.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.last_name.label_tag }}
+            {{ form.last_name }}
+            {% if form.last_name.errors %}
+                <div class="error">{{ form.last_name.errors }}</div>
+            {% endif %}
+        </div>
+
+        {% if form.is_active %}
+            <div class="form-group">
+                {{ form.is_active.label_tag }}
+                {{ form.is_active }}
+                {% if form.is_active.errors %}
+                    <div class="error">{{ form.is_active.errors }}</div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if form.is_staff %}
+            <div class="form-group">
+                {{ form.is_staff.label_tag }}
+                {{ form.is_staff }}
+                {% if form.is_staff.errors %}
+                    <div class="error">{{ form.is_staff.errors }}</div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <button type="submit">{{ action }} User</button>
+        <a href="{% url 'user_list' %}">Cancel</a>
+    </form>
+</div>
+{% endblock %}

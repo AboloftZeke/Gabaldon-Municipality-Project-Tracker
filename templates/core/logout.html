@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Logout - Municipality Project Tracker{% endblock %}
+
+{% block content %}
+<div class="logout-container">
+    <h2>Logout Successful</h2>
+    <p>You have been successfully logged out.</p>
+    <a href="{% url 'login' %}">Back to Login</a>
+</div>
+{% endblock %}
