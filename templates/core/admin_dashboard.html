@@ -477,12 +477,12 @@
 {% block show_header %}
 <header>
     <nav>
-        <h1>🏛️ Municipality Project Tracker</h1>
+        <h1>Municipality Project Tracker</h1>
         {% if user.is_authenticated %}
             <ul>
                 <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
                 {% if user.is_superuser %}
-                    <li><a href="{% url 'user_list' %}">Users</a></li>
+                    <li><a href="{% url 'user_list' %}">User Management</a></li>
                 {% endif %}
                 <li><a href="{% url 'logout' %}">Logout</a></li>
             </ul>
@@ -494,33 +494,33 @@
 {% block content %}
 <div class="sidebar">
     <div class="sidebar-section">
-        <p class="sidebar-title">Menu</p>
+        <p class="sidebar-title">Navigation</p>
         <ul class="sidebar-menu">
-            <li><a href="{% url 'admin_dashboard' %}" class="active">📊 Dashboard</a></li>
+            <li><a href="{% url 'admin_dashboard' %}" class="active">Dashboard</a></li>
             {% if user.is_superuser %}
-                <li><a href="{% url 'user_list' %}">👥 Manage Users</a></li>
-                <li><a href="{% url 'user_create' %}">➕ Create User</a></li>
+                <li><a href="{% url 'user_list' %}">User Management</a></li>
+                <li><a href="{% url 'user_create' %}">Create User</a></li>
             {% endif %}
         </ul>
     </div>
 
     <div class="sidebar-section">
-        <p class="sidebar-title">User Account</p>
+        <p class="sidebar-title">Account</p>
         <div class="quick-actions">
             <h4>{{ user.username }}</h4>
-            <a href="{% url 'logout' %}" class="action-button secondary" style="display: block; text-align: center; margin-right: 0;">Logout</a>
+            <a href="{% url 'logout' %}" class="action-button secondary" style="display: block; text-align: center; margin-right: 0;">Sign Out</a>
         </div>
     </div>
 </div>
 
 <div class="dashboard-content">
     <div class="dashboard-header">
-        <h2>Dashboard</h2>
+        <h2>Administrative Dashboard</h2>
         <div class="user-info">
             <div class="user-avatar">{{ user.username|first|upper }}</div>
             <div>
                 <div class="user-name">{{ user.username }}</div>
-                <div style="font-size: 0.8rem; color: var(--ink-600);">{% if user.is_superuser %}Administrator{% else %}Staff{% endif %}</div>
+                <div style="font-size: 0.8rem; color: var(--ink-600);">{% if user.is_superuser %}System Administrator{% else %}Staff Member{% endif %}</div>
             </div>
         </div>
     </div>
@@ -531,44 +531,44 @@
             <img src="{% static 'images/Gabaldon seal.png' %}" alt="Municipality of Gabaldon seal">
         </div>
         <div class="welcome-text">
-            <h3>Welcome to Municipality Project Tracker</h3>
-            <p>Manage municipal development initiatives, coordinate teams, and track project progress with real-time insights. Use the dashboard below to access key metrics and administrative tools.</p>
+            <h3>Municipality Project Tracker</h3>
+            <p>Manage municipal development initiatives, coordinate teams, and track project progress. Use the dashboard below to access key metrics and administrative tools.</p>
         </div>
     </div>
 
     <!-- Statistics Section -->
     <div class="dashboard-stats">
         <div class="stat-card">
-            <h3>👥 Total Users</h3>
+            <h3>Total Users</h3>
             <p class="stat-value">{{ total_users }}</p>
-            <div class="stat-subtitle">Across all roles</div>
+            <div class="stat-subtitle">All system users</div>
         </div>
         <div class="stat-card">
-            <h3>🔐 Administrators</h3>
+            <h3>Administrators</h3>
             <p class="stat-value">{{ total_admins }}</p>
-            <div class="stat-subtitle">Full system access</div>
+            <div class="stat-subtitle">System administrators</div>
         </div>
         <div class="stat-card">
-            <h3>👔 Staff Members</h3>
+            <h3>Staff Members</h3>
             <p class="stat-value">{{ total_staff }}</p>
-            <div class="stat-subtitle">Regular users</div>
+            <div class="stat-subtitle">Active staff accounts</div>
         </div>
     </div>
 
     <!-- Admin Actions Section -->
     {% if user.is_superuser %}
     <div class="dashboard-section">
-        <h3><span class="section-icon">🔐</span>System Access Management</h3>
+        <h3><span class="section-icon">■</span>System Access Management</h3>
         <div class="action-grid">
             <a href="{% url 'user_list' %}" class="action-card">
-                <div class="action-card-icon">👥</div>
+                <div class="action-card-icon">👤</div>
                 <div class="action-card-title">Manage Users</div>
-                <div class="action-card-desc">View, edit, enable/disable all system users and their departments</div>
+                <div class="action-card-desc">View, edit, enable or disable system user accounts and permissions</div>
             </a>
             <a href="{% url 'user_create' %}" class="action-card">
-                <div class="action-card-icon">➕</div>
+                <div class="action-card-icon">✓</div>
                 <div class="action-card-title">Create New User</div>
-                <div class="action-card-desc">Add a new user to Engineering Office, Mayor's Office, or Admin</div>
+                <div class="action-card-desc">Add a new user account to Engineering Office, Mayor's Office, or Admin</div>
             </a>
         </div>
     </div>
@@ -576,19 +576,19 @@
 
     <!-- Quick Actions Section -->
     <div class="dashboard-section">
-        <h3><span class="section-icon">⚡</span>Quick Actions</h3>
+        <h3><span class="section-icon">■</span>Quick Actions</h3>
         <div class="quick-actions">
             <h4>Common Tasks</h4>
             {% if user.is_superuser %}
-                <a href="{% url 'user_list' %}" class="action-button">👥 Manage Users</a>
-                <a href="{% url 'user_create' %}" class="action-button">➕ Add User</a>
+                <a href="{% url 'user_list' %}" class="action-button">Manage Users</a>
+                <a href="{% url 'user_create' %}" class="action-button">Add New User</a>
             {% endif %}
-            <a href="{% url 'logout' %}" class="action-button secondary">🚪 Logout</a>
+            <a href="{% url 'logout' %}" class="action-button secondary">Sign Out</a>
         </div>
     </div>
 </div>
 
 <footer>
-    <p>&copy; 2026 Municipality of Gabaldon Project Tracker. All rights reserved.</p>
+    <p>&copy; 2026 Municipality of Gabaldon. Project Tracker System. All rights reserved.</p>
 </footer>
 {% endblock %}

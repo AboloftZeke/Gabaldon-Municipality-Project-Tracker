@@ -327,7 +327,7 @@
 {% block show_header %}
 <header>
     <nav>
-        <h1>🏛️ Municipality Project Tracker</h1>
+        <h1>Municipality Project Tracker</h1>
         {% if user.is_authenticated %}
             <ul>
                 <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
@@ -360,7 +360,7 @@
 
     <div class="delete-confirm-wrapper">
         <div class="delete-header">
-            <div class="delete-icon">⚠️</div>
+            <div class="delete-icon"></div>
             <h3>Delete User Account?</h3>
         </div>
 
@@ -374,14 +374,14 @@
         </div>
 
         <div class="warning-text">
-            <span class="warning-icon">⚠️</span>
+            <span class="warning-icon"></span>
             <span>Only delete users if you're certain they should no longer have access to the system.</span>
         </div>
 
         <form method="post">
             {% csrf_token %}
             <div class="form-actions">
-                <button type="submit" class="btn btn-danger">🗑️ Delete User</button>
+                <button type="submit" class="btn btn-danger">Delete User</button>
                 <a href="{% url 'user_list' %}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>

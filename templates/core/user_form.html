@@ -379,7 +379,7 @@
 {% block show_header %}
 <header>
     <nav>
-        <h1>🏛️ Municipality Project Tracker</h1>
+        <h1>Municipality Project Tracker</h1>
         {% if user.is_authenticated %}
             <ul>
                 <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
@@ -497,7 +497,7 @@
 
             <!-- Account Status Section -->
             <div class="form-section">
-                <h3>✓ Account Status</h3>
+                <h3>Account Status</h3>
 
                 {% if form.is_active %}
                     <div class="form-group">
@@ -537,8 +537,8 @@
 
             <!-- Form Actions -->
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">✓ {{ action }} User</button>
-                <a href="{% url 'user_list' %}" class="btn btn-secondary">↩️ Cancel</a>
+                <button type="submit" class="btn btn-primary">{{ action }} User</button>
+                <a href="{% url 'user_list' %}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>

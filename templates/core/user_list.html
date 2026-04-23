@@ -549,12 +549,12 @@
 {% block show_header %}
 <header>
     <nav>
-        <h1>🏛️ Municipality Project Tracker</h1>
+        <h1>Municipality Project Tracker</h1>
         {% if user.is_authenticated %}
             <ul>
                 <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
                 {% if user.is_superuser %}
-                    <li><a href="{% url 'user_list' %}">Users</a></li>
+                    <li><a href="{% url 'user_list' %}">User Management</a></li>
                 {% endif %}
                 <li><a href="{% url 'logout' %}">Logout</a></li>
             </ul>
@@ -566,12 +566,12 @@
 {% block content %}
 <div class="sidebar">
     <div class="sidebar-section">
-        <p class="sidebar-title">Menu</p>
+        <p class="sidebar-title">Navigation</p>
         <ul class="sidebar-menu">
-            <li><a href="{% url 'admin_dashboard' %}">📊 Dashboard</a></li>
+            <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
             {% if user.is_superuser %}
-                <li><a href="{% url 'user_list' %}" class="active">👥 Manage Users</a></li>
-                <li><a href="{% url 'user_create' %}">➕ Create User</a></li>
+                <li><a href="{% url 'user_list' %}" class="active">User Management</a></li>
+                <li><a href="{% url 'user_create' %}">Create User</a></li>
             {% endif %}
         </ul>
     </div>
@@ -579,23 +579,23 @@
     <div class="sidebar-section">
         <p class="sidebar-title">Departments</p>
         <ul class="sidebar-menu">
-            <li><a href="{% url 'user_list' %}">🏗️ Engineering Office</a></li>
-            <li><a href="{% url 'user_list' %}">🏛️ Mayor's Office</a></li>
-            <li><a href="{% url 'user_list' %}">🔐 Admin</a></li>
+            <li><a href="{% url 'user_list' %}">Engineering Office</a></li>
+            <li><a href="{% url 'user_list' %}">Mayor's Office</a></li>
+            <li><a href="{% url 'user_list' %}">Administration</a></li>
         </ul>
     </div>
 </div>
 
 <div class="page-content">
     <div class="page-header">
-        <h2>System Access Management</h2>
-        <a href="{% url 'user_create' %}" class="create-btn">➕ Create New User</a>
+        <h2>User Account Management</h2>
+        <a href="{% url 'user_create' %}" class="create-btn">Create New User</a>
     </div>
 
     <div class="filter-section">
         <form method="get" class="filter-form">
             {{ filter_form.as_p }}
-            <button type="submit">🔍 Search & Filter</button>
+            <button type="submit">Search &amp; Filter</button>
         </form>
     </div>
 
@@ -603,10 +603,10 @@
         <table class="user-table">
             <thead>
                 <tr>
-                    <th>User</th>
-                    <th>Email</th>
+                    <th>User Account</th>
+                    <th>Email Address</th>
                     <th>Department</th>
-                    <th>Status</th>
+                    <th>Account Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -625,24 +625,24 @@
                         <td>{{ user.email }}</td>
                         <td>
                             {% if user.is_superuser %}
-                                <span class="department-badge department-admin">🔐 Admin</span>
+                                <span class="department-badge department-admin">Administration</span>
                             {% else %}
-                                <span class="department-badge department-engineering">🏗️ Engineering Office</span>
+                                <span class="department-badge department-engineering">Engineering Office</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if user.is_active %}
-                                <span class="status-badge status-active">✓ Active</span>
+                                <span class="status-badge status-active">Active</span>
                             {% else %}
-                                <span class="status-badge status-inactive">✕ Inactive</span>
+                                <span class="status-badge status-inactive">Inactive</span>
                             {% endif %}
                         </td>
                         <td>
                             <div class="action-buttons">
-                                <a href="{% url 'user_password_history' user.pk %}" class="action-btn" style="background: rgba(6, 182, 212, 0.15); color: #0891b2;">🕐 History</a>
-                                <a href="{% url 'user_initiate_password_reset' user.pk %}" class="action-btn" style="background: rgba(168, 85, 247, 0.15); color: #9333ea;">🔑 Reset</a>
-                                <a href="{% url 'user_edit' user.pk %}" class="action-btn action-btn-primary">✏️ Edit</a>
-                                <a href="{% url 'user_delete' user.pk %}" class="action-btn action-btn-danger">🗑️ Delete</a>
+                                <a href="{% url 'user_password_history' user.pk %}" class="action-btn" style="background: rgba(6, 182, 212, 0.15); color: #0891b2;">History</a>
+                                <a href="{% url 'user_initiate_password_reset' user.pk %}" class="action-btn" style="background: rgba(168, 85, 247, 0.15); color: #9333ea;">Reset Password</a>
+                                <a href="{% url 'user_edit' user.pk %}" class="action-btn action-btn-primary">Edit</a>
+                                <a href="{% url 'user_delete' user.pk %}" class="action-btn action-btn-danger">Delete</a>
                             </div>
                         </td>
                     </tr>
@@ -650,7 +650,7 @@
                     <tr>
                         <td colspan="5">
                             <div class="empty-state">
-                                <p>No users found in the system.</p>
+                                <p>No user accounts found in the system.</p>
                                 <a href="{% url 'user_create' %}" class="create-btn">Create First User</a>
                             </div>
                         </td>
@@ -664,8 +664,8 @@
         <div class="users-table-wrapper">
             <div class="pagination">
                 {% if page_obj.has_previous %}
-                    <a href="?page=1">« First</a>
-                    <a href="?page={{ page_obj.previous_page_number }}">‹ Previous</a>
+                    <a href="?page=1">First</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
                 {% endif %}
 
                 <span class="page-info">
@@ -673,8 +673,8 @@
                 </span>
 
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}">Next ›</a>
-                    <a href="?page={{ page_obj.paginator.num_pages }}">Last »</a>
+                    <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">Last</a>
                 {% endif %}
             </div>
         </div>
@@ -682,6 +682,6 @@
 </div>
 
 <footer>
-    <p>&copy; 2026 Municipality of Gabaldon Project Tracker. All rights reserved.</p>
+    <p>&copy; 2026 Municipality of Gabaldon. Project Tracker System. All rights reserved.</p>
 </footer>
 {% endblock %}
