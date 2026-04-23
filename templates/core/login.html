@@ -44,6 +44,24 @@
         isolation: isolate;
     }
 
+    .slide-frame {
+    background: linear-gradient(135deg, rgba(17, 42, 70, 0.95), rgba(8, 21, 38, 0.95));
+}
+
+.slide-fallback {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 1.5rem;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    background: linear-gradient(135deg, rgba(17, 42, 70, 0.85), rgba(8, 21, 38, 0.92));
+    z-index: 1;
+}
+
     .slide-frame,
     .slide-frame img {
         position: absolute;
@@ -58,12 +76,18 @@
         opacity: 0;
         transform: scale(1.08);
         transition: opacity 700ms ease, transform 4s ease;
+        z-index: 0;
+        z-index: 1; 
     }
 
     .slide-frame img.is-active {
         opacity: 1;
         transform: scale(1);
     }
+
+    .slide-frame img[hidden] {
+    display: none !important;
+}
 
     .left-panel::after {
         content: "";
@@ -373,6 +397,30 @@
             return;
         }
 
+        const validSlides = () => slides.filter((img) => !img.hidden && img.dataset.failed !== 'true');
+
+        slides.forEach((slide) => {
+            slide.addEventListener('error', () => {
+                slide.dataset.failed = 'true';
+                slide.hidden = true;
+                slide.classList.remove('is-active');
+
+                const available = validSlides();
+                if (available.length === 0) {
+                    caption.textContent = '';
+                } else if (!available.some((img) => img.classList.contains('is-active'))) {
+                    const first = available[0];
+                    first.classList.add('is-active');
+                    caption.textContent = first.dataset.caption || '';
+                }
+            });
+
+            slide.addEventListener('load', () => {
+                slide.dataset.failed = 'false';
+                slide.hidden = false;
+            });
+        });
+
         slides.forEach((_, index) => {
             const dot = document.createElement('span');
             dot.className = 'slide-dot' + (index === 0 ? ' is-active' : '');
@@ -383,20 +431,52 @@
         let current = 0;
 
         const activate = (index) => {
-            slides[current].classList.remove('is-active');
-            dots[current].classList.remove('is-active');
+            if (slides[current] && slides[current].dataset.failed !== 'true') {
+                slides[current].classList.remove('is-active');
+            }
+            if (dots[current]) {
+                dots[current].classList.remove('is-active');
+            }
+
             current = index;
-            slides[current].classList.add('is-active');
-            dots[current].classList.add('is-active');
-            caption.textContent = slides[current].dataset.caption || '';
+
+            if (slides[current] && slides[current].dataset.failed !== 'true') {
+                slides[current].classList.add('is-active');
+                caption.textContent = slides[current].dataset.caption || '';
+            }
+
+            if (dots[current]) {
+                dots[current].classList.add('is-active');
+            }
         };
 
-        if (slides.length > 1) {
-            window.setInterval(() => {
-                const next = (current + 1) % slides.length;
-                activate(next);
-            }, 5000);
-        }
+        window.setTimeout(() => {
+            const available = validSlides();
+
+            if (available.length === 0) {
+                return;
+            }
+
+            const firstAvailableIndex = slides.indexOf(available[0]);
+            if (firstAvailableIndex !== 0) {
+                activate(firstAvailableIndex);
+            } else {
+                caption.textContent = slides[0].dataset.caption || '';
+            }
+
+            if (available.length > 1) {
+                window.setInterval(() => {
+                    const currentAvailable = validSlides();
+                    if (currentAvailable.length <= 1) {
+                        return;
+                    }
+
+                    const currentPos = currentAvailable.indexOf(slides[current]);
+                    const nextSlide = currentAvailable[(currentPos + 1) % currentAvailable.length];
+                    activate(slides.indexOf(nextSlide));
+                }, 5000);
+            }
+        }, 0);
     })();
 </script>
 {% endblock %}
