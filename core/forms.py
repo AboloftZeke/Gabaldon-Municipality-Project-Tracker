@@ -1,18 +1,34 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 
 class CustomUserCreationForm(forms.ModelForm):
     """
     Form for creating new users.
-    Placeholder implementation - to be expanded with password fields and validation.
+    Uses built-in password validators and simple role assignment.
     """
+    ROLE_ADMIN = 'admin'
+    ROLE_STAFF = 'staff'
+    ROLE_CHOICES = (
+        (ROLE_ADMIN, 'Admin'),
+        (ROLE_STAFF, 'Staff'),
+    )
+
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
     password2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput)
+    role = forms.ChoiceField(label='Role', choices=ROLE_CHOICES, initial=ROLE_STAFF)
 
     class Meta:
         model = User
         fields = ('username', 'email', 'first_name', 'last_name')
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip()
+        if email and User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError('Email is already in use.')
+        return email
 
     def clean(self):
         cleaned_data = super().clean()
@@ -22,17 +38,68 @@ class CustomUserCreationForm(forms.ModelForm):
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError('Passwords do not match.')
 
+        if password1:
+            try:
+                validate_password(password1)
+            except ValidationError as error:
+                self.add_error('password1', error)
+
         return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        role = self.cleaned_data.get('role', self.ROLE_STAFF)
+
+        user.set_password(self.cleaned_data['password1'])
+        user.is_staff = True
+        user.is_superuser = role == self.ROLE_ADMIN
+
+        if commit:
+            user.save()
+
+        return user
 
 
 class CustomUserChangeForm(forms.ModelForm):
     """
     Form for editing existing users.
-    Placeholder implementation - to be expanded with additional fields.
+    Supports role updates for staff/admin users.
     """
+    ROLE_ADMIN = 'admin'
+    ROLE_STAFF = 'staff'
+    ROLE_CHOICES = (
+        (ROLE_ADMIN, 'Admin'),
+        (ROLE_STAFF, 'Staff'),
+    )
+
+    role = forms.ChoiceField(label='Role', choices=ROLE_CHOICES)
+
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'is_active', 'is_staff')
+        fields = ('username', 'email', 'first_name', 'last_name', 'is_active')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['role'].initial = self.ROLE_ADMIN if self.instance.is_superuser else self.ROLE_STAFF
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip()
+        queryset = User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk)
+        if email and queryset.exists():
+            raise forms.ValidationError('Email is already in use.')
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        role = self.cleaned_data.get('role', self.ROLE_STAFF)
+
+        user.is_staff = True
+        user.is_superuser = role == self.ROLE_ADMIN
+
+        if commit:
+            user.save()
+
+        return user
 
 
 class UserListFilterForm(forms.Form):

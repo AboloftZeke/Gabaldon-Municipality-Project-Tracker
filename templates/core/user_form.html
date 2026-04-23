@@ -8,6 +8,10 @@
 
     <form method="post">
         {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="error">{{ form.non_field_errors }}</div>
+        {% endif %}
+
         <div class="form-group">
             {{ form.username.label_tag }}
             {{ form.username }}
@@ -56,6 +60,36 @@
                 {{ form.is_staff }}
                 {% if form.is_staff.errors %}
                     <div class="error">{{ form.is_staff.errors }}</div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if form.role %}
+            <div class="form-group">
+                {{ form.role.label_tag }}
+                {{ form.role }}
+                {% if form.role.errors %}
+                    <div class="error">{{ form.role.errors }}</div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if form.password1 %}
+            <div class="form-group">
+                {{ form.password1.label_tag }}
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                    <div class="error">{{ form.password1.errors }}</div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if form.password2 %}
+            <div class="form-group">
+                {{ form.password2.label_tag }}
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                    <div class="error">{{ form.password2.errors }}</div>
                 {% endif %}
             </div>
         {% endif %}
