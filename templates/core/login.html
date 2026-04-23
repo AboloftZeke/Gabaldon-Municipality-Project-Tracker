@@ -1,30 +1,402 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Login - Municipality Project Tracker{% endblock %}
 
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --panel-blue: #112a46;
+        --panel-overlay: rgba(6, 18, 34, 0.5);
+        --panel-card: rgba(8, 22, 40, 0.58);
+        --white: #ffffff;
+        --ink-900: #111827;
+        --ink-600: #4b5563;
+        --line: #d1d5db;
+        --focus: #1d4ed8;
+        --btn: #1d4ed8;
+        --btn-hover: #1e40af;
+        --error-bg: #fef2f2;
+        --error-border: #fca5a5;
+        --error-text: #b91c1c;
+    }
+
+    body {
+        margin: 0;
+        font-family: 'Manrope', "Segoe UI", sans-serif;
+        background: var(--white);
+    }
+
+    .split-login {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .left-panel {
+        position: relative;
+        overflow: hidden;
+        background: var(--panel-blue);
+        color: var(--white);
+        isolation: isolate;
+    }
+
+    .slide-frame,
+    .slide-frame img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .slide-frame img {
+        object-fit: cover;
+        filter: blur(2px) brightness(0.72);
+        opacity: 0;
+        transform: scale(1.08);
+        transition: opacity 700ms ease, transform 4s ease;
+    }
+
+    .slide-frame img.is-active {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .left-panel::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, rgba(7, 17, 32, 0.82) 0%, rgba(8, 21, 38, 0.6) 55%, rgba(8, 21, 38, 0.68) 100%);
+        z-index: -1;
+    }
+
+    .welcome-copy {
+        position: relative;
+        z-index: 2;
+        max-width: 520px;
+        padding: 3rem clamp(1.25rem, 5vw, 4rem);
+        margin-top: 4vh;
+    }
+
+    .welcome-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 999px;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.78rem;
+        letter-spacing: 0.03em;
+        margin-bottom: 1rem;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(2px);
+    }
+
+    .welcome-copy h1 {
+        margin: 0;
+        font-size: clamp(1.85rem, 5.2vw, 3.1rem);
+        line-height: 1.1;
+    }
+
+    .welcome-copy p {
+        margin-top: 0.95rem;
+        margin-bottom: 0;
+        max-width: 45ch;
+        color: rgba(255, 255, 255, 0.9);
+        line-height: 1.55;
+    }
+
+    .slide-caption {
+        position: absolute;
+        left: clamp(1rem, 4vw, 2.5rem);
+        bottom: clamp(1rem, 4vw, 2.5rem);
+        z-index: 2;
+        background: var(--panel-card);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 14px;
+        padding: 0.75rem 1rem;
+        max-width: 320px;
+        font-size: 0.9rem;
+        backdrop-filter: blur(5px);
+    }
+
+    .slide-dots {
+        position: absolute;
+        right: clamp(1rem, 4vw, 2.5rem);
+        bottom: clamp(1rem, 4vw, 2.5rem);
+        z-index: 2;
+        display: flex;
+        gap: 0.45rem;
+    }
+
+    .slide-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.45);
+        transition: width 200ms ease, background 200ms ease;
+    }
+
+    .slide-dot.is-active {
+        width: 20px;
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    .right-panel {
+        background: var(--white);
+        display: grid;
+        place-items: center;
+        padding: 2rem 1.25rem;
+    }
+
+    .login-panel {
+        width: min(440px, 100%);
+        padding: 0.25rem;
+    }
+
+    .seal-mark {
+        width: 86px;
+        height: 86px;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto 0.7rem;
+    }
+
+    .login-brand {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .login-brand h2 {
+        margin: 0;
+        color: var(--ink-900);
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .login-kicker {
+        margin-top: 0.45rem;
+        margin-bottom: 0;
+        color: var(--ink-600);
+        font-size: 0.92rem;
+    }
+
+    .error-message {
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--error-border);
+        color: var(--error-text);
+        background: var(--error-bg);
+        border-radius: 4px;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-group label {
+        color: var(--ink-900);
+        font-size: 0.87rem;
+        font-weight: 600;
+    }
+
+    .form-group input {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 0.82rem 0.88rem;
+        font-size: 0.96rem;
+        color: var(--ink-900);
+        background: #ffffff;
+        transition: border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--focus);
+        box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
+    }
+
+    .submit-btn {
+        margin-top: 0.4rem;
+        width: 100%;
+        border: none;
+        border-radius: 12px;
+        background-color: var(--btn);
+        color: #ffffff;
+        font-size: 0.96rem;
+        font-weight: 700;
+        padding: 0.9rem 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .submit-btn:hover,
+    .submit-btn:focus {
+        background-color: var(--btn-hover);
+        outline: none;
+        transform: translateY(-1px);
+    }
+
+    .login-hint {
+        margin-top: 1.25rem;
+        color: var(--ink-600);
+        font-size: 0.8rem;
+        text-align: center;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 1rem;
+    }
+
+    @media (max-width: 980px) {
+        .split-login {
+            grid-template-columns: 1fr;
+        }
+
+        .left-panel {
+            min-height: 44vh;
+        }
+
+        .welcome-copy {
+            margin-top: 0;
+            padding-top: 2rem;
+        }
+    }
+
+    @media (max-width: 560px) {
+        .left-panel {
+            min-height: 40vh;
+        }
+
+        .login-panel {
+            padding: 0;
+        }
+
+        .right-panel {
+            padding: 1.5rem 1rem 2rem;
+        }
+
+        .welcome-copy p {
+            font-size: 0.93rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body_class %}login-page{% endblock %}
+{% block show_header %}{% endblock %}
+{% block show_footer %}{% endblock %}
+
 {% block content %}
-<div class="login-container">
-    <h2>Login</h2>
-
-    {% if error %}
-        <div class="error-message">
-            {{ error }}
-        </div>
-    {% endif %}
-
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
+<section class="split-login">
+    <aside class="left-panel">
+        <div class="slide-frame" id="slideFrame">
+            <img src="{% static 'images/Image-1.jpg' %}" alt="Gabaldon municipality development project" class="is-active" data-caption="Ongoing community projects across Gabaldon.">
+            <img src="{% static 'images/Image-2.jpg' %}" alt="Gabaldon municipality infrastructure project" data-caption="Infrastructure improvement projects serving local communities.">
+            <img src="{% static 'images/Image-3.jpeg' %}" alt="Gabaldon municipality community development project" data-caption="Community-centered developments to improve quality of life in Gabaldon.">
         </div>
 
-        <div class="form-group">
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
+        <div class="welcome-copy">
+            <span class="welcome-badge">Municipality of Gabaldon</span>
+            <h1>Welcome</h1>
+            <p>Track progress, coordinate teams, and monitor project milestones with one unified system for municipal development initiatives.</p>
         </div>
 
-        <button type="submit">Login</button>
-    </form>
-</div>
+        <div class="slide-caption" id="slideCaption">Ongoing community projects across Gabaldon.</div>
+        <div class="slide-dots" id="slideDots"></div>
+    </aside>
+
+    <aside class="right-panel">
+        <div class="login-panel">
+            <div class="login-brand">
+                <img src="{% static 'images/Gabaldon seal.png' %}" alt="Municipality of Gabaldon seal" class="seal-mark">
+                <h2>Municipality Project Tracker</h2>
+                <p class="login-kicker">Secure administrative access</p>
+            </div>
+
+            {% if error %}
+                <div class="error-message">
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <form method="post" class="login-form" autocomplete="on">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+
+                <button type="submit" class="submit-btn">Log In</button>
+            </form>
+
+            <p class="login-hint">Restricted Access • Authorized Personnel Only</p>
+        </div>
+    </aside>
+</section>
+
+<script>
+    (function () {
+        const frame = document.getElementById('slideFrame');
+        const caption = document.getElementById('slideCaption');
+        const dotsWrap = document.getElementById('slideDots');
+
+        if (!frame || !caption || !dotsWrap) {
+            return;
+        }
+
+        const slides = Array.from(frame.querySelectorAll('img'));
+        if (slides.length === 0) {
+            return;
+        }
+
+        slides.forEach((_, index) => {
+            const dot = document.createElement('span');
+            dot.className = 'slide-dot' + (index === 0 ? ' is-active' : '');
+            dotsWrap.appendChild(dot);
+        });
+
+        const dots = Array.from(dotsWrap.children);
+        let current = 0;
+
+        const activate = (index) => {
+            slides[current].classList.remove('is-active');
+            dots[current].classList.remove('is-active');
+            current = index;
+            slides[current].classList.add('is-active');
+            dots[current].classList.add('is-active');
+            caption.textContent = slides[current].dataset.caption || '';
+        };
+
+        if (slides.length > 1) {
+            window.setInterval(() => {
+                const next = (current + 1) % slides.length;
+                activate(next);
+            }, 5000);
+        }
+    })();
+</script>
 {% endblock %}
