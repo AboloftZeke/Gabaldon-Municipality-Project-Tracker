@@ -1,101 +1,550 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{{ action }} User - Municipality Project Tracker{% endblock %}
 
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --panel-blue: #112a46;
+        --white: #ffffff;
+        --ink-900: #111827;
+        --ink-600: #4b5563;
+        --line: #d1d5db;
+        --focus: #1d4ed8;
+        --btn: #1d4ed8;
+        --btn-hover: #1e40af;
+        --error-bg: #fef2f2;
+        --error-border: #fca5a5;
+        --error-text: #b91c1c;
+        --bg-light: #f9fafb;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Manrope', "Segoe UI", sans-serif;
+        background: var(--bg-light);
+        color: var(--ink-900);
+    }
+
+    header {
+        background: var(--panel-blue);
+        color: var(--white);
+        padding: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    header nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem clamp(1rem, 5vw, 3rem);
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    header nav h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    header nav ul {
+        display: flex;
+        list-style: none;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    header nav a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        font-size: 0.94rem;
+        font-weight: 500;
+        transition: color 180ms ease;
+        padding: 0.5rem 0;
+        border-bottom: 2px solid transparent;
+    }
+
+    header nav a:hover {
+        color: var(--white);
+        border-bottom-color: var(--white);
+    }
+
+    main {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        min-height: calc(100vh - 80px);
+    }
+
+    .sidebar {
+        background: var(--white);
+        border-right: 1px solid var(--line);
+        padding: 2rem 0;
+    }
+
+    .sidebar-section {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .sidebar-section:last-child {
+        border-bottom: none;
+    }
+
+    .sidebar-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-600);
+        margin-bottom: 1rem;
+    }
+
+    .sidebar-menu {
+        list-style: none;
+    }
+
+    .sidebar-menu li {
+        margin-bottom: 0.5rem;
+    }
+
+    .sidebar-menu a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        color: var(--ink-900);
+        text-decoration: none;
+        font-size: 0.94rem;
+        font-weight: 500;
+        transition: background 180ms ease, color 180ms ease;
+    }
+
+    .sidebar-menu a:hover {
+        background: var(--bg-light);
+        color: var(--btn);
+    }
+
+    .sidebar-menu a.active {
+        background: var(--btn);
+        color: var(--white);
+    }
+
+    main > div:last-child {
+        overflow-y: auto;
+        padding: clamp(1.5rem, 5vw, 3rem);
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--ink-900);
+        margin-bottom: 2rem;
+    }
+
+    .form-wrapper {
+        background: var(--white);
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        padding: 2rem;
+        max-width: 600px;
+    }
+
+    .error-messages {
+        background: var(--error-bg);
+        border: 1px solid var(--error-border);
+        color: var(--error-text);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .error-messages ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .error-messages li {
+        margin-bottom: 0.35rem;
+    }
+
+    .error-messages li:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--ink-900);
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--line);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.87rem;
+        font-weight: 600;
+        color: var(--ink-900);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-group label.required::after {
+        content: " *";
+        color: #dc2626;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.82rem 0.88rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font-size: 0.94rem;
+        font-family: 'Manrope', sans-serif;
+        color: var(--ink-900);
+        background: var(--white);
+        transition: border-color 180ms ease, box-shadow 180ms ease;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--focus);
+        box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
+    }
+
+    .form-group input[type="checkbox"],
+    .form-group input[type="radio"] {
+        width: auto;
+        margin-right: 0.5rem;
+    }
+
+    .checkbox-group,
+    .radio-group {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .form-group-error input,
+    .form-group-error select {
+        border-color: var(--error-text);
+    }
+
+    .field-error {
+        color: var(--error-text);
+        font-size: 0.8rem;
+        margin-top: 0.35rem;
+    }
+
+    .form-help {
+        color: var(--ink-600);
+        font-size: 0.8rem;
+        margin-top: 0.35rem;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--line);
+    }
+
+    .btn {
+        padding: 0.9rem 1.75rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.94rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 180ms ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+        justify-content: center;
+    }
+
+    .btn-primary {
+        background: var(--btn);
+        color: var(--white);
+    }
+
+    .btn-primary:hover {
+        background: var(--btn-hover);
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: var(--bg-light);
+        color: var(--ink-900);
+        border: 1px solid var(--line);
+    }
+
+    .btn-secondary:hover {
+        background: var(--line);
+    }
+
+    footer {
+        grid-column: 1 / -1;
+        background: var(--white);
+        border-top: 1px solid var(--line);
+        padding: 1.5rem;
+        text-align: center;
+        font-size: 0.8rem;
+        color: var(--ink-600);
+    }
+
+    @media (max-width: 1024px) {
+        main {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+            display: none;
+        }
+    }
+
+    @media (max-width: 768px) {
+        header nav {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        header nav h1 {
+            font-size: 1.1rem;
+        }
+
+        header nav ul {
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+
+        main > div:last-child {
+            padding: 1rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .form-wrapper {
+            padding: 1.5rem;
+            max-width: 100%;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            flex: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block show_header %}
+<header>
+    <nav>
+        <h1>🏛️ Municipality Project Tracker</h1>
+        {% if user.is_authenticated %}
+            <ul>
+                <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+                {% if user.is_superuser %}
+                    <li><a href="{% url 'user_list' %}">Users</a></li>
+                {% endif %}
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+            </ul>
+        {% endif %}
+    </nav>
+</header>
+{% endblock %}
+
 {% block content %}
-<div class="user-form-container">
-    <h2>{{ action }} User</h2>
-
-    <form method="post">
-        {% csrf_token %}
-        {% if form.non_field_errors %}
-            <div class="error">{{ form.non_field_errors }}</div>
-        {% endif %}
-
-        <div class="form-group">
-            {{ form.username.label_tag }}
-            {{ form.username }}
-            {% if form.username.errors %}
-                <div class="error">{{ form.username.errors }}</div>
+<div class="sidebar">
+    <div class="sidebar-section">
+        <p class="sidebar-title">Menu</p>
+        <ul class="sidebar-menu">
+            <li><a href="{% url 'admin_dashboard' %}">📊 Dashboard</a></li>
+            {% if user.is_superuser %}
+                <li><a href="{% url 'user_list' %}" class="active">👥 Manage Users</a></li>
+                <li><a href="{% url 'user_create' %}">➕ Create User</a></li>
             {% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.email.label_tag }}
-            {{ form.email }}
-            {% if form.email.errors %}
-                <div class="error">{{ form.email.errors }}</div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.first_name.label_tag }}
-            {{ form.first_name }}
-            {% if form.first_name.errors %}
-                <div class="error">{{ form.first_name.errors }}</div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.last_name.label_tag }}
-            {{ form.last_name }}
-            {% if form.last_name.errors %}
-                <div class="error">{{ form.last_name.errors }}</div>
-            {% endif %}
-        </div>
-
-        {% if form.is_active %}
-            <div class="form-group">
-                {{ form.is_active.label_tag }}
-                {{ form.is_active }}
-                {% if form.is_active.errors %}
-                    <div class="error">{{ form.is_active.errors }}</div>
-                {% endif %}
-            </div>
-        {% endif %}
-
-        {% if form.is_staff %}
-            <div class="form-group">
-                {{ form.is_staff.label_tag }}
-                {{ form.is_staff }}
-                {% if form.is_staff.errors %}
-                    <div class="error">{{ form.is_staff.errors }}</div>
-                {% endif %}
-            </div>
-        {% endif %}
-
-        {% if form.role %}
-            <div class="form-group">
-                {{ form.role.label_tag }}
-                {{ form.role }}
-                {% if form.role.errors %}
-                    <div class="error">{{ form.role.errors }}</div>
-                {% endif %}
-            </div>
-        {% endif %}
-
-        {% if form.password1 %}
-            <div class="form-group">
-                {{ form.password1.label_tag }}
-                {{ form.password1 }}
-                {% if form.password1.errors %}
-                    <div class="error">{{ form.password1.errors }}</div>
-                {% endif %}
-            </div>
-        {% endif %}
-
-        {% if form.password2 %}
-            <div class="form-group">
-                {{ form.password2.label_tag }}
-                {{ form.password2 }}
-                {% if form.password2.errors %}
-                    <div class="error">{{ form.password2.errors }}</div>
-                {% endif %}
-            </div>
-        {% endif %}
-
-        <button type="submit">{{ action }} User</button>
-        <a href="{% url 'user_list' %}">Cancel</a>
-    </form>
+        </ul>
+    </div>
 </div>
+
+<div>
+    <h2 class="page-title">{{ action }} User</h2>
+
+    <div class="form-wrapper">
+        {% if form.non_field_errors %}
+            <div class="error-messages">
+                <strong>Error:</strong>
+                {% if form.non_field_errors.0 %}
+                    <ul>
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    {{ form.non_field_errors }}
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <h3>👤 Basic Information</h3>
+
+                <div class="form-group {% if form.username.errors %}form-group-error{% endif %}">
+                    <label for="{{ form.username.id_for_label }}" class="required">{{ form.username.label }}</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="field-error">{{ form.username.errors.0 }}</div>
+                    {% endif %}
+                    <div class="form-help">Unique identifier for system login</div>
+                </div>
+
+                <div class="form-group {% if form.email.errors %}form-group-error{% endif %}">
+                    <label for="{{ form.email.id_for_label }}" class="required">{{ form.email.label }}</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="field-error">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group {% if form.first_name.errors %}form-group-error{% endif %}">
+                    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <div class="field-error">{{ form.first_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group {% if form.last_name.errors %}form-group-error{% endif %}">
+                    <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                        <div class="field-error">{{ form.last_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Department & Permissions Section -->
+            <div class="form-section">
+                <h3>🏛️ Department & Permissions</h3>
+
+                {% if form.is_superuser %}
+                    <div class="form-group">
+                        <label for="{{ form.is_superuser.id_for_label }}">
+                            <div class="checkbox-group">
+                                {{ form.is_superuser }}
+                                <span>Administrator Access (🔐 Admin Department)</span>
+                            </div>
+                        </label>
+                        <div class="form-help">Grant full system access. Unchecked users are assigned to Engineering Office.</div>
+                    </div>
+                {% endif %}
+
+                {% if form.is_staff %}
+                    <div class="form-group">
+                        <label for="{{ form.is_staff.id_for_label }}">
+                            <div class="checkbox-group">
+                                {{ form.is_staff }}
+                                <span>Staff Member</span>
+                            </div>
+                        </label>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Account Status Section -->
+            <div class="form-section">
+                <h3>✓ Account Status</h3>
+
+                {% if form.is_active %}
+                    <div class="form-group">
+                        <label for="{{ form.is_active.id_for_label }}">
+                            <div class="checkbox-group">
+                                {{ form.is_active }}
+                                <span>User account is active</span>
+                            </div>
+                        </label>
+                        <div class="form-help">Uncheck to disable user access without deleting the account</div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Password Section -->
+            {% if form.password1 %}
+            <div class="form-section">
+                <h3>🔑 Password</h3>
+
+                <div class="form-group {% if form.password1.errors %}form-group-error{% endif %}">
+                    <label for="{{ form.password1.id_for_label }}" class="{% if action == 'Create' %}required{% endif %}">{{ form.password1.label }}</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <div class="field-error">{{ form.password1.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group {% if form.password2.errors %}form-group-error{% endif %}">
+                    <label for="{{ form.password2.id_for_label }}" class="{% if action == 'Create' %}required{% endif %}">{{ form.password2.label }}</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <div class="field-error">{{ form.password2.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">✓ {{ action }} User</button>
+                <a href="{% url 'user_list' %}" class="btn btn-secondary">↩️ Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2026 Municipality of Gabaldon Project Tracker. All rights reserved.</p>
+</footer>
 {% endblock %}

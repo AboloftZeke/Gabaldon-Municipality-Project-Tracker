@@ -1,34 +1,594 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Admin Dashboard - Municipality Project Tracker{% endblock %}
 
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --panel-blue: #112a46;
+        --panel-overlay: rgba(6, 18, 34, 0.5);
+        --panel-card: rgba(8, 22, 40, 0.58);
+        --white: #ffffff;
+        --ink-900: #111827;
+        --ink-600: #4b5563;
+        --line: #d1d5db;
+        --focus: #1d4ed8;
+        --btn: #1d4ed8;
+        --btn-hover: #1e40af;
+        --success-bg: #ecfdf5;
+        --success-text: #065f46;
+        --bg-light: #f9fafb;
+        --accent-blue: #0284c7;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Manrope', "Segoe UI", sans-serif;
+        background: var(--bg-light);
+        color: var(--ink-900);
+    }
+
+    header {
+        background: var(--panel-blue);
+        color: var(--white);
+        padding: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    header nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem clamp(1rem, 5vw, 3rem);
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    header nav h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    header nav ul {
+        display: flex;
+        list-style: none;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    header nav a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        font-size: 0.94rem;
+        font-weight: 500;
+        transition: color 180ms ease;
+        padding: 0.5rem 0;
+        border-bottom: 2px solid transparent;
+    }
+
+    header nav a:hover {
+        color: var(--white);
+        border-bottom-color: var(--white);
+    }
+
+    main {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        min-height: calc(100vh - 80px);
+    }
+
+    .sidebar {
+        background: var(--white);
+        border-right: 1px solid var(--line);
+        padding: 2rem 0;
+    }
+
+    .sidebar-section {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .sidebar-section:last-child {
+        border-bottom: none;
+    }
+
+    .sidebar-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-600);
+        margin-bottom: 1rem;
+    }
+
+    .sidebar-menu {
+        list-style: none;
+    }
+
+    .sidebar-menu li {
+        margin-bottom: 0.5rem;
+    }
+
+    .sidebar-menu a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        color: var(--ink-900);
+        text-decoration: none;
+        font-size: 0.94rem;
+        font-weight: 500;
+        transition: background 180ms ease, color 180ms ease;
+    }
+
+    .sidebar-menu a:hover {
+        background: var(--bg-light);
+        color: var(--btn);
+    }
+
+    .sidebar-menu a.active {
+        background: var(--btn);
+        color: var(--white);
+    }
+
+    .dashboard-content {
+        padding: clamp(1.5rem, 5vw, 3rem);
+        overflow-y: auto;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--ink-900);
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 1.25rem;
+        background: var(--white);
+        border-radius: 12px;
+        border: 1px solid var(--line);
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--btn);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .user-name {
+        font-size: 0.94rem;
+        font-weight: 600;
+        color: var(--ink-900);
+    }
+
+    .welcome-section {
+        background: var(--white);
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        padding: 2rem;
+        margin-bottom: 2.5rem;
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    .welcome-seal {
+        flex-shrink: 0;
+    }
+
+    .welcome-seal img {
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+    }
+
+    .welcome-text h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--panel-blue);
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-text p {
+        color: var(--ink-600);
+        line-height: 1.6;
+        max-width: 500px;
+    }
+
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        padding: 1.5rem;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-card h3 {
+        font-size: 0.87rem;
+        font-weight: 600;
+        color: var(--ink-600);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 0.75rem;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--btn);
+        margin: 0;
+    }
+
+    .stat-subtitle {
+        font-size: 0.8rem;
+        color: var(--ink-600);
+        margin-top: 0.5rem;
+    }
+
+    .dashboard-section {
+        margin-bottom: 2.5rem;
+    }
+
+    .dashboard-section h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--ink-900);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-icon {
+        width: 28px;
+        height: 28px;
+        background: var(--btn);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        font-size: 1.2rem;
+    }
+
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .action-card {
+        background: var(--white);
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        padding: 1.5rem;
+        text-decoration: none;
+        transition: all 180ms ease;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .action-card:hover {
+        border-color: var(--btn);
+        box-shadow: 0 8px 20px rgba(29, 78, 216, 0.12);
+    }
+
+    .action-card-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--bg-light);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .action-card-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--ink-900);
+    }
+
+    .action-card-desc {
+        font-size: 0.87rem;
+        color: var(--ink-600);
+        line-height: 1.5;
+    }
+
+    .quick-actions {
+        background: var(--white);
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        padding: 1.5rem;
+    }
+
+    .quick-actions h4 {
+        font-size: 0.94rem;
+        font-weight: 700;
+        color: var(--ink-900);
+        margin-bottom: 1rem;
+    }
+
+    .action-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        background: var(--btn);
+        color: var(--white);
+        border: none;
+        border-radius: 8px;
+        font-size: 0.94rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 180ms ease, transform 180ms ease;
+        margin-right: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .action-button:hover {
+        background: var(--btn-hover);
+        transform: translateY(-2px);
+    }
+
+    .action-button.secondary {
+        background: transparent;
+        color: var(--btn);
+        border: 1px solid var(--btn);
+    }
+
+    .action-button.secondary:hover {
+        background: var(--bg-light);
+    }
+
+    footer {
+        grid-column: 1 / -1;
+        background: var(--white);
+        border-top: 1px solid var(--line);
+        padding: 1.5rem;
+        text-align: center;
+        font-size: 0.8rem;
+        color: var(--ink-600);
+    }
+
+    @media (max-width: 1024px) {
+        main {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+            display: none;
+        }
+
+        .dashboard-stats {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+
+        .welcome-section {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .welcome-text p {
+            max-width: 100%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        header nav {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        header nav h1 {
+            font-size: 1.1rem;
+        }
+
+        header nav ul {
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .dashboard-content {
+            padding: 1rem;
+        }
+
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .dashboard-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .action-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stat-value {
+            font-size: 1.75rem;
+        }
+
+        .welcome-section {
+            padding: 1.5rem 1rem;
+        }
+
+        .welcome-seal img {
+            width: 80px;
+            height: 80px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block show_header %}
+<header>
+    <nav>
+        <h1>🏛️ Municipality Project Tracker</h1>
+        {% if user.is_authenticated %}
+            <ul>
+                <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+                {% if user.is_superuser %}
+                    <li><a href="{% url 'user_list' %}">Users</a></li>
+                {% endif %}
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+            </ul>
+        {% endif %}
+    </nav>
+</header>
+{% endblock %}
+
 {% block content %}
-<div class="dashboard-container">
-    <h2>Admin Dashboard</h2>
-
-    <div class="dashboard-stats">
-        <div class="stat-card">
-            <h3>Total Users</h3>
-            <p class="stat-value">{{ total_users }}</p>
-        </div>
-        <div class="stat-card">
-            <h3>Admins</h3>
-            <p class="stat-value">{{ total_admins }}</p>
-        </div>
-        <div class="stat-card">
-            <h3>Staff</h3>
-            <p class="stat-value">{{ total_staff }}</p>
-        </div>
-    </div>
-
-    <div class="dashboard-links">
-        <h3>Quick Links</h3>
-        <ul>
+<div class="sidebar">
+    <div class="sidebar-section">
+        <p class="sidebar-title">Menu</p>
+        <ul class="sidebar-menu">
+            <li><a href="{% url 'admin_dashboard' %}" class="active">📊 Dashboard</a></li>
             {% if user.is_superuser %}
-                <li><a href="{% url 'user_list' %}">View Users</a></li>
-                <li><a href="{% url 'user_create' %}">Create New User</a></li>
+                <li><a href="{% url 'user_list' %}">👥 Manage Users</a></li>
+                <li><a href="{% url 'user_create' %}">➕ Create User</a></li>
             {% endif %}
         </ul>
     </div>
+
+    <div class="sidebar-section">
+        <p class="sidebar-title">User Account</p>
+        <div class="quick-actions">
+            <h4>{{ user.username }}</h4>
+            <a href="{% url 'logout' %}" class="action-button secondary" style="display: block; text-align: center; margin-right: 0;">Logout</a>
+        </div>
+    </div>
 </div>
+
+<div class="dashboard-content">
+    <div class="dashboard-header">
+        <h2>Dashboard</h2>
+        <div class="user-info">
+            <div class="user-avatar">{{ user.username|first|upper }}</div>
+            <div>
+                <div class="user-name">{{ user.username }}</div>
+                <div style="font-size: 0.8rem; color: var(--ink-600);">{% if user.is_superuser %}Administrator{% else %}Staff{% endif %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Section with Gabaldon Seal -->
+    <div class="welcome-section">
+        <div class="welcome-seal">
+            <img src="{% static 'images/Gabaldon seal.png' %}" alt="Municipality of Gabaldon seal">
+        </div>
+        <div class="welcome-text">
+            <h3>Welcome to Municipality Project Tracker</h3>
+            <p>Manage municipal development initiatives, coordinate teams, and track project progress with real-time insights. Use the dashboard below to access key metrics and administrative tools.</p>
+        </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <h3>👥 Total Users</h3>
+            <p class="stat-value">{{ total_users }}</p>
+            <div class="stat-subtitle">Across all roles</div>
+        </div>
+        <div class="stat-card">
+            <h3>🔐 Administrators</h3>
+            <p class="stat-value">{{ total_admins }}</p>
+            <div class="stat-subtitle">Full system access</div>
+        </div>
+        <div class="stat-card">
+            <h3>👔 Staff Members</h3>
+            <p class="stat-value">{{ total_staff }}</p>
+            <div class="stat-subtitle">Regular users</div>
+        </div>
+    </div>
+
+    <!-- Admin Actions Section -->
+    {% if user.is_superuser %}
+    <div class="dashboard-section">
+        <h3><span class="section-icon">🔐</span>System Access Management</h3>
+        <div class="action-grid">
+            <a href="{% url 'user_list' %}" class="action-card">
+                <div class="action-card-icon">👥</div>
+                <div class="action-card-title">Manage Users</div>
+                <div class="action-card-desc">View, edit, enable/disable all system users and their departments</div>
+            </a>
+            <a href="{% url 'user_create' %}" class="action-card">
+                <div class="action-card-icon">➕</div>
+                <div class="action-card-title">Create New User</div>
+                <div class="action-card-desc">Add a new user to Engineering Office, Mayor's Office, or Admin</div>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions Section -->
+    <div class="dashboard-section">
+        <h3><span class="section-icon">⚡</span>Quick Actions</h3>
+        <div class="quick-actions">
+            <h4>Common Tasks</h4>
+            {% if user.is_superuser %}
+                <a href="{% url 'user_list' %}" class="action-button">👥 Manage Users</a>
+                <a href="{% url 'user_create' %}" class="action-button">➕ Add User</a>
+            {% endif %}
+            <a href="{% url 'logout' %}" class="action-button secondary">🚪 Logout</a>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2026 Municipality of Gabaldon Project Tracker. All rights reserved.</p>
+</footer>
 {% endblock %}
