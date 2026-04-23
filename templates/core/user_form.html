@@ -472,6 +472,17 @@
             <div class="form-section">
                 <h3>Department & Permissions</h3>
 
+                {% if form.role %}
+                    <div class="form-group {% if form.role.errors %}form-group-error{% endif %}">
+                        <label for="{{ form.role.id_for_label }}" class="required">{{ form.role.label }}</label>
+                        {{ form.role }}
+                        {% if form.role.errors %}
+                            <div class="field-error">{{ form.role.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-help">Select user role: Admin (full access) or Staff (limited access)</div>
+                    </div>
+                {% endif %}
+
                 {% if form.is_superuser %}
                     <div class="form-group">
                         <label for="{{ form.is_superuser.id_for_label }}">
