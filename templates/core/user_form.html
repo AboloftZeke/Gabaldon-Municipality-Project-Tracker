@@ -159,6 +159,7 @@
         border: 1px solid var(--line);
         padding: 2rem;
         max-width: 600px;
+        margin: 0 auto;
     }
 
     .error-messages {
@@ -398,10 +399,10 @@
     <div class="sidebar-section">
         <p class="sidebar-title">Menu</p>
         <ul class="sidebar-menu">
-            <li><a href="{% url 'admin_dashboard' %}">📊 Dashboard</a></li>
+            <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
             {% if user.is_superuser %}
-                <li><a href="{% url 'user_list' %}" class="active">👥 Manage Users</a></li>
-                <li><a href="{% url 'user_create' %}">➕ Create User</a></li>
+                <li><a href="{% url 'user_list' %}" class="active">Manage Users</a></li>
+                <li><a href="{% url 'user_create' %}">Create User</a></li>
             {% endif %}
         </ul>
     </div>
@@ -431,7 +432,7 @@
 
             <!-- Basic Information Section -->
             <div class="form-section">
-                <h3>👤 Basic Information</h3>
+                <h3>Basic Information</h3>
 
                 <div class="form-group {% if form.username.errors %}form-group-error{% endif %}">
                     <label for="{{ form.username.id_for_label }}" class="required">{{ form.username.label }}</label>
@@ -469,14 +470,14 @@
 
             <!-- Department & Permissions Section -->
             <div class="form-section">
-                <h3>🏛️ Department & Permissions</h3>
+                <h3>Department & Permissions</h3>
 
                 {% if form.is_superuser %}
                     <div class="form-group">
                         <label for="{{ form.is_superuser.id_for_label }}">
                             <div class="checkbox-group">
                                 {{ form.is_superuser }}
-                                <span>Administrator Access (🔐 Admin Department)</span>
+                                <span>Administrator Access (Admin Department)</span>
                             </div>
                         </label>
                         <div class="form-help">Grant full system access. Unchecked users are assigned to Engineering Office.</div>
@@ -515,7 +516,7 @@
             <!-- Password Section -->
             {% if form.password1 %}
             <div class="form-section">
-                <h3>🔑 Password</h3>
+                <h3>Password</h3>
 
                 <div class="form-group {% if form.password1.errors %}form-group-error{% endif %}">
                     <label for="{{ form.password1.id_for_label }}" class="{% if action == 'Create' %}required{% endif %}">{{ form.password1.label }}</label>
