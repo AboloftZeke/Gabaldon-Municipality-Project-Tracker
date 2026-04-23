@@ -639,6 +639,7 @@
                         </td>
                         <td>
                             <div class="action-buttons">
+                                <a href="{% url 'user_initiate_password_reset' user.pk %}" class="action-btn" style="background: rgba(168, 85, 247, 0.15); color: #9333ea;">🔑 Reset</a>
                                 <a href="{% url 'user_edit' user.pk %}" class="action-btn action-btn-primary">✏️ Edit</a>
                                 <a href="{% url 'user_delete' user.pk %}" class="action-btn action-btn-danger">🗑️ Delete</a>
                             </div>

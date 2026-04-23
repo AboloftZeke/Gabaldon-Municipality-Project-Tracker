@@ -1,11 +1,17 @@
 from django.shortcuts import render, redirect
 from django.views import View
-from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.urls import reverse_lazy
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.urls import reverse_lazy, reverse
 from django.db.models import Q
+from django.conf import settings
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 from .forms import CustomUserCreationForm, CustomUserChangeForm, UserListFilterForm
 
 
@@ -146,3 +152,78 @@ class UserDeleteView(AdminRequiredMixin, DeleteView):
     model = User
     template_name = 'core/user_confirm_delete.html'
     success_url = reverse_lazy('user_list')
+
+
+class UserPasswordResetInitiateView(AdminRequiredMixin, DetailView):
+    """
+    Initiate password reset for a user by sending email with reset link.
+    """
+    model = User
+    template_name = 'core/user_password_reset_confirm.html'
+    context_object_name = 'reset_user'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Reset Password'
+        return context
+
+    def post(self, request, *args, **kwargs):
+        user = self.get_object()
+
+        # Generate token
+        token_generator = PasswordResetTokenGenerator()
+        token = token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        # Build password reset link (using Django's default password reset confirm view)
+        reset_url = request.build_absolute_uri(
+            reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+        )
+
+        # Prepare email context
+        email_context = {
+            'user': user,
+            'reset_link': reset_url,
+            'site_name': 'Municipality Project Tracker',
+            'token_expiration_hours': 24,
+        }
+
+        # Send email
+        try:
+            # Text version
+            text_message = render_to_string(
+                'core/email/password_reset_email.txt',
+                email_context,
+                request=request
+            )
+
+            # HTML version
+            html_message = render_to_string(
+                'core/email/password_reset_email.html',
+                email_context,
+                request=request
+            )
+
+            send_mail(
+                subject='Password Reset Request - Municipality Project Tracker',
+                message=text_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+
+            # Show success message
+            from django.contrib import messages
+            messages.success(
+                request,
+                f'Password reset link has been sent to {user.email}'
+            )
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(
+                request,
+                f'Error sending password reset email: {str(e)}'
+            )
+
+        return redirect('user_list')
