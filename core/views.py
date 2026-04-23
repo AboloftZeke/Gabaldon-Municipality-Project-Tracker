@@ -64,12 +64,9 @@ class LoginView(View):
 
 
 class LogoutView(View):
-    """
-    Handle user logout.
-    """
     def get(self, request):
         logout(request)
-        return redirect('login')
+        return render(request, 'core/logout.html')
 
 
 class AdminDashboardView(StaffRequiredMixin, TemplateView):
