@@ -129,6 +129,18 @@ class UserCreateView(AdminRequiredMixin, CreateView):
         context['action'] = 'Create'
         return context
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Log password creation
+        from .models import PasswordChangeHistory
+        PasswordChangeHistory.objects.create(
+            user=self.object,
+            changed_by=self.request.user,
+            method='creation',
+            notes=f'User created by {self.request.user.username}'
+        )
+        return response
+
 
 class UserEditView(AdminRequiredMixin, UpdateView):
     """
@@ -213,6 +225,15 @@ class UserPasswordResetInitiateView(AdminRequiredMixin, DetailView):
                 fail_silently=False,
             )
 
+            # Log password reset in history
+            from .models import PasswordChangeHistory
+            PasswordChangeHistory.objects.create(
+                user=user,
+                changed_by=request.user,
+                method='reset_link',
+                notes=f'Password reset link sent by {request.user.username}'
+            )
+
             # Show success message
             from django.contrib import messages
             messages.success(
@@ -227,3 +248,88 @@ class UserPasswordResetInitiateView(AdminRequiredMixin, DetailView):
             )
 
         return redirect('user_list')
+
+
+class UserPasswordHistoryView(AdminRequiredMixin, DetailView):
+    """
+    Display password change history for a specific user.
+    """
+    model = User
+    template_name = 'core/user_password_history.html'
+    context_object_name = 'history_user'
+
+    def get_context_data(self, **kwargs):
+        from .models import PasswordChangeHistory
+        context = super().get_context_data(**kwargs)
+        user = self.get_object()
+        context['password_changes'] = PasswordChangeHistory.objects.filter(
+            user=user
+        ).order_by('-changed_at')
+        return context
+
+
+class PasswordHistoryListView(AdminRequiredMixin, ListView):
+    """
+    Display all password changes across all users with filters.
+    """
+    template_name = 'core/password_history_list.html'
+    context_object_name = 'password_changes'
+    paginate_by = 20
+
+    def get_queryset(self):
+        from .models import PasswordChangeHistory
+        queryset = PasswordChangeHistory.objects.select_related(
+            'user', 'changed_by'
+        ).order_by('-changed_at')
+
+        # Filter by user
+        user_filter = self.request.GET.get('user', '').strip()
+        if user_filter:
+            queryset = queryset.filter(user__username__icontains=user_filter)
+
+        # Filter by method
+        method_filter = self.request.GET.get('method', '').strip()
+        if method_filter:
+            queryset = queryset.filter(method=method_filter)
+
+        # Filter by date range
+        date_from = self.request.GET.get('date_from', '').strip()
+        date_to = self.request.GET.get('date_to', '').strip()
+
+        if date_from:
+            from datetime import datetime
+            try:
+                start_date = datetime.strptime(date_from, '%Y-%m-%d')
+                queryset = queryset.filter(changed_at__gte=start_date)
+            except ValueError:
+                pass
+
+        if date_to:
+            from datetime import datetime, timedelta
+            try:
+                end_date = datetime.strptime(date_to, '%Y-%m-%d')
+                # Include entire day
+                end_date = end_date + timedelta(days=1)
+                queryset = queryset.filter(changed_at__lt=end_date)
+            except ValueError:
+                pass
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        from .models import PasswordChangeHistory
+        context = super().get_context_data(**kwargs)
+
+        # Add method choices for filter dropdown
+        context['method_choices'] = PasswordChangeHistory.CHANGE_METHOD_CHOICES
+
+        # Get all users for filter dropdown
+        context['all_users'] = User.objects.all().order_by('username')
+
+        # Add current filter values
+        context['user_filter'] = self.request.GET.get('user', '')
+        context['method_filter'] = self.request.GET.get('method', '')
+        context['date_from'] = self.request.GET.get('date_from', '')
+        context['date_to'] = self.request.GET.get('date_to', '')
+
+        return context
