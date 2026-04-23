@@ -69,13 +69,30 @@ pip install -r requirements.txt
 
 ### 4. Configure Database
 
-Update `config/settings.py` with your PostgreSQL credentials:
-- Database name: `gabaldon_db` (current)
-- Username: `postgres` (current)
-- Password: Update with your actual password
-- Host: `localhost` (current)
+Create a `.env` file in the project root (you can copy from `.env.example`) and set:
+```bash
+SECRET_KEY=replace-with-a-secure-secret-key
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+DB_NAME=gabaldon_db
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_HOST=localhost
+DB_PORT=5432
+```
 
-Or use environment variables:
+If you prefer shell variables instead of a `.env` file:
+
+**Windows (PowerShell):**
+```powershell
+$env:DB_NAME="gabaldon_db"
+$env:DB_USER="postgres"
+$env:DB_PASSWORD="your_password"
+$env:DB_HOST="localhost"
+$env:DB_PORT="5432"
+```
+
+**macOS/Linux:**
 ```bash
 export DB_NAME=gabaldon_db
 export DB_USER=postgres
