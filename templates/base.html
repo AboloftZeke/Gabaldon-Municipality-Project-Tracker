@@ -4,6 +4,155 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Municipality Project Tracker{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Global CSS Variables */
+        :root {
+            --panel-blue: #112a46;
+            --white: #ffffff;
+            --ink-900: #111827;
+            --ink-600: #4b5563;
+            --line: #d1d5db;
+            --btn: #1d4ed8;
+            --btn-hover: #1e40af;
+            --bg-light: #f9fafb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Manrope', 'Segoe UI', sans-serif;
+            background: var(--bg-light);
+            color: var(--ink-900);
+        }
+
+        /* Header Styles */
+        header {
+            background: var(--panel-blue);
+            color: var(--white);
+            padding: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        header nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem clamp(1rem, 5vw, 3rem);
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        header nav h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0;
+            flex-shrink: 0;
+        }
+
+        header nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        header nav li {
+            white-space: nowrap;
+        }
+
+        header nav a {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-size: 0.94rem;
+            font-weight: 500;
+            transition: color 180ms ease;
+            padding: 0.5rem 0;
+            border-bottom: 2px solid transparent;
+            display: inline-block;
+        }
+
+        header nav a:hover {
+            color: var(--white);
+            border-bottom-color: var(--white);
+        }
+
+        header nav a:focus {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        /* Footer Styles */
+        footer {
+            background: var(--white);
+            border-top: 1px solid var(--line);
+            padding: 1.5rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--ink-600);
+            margin-top: auto;
+        }
+
+        main {
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Tablet Responsive */
+        @media (max-width: 768px) {
+            header nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            header nav h1 {
+                font-size: 1.1rem;
+                width: 100%;
+                text-align: center;
+            }
+
+            header nav ul {
+                gap: 1rem;
+                font-size: 0.9rem;
+                justify-content: center;
+                width: 100%;
+            }
+
+            header nav li {
+                white-space: normal;
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 480px) {
+            header nav {
+                padding: 0.75rem;
+            }
+
+            header nav h1 {
+                font-size: 1rem;
+            }
+
+            header nav ul {
+                gap: 0.5rem;
+                font-size: 0.85rem;
+            }
+
+            header nav a {
+                padding: 0.5rem 0.5rem;
+            }
+        }
+    </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -18,7 +167,7 @@
                         <li><a href="{% url 'user_list' %}">Users</a></li>
                     {% endif %}
                     <li><a href="{% url 'logout' %}">Logout</a></li>
-                    <li>Welcome, {{ user.username }}</li>
+                    <li><span>Welcome, {{ user.username }}</span></li>
                 </ul>
             {% else %}
                 <ul>
