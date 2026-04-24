@@ -11,7 +11,7 @@
     <style>
         /* Global CSS Variables */
         :root {
-            --panel-blue: #112a46;
+            --panel-green: #1a5a3a;
             --white: #ffffff;
             --ink-900: #111827;
             --ink-600: #4b5563;
@@ -35,7 +35,7 @@
 
         /* Header Styles */
         header {
-            background: var(--panel-blue);
+            background: var(--panel-green);
             color: var(--white);
             padding: 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -45,10 +45,23 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.25rem clamp(1rem, 5vw, 3rem);
+            padding: 1rem clamp(1rem, 5vw, 3rem);
             max-width: 1400px;
             margin: 0 auto;
             width: 100%;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        .header-seal {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
         }
 
         header nav h1 {
@@ -183,10 +196,21 @@
                 padding: 1rem;
             }
 
+            .header-brand {
+                flex-direction: column;
+                gap: 0.5rem;
+                width: 100%;
+            }
+
             header nav h1 {
                 font-size: 1.1rem;
                 width: 100%;
                 text-align: center;
+            }
+
+            .header-seal {
+                width: 45px;
+                height: 45px;
             }
 
             header nav ul {
@@ -214,6 +238,11 @@
 
             header nav h1 {
                 font-size: 1rem;
+            }
+
+            .header-seal {
+                width: 40px;
+                height: 40px;
             }
 
             header nav ul {
@@ -256,7 +285,10 @@
     {% block show_header %}
     <header>
         <nav>
-            <h1>Municipality Project Tracker</h1>
+            <div class="header-brand">
+                <img src="{% static 'images/Gabaldon seal.png' %}" alt="Municipality of Gabaldon seal" class="header-seal">
+                <h1>Municipality Project Tracker</h1>
+            </div>
             {% if user.is_authenticated %}
                 <ul>
                     <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
