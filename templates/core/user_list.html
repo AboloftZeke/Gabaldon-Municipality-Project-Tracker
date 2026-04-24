@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
     :root {
-        --panel-blue: #112a46;
+        --panel-green: #1a5a3a;
         --panel-overlay: rgba(6, 18, 34, 0.5);
         --panel-card: rgba(8, 22, 40, 0.58);
         --white: #ffffff;
@@ -41,7 +41,7 @@
     }
 
     header {
-        background: var(--panel-blue);
+        background: var(--panel-green);
         color: var(--white);
         padding: 0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -449,16 +449,6 @@
         color: var(--ink-600);
     }
 
-    footer {
-        grid-column: 1 / -1;
-        background: var(--white);
-        border-top: 1px solid var(--line);
-        padding: 1.5rem;
-        text-align: center;
-        font-size: 0.8rem;
-        color: var(--ink-600);
-    }
-
     @media (max-width: 1024px) {
         main {
             grid-template-columns: 1fr;
@@ -680,8 +670,4 @@
         </div>
     {% endif %}
 </div>
-
-<footer>
-    <p>&copy; 2026 Municipality of Gabaldon. Project Tracker System. All rights reserved.</p>
-</footer>
 {% endblock %}

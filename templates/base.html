@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 {% load static %}
@@ -11,7 +12,7 @@
     <style>
         /* Global CSS Variables */
         :root {
-            --panel-blue: #112a46;
+            --panel-green: #1a5a3a;
             --white: #ffffff;
             --ink-900: #111827;
             --ink-600: #4b5563;
@@ -35,7 +36,7 @@
 
         /* Header Styles */
         header {
-            background: var(--panel-blue);
+            background: var(--panel-green);
             color: var(--white);
             padding: 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -45,23 +46,34 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.25rem clamp(1rem, 5vw, 3rem);
+            padding: 1rem clamp(1rem, 5vw, 3rem);
             max-width: 1400px;
             margin: 0 auto;
             width: 100%;
         }
 
+<<<<<<< HEAD
         header nav .header-content {
+=======
+        .header-brand {
+>>>>>>> 378ac7ceada54785cdde07855994a2b23877637f
             display: flex;
             align-items: center;
             gap: 1rem;
             flex-shrink: 0;
         }
 
+<<<<<<< HEAD
         header nav .seal {
             width: 40px;
             height: 40px;
             flex-shrink: 0;
+=======
+        .header-seal {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+>>>>>>> 378ac7ceada54785cdde07855994a2b23877637f
         }
 
         header nav h1 {
@@ -108,13 +120,80 @@
 
         /* Footer Styles */
         footer {
-            background: var(--white);
-            border-top: 1px solid var(--line);
-            padding: 1.5rem;
+            background: #1a5a3a;
+            color: #ffffff;
+            padding: 3rem clamp(1.5rem, 5vw, 4rem) 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding: 0 clamp(1.5rem, 5vw, 4rem);
+        }
+
+        .footer-section h3 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.25rem;
+            color: #ffffff;
+        }
+
+        .footer-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-section li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 180ms ease;
+        }
+
+        .footer-section a:hover {
+            color: #ffffff;
+        }
+
+        .footer-middle {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            padding: 0 clamp(1.5rem, 5vw, 4rem);
+        }
+
+        .footer-seal {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+
+        .footer-bottom {
             text-align: center;
-            font-size: 0.8rem;
-            color: var(--ink-600);
-            margin-top: auto;
+            padding: 2rem clamp(1.5rem, 5vw, 4rem);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+        }
+
+        .footer-accent {
+            height: 4px;
+            background: linear-gradient(90deg, #8b5cf6, #6366f1, #8b5cf6);
         }
 
         main {
@@ -129,14 +208,25 @@
                 padding: 1rem;
             }
 
+<<<<<<< HEAD
             header nav .header-content {
                 justify-content: center;
+=======
+            .header-brand {
+                flex-direction: column;
+                gap: 0.5rem;
+>>>>>>> 378ac7ceada54785cdde07855994a2b23877637f
                 width: 100%;
             }
 
             header nav h1 {
                 font-size: 1.1rem;
                 text-align: center;
+            }
+
+            .header-seal {
+                width: 45px;
+                height: 45px;
             }
 
             header nav ul {
@@ -148,6 +238,11 @@
 
             header nav li {
                 white-space: normal;
+            }
+
+            .footer-content {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
             }
         }
 
@@ -161,6 +256,11 @@
                 font-size: 1rem;
             }
 
+            .header-seal {
+                width: 40px;
+                height: 40px;
+            }
+
             header nav ul {
                 gap: 0.5rem;
                 font-size: 0.85rem;
@@ -168,6 +268,30 @@
 
             header nav a {
                 padding: 0.5rem 0.5rem;
+            }
+
+            footer {
+                padding: 2rem clamp(1rem, 5vw, 2rem) 0;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+                margin-bottom: 1.5rem;
+                padding: 0 clamp(1rem, 5vw, 2rem);
+            }
+
+            .footer-bottom {
+                padding: 1.5rem clamp(1rem, 5vw, 2rem);
+            }
+
+            .footer-middle {
+                padding: 0 clamp(1rem, 5vw, 2rem);
+            }
+
+            .footer-seal {
+                width: 70px;
+                height: 70px;
             }
         }
     </style>
@@ -177,7 +301,10 @@
     {% block show_header %}
     <header>
         <nav>
-            <h1>Municipality Project Tracker</h1>
+            <div class="header-brand">
+                <img src="{% static 'images/gabaldon-seal.png' %}" alt="Municipality of Gabaldon seal" class="header-seal">
+                <h1>Municipality Project Tracker</h1>
+            </div>
             {% if user.is_authenticated %}
                 <ul>
                     <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
@@ -204,7 +331,65 @@
 
     {% block show_footer %}
     <footer>
-        <p>&copy; 2026 Municipality Project Tracker. All rights reserved.</p>
+        <div class="footer-container">
+            <div class="footer-content">
+                <!-- Quick Links -->
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+                        <li><a href="#">All Projects</a></li>
+                        <li><a href="#">Statistics</a></li>
+                        <li><a href="#">Official Websites</a></li>
+                    </ul>
+                </div>
+
+                <!-- Departments -->
+                <div class="footer-section">
+                    <h3>Departments</h3>
+                    <ul>
+                        <li><a href="#">Engineering Office</a></li>
+                        <li><a href="#">Mayor's Office</a></li>
+                        <li><a href="#">Health Office</a></li>
+                        <li><a href="#">Social Welfare</a></li>
+                    </ul>
+                </div>
+
+                <!-- Resources -->
+                <div class="footer-section">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="#">Project Reports</a></li>
+                        <li><a href="#">Budget Documents</a></li>
+                        <li><a href="#">Public Notices</a></li>
+                        <li><a href="#">FAQs</a></li>
+                    </ul>
+                </div>
+
+                <!-- Connect -->
+                <div class="footer-section">
+                    <h3>Connect</h3>
+                    <ul>
+                        <li><a href="#">Facebook</a></li>
+                        <li><a href="#">Feedback</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Report an Issue</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Municipality Seal -->
+            <div class="footer-middle">
+                <img src="{% static 'images/gabaldon-seal.png' %}" alt="Municipality of Gabaldon seal" class="footer-seal">
+            </div>
+
+            <!-- Copyright -->
+            <div class="footer-bottom">
+                <p>&copy; 2026 Municipality of Gabaldon – Transparent Governance for the Community.</p>
+            </div>
+        </div>
+
+        <div class="footer-accent"></div>
     </footer>
     {% endblock %}
 </body>
