@@ -245,6 +245,48 @@
         box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
     }
 
+    .password-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .password-wrapper input {
+        flex: 1;
+        padding-right: 2.5rem;
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 0.88rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.25rem;
+        transition: opacity 180ms ease;
+        width: 24px;
+        height: 24px;
+    }
+
+    .toggle-password:hover {
+        opacity: 0.7;
+    }
+
+    .toggle-password:focus {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    .toggle-password img {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+    }
+
     .submit-btn {
         margin-top: 0.4rem;
         width: 100%;
@@ -357,7 +399,12 @@
 
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                        <button type="button" class="toggle-password" id="togglePassword" aria-label="Toggle password visibility">
+                            <img id="passwordToggleIcon" src="{% static 'images/view-password.png' %}" alt="Show password">
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="submit-btn">Log In</button>
@@ -463,6 +510,25 @@
                 }, 5000);
             }
         }, 0);
+    })();
+
+    // Password visibility toggle
+    (function () {
+        const passwordInput = document.getElementById('password');
+        const toggleButton = document.getElementById('togglePassword');
+        const toggleIcon = document.getElementById('passwordToggleIcon');
+
+        if (!passwordInput || !toggleButton || !toggleIcon) {
+            return;
+        }
+
+        toggleButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            toggleIcon.src = isPassword ? '{% static "images/hide-password.png" %}' : '{% static "images/view-password.png" %}';
+            toggleIcon.alt = isPassword ? 'Hide password' : 'Show password';
+        });
     })();
 </script>
 {% endblock %}
