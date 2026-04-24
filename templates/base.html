@@ -120,16 +120,19 @@
 
         /* Footer Styles */
         footer {
-            background: #1a5a3a;
-            color: #ffffff;
+            background: #1a5a3a !important;
+            color: #ffffff !important;
             padding: 3rem clamp(1.5rem, 5vw, 4rem) 0;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .footer-container {
             max-width: 1400px;
             margin: 0 auto;
             width: 100%;
+            padding: 0;
         }
 
         .footer-content {
@@ -140,13 +143,17 @@
             padding: 0 clamp(1.5rem, 5vw, 4rem);
         }
 
+        .footer-section {
+            width: 100%;
+        }
+
         .footer-section h3 {
             font-size: 0.9rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-bottom: 1.25rem;
-            color: #ffffff;
+            color: #ffffff !important;
         }
 
         .footer-section ul {
@@ -160,14 +167,14 @@
         }
 
         .footer-section a {
-            color: rgba(255, 255, 255, 0.85);
-            text-decoration: none;
+            color: rgba(255, 255, 255, 0.85) !important;
+            text-decoration: none !important;
             font-size: 0.9rem;
             transition: color 180ms ease;
         }
 
         .footer-section a:hover {
-            color: #ffffff;
+            color: #ffffff !important;
         }
 
         .footer-middle {
@@ -187,8 +194,13 @@
             text-align: center;
             padding: 2rem clamp(1.5rem, 5vw, 4rem);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 0.9) !important;
             font-size: 0.9rem;
+        }
+
+        .footer-bottom p {
+            color: rgba(255, 255, 255, 0.9) !important;
+            margin: 0;
         }
 
         .footer-accent {
