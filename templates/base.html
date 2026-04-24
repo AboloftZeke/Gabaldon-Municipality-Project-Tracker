@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+{% load static %}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -48,6 +49,19 @@
             max-width: 1400px;
             margin: 0 auto;
             width: 100%;
+        }
+
+        header nav .header-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        header nav .seal {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
         }
 
         header nav h1 {
@@ -115,9 +129,13 @@
                 padding: 1rem;
             }
 
+            header nav .header-content {
+                justify-content: center;
+                width: 100%;
+            }
+
             header nav h1 {
                 font-size: 1.1rem;
-                width: 100%;
                 text-align: center;
             }
 
@@ -155,7 +173,7 @@
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body>
     {% block show_header %}
     <header>
         <nav>
