@@ -10,15 +10,21 @@ class CustomUserCreationForm(forms.ModelForm):
     Uses built-in password validators and simple role assignment.
     """
     ROLE_ADMIN = 'admin'
-    ROLE_STAFF = 'staff'
+    ROLE_ENGINEERING = 'engineering'
+    ROLE_MAYORS = 'mayors'
+    ROLE_PLANNING = 'planning'
+    ROLE_FINANCE = 'finance'
     ROLE_CHOICES = (
         (ROLE_ADMIN, 'Admin'),
-        (ROLE_STAFF, 'Staff'),
+        (ROLE_ENGINEERING, 'Engineering Office'),
+        (ROLE_MAYORS, "Mayor's Office"),
+        (ROLE_PLANNING, 'Planning Department'),
+        (ROLE_FINANCE, 'Finance Department'),
     )
 
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
     password2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput)
-    role = forms.ChoiceField(label='Role', choices=ROLE_CHOICES, initial=ROLE_STAFF)
+    role = forms.ChoiceField(label='Department', choices=ROLE_CHOICES, initial=ROLE_ENGINEERING)
 
     class Meta:
         model = User
@@ -48,7 +54,7 @@ class CustomUserCreationForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        role = self.cleaned_data.get('role', self.ROLE_STAFF)
+        role = self.cleaned_data.get('role', self.ROLE_ENGINEERING)
 
         user.set_password(self.cleaned_data['password1'])
         user.is_staff = True
@@ -66,13 +72,19 @@ class CustomUserChangeForm(forms.ModelForm):
     Supports role updates for staff/admin users.
     """
     ROLE_ADMIN = 'admin'
-    ROLE_STAFF = 'staff'
+    ROLE_ENGINEERING = 'engineering'
+    ROLE_MAYORS = 'mayors'
+    ROLE_PLANNING = 'planning'
+    ROLE_FINANCE = 'finance'
     ROLE_CHOICES = (
         (ROLE_ADMIN, 'Admin'),
-        (ROLE_STAFF, 'Staff'),
+        (ROLE_ENGINEERING, 'Engineering Office'),
+        (ROLE_MAYORS, "Mayor's Office"),
+        (ROLE_PLANNING, 'Planning Department'),
+        (ROLE_FINANCE, 'Finance Department'),
     )
 
-    role = forms.ChoiceField(label='Role', choices=ROLE_CHOICES)
+    role = forms.ChoiceField(label='Department', choices=ROLE_CHOICES)
 
     class Meta:
         model = User
@@ -91,7 +103,7 @@ class CustomUserChangeForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        role = self.cleaned_data.get('role', self.ROLE_STAFF)
+        role = self.cleaned_data.get('role', self.ROLE_ENGINEERING)
 
         user.is_staff = True
         user.is_superuser = role == self.ROLE_ADMIN

@@ -401,8 +401,8 @@
         <ul class="sidebar-menu">
             <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
             {% if user.is_superuser %}
-                <li><a href="{% url 'user_list' %}" class="active">Manage Users</a></li>
-                <li><a href="{% url 'user_create' %}">Create User</a></li>
+                <li><a href="{% url 'user_list' %}" {% if action != 'Create' %}class="active"{% endif %}>Manage Users</a></li>
+                <li><a href="{% url 'user_create' %}" {% if action == 'Create' %}class="active"{% endif %}>Create User</a></li>
             {% endif %}
         </ul>
     </div>
@@ -479,7 +479,7 @@
                         {% if form.role.errors %}
                             <div class="field-error">{{ form.role.errors.0 }}</div>
                         {% endif %}
-                        <div class="form-help">Select user role: Admin (full access) or Staff (limited access)</div>
+                        <div class="form-help">Select user department: Admin (full system access) or specific department</div>
                     </div>
                 {% endif %}
 
