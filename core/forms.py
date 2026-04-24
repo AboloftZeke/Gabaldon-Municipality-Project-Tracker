@@ -12,14 +12,10 @@ class CustomUserCreationForm(forms.ModelForm):
     ROLE_ADMIN = 'admin'
     ROLE_ENGINEERING = 'engineering'
     ROLE_MAYORS = 'mayors'
-    ROLE_PLANNING = 'planning'
-    ROLE_FINANCE = 'finance'
     ROLE_CHOICES = (
         (ROLE_ADMIN, 'Admin'),
         (ROLE_ENGINEERING, 'Engineering Office'),
         (ROLE_MAYORS, "Mayor's Office"),
-        (ROLE_PLANNING, 'Planning Department'),
-        (ROLE_FINANCE, 'Finance Department'),
     )
 
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
@@ -74,14 +70,10 @@ class CustomUserChangeForm(forms.ModelForm):
     ROLE_ADMIN = 'admin'
     ROLE_ENGINEERING = 'engineering'
     ROLE_MAYORS = 'mayors'
-    ROLE_PLANNING = 'planning'
-    ROLE_FINANCE = 'finance'
     ROLE_CHOICES = (
         (ROLE_ADMIN, 'Admin'),
         (ROLE_ENGINEERING, 'Engineering Office'),
         (ROLE_MAYORS, "Mayor's Office"),
-        (ROLE_PLANNING, 'Planning Department'),
-        (ROLE_FINANCE, 'Finance Department'),
     )
 
     role = forms.ChoiceField(label='Department', choices=ROLE_CHOICES)
@@ -92,7 +84,7 @@ class CustomUserChangeForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['role'].initial = self.ROLE_ADMIN if self.instance.is_superuser else self.ROLE_STAFF
+        self.fields['role'].initial = self.ROLE_ADMIN if self.instance.is_superuser else self.ROLE_ENGINEERING
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip()
