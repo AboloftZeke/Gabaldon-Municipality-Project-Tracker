@@ -539,7 +539,10 @@
 {% block show_header %}
 <header>
     <nav>
-        <h1>Municipality Project Tracker</h1>
+        <div class="header-brand">
+            <img src="{% static 'images/Gabaldon seal.png' %}" alt="Gabaldon Seal" class="header-logo">
+            <h1>Municipality Project Tracker</h1>
+        </div>
         {% if user.is_authenticated %}
             <ul>
                 <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
