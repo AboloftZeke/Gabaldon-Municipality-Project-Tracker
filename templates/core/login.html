@@ -262,22 +262,29 @@
         background: none;
         border: none;
         cursor: pointer;
-        color: var(--ink-600);
-        font-size: 1.2rem;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 0.25rem;
-        transition: color 180ms ease;
+        transition: opacity 180ms ease;
+        width: 24px;
+        height: 24px;
     }
 
     .toggle-password:hover {
-        color: var(--ink-900);
+        opacity: 0.7;
     }
 
     .toggle-password:focus {
-        outline: none;
-        color: var(--focus);
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    .toggle-password img {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
     }
 
     .submit-btn {
@@ -395,7 +402,7 @@
                     <div class="password-wrapper">
                         <input type="password" id="password" name="password" placeholder="Enter your password" required>
                         <button type="button" class="toggle-password" id="togglePassword" aria-label="Toggle password visibility">
-                            👁️
+                            <img id="passwordToggleIcon" src="{% static 'images/view-password.png' %}" alt="Show password">
                         </button>
                     </div>
                 </div>
@@ -509,8 +516,9 @@
     (function () {
         const passwordInput = document.getElementById('password');
         const toggleButton = document.getElementById('togglePassword');
+        const toggleIcon = document.getElementById('passwordToggleIcon');
 
-        if (!passwordInput || !toggleButton) {
+        if (!passwordInput || !toggleButton || !toggleIcon) {
             return;
         }
 
@@ -518,7 +526,8 @@
             e.preventDefault();
             const isPassword = passwordInput.type === 'password';
             passwordInput.type = isPassword ? 'text' : 'password';
-            toggleButton.textContent = isPassword ? '🙈' : '👁️';
+            toggleIcon.src = isPassword ? '{% static "images/hide-password.png" %}' : '{% static "images/view-password.png" %}';
+            toggleIcon.alt = isPassword ? 'Hide password' : 'Show password';
         });
     })();
 </script>
