@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Infrastructure Projects - Municipality Project Tracker{% endblock %}
+
+{% block extra_head %}
+<style>
+    .projects-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .projects-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .projects-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .btn-create {
+        background: #1d4ed8;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: background 180ms ease;
+    }
+
+    .btn-create:hover {
+        background: #1e40af;
+    }
+
+    .projects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .project-card {
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: box-shadow 180ms ease;
+    }
+
+    .project-card:hover {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .project-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: #111827;
+    }
+
+    .project-location {
+        color: #4b5563;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .project-status {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: capitalize;
+        margin-bottom: 1rem;
+    }
+
+    .status-planning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-ongoing {
+        background: #dbeafe;
+        color: #1e3a8a;
+    }
+
+    .status-completed {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-on_hold {
+        background: #fecaca;
+        color: #7c2d12;
+    }
+
+    .status-cancelled {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+
+    .project-dates {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-bottom: 1rem;
+    }
+
+    .project-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-small {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        text-decoration: none;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: background 180ms ease;
+    }
+
+    .btn-view {
+        background: #1d4ed8;
+        color: white;
+        flex: 1;
+    }
+
+    .btn-view:hover {
+        background: #1e40af;
+    }
+
+    .btn-edit {
+        background: #6b7280;
+        color: white;
+    }
+
+    .btn-edit:hover {
+        background: #4b5563;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .empty-state p {
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="projects-container">
+    <div class="projects-header">
+        <h2>Infrastructure Projects</h2>
+        <a href="{% url 'project_create' %}" class="btn-create">+ New Project</a>
+    </div>
+
+    {% if projects %}
+        <div class="projects-grid">
+            {% for project in projects %}
+                <div class="project-card">
+                    <div class="project-title">{{ project.title }}</div>
+                    <div class="project-location">📍 {{ project.location }}</div>
+                    <div class="project-status status-{{ project.status }}">
+                        {{ project.get_status_display }}
+                    </div>
+
+                    {% if project.start_date or project.end_date %}
+                        <div class="project-dates">
+                            {% if project.start_date %}
+                                <strong>Start:</strong> {{ project.start_date|date:"M d, Y" }}<br>
+                            {% endif %}
+                            {% if project.end_date %}
+                                <strong>End:</strong> {{ project.end_date|date:"M d, Y" }}
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if project.budget %}
+                        <div style="font-weight: 600; color: #1d4ed8; margin-bottom: 1rem;">
+                            ₱{{ project.budget|floatformat:2 }}
+                        </div>
+                    {% endif %}
+
+                    <div class="project-actions">
+                        <a href="{% url 'project_detail' project.pk %}" class="btn-small btn-view">View</a>
+                        <a href="{% url 'project_update' project.pk %}" class="btn-small btn-edit">Edit</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>No infrastructure projects yet.</p>
+            <a href="{% url 'project_create' %}" class="btn-create">Create the first project</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
