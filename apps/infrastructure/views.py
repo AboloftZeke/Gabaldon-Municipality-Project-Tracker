@@ -8,11 +8,11 @@ from django.db.models import Q, Sum
 from .models import InfrastructureProject
 from .forms import InfrastructureProjectForm
 
-# Import UserProfile from core app
+# Import UserProfile from system app
 try:
-    from apps.core.models import UserProfile
+    from apps.system.models import UserProfile
 except ImportError:
-    from core.models import UserProfile
+    from system.models import UserProfile
 
 
 class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
