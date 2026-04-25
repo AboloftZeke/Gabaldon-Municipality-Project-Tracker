@@ -58,8 +58,22 @@ class CustomUserCreationForm(forms.ModelForm):
 
         if commit:
             user.save()
+            # Save the user profile with the department
+            self._save_user_profile(user, role)
 
         return user
+
+    def _save_user_profile(self, user, role):
+        """Helper method to save user profile with department."""
+        from .models import UserProfile
+        department_map = {
+            self.ROLE_ADMIN: 'admin',
+            self.ROLE_ENGINEERING: 'engineer',
+            self.ROLE_MAYORS: 'mayor',
+        }
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        profile.department = department_map.get(role, 'engineer')
+        profile.save()
 
 
 class CustomUserChangeForm(forms.ModelForm):
@@ -84,7 +98,19 @@ class CustomUserChangeForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['role'].initial = self.ROLE_ADMIN if self.instance.is_superuser else self.ROLE_ENGINEERING
+        # Set initial role based on user profile or superuser status
+        if hasattr(self.instance, 'profile') and self.instance.profile:
+            department_reverse_map = {
+                'admin': self.ROLE_ADMIN,
+                'engineer': self.ROLE_ENGINEERING,
+                'mayor': self.ROLE_MAYORS,
+            }
+            self.fields['role'].initial = department_reverse_map.get(
+                self.instance.profile.department,
+                self.ROLE_ENGINEERING
+            )
+        else:
+            self.fields['role'].initial = self.ROLE_ADMIN if self.instance.is_superuser else self.ROLE_ENGINEERING
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip()
@@ -102,8 +128,22 @@ class CustomUserChangeForm(forms.ModelForm):
 
         if commit:
             user.save()
+            # Save the user profile with the department
+            self._save_user_profile(user, role)
 
         return user
+
+    def _save_user_profile(self, user, role):
+        """Helper method to save user profile with department."""
+        from .models import UserProfile
+        department_map = {
+            self.ROLE_ADMIN: 'admin',
+            self.ROLE_ENGINEERING: 'engineer',
+            self.ROLE_MAYORS: 'mayor',
+        }
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        profile.department = department_map.get(role, 'engineer')
+        profile.save()
 
 
 class UserListFilterForm(forms.Form):

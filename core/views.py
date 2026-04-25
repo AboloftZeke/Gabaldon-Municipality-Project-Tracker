@@ -85,7 +85,7 @@ class AdminDashboardView(StaffRequiredMixin, TemplateView):
 
 class UserListView(AdminRequiredMixin, ListView):
     """
-    Display list of users - placeholder view.
+    Display list of users with optional department filtering.
     """
     model = User
     template_name = 'core/user_list.html'
@@ -95,6 +95,7 @@ class UserListView(AdminRequiredMixin, ListView):
     def get_queryset(self):
         queryset = User.objects.all().order_by('username')
         search = self.request.GET.get('search', '').strip()
+        department = self.request.GET.get('department', '').strip()
 
         if search:
             queryset = queryset.filter(
@@ -104,11 +105,16 @@ class UserListView(AdminRequiredMixin, ListView):
                 | Q(last_name__icontains=search)
             )
 
+        # Filter by department if provided
+        if department:
+            queryset = queryset.filter(profile__department=department)
+
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['filter_form'] = UserListFilterForm(self.request.GET)
+        context['current_department'] = self.request.GET.get('department', '')
         return context
 
 

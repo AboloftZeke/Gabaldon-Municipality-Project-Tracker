@@ -146,6 +146,11 @@
         color: var(--white);
     }
 
+    .sidebar-menu a.active-filter {
+        background: var(--btn);
+        color: var(--white);
+    }
+
     main > div:last-child {
         overflow-y: auto;
     }
@@ -572,9 +577,10 @@
     <div class="sidebar-section">
         <p class="sidebar-title">Departments</p>
         <ul class="sidebar-menu">
-            <li><a href="{% url 'user_list' %}">Engineering Office</a></li>
-            <li><a href="{% url 'user_list' %}">Mayor's Office</a></li>
-            <li><a href="{% url 'user_list' %}">Administration</a></li>
+            <li><a href="{% url 'user_list' %}" class="{% if not current_department %}active-filter{% endif %}">All Users</a></li>
+            <li><a href="?department=engineer" class="{% if current_department == 'engineer' %}active-filter{% endif %}">Engineering Office</a></li>
+            <li><a href="?department=mayor" class="{% if current_department == 'mayor' %}active-filter{% endif %}">Mayor's Office</a></li>
+            <li><a href="?department=admin" class="{% if current_department == 'admin' %}active-filter{% endif %}">Administration</a></li>
         </ul>
     </div>
 </div>
@@ -617,8 +623,16 @@
                         </td>
                         <td>{{ user.email }}</td>
                         <td>
-                            {% if user.is_superuser %}
-                                <span class="department-badge department-admin">Administration</span>
+                            {% if user.profile %}
+                                {% if user.profile.department == 'engineer' %}
+                                    <span class="department-badge department-engineering">Engineering Office</span>
+                                {% elif user.profile.department == 'mayor' %}
+                                    <span class="department-badge department-mayor">Mayor's Office</span>
+                                {% elif user.profile.department == 'admin' %}
+                                    <span class="department-badge department-admin">Administration</span>
+                                {% else %}
+                                    <span class="department-badge department-engineering">Engineering Office</span>
+                                {% endif %}
                             {% else %}
                                 <span class="department-badge department-engineering">Engineering Office</span>
                             {% endif %}

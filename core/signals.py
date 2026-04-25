@@ -8,7 +8,7 @@ PasswordChangeHistory entries when a password is modified.
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
-from .models import PasswordChangeHistory
+from .models import PasswordChangeHistory, UserProfile
 
 
 @receiver(post_save, sender=User)
@@ -60,3 +60,21 @@ def track_password_change(sender, instance, created, **kwargs):
             method='signal',
             notes='Password change detected by system monitoring'
         )
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """
+    Signal handler to create a UserProfile when a new User is created.
+
+    This automatically creates a UserProfile entry with default department
+    (Engineering Office) whenever a new User is created.
+
+    Args:
+        sender: The model class (User)
+        instance: The User instance being saved
+        created: Boolean indicating if this is a new User
+        **kwargs: Additional signal arguments
+    """
+    if created:
+        UserProfile.objects.get_or_create(user=instance)
