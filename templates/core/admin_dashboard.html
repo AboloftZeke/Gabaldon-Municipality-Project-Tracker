@@ -507,7 +507,7 @@
                 <li><a href="{% url 'user_list' %}">User Management</a></li>
                 <li><a href="{% url 'user_create' %}">Create User</a></li>
             {% endif %}
-            {% if user.profile.department == 'engineer' or user.is_superuser %}
+            {% if user.profile.department == 'engineer' %}
                 <li><a href="{% url 'project_dashboard' %}">Projects</a></li>
             {% endif %}
         </ul>
@@ -584,7 +584,7 @@
     {% endif %}
 
     <!-- Infrastructure Projects Section for Engineering Users -->
-    {% if user.profile.department == 'engineer' or user.is_superuser %}
+    {% if user.profile.department == 'engineer' %}
     <div class="dashboard-section">
         <h3><span class="section-icon">■</span>Infrastructure Projects</h3>
         <div class="action-grid">
@@ -616,7 +616,7 @@
                 <a href="{% url 'user_list' %}" class="action-button">Manage Users</a>
                 <a href="{% url 'user_create' %}" class="action-button">Add New User</a>
             {% endif %}
-            {% if user.profile.department == 'engineer' or user.is_superuser %}
+            {% if user.profile.department == 'engineer' %}
                 <a href="{% url 'project_create' %}" class="action-button">Create Project</a>
                 <a href="{% url 'project_dashboard' %}" class="action-button">Go to Projects</a>
             {% endif %}
