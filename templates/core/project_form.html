@@ -1,0 +1,571 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if action == 'Create' %}Create{% else %}Edit{% endif %} Infrastructure Project - Municipality Project Tracker{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --panel-green: #1a5a3a;
+        --white: #ffffff;
+        --ink-900: #111827;
+        --ink-600: #4b5563;
+        --line: #d1d5db;
+        --btn: #2E6F40;
+        --btn-hover: #235A32;
+        --bg-light: #f9fafb;
+        --danger-text: #b91c1c;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Manrope', "Segoe UI", sans-serif;
+        background: var(--bg-light);
+        color: var(--ink-900);
+    }
+
+    header {
+        background: var(--panel-green);
+        color: var(--white);
+        padding: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    header nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem clamp(1rem, 5vw, 3rem);
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    header nav h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    header nav ul {
+        display: flex;
+        list-style: none;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    header nav a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        font-size: 0.94rem;
+        font-weight: 500;
+        transition: color 180ms ease;
+        padding: 0.5rem 0;
+        border-bottom: 2px solid transparent;
+    }
+
+    header nav a:hover {
+        color: var(--white);
+        border-bottom-color: var(--white);
+    }
+
+    main {
+        display: block;
+        min-height: calc(100vh - 80px);
+    }
+
+    .page-content {
+        padding: clamp(1.5rem, 5vw, 3rem);
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--ink-900);
+    }
+
+    .form-wrapper {
+        background: var(--white);
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        padding: 2rem;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .form-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .form-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--ink-900);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--btn);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ink-900);
+    }
+
+    .required::after {
+        content: " *";
+        color: #dc2626;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+        padding: 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font-size: 0.94rem;
+        font-family: 'Manrope', sans-serif;
+        color: var(--ink-900);
+        transition: border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="number"]:focus,
+    input[type="date"]:focus,
+    select:focus,
+    textarea:focus {
+        outline: none;
+        border-color: var(--btn);
+        box-shadow: 0 0 0 3px rgba(46, 111, 64, 0.1);
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .form-help-text {
+        font-size: 0.8rem;
+        color: var(--ink-600);
+        margin-top: 0.25rem;
+    }
+
+    .errorlist {
+        list-style: none;
+        background: rgba(220, 38, 38, 0.1);
+        border: 1px solid #dc2626;
+        border-radius: 6px;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        color: var(--danger-text);
+        font-size: 0.9rem;
+    }
+
+    .errorlist li {
+        margin-bottom: 0.5rem;
+    }
+
+    .errorlist li:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        justify-content: flex-end;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.94rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 180ms ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: var(--btn);
+        color: var(--white);
+    }
+
+    .btn-primary:hover {
+        background: var(--btn-hover);
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: var(--bg-light);
+        color: var(--ink-900);
+        border: 1px solid var(--line);
+    }
+
+    .btn-secondary:hover {
+        background: var(--line);
+    }
+
+    @media (max-width: 768px) {
+        header nav {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        header nav h1 {
+            font-size: 1.1rem;
+        }
+
+        header nav ul {
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .page-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .form-wrapper {
+            padding: 1.5rem;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+            justify-content: stretch;
+        }
+
+        .btn {
+            justify-content: center;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block show_header %}
+<header>
+    <nav>
+        <div class="header-brand">
+            <img src="{% static 'images/Gabaldon seal.png' %}" alt="Gabaldon Seal" class="header-logo">
+            <h1>Municipality Project Tracker</h1>
+        </div>
+        {% if user.is_authenticated %}
+            <ul>
+                <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+                {% if user.is_superuser %}
+                    <li><a href="{% url 'user_list' %}">User Management</a></li>
+                {% endif %}
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+            </ul>
+        {% endif %}
+    </nav>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="page-header">
+        <h2>{{ action }} Infrastructure Project</h2>
+    </div>
+
+    <div class="form-wrapper">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="errorlist">
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Basic Information -->
+            <div class="form-section">
+                <h3 class="form-section-title">Basic Information</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.title.id_for_label }}" class="required">Project Title</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="errorlist">
+                                {% for error in form.title.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.location.id_for_label }}" class="required">Project Location</label>
+                        {{ form.location }}
+                        <span class="form-help-text">Barangay/Municipality/Province</span>
+                        {% if form.location.errors %}
+                            <div class="errorlist">
+                                {% for error in form.location.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.implementing_office.id_for_label }}" class="required">Implementing Office/Agency</label>
+                        {{ form.implementing_office }}
+                        {% if form.implementing_office.errors %}
+                            <div class="errorlist">
+                                {% for error in form.implementing_office.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.category.id_for_label }}" class="required">Category / Project Type</label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                            <div class="errorlist">
+                                {% for error in form.category.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contractor & Procurement -->
+            <div class="form-section">
+                <h3 class="form-section-title">Contractor & Procurement</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.contractor.id_for_label }}">Contractor (Company Name)</label>
+                        {{ form.contractor }}
+                        {% if form.contractor.errors %}
+                            <div class="errorlist">
+                                {% for error in form.contractor.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.procurement_method.id_for_label }}" class="required">Procurement Method</label>
+                        {{ form.procurement_method }}
+                        {% if form.procurement_method.errors %}
+                            <div class="errorlist">
+                                {% for error in form.procurement_method.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Procurement Dates -->
+            <div class="form-section">
+                <h3 class="form-section-title">Key Procurement Dates</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.posting_date.id_for_label }}">Posting Date</label>
+                        {{ form.posting_date }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.prebid_date.id_for_label }}">Pre-bid Conference Date</label>
+                        {{ form.prebid_date }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.bidding_date.id_for_label }}">Bidding Date</label>
+                        {{ form.bidding_date }}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.noa_date.id_for_label }}">Notice of Award (NOA) Date</label>
+                        {{ form.noa_date }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.ntp_date.id_for_label }}">Notice to Proceed (NTP) Date</label>
+                        {{ form.ntp_date }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Information -->
+            <div class="form-section">
+                <h3 class="form-section-title">Financial Information</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.award_status.id_for_label }}" class="required">Award Status</label>
+                        {{ form.award_status }}
+                        {% if form.award_status.errors %}
+                            <div class="errorlist">
+                                {% for error in form.award_status.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.source_of_fund.id_for_label }}">Source of Fund</label>
+                        {{ form.source_of_fund }}
+                        <span class="form-help-text">e.g., 20% Development Fund</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.abc_amount.id_for_label }}">Approved Budget for Contract (ABC)</label>
+                        {{ form.abc_amount }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.contract_price.id_for_label }}">Contract Price / Bid Amount</label>
+                        {{ form.contract_price }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contract Adjustments -->
+            <div class="form-section">
+                <div class="form-group">
+                    <label for="{{ form.variation_orders.id_for_label }}">Variation Orders / Contract Price Adjustments</label>
+                    {{ form.variation_orders }}
+                    <span class="form-help-text">Record variation orders with amounts, reasons, and approval dates</span>
+                </div>
+            </div>
+
+            <!-- Disbursements -->
+            <div class="form-section">
+                <h3 class="form-section-title">Disbursements / Payments</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.disbursements_to_date.id_for_label }}">Total Disbursements/Payments to Date</label>
+                        {{ form.disbursements_to_date }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.disbursement_details.id_for_label }}">Disbursement Details</label>
+                    {{ form.disbursement_details }}
+                    <span class="form-help-text">Breakdown by milestone or payment schedule</span>
+                </div>
+            </div>
+
+            <!-- Project Schedule -->
+            <div class="form-section">
+                <h3 class="form-section-title">Project Schedule</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.planned_start_date.id_for_label }}">Planned Start Date</label>
+                        {{ form.planned_start_date }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.planned_end_date.id_for_label }}">Planned End Date</label>
+                        {{ form.planned_end_date }}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.actual_start_date.id_for_label }}">Actual Start Date</label>
+                        {{ form.actual_start_date }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.revised_completion_date.id_for_label }}">Revised Completion Date</label>
+                        {{ form.revised_completion_date }}
+                        <span class="form-help-text">If there's extension of time</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Tracking -->
+            <div class="form-section">
+                <h3 class="form-section-title">Progress Tracking</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.cost_progress_percentage.id_for_label }}">Cost Progress (%)</label>
+                        {{ form.cost_progress_percentage }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.physical_progress_percentage.id_for_label }}">Physical Progress (%)</label>
+                        {{ form.physical_progress_percentage }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <a href="{% url 'project_list' %}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">{{ action }} Project</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

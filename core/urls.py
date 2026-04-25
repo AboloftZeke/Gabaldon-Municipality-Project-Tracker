@@ -15,4 +15,17 @@ urlpatterns = [
     path('users/<int:pk>/reset-password/', views.UserPasswordResetInitiateView.as_view(), name='user_initiate_password_reset'),
     path('users/<int:pk>/password-history/', views.UserPasswordHistoryView.as_view(), name='user_password_history'),
     path('password-history/', views.PasswordHistoryListView.as_view(), name='password_history_list'),
+
+    # Project URLs
+    path('projects/dashboard/', views.ProjectDashboardView.as_view(), name='project_dashboard'),
+    path('projects/', views.ProjectListView.as_view(), name='project_list'),
+    path('projects/create/', views.ProjectCreateView.as_view(), name='project_create'),
+    path('projects/<int:pk>/', views.ProjectDetailView.as_view(), name='project_detail'),
+    path('projects/<int:pk>/edit/', views.ProjectEditView.as_view(), name='project_edit'),
+    path('projects/<int:pk>/delete/', views.ProjectDeleteView.as_view(), name='project_delete'),
+    path('projects/<int:pk>/publish/', views.ProjectPublishView.as_view(), name='project_publish'),
+    
+    # Admin review/approval URLs
+    path('projects/review/list/', views.ProjectReviewListView.as_view(), name='project_review_list'),
+    path('projects/<int:pk>/review/', views.ProjectReviewView.as_view(), name='project_review'),
 ]

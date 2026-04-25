@@ -506,6 +506,10 @@
             {% if user.is_superuser %}
                 <li><a href="{% url 'user_list' %}">User Management</a></li>
                 <li><a href="{% url 'user_create' %}">Create User</a></li>
+                <li><a href="{% url 'project_review_list' %}">Project Review Queue</a></li>
+            {% endif %}
+            {% if user.profile.department == 'engineer' or user.is_superuser %}
+                <li><a href="{% url 'project_dashboard' %}">Projects</a></li>
             {% endif %}
         </ul>
     </div>

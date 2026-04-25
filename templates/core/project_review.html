@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Review Project - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Review Project for Approval</h1>
+        <p class="subtitle">{{ project.title }}</p>
+    </div>
+
+    <div class="review-container">
+        <div class="project-info-section">
+            <h2>Project Details</h2>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Title:</label>
+                    <span>{{ project.title }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Location:</label>
+                    <span>{{ project.get_location_display }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Category:</label>
+                    <span>{{ project.get_category_display }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Implementing Office:</label>
+                    <span>{{ project.implementing_office }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Contractor:</label>
+                    <span>{{ project.contractor|default:"N/A" }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Procurement Method:</label>
+                    <span>{{ project.get_procurement_method_display }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Award Status:</label>
+                    <span>{{ project.get_award_status_display }}</span>
+                </div>
+                <div class="info-item">
+                    <label>ABC Amount:</label>
+                    <span>₱ {{ project.abc_amount|floatformat:2|default:"N/A" }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Submitted By:</label>
+                    <span>{{ project.created_by.get_full_name }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Submitted Date:</label>
+                    <span>{{ project.created_at|date:"M d, Y H:i" }}</span>
+                </div>
+            </div>
+
+            {% if project.review_comments %}
+                <div class="previous-comments">
+                    <h3>Previous Comments</h3>
+                    <p>{{ project.review_comments }}</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="review-actions-section">
+            <h2>Review Decision</h2>
+            
+            <form method="post" class="review-form">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label>Your Decision:</label>
+                    <div class="radio-options">
+                        <label class="radio-label">
+                            <input type="radio" name="action" value="approve" required>
+                            <span class="radio-title">✓ Approve & Publish</span>
+                            <span class="radio-desc">Project will be published immediately</span>
+                        </label>
+
+                        <label class="radio-label">
+                            <input type="radio" name="action" value="revision" required>
+                            <span class="radio-title">↻ Return for Revision</span>
+                            <span class="radio-desc">Request changes with comments</span>
+                        </label>
+
+                        <label class="radio-label">
+                            <input type="radio" name="action" value="reject" required>
+                            <span class="radio-title">✗ Reject</span>
+                            <span class="radio-desc">Reject the project submission</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="comments">Comments (required for revision/rejection):</label>
+                    <textarea 
+                        id="comments" 
+                        name="comments" 
+                        class="form-textarea"
+                        placeholder="Enter your feedback, suggestions, or reason for rejection..."
+                        rows="5"
+                    ></textarea>
+                    <small>Provide detailed feedback to help engineering office improve the project.</small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        Submit Review
+                    </button>
+                    <a href="{% url 'project_review_list' %}" class="btn btn-secondary">
+                        Back to Queue
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.review-container {
+    max-width: 900px;
+    margin: 20px auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.project-info-section,
+.review-actions-section {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.project-info-section h2,
+.review-actions-section h2 {
+    margin-top: 0;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+    color: #333;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.info-item {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 15px;
+}
+
+.info-item label {
+    font-weight: 600;
+    color: #666;
+    padding-top: 5px;
+}
+
+.info-item span {
+    color: #333;
+    padding: 5px 10px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.previous-comments {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 20px;
+}
+
+.previous-comments h3 {
+    margin-top: 0;
+    color: #856404;
+}
+
+.previous-comments p {
+    margin: 10px 0 0 0;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.radio-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.radio-label {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.radio-label:hover {
+    border-color: #1a5a3a;
+    background: #f9f9f9;
+}
+
+.radio-label input[type="radio"] {
+    margin-right: 12px;
+    margin-top: 4px;
+    cursor: pointer;
+}
+
+.radio-label input[type="radio"]:checked + .radio-title,
+.radio-label input[type="radio"]:checked + .radio-title + .radio-desc {
+    color: #1a5a3a;
+    font-weight: 600;
+}
+
+.radio-title {
+    display: block;
+    font-weight: 600;
+    color: #333;
+}
+
+.radio-desc {
+    display: block;
+    font-size: 0.85em;
+    color: #999;
+}
+
+.form-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95em;
+    resize: vertical;
+}
+
+.form-textarea:focus {
+    outline: none;
+    border-color: #1a5a3a;
+    box-shadow: 0 0 0 3px rgba(26, 90, 58, 0.1);
+}
+
+.form-group small {
+    display: block;
+    color: #999;
+    font-size: 0.85em;
+    margin-top: 5px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: #1a5a3a;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0f3e24;
+}
+
+.btn-secondary {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #d0d0d0;
+}
+
+@media (max-width: 768px) {
+    .review-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-item {
+        grid-template-columns: 100px 1fr;
+    }
+}
+</style>
+{% endblock %}

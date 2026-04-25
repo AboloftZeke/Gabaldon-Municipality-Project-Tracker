@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Infrastructure Projects Dashboard - Municipality Project Tracker{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --panel-green: #1a5a3a;
+        --panel-overlay: rgba(6, 18, 34, 0.5);
+        --panel-card: rgba(8, 22, 40, 0.58);
+        --white: #ffffff;
+        --ink-900: #111827;
+        --ink-600: #4b5563;
+        --line: #d1d5db;
+        --focus: #2E6F40;
+        --btn: #2E6F40;
+        --btn-hover: #235A32;
+        --success-bg: #ecfdf5;
+        --success-text: #065f46;
+        --warning-bg: #fef3c7;
+        --warning-text: #b45309;
+        --danger-bg: #fef2f2;
+        --danger-text: #b91c1c;
+        --bg-light: #f9fafb;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Manrope', "Segoe UI", sans-serif;
+        background: var(--bg-light);
+        color: var(--ink-900);
+    }
+
+    header {
+        background: var(--panel-green);
+        color: var(--white);
+        padding: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    header nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem clamp(1rem, 5vw, 3rem);
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    header nav h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    header nav ul {
+        display: flex;
+        list-style: none;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    header nav a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        font-size: 0.94rem;
+        font-weight: 500;
+        transition: color 180ms ease;
+        padding: 0.5rem 0;
+        border-bottom: 2px solid transparent;
+    }
+
+    header nav a:hover {
+        color: var(--white);
+        border-bottom-color: var(--white);
+    }
+
+    main {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        min-height: calc(100vh - 80px);
+    }
+
+    .sidebar {
+        background: var(--white);
+        border-right: 1px solid var(--line);
+        padding: 2rem 0;
+    }
+
+    .sidebar-section {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .sidebar-section:last-child {
+        border-bottom: none;
+    }
+
+    .sidebar-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-600);
+        margin-bottom: 1rem;
+    }
+
+    .sidebar-menu {
+        list-style: none;
+    }
+
+    .sidebar-menu li {
+        margin-bottom: 0.5rem;
+    }
+
+    .sidebar-menu a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        color: var(--ink-900);
+        text-decoration: none;
+        font-size: 0.94rem;
+        font-weight: 500;
+        transition: background 180ms ease, color 180ms ease;
+    }
+
+    .sidebar-menu a:hover {
+        background: var(--bg-light);
+        color: var(--btn);
+    }
+
+    .sidebar-menu a.active {
+        background: var(--btn);
+        color: var(--white);
+    }
+
+    main > div:last-child {
+        overflow-y: auto;
+    }
+
+    .page-content {
+        padding: clamp(1.5rem, 5vw, 3rem);
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--ink-900);
+    }
+
+    .create-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: var(--btn);
+        color: var(--white);
+        border: none;
+        border-radius: 12px;
+        font-size: 0.94rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 180ms ease, transform 180ms ease;
+    }
+
+    .create-btn:hover {
+        background: var(--btn-hover);
+        transform: translateY(-2px);
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-label {
+        font-size: 0.87rem;
+        font-weight: 600;
+        color: var(--ink-600);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--btn);
+    }
+
+    .stat-sublabel {
+        font-size: 0.8rem;
+        color: var(--ink-600);
+        margin-top: 0.25rem;
+    }
+
+    .recent-projects {
+        background: var(--white);
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .recent-projects h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--ink-900);
+    }
+
+    .projects-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .projects-table th {
+        background: var(--bg-light);
+        padding: 0.75rem;
+        text-align: left;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--ink-600);
+        border-bottom: 2px solid var(--line);
+    }
+
+    .projects-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--line);
+        font-size: 0.9rem;
+    }
+
+    .projects-table tbody tr:hover {
+        background: var(--bg-light);
+    }
+
+    .project-title-link {
+        color: var(--btn);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .project-title-link:hover {
+        text-decoration: underline;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .badge-awarded {
+        background: rgba(34, 197, 94, 0.15);
+        color: #16a34a;
+    }
+
+    .badge-ongoing {
+        background: rgba(168, 85, 247, 0.15);
+        color: #9333ea;
+    }
+
+    .badge-completed {
+        background: var(--success-bg);
+        color: var(--success-text);
+    }
+
+    .badge-cancelled {
+        background: var(--danger-bg);
+        color: var(--danger-text);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: var(--ink-600);
+    }
+
+    .empty-state p {
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 1024px) {
+        main {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+            display: none;
+        }
+
+        .dashboard-grid {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        header nav {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        header nav h1 {
+            font-size: 1.1rem;
+        }
+
+        header nav ul {
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .page-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .projects-table {
+            font-size: 0.85rem;
+        }
+
+        .projects-table th,
+        .projects-table td {
+            padding: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block show_header %}
+<header>
+    <nav>
+        <div class="header-brand">
+            <img src="{% static 'images/Gabaldon seal.png' %}" alt="Gabaldon Seal" class="header-logo">
+            <h1>Municipality Project Tracker</h1>
+        </div>
+        {% if user.is_authenticated %}
+            <ul>
+                <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+                {% if user.is_superuser %}
+                    <li><a href="{% url 'user_list' %}">User Management</a></li>
+                {% endif %}
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+            </ul>
+        {% endif %}
+    </nav>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="sidebar">
+    <div class="sidebar-section">
+        <p class="sidebar-title">Navigation</p>
+        <ul class="sidebar-menu">
+            <li><a href="{% url 'admin_dashboard' %}">Admin Dashboard</a></li>
+            <li><a href="{% url 'project_dashboard' %}" class="active">Projects</a></li>
+            {% if not user.is_superuser %}<li><a href="{% url 'project_create' %}">New Project</a></li>{% endif %}
+        </ul>
+    </div>
+</div>
+
+<div class="page-content">
+    <div class="page-header">
+        <h2>Infrastructure Projects Dashboard</h2>
+        {% if not user.is_superuser %}<a href="{% url 'project_create' %}" class="create-btn">+ New Project</a>{% endif %}
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="stat-card">
+            <span class="stat-label">Total Projects</span>
+            <span class="stat-value">{{ total_projects }}</span>
+            <span class="stat-sublabel">projects published</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-label">Awarded</span>
+            <span class="stat-value">{{ awarded_projects }}</span>
+            <span class="stat-sublabel">contracts awarded</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-label">Ongoing</span>
+            <span class="stat-value">{{ ongoing_projects }}</span>
+            <span class="stat-sublabel">projects in progress</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-label">Completed</span>
+            <span class="stat-value">{{ completed_projects }}</span>
+            <span class="stat-sublabel">finished projects</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-label">Total Investment</span>
+            <span class="stat-value">₱{{ total_investment|floatformat:0 }}</span>
+            <span class="stat-sublabel">total ABC value</span>
+        </div>
+    </div>
+
+    {% if recent_projects %}
+        <div class="recent-projects">
+            <h3>Recent Projects</h3>
+            <table class="projects-table">
+                <thead>
+                    <tr>
+                        <th>Project Title</th>
+                        <th>Location</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>ABC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in recent_projects %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'project_detail' project.pk %}" class="project-title-link">
+                                    {{ project.title }}
+                                </a>
+                            </td>
+                            <td>{{ project.location }}</td>
+                            <td>{{ project.get_category_display }}</td>
+                            <td>
+                                {% if project.award_status == 'awarded' %}
+                                    <span class="badge badge-awarded">Awarded</span>
+                                {% elif project.award_status == 'ongoing_bidding' %}
+                                    <span class="badge badge-ongoing">Ongoing Bidding</span>
+                                {% elif project.award_status == 'completed' %}
+                                    <span class="badge badge-completed">Completed</span>
+                                {% elif project.award_status == 'cancelled' %}
+                                    <span class="badge badge-cancelled">Cancelled</span>
+                                {% else %}
+                                    <span class="badge">{{ project.get_award_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{% if project.abc_amount %}₱{{ project.abc_amount|floatformat:2 }}{% else %}-{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state" style="background: var(--white); border-radius: 12px; border: 1px solid var(--line); padding: 3rem 2rem;">
+            <p>No projects published yet.</p>
+            {% if not user.is_superuser %}<a href="{% url 'project_create' %}" class="create-btn">Create Your First Project</a>{% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth import authenticate, login, logout
@@ -8,11 +8,15 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy, reverse
-from django.db.models import Q
+from django.db.models import Q, Sum
+from django.db import models
 from django.conf import settings
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
-from .forms import CustomUserCreationForm, CustomUserChangeForm, UserListFilterForm
+from django.contrib import messages
+from django.utils import timezone
+from .forms import CustomUserCreationForm, CustomUserChangeForm, UserListFilterForm, InfrastructureProjectForm
+from .models import InfrastructureProject
 
 
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -336,3 +340,297 @@ class PasswordHistoryListView(AdminRequiredMixin, ListView):
         context['date_to'] = self.request.GET.get('date_to', '')
 
         return context
+
+
+class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """
+    Allow only engineering office users (or admins) to access a view.
+    """
+    login_url = 'login'
+    raise_exception = True
+
+    def test_func(self):
+        if self.request.user.is_superuser:
+            return True
+        # Check if user is in engineering office department
+        if hasattr(self.request.user, 'profile'):
+            return self.request.user.profile.department == 'engineer'
+        return False
+
+
+class EngineerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """
+    Allow only engineering office users to access a view (excludes admins).
+    """
+    login_url = 'login'
+    raise_exception = True
+
+    def test_func(self):
+        # Only allow engineers, explicitly exclude admins
+        if self.request.user.is_superuser:
+            return False
+        # Check if user is in engineering office department
+        if hasattr(self.request.user, 'profile'):
+            return self.request.user.profile.department == 'engineer'
+        return False
+
+
+class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
+    """
+    Dashboard for engineering office to manage infrastructure projects.
+    """
+    template_name = 'core/project_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        from .models import InfrastructureProject
+        context = super().get_context_data(**kwargs)
+        
+        # Admins see all projects; engineers see only their own
+        if self.request.user.is_superuser:
+            user_projects = InfrastructureProject.objects.all()
+        else:
+            user_projects = InfrastructureProject.objects.filter(created_by=self.request.user)
+        
+        context['total_projects'] = user_projects.count()
+        context['awarded_projects'] = user_projects.filter(award_status='awarded').count()
+        context['ongoing_projects'] = user_projects.filter(award_status__in=['ongoing_bidding', 'awarded']).count()
+        context['completed_projects'] = user_projects.filter(award_status='completed').count()
+        
+        # Get recent projects
+        context['recent_projects'] = user_projects.order_by('-created_at')[:5]
+        
+        # Calculate total investment
+        total_abc = user_projects.filter(abc_amount__isnull=False).aggregate(
+            total=models.Sum('abc_amount')
+        )['total'] or 0
+        context['total_investment'] = total_abc
+        
+        return context
+
+
+class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
+    """
+    Display list of infrastructure projects.
+    """
+    model = InfrastructureProject
+    template_name = 'core/project_list.html'
+    context_object_name = 'projects'
+    paginate_by = 10
+
+    def get_queryset(self):
+        from .models import InfrastructureProject
+        
+        # Admins see all projects; engineers see only their own
+        if self.request.user.is_superuser:
+            queryset = InfrastructureProject.objects.all()
+        else:
+            queryset = InfrastructureProject.objects.filter(
+                created_by=self.request.user
+            )
+        
+        queryset = queryset.order_by('-created_at')
+        
+        # Search filter
+        search = self.request.GET.get('search', '').strip()
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search)
+                | Q(location__icontains=search)
+                | Q(implementing_office__icontains=search)
+            )
+        
+        # Category filter
+        category = self.request.GET.get('category', '').strip()
+        if category:
+            queryset = queryset.filter(category=category)
+        
+        # Status filter
+        status = self.request.GET.get('status', '').strip()
+        if status:
+            queryset = queryset.filter(award_status=status)
+        
+        # Location filter
+        location = self.request.GET.get('location', '').strip()
+        if location:
+            queryset = queryset.filter(location=location)
+        
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        from .models import InfrastructureProject
+        context = super().get_context_data(**kwargs)
+        context['category_choices'] = InfrastructureProject.PROJECT_CATEGORY_CHOICES
+        context['status_choices'] = InfrastructureProject.AWARD_STATUS_CHOICES
+        context['location_choices'] = InfrastructureProject.LOCATION_CHOICES
+        context['current_search'] = self.request.GET.get('search', '')
+        context['current_category'] = self.request.GET.get('category', '')
+        context['current_status'] = self.request.GET.get('status', '')
+        context['current_location'] = self.request.GET.get('location', '')
+        return context
+
+
+class ProjectCreateView(EngineerOnlyMixin, CreateView):
+    """
+    Create a new infrastructure project.
+    """
+    model = InfrastructureProject
+    template_name = 'core/project_form.html'
+    form_class = InfrastructureProjectForm
+    success_url = reverse_lazy('project_list')
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.created_by = self.request.user
+        self.object.save()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Create'
+        return context
+
+
+class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
+    """
+    Display detailed view of a project.
+    """
+    model = InfrastructureProject
+    template_name = 'core/project_detail.html'
+    context_object_name = 'project'
+
+    def get_queryset(self):
+        from .models import InfrastructureProject
+        return InfrastructureProject.objects.filter(
+            created_by=self.request.user
+        )
+
+
+class ProjectEditView(EngineeringOfficeRequiredMixin, UpdateView):
+    """
+    Edit an existing infrastructure project.
+    """
+    model = InfrastructureProject
+    template_name = 'core/project_form.html'
+    form_class = InfrastructureProjectForm
+    success_url = reverse_lazy('project_list')
+
+    def get_queryset(self):
+        from .models import InfrastructureProject
+        return InfrastructureProject.objects.filter(
+            created_by=self.request.user
+        )
+
+    def form_valid(self, form):
+        form.instance.updated_by = self.request.user
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Edit'
+        return context
+
+
+class ProjectDeleteView(EngineeringOfficeRequiredMixin, DeleteView):
+    """
+    Delete an infrastructure project.
+    """
+    model = InfrastructureProject
+    template_name = 'core/project_confirm_delete.html'
+    success_url = reverse_lazy('project_list')
+
+    def get_queryset(self):
+        from .models import InfrastructureProject
+        return InfrastructureProject.objects.filter(
+            created_by=self.request.user
+        )
+
+
+class ProjectPublishView(EngineerOnlyMixin, DetailView):
+    """
+    Submit a project for admin review/publication.
+    """
+    model = InfrastructureProject
+    template_name = 'core/project_publish_confirm.html'
+    context_object_name = 'project'
+
+    def get_queryset(self):
+        return InfrastructureProject.objects.filter(
+            created_by=self.request.user,
+            publication_status='draft'
+        )
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_object()
+        project.publication_status = 'pending_review'
+        project.save()
+        
+        messages.success(request, f"Project '{project.title}' submitted for review.")
+        return redirect('project_detail', pk=project.pk)
+
+
+class ProjectReviewListView(AdminRequiredMixin, ListView):
+    """
+    List projects pending admin review.
+    """
+    model = InfrastructureProject
+    template_name = 'core/project_review_list.html'
+    context_object_name = 'projects'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return InfrastructureProject.objects.filter(
+            publication_status='pending_review'
+        ).order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pending_count'] = self.get_queryset().count()
+        return context
+
+
+class ProjectReviewView(AdminRequiredMixin, DetailView):
+    """
+    Review and approve/reject projects submitted by engineering office.
+    """
+    model = InfrastructureProject
+    template_name = 'core/project_review.html'
+    context_object_name = 'project'
+
+    def get_queryset(self):
+        return InfrastructureProject.objects.filter(
+            publication_status__in=['pending_review', 'needs_revision']
+        )
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_object()
+        action = request.POST.get('action')
+        comments = request.POST.get('comments', '').strip()
+
+        if action == 'approve':
+            project.publication_status = 'published'
+            project.review_comments = ''
+            msg = f"Project '{project.title}' has been approved and published."
+        elif action == 'revision':
+            if not comments:
+                messages.error(request, "Please provide comments for revision.")
+                return redirect('project_review', pk=project.pk)
+            project.publication_status = 'needs_revision'
+            project.review_comments = comments
+            msg = f"Project '{project.title}' marked for revision with comments."
+        elif action == 'reject':
+            if not comments:
+                messages.error(request, "Please provide reason for rejection.")
+                return redirect('project_review', pk=project.pk)
+            project.publication_status = 'rejected'
+            project.review_comments = comments
+            msg = f"Project '{project.title}' has been rejected."
+        else:
+            messages.error(request, "Invalid action.")
+            return redirect('project_review', pk=project.pk)
+
+        project.reviewed_by = request.user
+        project.reviewed_at = timezone.now()
+        project.save()
+
+        messages.success(request, msg)
+        return redirect('project_review_list')
