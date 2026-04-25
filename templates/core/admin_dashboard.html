@@ -301,8 +301,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--white);
-        font-size: 1.2rem;
+    }
+
+    .section-icon img {
+        width: 16px;
+        height: 16px;
+        object-fit: contain;
+        display: block;
     }
 
     .action-grid {
@@ -336,7 +341,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
+    }
+
+    .action-card-icon img {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+        display: block;
     }
 
     .action-card-title {
@@ -586,20 +597,20 @@
     <!-- Infrastructure Projects Section for Engineering Users -->
     {% if user.profile.department == 'engineer' %}
     <div class="dashboard-section">
-        <h3><span class="section-icon">■</span>Infrastructure Projects</h3>
+        <h3><span class="section-icon"><img src="{% static 'images/infra-icon.png' %}" alt="Infrastructure"></span>Infrastructure Projects</h3>
         <div class="action-grid">
             <a href="{% url 'project_dashboard' %}" class="action-card">
-                <div class="action-card-icon">📊</div>
+                <div class="action-card-icon"><img src="{% static 'images/project-icon.png' %}" alt="Project dashboard"></div>
                 <div class="action-card-title">Project Dashboard</div>
                 <div class="action-card-desc">View project statistics and recent projects</div>
             </a>
             <a href="{% url 'project_list' %}" class="action-card">
-                <div class="action-card-icon">📋</div>
+                <div class="action-card-icon"><img src="{% static 'images/project-icon.png' %}" alt="All projects"></div>
                 <div class="action-card-title">View All Projects</div>
                 <div class="action-card-desc">Browse and manage all infrastructure projects</div>
             </a>
             <a href="{% url 'project_create' %}" class="action-card">
-                <div class="action-card-icon">➕</div>
+                <div class="action-card-icon"><img src="{% static 'images/add-icon.png' %}" alt="Create project"></div>
                 <div class="action-card-title">Create New Project</div>
                 <div class="action-card-desc">Start tracking a new infrastructure project</div>
             </a>
