@@ -5,8 +5,14 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.urls import reverse_lazy
 from django.db import models
 from django.db.models import Q, Sum
-from .models import InfrastructureProject, UserProfile
+from .models import InfrastructureProject
 from .forms import InfrastructureProjectForm
+
+# Import UserProfile from core app
+try:
+    from apps.core.models import UserProfile
+except ImportError:
+    from core.models import UserProfile
 
 
 class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
