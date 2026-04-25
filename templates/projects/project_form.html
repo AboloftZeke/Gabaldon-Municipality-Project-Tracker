@@ -153,62 +153,122 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="{{ form.status.id_for_label }}">Status*</label>
-                    {{ form.status }}
-                    {% if form.status.errors %}
-                        <div class="error-message">{{ form.status.errors.0 }}</div>
+                    <label for="{{ form.implementing_office.id_for_label }}">Implementing Office*</label>
+                    {{ form.implementing_office }}
+                    {% if form.implementing_office.errors %}
+                        <div class="error-message">{{ form.implementing_office.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.category.id_for_label }}">Category*</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                        <div class="error-message">{{ form.category.errors.0 }}</div>
                     {% endif %}
                 </div>
             </div>
 
             <div class="fieldset">
-                <legend>Details</legend>
+                <legend>Contractor & Procurement</legend>
 
                 <div class="form-group">
-                    <label for="{{ form.description.id_for_label }}">Description</label>
-                    {{ form.description }}
-                    {% if form.description.errors %}
-                        <div class="error-message">{{ form.description.errors.0 }}</div>
+                    <label for="{{ form.contractor.id_for_label }}">Contractor</label>
+                    {{ form.contractor }}
+                    {% if form.contractor.errors %}
+                        <div class="error-message">{{ form.contractor.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.procurement_method.id_for_label }}">Procurement Method*</label>
+                    {{ form.procurement_method }}
+                    {% if form.procurement_method.errors %}
+                        <div class="error-message">{{ form.procurement_method.errors.0 }}</div>
                     {% endif %}
                 </div>
             </div>
 
             <div class="fieldset">
-                <legend>Financial & Timeline</legend>
+                <legend>Financial Information</legend>
 
                 <div class="form-group">
-                    <label for="{{ form.budget.id_for_label }}">Budget (₱)</label>
-                    {{ form.budget }}
-                    {% if form.budget.errors %}
-                        <div class="error-message">{{ form.budget.errors.0 }}</div>
+                    <label for="{{ form.abc_amount.id_for_label }}">Approved Budget for Contract (₱)</label>
+                    {{ form.abc_amount }}
+                    {% if form.abc_amount.errors %}
+                        <div class="error-message">{{ form.abc_amount.errors.0 }}</div>
                     {% endif %}
                 </div>
 
                 <div class="form-group">
-                    <label for="{{ form.start_date.id_for_label }}">Start Date</label>
-                    {{ form.start_date }}
-                    {% if form.start_date.errors %}
-                        <div class="error-message">{{ form.start_date.errors.0 }}</div>
+                    <label for="{{ form.contract_price.id_for_label }}">Contract Price (₱)</label>
+                    {{ form.contract_price }}
+                    {% if form.contract_price.errors %}
+                        <div class="error-message">{{ form.contract_price.errors.0 }}</div>
                     {% endif %}
                 </div>
 
                 <div class="form-group">
-                    <label for="{{ form.end_date.id_for_label }}">End Date</label>
-                    {{ form.end_date }}
-                    {% if form.end_date.errors %}
-                        <div class="error-message">{{ form.end_date.errors.0 }}</div>
+                    <label for="{{ form.source_of_fund.id_for_label }}">Source of Fund</label>
+                    {{ form.source_of_fund }}
+                    {% if form.source_of_fund.errors %}
+                        <div class="error-message">{{ form.source_of_fund.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.award_status.id_for_label }}">Award Status*</label>
+                    {{ form.award_status }}
+                    {% if form.award_status.errors %}
+                        <div class="error-message">{{ form.award_status.errors.0 }}</div>
                     {% endif %}
                 </div>
             </div>
 
             <div class="fieldset">
-                <legend>Assignment</legend>
+                <legend>Timeline</legend>
 
                 <div class="form-group">
-                    <label for="{{ form.assigned_to.id_for_label }}">Assign To</label>
-                    {{ form.assigned_to }}
-                    {% if form.assigned_to.errors %}
-                        <div class="error-message">{{ form.assigned_to.errors.0 }}</div>
+                    <label for="{{ form.planned_start_date.id_for_label }}">Planned Start Date</label>
+                    {{ form.planned_start_date }}
+                    {% if form.planned_start_date.errors %}
+                        <div class="error-message">{{ form.planned_start_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.planned_end_date.id_for_label }}">Planned End Date</label>
+                    {{ form.planned_end_date }}
+                    {% if form.planned_end_date.errors %}
+                        <div class="error-message">{{ form.planned_end_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.actual_start_date.id_for_label }}">Actual Start Date</label>
+                    {{ form.actual_start_date }}
+                    {% if form.actual_start_date.errors %}
+                        <div class="error-message">{{ form.actual_start_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="fieldset">
+                <legend>Progress Tracking</legend>
+
+                <div class="form-group">
+                    <label for="{{ form.cost_progress_percentage.id_for_label }}">Cost Progress (%)</label>
+                    {{ form.cost_progress_percentage }}
+                    {% if form.cost_progress_percentage.errors %}
+                        <div class="error-message">{{ form.cost_progress_percentage.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.physical_progress_percentage.id_for_label }}">Physical Progress (%)</label>
+                    {{ form.physical_progress_percentage }}
+                    {% if form.physical_progress_percentage.errors %}
+                        <div class="error-message">{{ form.physical_progress_percentage.errors.0 }}</div>
                     {% endif %}
                 </div>
             </div>
