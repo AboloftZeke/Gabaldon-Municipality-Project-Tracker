@@ -19,14 +19,15 @@ Gabaldon-Municipality-Project-Tracker/
 │   ├── urls.py            # Main URL routing (updated)
 │   ├── wsgi.py
 │   └── asgi.py
-├── core/                   # Core app for system access
-│   ├── models.py          # Models (placeholder)
-│   ├── views.py           # Views (authentication & user management)
-│   ├── forms.py           # Forms (user creation, editing, filtering)
-│   ├── urls.py            # App-level URL routing
-│   ├── admin.py
-│   ├── apps.py
-│   └── migrations/
+├── apps/                   # Django apps package
+│   └── core/               # Core app for system access
+│       ├── models.py       # Models (placeholder)
+│       ├── views.py        # Views (authentication & user management)
+│       ├── forms.py        # Forms (user creation, editing, filtering)
+│       ├── urls.py         # App-level URL routing
+│       ├── admin.py
+│       ├── apps.py
+│       └── migrations/
 ├── templates/             # Template directory
 │   ├── base.html          # Base template (layout)
 │   └── core/
