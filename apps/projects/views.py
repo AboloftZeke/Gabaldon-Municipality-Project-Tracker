@@ -3,7 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
-from django.db.models import Q, Sum, models
+from django.db import models
+from django.db.models import Q, Sum
 from .models import InfrastructureProject, UserProfile
 from .forms import InfrastructureProjectForm
 
