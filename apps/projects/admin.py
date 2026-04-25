@@ -1,28 +1,17 @@
 from django.contrib import admin
-from .models import Project
+from .models import InfrastructureProject, UserProfile
 
 
-@admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('title', 'status', 'location', 'start_date', 'end_date', 'budget', 'created_at')
-    list_filter = ('status', 'created_at')
-    search_fields = ('title', 'description', 'location')
+@admin.register(InfrastructureProject)
+class InfrastructureProjectAdmin(admin.ModelAdmin):
+    list_display = ('title', 'location', 'category', 'award_status', 'created_by', 'created_at')
+    list_filter = ('award_status', 'category', 'location', 'created_at')
+    search_fields = ('title', 'location', 'implementing_office')
     readonly_fields = ('created_at', 'updated_at')
-    fieldsets = (
-        ('Project Information', {
-            'fields': ('title', 'description', 'status', 'location')
-        }),
-        ('Financial', {
-            'fields': ('budget',)
-        }),
-        ('Timeline', {
-            'fields': ('start_date', 'end_date')
-        }),
-        ('Assignment', {
-            'fields': ('assigned_to', 'created_by')
-        }),
-        ('Metadata', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'department', 'created_at')
+    list_filter = ('department', 'created_at')
+    search_fields = ('user__username', 'user__email')

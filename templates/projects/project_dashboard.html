@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Project Dashboard - Infrastructure Projects{% endblock %}
+
+{% block extra_head %}
+<style>
+    .dashboard-container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+    .dashboard-title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; color: #111827; }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .stat-card {
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1d4ed8;
+        margin: 0.5rem 0;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .recent-section {
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        padding: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #111827;
+    }
+
+    .project-item {
+        padding: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .project-item:last-child { border-bottom: none; }
+
+    .project-info { flex: 1; }
+    .project-name { font-weight: 600; color: #111827; }
+    .project-meta { font-size: 0.85rem; color: #6b7280; margin-top: 0.25rem; }
+
+    .btn-group { display: flex; gap: 0.75rem; }
+    .btn-small { padding: 0.5rem 1rem; font-size: 0.85rem; text-decoration: none; border-radius: 6px; border: none; cursor: pointer; }
+    .btn-primary { background: #1d4ed8; color: white; }
+    .btn-primary:hover { background: #1e40af; }
+
+    .empty-state { text-align: center; padding: 3rem; color: #6b7280; }
+    .empty-state a { display: inline-block; margin-top: 1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h1 class="dashboard-title">Project Dashboard</h1>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Projects</div>
+            <div class="stat-value">{{ total_projects }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Awarded</div>
+            <div class="stat-value">{{ awarded_projects }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Ongoing</div>
+            <div class="stat-value">{{ ongoing_projects }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Completed</div>
+            <div class="stat-value">{{ completed_projects }}</div>
+        </div>
+    </div>
+
+    {% if total_investment > 0 %}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Investment</div>
+            <div class="stat-value">₱{{ total_investment|floatformat:0 }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="recent-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 class="section-title" style="margin: 0;">Recent Projects</h3>
+            <a href="{% url 'project_create' %}" class="btn-small btn-primary">+ New Project</a>
+        </div>
+
+        {% if recent_projects %}
+            {% for project in recent_projects %}
+                <div class="project-item">
+                    <div class="project-info">
+                        <div class="project-name">{{ project.title }}</div>
+                        <div class="project-meta">{{ project.location|title }} • {{ project.get_category_display }}</div>
+                    </div>
+                    <div class="btn-group">
+                        <a href="{% url 'project_detail' project.pk %}" class="btn-small btn-primary">View</a>
+                        <a href="{% url 'project_update' project.pk %}" class="btn-small" style="background: #6b7280; color: white;">Edit</a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <p>No projects yet. Create your first infrastructure project.</p>
+                <a href="{% url 'project_create' %}" class="btn-small btn-primary">Create Project</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
