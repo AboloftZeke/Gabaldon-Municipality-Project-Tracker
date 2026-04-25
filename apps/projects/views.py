@@ -29,6 +29,21 @@ class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
             return False
 
 
+class EngineerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Allow only engineering office users, explicitly exclude admins"""
+    login_url = 'login'
+    raise_exception = True
+
+    def test_func(self):
+        # Explicitly exclude superusers/admins
+        if self.request.user.is_superuser:
+            return False
+        try:
+            return self.request.user.profile.department == 'engineer'
+        except UserProfile.DoesNotExist:
+            return False
+
+
 class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
     """Dashboard for engineering office to manage infrastructure projects"""
     template_name = 'projects/project_dashboard.html'
@@ -94,8 +109,8 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
         return context
 
 
-class ProjectCreateView(EngineeringOfficeRequiredMixin, CreateView):
-    """Create a new infrastructure project"""
+class ProjectCreateView(EngineerOnlyMixin, CreateView):
+    """Create a new infrastructure project - engineers only"""
     model = InfrastructureProject
     form_class = InfrastructureProjectForm
     template_name = 'projects/project_form.html'
@@ -123,8 +138,8 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
         return InfrastructureProject.objects.filter(created_by=self.request.user)
 
 
-class ProjectEditView(EngineeringOfficeRequiredMixin, UpdateView):
-    """Update an existing infrastructure project"""
+class ProjectEditView(EngineerOnlyMixin, UpdateView):
+    """Update an existing infrastructure project - engineers only"""
     model = InfrastructureProject
     form_class = InfrastructureProjectForm
     template_name = 'projects/project_form.html'
@@ -145,8 +160,8 @@ class ProjectEditView(EngineeringOfficeRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class ProjectDeleteView(EngineeringOfficeRequiredMixin, DeleteView):
-    """Delete an infrastructure project"""
+class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
+    """Delete an infrastructure project - engineers only"""
     model = InfrastructureProject
     template_name = 'projects/project_confirm_delete.html'
     success_url = reverse_lazy('project_list')
