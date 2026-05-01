@@ -15,7 +15,7 @@ except ImportError:
     from system.models import UserProfile
 
 
-class ProjectManagerRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+class MayorsOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Allow only Mayor's Office users and admins"""
     login_url = 'login'
     raise_exception = True
@@ -29,7 +29,7 @@ class ProjectManagerRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
             return False
 
 
-class ProjectManagerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
+class MayorsOfficeOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Allow only Mayor's Office users, explicitly exclude admins"""
     login_url = 'login'
     raise_exception = True
@@ -44,14 +44,14 @@ class ProjectManagerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
             return False
 
 
-class NonInfrastructureProjectDashboardView(ProjectManagerRequiredMixin, TemplateView):
-    """Dashboard for project managers to manage non-infrastructure projects"""
+class NonInfrastructureProjectDashboardView(MayorsOfficeRequiredMixin, TemplateView):
+    """Dashboard for Mayor's Office to manage non-infrastructure projects"""
     template_name = 'non_infrastructure/non_infrastructure_dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Admins see all projects; project managers see only their own
+        # Admins see all projects; Mayor's Office see only their own
         if self.request.user.is_superuser:
             user_projects = NonInfrastructureProject.objects.all()
         else:
@@ -71,7 +71,7 @@ class NonInfrastructureProjectDashboardView(ProjectManagerRequiredMixin, Templat
         return context
 
 
-class NonInfrastructureProjectListView(ProjectManagerRequiredMixin, ListView):
+class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
     """Display list of non-infrastructure projects"""
     model = NonInfrastructureProject
     template_name = 'non_infrastructure/non_infrastructure_list.html'
@@ -109,8 +109,8 @@ class NonInfrastructureProjectListView(ProjectManagerRequiredMixin, ListView):
         return context
 
 
-class NonInfrastructureProjectCreateView(ProjectManagerOnlyMixin, CreateView):
-    """Create a new non-infrastructure project - project managers only"""
+class NonInfrastructureProjectCreateView(MayorsOfficeOnlyMixin, CreateView):
+    """Create a new non-infrastructure project - Mayor's Office only"""
     model = NonInfrastructureProject
     form_class = NonInfrastructureProjectForm
     template_name = 'non_infrastructure/non_infrastructure_form.html'
@@ -126,7 +126,7 @@ class NonInfrastructureProjectCreateView(ProjectManagerOnlyMixin, CreateView):
         return super().form_valid(form)
 
 
-class NonInfrastructureProjectDetailView(ProjectManagerRequiredMixin, DetailView):
+class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
     """Display project details"""
     model = NonInfrastructureProject
     template_name = 'non_infrastructure/non_infrastructure_detail.html'
@@ -138,8 +138,8 @@ class NonInfrastructureProjectDetailView(ProjectManagerRequiredMixin, DetailView
         return NonInfrastructureProject.objects.filter(created_by=self.request.user)
 
 
-class NonInfrastructureProjectEditView(ProjectManagerOnlyMixin, UpdateView):
-    """Update an existing non-infrastructure project - project managers only"""
+class NonInfrastructureProjectEditView(MayorsOfficeOnlyMixin, UpdateView):
+    """Update an existing non-infrastructure project - Mayor's Office only"""
     model = NonInfrastructureProject
     form_class = NonInfrastructureProjectForm
     template_name = 'non_infrastructure/non_infrastructure_form.html'
@@ -160,8 +160,8 @@ class NonInfrastructureProjectEditView(ProjectManagerOnlyMixin, UpdateView):
         return super().form_valid(form)
 
 
-class NonInfrastructureProjectDeleteView(ProjectManagerOnlyMixin, DeleteView):
-    """Delete a non-infrastructure project - project managers only"""
+class NonInfrastructureProjectDeleteView(MayorsOfficeOnlyMixin, DeleteView):
+    """Delete a non-infrastructure project - Mayor's Office only"""
     model = NonInfrastructureProject
     template_name = 'non_infrastructure/non_infrastructure_confirm_delete.html'
     success_url = reverse_lazy('non_infrastructure_project_list')
@@ -170,3 +170,4 @@ class NonInfrastructureProjectDeleteView(ProjectManagerOnlyMixin, DeleteView):
         if self.request.user.is_superuser:
             return NonInfrastructureProject.objects.all()
         return NonInfrastructureProject.objects.filter(created_by=self.request.user)
+
