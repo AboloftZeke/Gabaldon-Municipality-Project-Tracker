@@ -57,7 +57,7 @@
 
     .form-group textarea {
         resize: vertical;
-        min-height: 150px;
+        min-height: 120px;
     }
 
     .form-actions {
@@ -116,17 +116,6 @@
         padding: 0 0.5rem;
         color: #111827;
     }
-
-    .placeholder-section {
-        background: #f3f4f6;
-        border: 2px dashed #d1d5db;
-        border-radius: 8px;
-        padding: 1.5rem;
-        text-align: center;
-        color: #6b7280;
-        font-size: 0.9rem;
-        margin-bottom: 1.5rem;
-    }
 </style>
 {% endblock %}
 
@@ -156,6 +145,14 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}">Project Description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="error-message">{{ form.description.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
                     <label for="{{ form.location.id_for_label }}">Location*</label>
                     {{ form.location }}
                     {% if form.location.errors %}
@@ -181,43 +178,7 @@
             </div>
 
             <div class="fieldset">
-                <legend>Contractor & Procurement</legend>
-
-                <div class="form-group">
-                    <label for="{{ form.contractor.id_for_label }}">Contractor</label>
-                    {{ form.contractor }}
-                    {% if form.contractor.errors %}
-                        <div class="error-message">{{ form.contractor.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.procurement_method.id_for_label }}">Procurement Method*</label>
-                    {{ form.procurement_method }}
-                    {% if form.procurement_method.errors %}
-                        <div class="error-message">{{ form.procurement_method.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="fieldset">
-                <legend>Financial Information</legend>
-
-                <div class="form-group">
-                    <label for="{{ form.abc_amount.id_for_label }}">Approved Budget for Contract (₱)</label>
-                    {{ form.abc_amount }}
-                    {% if form.abc_amount.errors %}
-                        <div class="error-message">{{ form.abc_amount.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.contract_price.id_for_label }}">Contract Price (₱)</label>
-                    {{ form.contract_price }}
-                    {% if form.contract_price.errors %}
-                        <div class="error-message">{{ form.contract_price.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                <legend>Funding & Timeline</legend>
 
                 <div class="form-group">
                     <label for="{{ form.source_of_fund.id_for_label }}">Source of Fund</label>
@@ -226,18 +187,6 @@
                         <div class="error-message">{{ form.source_of_fund.errors.0 }}</div>
                     {% endif %}
                 </div>
-
-                <div class="form-group">
-                    <label for="{{ form.award_status.id_for_label }}">Award Status*</label>
-                    {{ form.award_status }}
-                    {% if form.award_status.errors %}
-                        <div class="error-message">{{ form.award_status.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="fieldset">
-                <legend>Timeline</legend>
 
                 <div class="form-group">
                     <label for="{{ form.planned_start_date.id_for_label }}">Planned Start Date</label>
@@ -262,31 +211,26 @@
                         <div class="error-message">{{ form.actual_start_date.errors.0 }}</div>
                     {% endif %}
                 </div>
+
+                <div class="form-group">
+                    <label for="{{ form.revised_completion_date.id_for_label }}">Revised Completion Date</label>
+                    {{ form.revised_completion_date }}
+                    {% if form.revised_completion_date.errors %}
+                        <div class="error-message">{{ form.revised_completion_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
             </div>
 
             <div class="fieldset">
-                <legend>Progress Tracking</legend>
+                <legend>Progress</legend>
 
                 <div class="form-group">
-                    <label for="{{ form.cost_progress_percentage.id_for_label }}">Cost Progress (%)</label>
-                    {{ form.cost_progress_percentage }}
-                    {% if form.cost_progress_percentage.errors %}
-                        <div class="error-message">{{ form.cost_progress_percentage.errors.0 }}</div>
+                    <label for="{{ form.overall_progress_percentage.id_for_label }}">Overall Progress (%)</label>
+                    {{ form.overall_progress_percentage }}
+                    {% if form.overall_progress_percentage.errors %}
+                        <div class="error-message">{{ form.overall_progress_percentage.errors.0 }}</div>
                     {% endif %}
                 </div>
-
-                <div class="form-group">
-                    <label for="{{ form.physical_progress_percentage.id_for_label }}">Physical Progress (%)</label>
-                    {{ form.physical_progress_percentage }}
-                    {% if form.physical_progress_percentage.errors %}
-                        <div class="error-message">{{ form.physical_progress_percentage.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="placeholder-section">
-                📋 <strong>Additional Non-Infrastructure Fields</strong><br>
-                Placeholder for non-infrastructure specific data fields (e.g., beneficiary count, program type, community impact)
             </div>
 
             <div class="form-actions">
@@ -297,4 +241,5 @@
     </div>
 </div>
 {% endblock %}
+
 

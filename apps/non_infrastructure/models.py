@@ -37,23 +37,6 @@ class NonInfrastructureProject(models.Model):
         ('other', 'Other'),
     ]
 
-    PROCUREMENT_METHOD_CHOICES = [
-        ('competitive_bidding', 'Competitive Bidding / Public Bidding'),
-        ('svp', 'SVP (Small Value Procurement)'),
-        ('nq', 'NQ (Negotiated Quotation)'),
-        ('shopping', 'Shopping'),
-        ('direct_contracting', 'Direct Contracting'),
-        ('force_account', 'Force Account'),
-    ]
-
-    AWARD_STATUS_CHOICES = [
-        ('awarded', 'Awarded'),
-        ('ongoing_bidding', 'Ongoing Bidding'),
-        ('cancelled', 'Cancelled'),
-        ('rebid', 'Re-bid'),
-        ('completed', 'Completed'),
-    ]
-
     PUBLICATION_STATUS_CHOICES = [
         ('draft', 'Draft'),
         ('pending_review', 'Pending Review'),
@@ -64,43 +47,20 @@ class NonInfrastructureProject(models.Model):
 
     # Basic Information
     title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, help_text="Project description and objectives")
     location = models.CharField(max_length=50, choices=LOCATION_CHOICES, help_text="Select barangay location")
     implementing_office = models.CharField(max_length=255, help_text="Office/Agency responsible for implementation")
     category = models.CharField(max_length=50, choices=PROJECT_CATEGORY_CHOICES)
 
-    # Contractor & Procurement
-    contractor = models.CharField(max_length=255, blank=True, help_text="Company name")
-    procurement_method = models.CharField(max_length=50, choices=PROCUREMENT_METHOD_CHOICES)
-
-    # Procurement Dates
-    posting_date = models.DateField(null=True, blank=True, verbose_name="Posting Date")
-    prebid_date = models.DateField(null=True, blank=True, verbose_name="Pre-bid Conference Date")
-    bidding_date = models.DateField(null=True, blank=True, verbose_name="Bidding Date")
-    noa_date = models.DateField(null=True, blank=True, verbose_name="Notice of Award (NOA) Date")
-    ntp_date = models.DateField(null=True, blank=True, verbose_name="Notice to Proceed (NTP) Date")
-
-    # Financial Information
-    award_status = models.CharField(max_length=50, choices=AWARD_STATUS_CHOICES, default='ongoing_bidding')
-    source_of_fund = models.CharField(max_length=255, blank=True, help_text="e.g., 20% Development Fund")
-    abc_amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name="Approved Budget for Contract (ABC)")
-    contract_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name="Contract Price / Bid Amount")
-
-    # Contract Adjustments
-    variation_orders = models.TextField(blank=True, help_text="Record of variation orders with amounts, reasons, and approval dates")
-
-    # Disbursements
-    disbursements_to_date = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name="Total Disbursements/Payments to Date")
-    disbursement_details = models.TextField(blank=True, help_text="Breakdown by milestone or payment schedule")
-
-    # Schedule
+    # Funding & Timeline
+    source_of_fund = models.CharField(max_length=255, blank=True, help_text="e.g., GAA, PRDP")
     planned_start_date = models.DateField(null=True, blank=True)
     planned_end_date = models.DateField(null=True, blank=True)
     actual_start_date = models.DateField(null=True, blank=True)
     revised_completion_date = models.DateField(null=True, blank=True, help_text="If there's extension of time")
 
-    # Progress Tracking
-    cost_progress_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Cost Progress (%)")
-    physical_progress_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Physical Progress (%)")
+    # Progress Tracking - Single overall progress field
+    overall_progress_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Overall Progress (%)")
 
     # Metadata
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='non_infrastructure_projects_created')
