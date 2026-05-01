@@ -62,6 +62,8 @@ class LoginView(View):
             try:
                 if user.profile.department == 'mayor':
                     return redirect('non_infrastructure_project_dashboard')
+                elif user.profile.department == 'engineer':
+                    return redirect('project_dashboard')
             except:
                 pass
             return redirect('admin_dashboard')
