@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if action == 'Create' %}New Non-Infrastructure Project{% else %}Edit Non-Infrastructure Project{% endif %} - Municipality Project Tracker{% endblock %}
+{% block title %}{% if action == 'Create' %}New Project{% else %}Edit Project{% endif %} - Municipality Project Tracker{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -115,6 +115,17 @@
         font-weight: 700;
         padding: 0 0.5rem;
         color: #111827;
+    }
+
+    .placeholder-section {
+        background: #f3f4f6;
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
     }
 </style>
 {% endblock %}
@@ -273,6 +284,11 @@
                 </div>
             </div>
 
+            <div class="placeholder-section">
+                📋 <strong>Additional Non-Infrastructure Fields</strong><br>
+                Placeholder for non-infrastructure specific data fields (e.g., beneficiary count, program type, community impact)
+            </div>
+
             <div class="form-actions">
                 <button type="submit" class="btn btn-submit">{{ action }} Project</button>
                 <a href="{% url 'non_infrastructure_project_list' %}" class="btn btn-cancel">Cancel</a>
@@ -281,3 +297,4 @@
     </div>
 </div>
 {% endblock %}
+
