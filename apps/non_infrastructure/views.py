@@ -91,18 +91,12 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
         if category:
             queryset = queryset.filter(category=category)
 
-        # Filter by status
-        status = self.request.GET.get('status', '').strip()
-        if status:
-            queryset = queryset.filter(award_status=status)
-
         return queryset.order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['locations'] = NonInfrastructureProject.LOCATION_CHOICES
         context['categories'] = NonInfrastructureProject.PROJECT_CATEGORY_CHOICES
-        context['statuses'] = NonInfrastructureProject.AWARD_STATUS_CHOICES
         return context
 
 

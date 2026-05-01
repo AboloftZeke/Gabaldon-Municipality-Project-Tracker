@@ -168,10 +168,17 @@
             {% for project in projects %}
                 <div class="project-card">
                     <div class="project-title">{{ project.title }}</div>
-                    <div class="project-location">📍 {{ project.location }}</div>
-                    <div class="project-status status-{{ project.award_status }}">
-                        {{ project.get_award_status_display }}
-                    </div>
+                    <div class="project-location">📍 {{ project.get_location_display }}</div>
+
+                    {% if project.overall_progress_percentage %}
+                        <div class="project-status status-ongoing">
+                            Progress: {{ project.overall_progress_percentage }}%
+                        </div>
+                    {% else %}
+                        <div class="project-status status-planning">
+                            Planned
+                        </div>
+                    {% endif %}
 
                     {% if project.planned_start_date or project.planned_end_date %}
                         <div class="project-dates">
@@ -181,12 +188,6 @@
                             {% if project.planned_end_date %}
                                 <strong>End:</strong> {{ project.planned_end_date|date:"M d, Y" }}
                             {% endif %}
-                        </div>
-                    {% endif %}
-
-                    {% if project.abc_amount %}
-                        <div style="font-weight: 600; color: #7c3aed; margin-bottom: 1rem;">
-                            ₱{{ project.abc_amount|floatformat:2 }}
                         </div>
                     {% endif %}
 
