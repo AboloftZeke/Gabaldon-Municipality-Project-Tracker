@@ -85,27 +85,18 @@
             <div class="stat-value">{{ total_projects }}</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Awarded</div>
-            <div class="stat-value">{{ awarded_projects }}</div>
+            <div class="stat-label">Planned</div>
+            <div class="stat-value">{{ planned_projects }}</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Ongoing</div>
-            <div class="stat-value">{{ ongoing_projects }}</div>
+            <div class="stat-label">In Progress</div>
+            <div class="stat-value">{{ in_progress_projects }}</div>
         </div>
         <div class="stat-card">
             <div class="stat-label">Completed</div>
             <div class="stat-value">{{ completed_projects }}</div>
         </div>
     </div>
-
-    {% if total_investment > 0 %}
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-label">Total Investment</div>
-            <div class="stat-value">₱{{ total_investment|floatformat:0 }}</div>
-        </div>
-    </div>
-    {% endif %}
 
     <div class="recent-section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">

@@ -92,21 +92,6 @@
         line-height: 1.5;
     }
 
-    .status-badge {
-        display: inline-block;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        font-weight: 600;
-        text-transform: capitalize;
-        margin-bottom: 1rem;
-    }
-
-    .status-awarded { background: #dcfce7; color: #166534; }
-    .status-ongoing_bidding { background: #dbeafe; color: #1e3a8a; }
-    .status-completed { background: #d1fae5; color: #065f46; }
-    .status-cancelled { background: #fee2e2; color: #991b1b; }
-    .status-rebid { background: #fef3c7; color: #92400e; }
-
     .action-buttons {
         display: flex;
         gap: 1rem;
@@ -159,7 +144,6 @@
 
     <div class="project-detail-header">
         <h2>{{ project.title }}</h2>
-        <span class="status-badge status-{{ project.award_status }}">{{ project.get_award_status_display }}</span>
 
         <div class="project-meta">
             <div class="meta-item">
@@ -170,12 +154,6 @@
                 <div class="meta-label">Category</div>
                 <div class="meta-value">{{ project.get_category_display }}</div>
             </div>
-            {% if project.abc_amount %}
-                <div class="meta-item">
-                    <div class="meta-label">Budget</div>
-                    <div class="meta-value">₱{{ project.abc_amount|floatformat:2 }}</div>
-                </div>
-            {% endif %}
             {% if project.planned_start_date %}
                 <div class="meta-item">
                     <div class="meta-label">Start Date</div>
@@ -198,16 +176,6 @@
                 <div class="content-label">Implementing Office</div>
                 <div class="content-value">{{ project.implementing_office }}</div>
             </div>
-            {% if project.contractor %}
-                <div class="content-item">
-                    <div class="content-label">Contractor</div>
-                    <div class="content-value">{{ project.contractor }}</div>
-                </div>
-            {% endif %}
-            <div class="content-item">
-                <div class="content-label">Procurement Method</div>
-                <div class="content-value">{{ project.get_procurement_method_display }}</div>
-            </div>
             {% if project.source_of_fund %}
                 <div class="content-item">
                     <div class="content-label">Source of Fund</div>
@@ -217,48 +185,53 @@
         </div>
     </div>
 
-    {% if project.abc_amount or project.contract_price or project.disbursements_to_date %}
+    {% if project.description %}
     <div class="project-section">
-        <h3>Financial Information</h3>
+        <h3>Description</h3>
+        <div style="color: #111827; line-height: 1.6; white-space: pre-wrap;">{{ project.description }}</div>
+    </div>
+    {% endif %}
+
+    {% if project.planned_start_date or project.actual_start_date or project.revised_completion_date %}
+    <div class="project-section">
+        <h3>Timeline</h3>
         <div class="section-content">
-            {% if project.abc_amount %}
+            {% if project.planned_start_date %}
                 <div class="content-item">
-                    <div class="content-label">Approved Budget (ABC)</div>
-                    <div class="content-value">₱{{ project.abc_amount|floatformat:2 }}</div>
+                    <div class="content-label">Planned Start</div>
+                    <div class="content-value">{{ project.planned_start_date|date:"M d, Y" }}</div>
                 </div>
             {% endif %}
-            {% if project.contract_price %}
+            {% if project.planned_end_date %}
                 <div class="content-item">
-                    <div class="content-label">Contract Price</div>
-                    <div class="content-value">₱{{ project.contract_price|floatformat:2 }}</div>
+                    <div class="content-label">Planned End</div>
+                    <div class="content-value">{{ project.planned_end_date|date:"M d, Y" }}</div>
                 </div>
             {% endif %}
-            {% if project.disbursements_to_date %}
+            {% if project.actual_start_date %}
                 <div class="content-item">
-                    <div class="content-label">Disbursements to Date</div>
-                    <div class="content-value">₱{{ project.disbursements_to_date|floatformat:2 }}</div>
+                    <div class="content-label">Actual Start</div>
+                    <div class="content-value">{{ project.actual_start_date|date:"M d, Y" }}</div>
+                </div>
+            {% endif %}
+            {% if project.revised_completion_date %}
+                <div class="content-item">
+                    <div class="content-label">Revised Completion</div>
+                    <div class="content-value">{{ project.revised_completion_date|date:"M d, Y" }}</div>
                 </div>
             {% endif %}
         </div>
     </div>
     {% endif %}
 
-    {% if project.cost_progress_percentage or project.physical_progress_percentage %}
+    {% if project.overall_progress_percentage %}
     <div class="project-section">
-        <h3>Progress Tracking</h3>
+        <h3>Progress</h3>
         <div class="section-content">
-            {% if project.cost_progress_percentage %}
-                <div class="content-item">
-                    <div class="content-label">Cost Progress</div>
-                    <div class="content-value">{{ project.cost_progress_percentage }}%</div>
-                </div>
-            {% endif %}
-            {% if project.physical_progress_percentage %}
-                <div class="content-item">
-                    <div class="content-label">Physical Progress</div>
-                    <div class="content-value">{{ project.physical_progress_percentage }}%</div>
-                </div>
-            {% endif %}
+            <div class="content-item">
+                <div class="content-label">Overall Progress</div>
+                <div class="content-value">{{ project.overall_progress_percentage }}%</div>
+            </div>
         </div>
     </div>
     {% endif %}
@@ -280,3 +253,4 @@
     </div>
 </div>
 {% endblock %}
+

@@ -58,15 +58,12 @@ class NonInfrastructureProjectDashboardView(MayorsOfficeRequiredMixin, TemplateV
             user_projects = NonInfrastructureProject.objects.filter(created_by=self.request.user)
 
         context['total_projects'] = user_projects.count()
-        context['awarded_projects'] = user_projects.filter(award_status='awarded').count()
-        context['ongoing_projects'] = user_projects.filter(award_status__in=['ongoing_bidding', 'awarded']).count()
-        context['completed_projects'] = user_projects.filter(award_status='completed').count()
-        context['recent_projects'] = user_projects.order_by('-created_at')[:5]
 
-        total_abc = user_projects.filter(abc_amount__isnull=False).aggregate(
-            total=models.Sum('abc_amount')
-        )['total'] or 0
-        context['total_investment'] = total_abc
+        # Count projects by progress
+        context['planned_projects'] = user_projects.filter(overall_progress_percentage__isnull=True).count()
+        context['in_progress_projects'] = user_projects.exclude(overall_progress_percentage__isnull=True).exclude(overall_progress_percentage=100).count()
+        context['completed_projects'] = user_projects.filter(overall_progress_percentage=100).count()
+        context['recent_projects'] = user_projects.order_by('-created_at')[:5]
 
         return context
 
