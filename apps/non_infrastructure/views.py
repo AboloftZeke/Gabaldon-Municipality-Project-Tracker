@@ -1,0 +1,172 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
+from django.urls import reverse_lazy
+from django.db import models
+from django.db.models import Q, Sum
+from .models import NonInfrastructureProject
+from .forms import NonInfrastructureProjectForm
+
+# Import UserProfile from system app
+try:
+    from apps.system.models import UserProfile
+except ImportError:
+    from system.models import UserProfile
+
+
+class ProjectManagerRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Allow only project managers and admins"""
+    login_url = 'login'
+    raise_exception = True
+
+    def test_func(self):
+        if self.request.user.is_superuser:
+            return True
+        try:
+            return self.request.user.profile.department == 'admin'
+        except UserProfile.DoesNotExist:
+            return False
+
+
+class ProjectManagerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Allow only project managers, explicitly exclude admins"""
+    login_url = 'login'
+    raise_exception = True
+
+    def test_func(self):
+        # Explicitly exclude superusers/admins
+        if self.request.user.is_superuser:
+            return False
+        try:
+            return self.request.user.profile.department == 'admin'
+        except UserProfile.DoesNotExist:
+            return False
+
+
+class NonInfrastructureProjectDashboardView(ProjectManagerRequiredMixin, TemplateView):
+    """Dashboard for project managers to manage non-infrastructure projects"""
+    template_name = 'non_infrastructure/non_infrastructure_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Admins see all projects; project managers see only their own
+        if self.request.user.is_superuser:
+            user_projects = NonInfrastructureProject.objects.all()
+        else:
+            user_projects = NonInfrastructureProject.objects.filter(created_by=self.request.user)
+
+        context['total_projects'] = user_projects.count()
+        context['awarded_projects'] = user_projects.filter(award_status='awarded').count()
+        context['ongoing_projects'] = user_projects.filter(award_status__in=['ongoing_bidding', 'awarded']).count()
+        context['completed_projects'] = user_projects.filter(award_status='completed').count()
+        context['recent_projects'] = user_projects.order_by('-created_at')[:5]
+
+        total_abc = user_projects.filter(abc_amount__isnull=False).aggregate(
+            total=models.Sum('abc_amount')
+        )['total'] or 0
+        context['total_investment'] = total_abc
+
+        return context
+
+
+class NonInfrastructureProjectListView(ProjectManagerRequiredMixin, ListView):
+    """Display list of non-infrastructure projects"""
+    model = NonInfrastructureProject
+    template_name = 'non_infrastructure/non_infrastructure_list.html'
+    context_object_name = 'projects'
+    paginate_by = 10
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            queryset = NonInfrastructureProject.objects.all()
+        else:
+            queryset = NonInfrastructureProject.objects.filter(created_by=self.request.user)
+
+        # Filter by location
+        location = self.request.GET.get('location', '').strip()
+        if location:
+            queryset = queryset.filter(location=location)
+
+        # Filter by category
+        category = self.request.GET.get('category', '').strip()
+        if category:
+            queryset = queryset.filter(category=category)
+
+        # Filter by status
+        status = self.request.GET.get('status', '').strip()
+        if status:
+            queryset = queryset.filter(award_status=status)
+
+        return queryset.order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['locations'] = NonInfrastructureProject.LOCATION_CHOICES
+        context['categories'] = NonInfrastructureProject.PROJECT_CATEGORY_CHOICES
+        context['statuses'] = NonInfrastructureProject.AWARD_STATUS_CHOICES
+        return context
+
+
+class NonInfrastructureProjectCreateView(ProjectManagerOnlyMixin, CreateView):
+    """Create a new non-infrastructure project - project managers only"""
+    model = NonInfrastructureProject
+    form_class = NonInfrastructureProjectForm
+    template_name = 'non_infrastructure/non_infrastructure_form.html'
+    success_url = reverse_lazy('non_infrastructure_project_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Create'
+        return context
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+
+class NonInfrastructureProjectDetailView(ProjectManagerRequiredMixin, DetailView):
+    """Display project details"""
+    model = NonInfrastructureProject
+    template_name = 'non_infrastructure/non_infrastructure_detail.html'
+    context_object_name = 'project'
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return NonInfrastructureProject.objects.all()
+        return NonInfrastructureProject.objects.filter(created_by=self.request.user)
+
+
+class NonInfrastructureProjectEditView(ProjectManagerOnlyMixin, UpdateView):
+    """Update an existing non-infrastructure project - project managers only"""
+    model = NonInfrastructureProject
+    form_class = NonInfrastructureProjectForm
+    template_name = 'non_infrastructure/non_infrastructure_form.html'
+    success_url = reverse_lazy('non_infrastructure_project_list')
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return NonInfrastructureProject.objects.all()
+        return NonInfrastructureProject.objects.filter(created_by=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Edit'
+        return context
+
+    def form_valid(self, form):
+        form.instance.updated_by = self.request.user
+        return super().form_valid(form)
+
+
+class NonInfrastructureProjectDeleteView(ProjectManagerOnlyMixin, DeleteView):
+    """Delete a non-infrastructure project - project managers only"""
+    model = NonInfrastructureProject
+    template_name = 'non_infrastructure/non_infrastructure_confirm_delete.html'
+    success_url = reverse_lazy('non_infrastructure_project_list')
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return NonInfrastructureProject.objects.all()
+        return NonInfrastructureProject.objects.filter(created_by=self.request.user)

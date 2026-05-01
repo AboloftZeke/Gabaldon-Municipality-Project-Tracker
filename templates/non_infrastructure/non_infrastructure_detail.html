@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.title }} - Non-Infrastructure Projects{% endblock %}
+
+{% block extra_head %}
+<style>
+    .project-detail-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .project-detail-header {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid #d1d5db;
+    }
+
+    .project-detail-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 0 1rem 0;
+        color: #111827;
+    }
+
+    .project-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .meta-item {
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+
+    .meta-label {
+        font-size: 0.85rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .meta-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .project-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid #d1d5db;
+    }
+
+    .project-section h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0 0 1rem 0;
+        color: #111827;
+    }
+
+    .section-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .content-item {
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+
+    .content-label {
+        font-size: 0.85rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .content-value {
+        font-size: 0.95rem;
+        color: #111827;
+        line-height: 1.5;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+        text-transform: capitalize;
+        margin-bottom: 1rem;
+    }
+
+    .status-awarded { background: #dcfce7; color: #166534; }
+    .status-ongoing_bidding { background: #dbeafe; color: #1e3a8a; }
+    .status-completed { background: #d1fae5; color: #065f46; }
+    .status-cancelled { background: #fee2e2; color: #991b1b; }
+    .status-rebid { background: #fef3c7; color: #92400e; }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: background 180ms ease;
+    }
+
+    .btn-edit {
+        background: #7c3aed;
+        color: white;
+    }
+
+    .btn-edit:hover {
+        background: #6d28d9;
+    }
+
+    .btn-delete {
+        background: #dc2626;
+        color: white;
+    }
+
+    .btn-delete:hover {
+        background: #b91c1c;
+    }
+
+    .btn-back {
+        background: #6b7280;
+        color: white;
+    }
+
+    .btn-back:hover {
+        background: #4b5563;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="project-detail-container">
+    <a href="{% url 'non_infrastructure_project_list' %}" class="btn btn-back">← Back to Projects</a>
+
+    <div class="project-detail-header">
+        <h2>{{ project.title }}</h2>
+        <span class="status-badge status-{{ project.award_status }}">{{ project.get_award_status_display }}</span>
+
+        <div class="project-meta">
+            <div class="meta-item">
+                <div class="meta-label">Location</div>
+                <div class="meta-value">{{ project.get_location_display }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Category</div>
+                <div class="meta-value">{{ project.get_category_display }}</div>
+            </div>
+            {% if project.abc_amount %}
+                <div class="meta-item">
+                    <div class="meta-label">Budget</div>
+                    <div class="meta-value">₱{{ project.abc_amount|floatformat:2 }}</div>
+                </div>
+            {% endif %}
+            {% if project.planned_start_date %}
+                <div class="meta-item">
+                    <div class="meta-label">Start Date</div>
+                    <div class="meta-value">{{ project.planned_start_date|date:"M d, Y" }}</div>
+                </div>
+            {% endif %}
+            {% if project.planned_end_date %}
+                <div class="meta-item">
+                    <div class="meta-label">End Date</div>
+                    <div class="meta-value">{{ project.planned_end_date|date:"M d, Y" }}</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="project-section">
+        <h3>Basic Information</h3>
+        <div class="section-content">
+            <div class="content-item">
+                <div class="content-label">Implementing Office</div>
+                <div class="content-value">{{ project.implementing_office }}</div>
+            </div>
+            {% if project.contractor %}
+                <div class="content-item">
+                    <div class="content-label">Contractor</div>
+                    <div class="content-value">{{ project.contractor }}</div>
+                </div>
+            {% endif %}
+            <div class="content-item">
+                <div class="content-label">Procurement Method</div>
+                <div class="content-value">{{ project.get_procurement_method_display }}</div>
+            </div>
+            {% if project.source_of_fund %}
+                <div class="content-item">
+                    <div class="content-label">Source of Fund</div>
+                    <div class="content-value">{{ project.source_of_fund }}</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if project.abc_amount or project.contract_price or project.disbursements_to_date %}
+    <div class="project-section">
+        <h3>Financial Information</h3>
+        <div class="section-content">
+            {% if project.abc_amount %}
+                <div class="content-item">
+                    <div class="content-label">Approved Budget (ABC)</div>
+                    <div class="content-value">₱{{ project.abc_amount|floatformat:2 }}</div>
+                </div>
+            {% endif %}
+            {% if project.contract_price %}
+                <div class="content-item">
+                    <div class="content-label">Contract Price</div>
+                    <div class="content-value">₱{{ project.contract_price|floatformat:2 }}</div>
+                </div>
+            {% endif %}
+            {% if project.disbursements_to_date %}
+                <div class="content-item">
+                    <div class="content-label">Disbursements to Date</div>
+                    <div class="content-value">₱{{ project.disbursements_to_date|floatformat:2 }}</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if project.cost_progress_percentage or project.physical_progress_percentage %}
+    <div class="project-section">
+        <h3>Progress Tracking</h3>
+        <div class="section-content">
+            {% if project.cost_progress_percentage %}
+                <div class="content-item">
+                    <div class="content-label">Cost Progress</div>
+                    <div class="content-value">{{ project.cost_progress_percentage }}%</div>
+                </div>
+            {% endif %}
+            {% if project.physical_progress_percentage %}
+                <div class="content-item">
+                    <div class="content-label">Physical Progress</div>
+                    <div class="content-value">{{ project.physical_progress_percentage }}%</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="project-section">
+        <h3>Project Information</h3>
+        <div style="color: #6b7280; line-height: 1.8;">
+            <p><strong>Created:</strong> {{ project.created_at|date:"M d, Y \a\t H:i" }}</p>
+            <p><strong>Last Updated:</strong> {{ project.updated_at|date:"M d, Y \a\t H:i" }}</p>
+            {% if project.created_by %}
+                <p><strong>Created By:</strong> {{ project.created_by.get_full_name|default:project.created_by.username }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <a href="{% url 'non_infrastructure_project_update' project.pk %}" class="btn btn-edit">Edit Project</a>
+        <a href="{% url 'non_infrastructure_project_delete' project.pk %}" class="btn btn-delete">Delete Project</a>
+    </div>
+</div>
+{% endblock %}

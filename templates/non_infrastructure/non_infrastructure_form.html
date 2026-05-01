@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}{% if action == 'Create' %}New Non-Infrastructure Project{% else %}Edit Non-Infrastructure Project{% endif %} - Municipality Project Tracker{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-container {
+        max-width: 700px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .form-card {
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        padding: 2rem;
+    }
+
+    .form-card h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 0 1.5rem 0;
+        color: #111827;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #111827;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 0.95rem;
+        font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #7c3aed;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 150px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 180ms ease;
+        flex: 1;
+    }
+
+    .btn-submit {
+        background: #7c3aed;
+        color: white;
+    }
+
+    .btn-submit:hover {
+        background: #6d28d9;
+    }
+
+    .btn-cancel {
+        background: #e5e7eb;
+        color: #111827;
+    }
+
+    .btn-cancel:hover {
+        background: #d1d5db;
+    }
+
+    .error-message {
+        background: #fef2f2;
+        border: 1px solid #fca5a5;
+        color: #b91c1c;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .fieldset {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .fieldset legend {
+        font-weight: 700;
+        padding: 0 0.5rem;
+        color: #111827;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-card">
+        <h2>{{ action }} Non-Infrastructure Project</h2>
+
+        {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+                <div class="error-message">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="fieldset">
+                <legend>Basic Information</legend>
+
+                <div class="form-group">
+                    <label for="{{ form.title.id_for_label }}">Project Title*</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <div class="error-message">{{ form.title.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.location.id_for_label }}">Location*</label>
+                    {{ form.location }}
+                    {% if form.location.errors %}
+                        <div class="error-message">{{ form.location.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.implementing_office.id_for_label }}">Implementing Office*</label>
+                    {{ form.implementing_office }}
+                    {% if form.implementing_office.errors %}
+                        <div class="error-message">{{ form.implementing_office.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.category.id_for_label }}">Category*</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                        <div class="error-message">{{ form.category.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="fieldset">
+                <legend>Contractor & Procurement</legend>
+
+                <div class="form-group">
+                    <label for="{{ form.contractor.id_for_label }}">Contractor</label>
+                    {{ form.contractor }}
+                    {% if form.contractor.errors %}
+                        <div class="error-message">{{ form.contractor.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.procurement_method.id_for_label }}">Procurement Method*</label>
+                    {{ form.procurement_method }}
+                    {% if form.procurement_method.errors %}
+                        <div class="error-message">{{ form.procurement_method.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="fieldset">
+                <legend>Financial Information</legend>
+
+                <div class="form-group">
+                    <label for="{{ form.abc_amount.id_for_label }}">Approved Budget for Contract (₱)</label>
+                    {{ form.abc_amount }}
+                    {% if form.abc_amount.errors %}
+                        <div class="error-message">{{ form.abc_amount.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.contract_price.id_for_label }}">Contract Price (₱)</label>
+                    {{ form.contract_price }}
+                    {% if form.contract_price.errors %}
+                        <div class="error-message">{{ form.contract_price.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.source_of_fund.id_for_label }}">Source of Fund</label>
+                    {{ form.source_of_fund }}
+                    {% if form.source_of_fund.errors %}
+                        <div class="error-message">{{ form.source_of_fund.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.award_status.id_for_label }}">Award Status*</label>
+                    {{ form.award_status }}
+                    {% if form.award_status.errors %}
+                        <div class="error-message">{{ form.award_status.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="fieldset">
+                <legend>Timeline</legend>
+
+                <div class="form-group">
+                    <label for="{{ form.planned_start_date.id_for_label }}">Planned Start Date</label>
+                    {{ form.planned_start_date }}
+                    {% if form.planned_start_date.errors %}
+                        <div class="error-message">{{ form.planned_start_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.planned_end_date.id_for_label }}">Planned End Date</label>
+                    {{ form.planned_end_date }}
+                    {% if form.planned_end_date.errors %}
+                        <div class="error-message">{{ form.planned_end_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.actual_start_date.id_for_label }}">Actual Start Date</label>
+                    {{ form.actual_start_date }}
+                    {% if form.actual_start_date.errors %}
+                        <div class="error-message">{{ form.actual_start_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="fieldset">
+                <legend>Progress Tracking</legend>
+
+                <div class="form-group">
+                    <label for="{{ form.cost_progress_percentage.id_for_label }}">Cost Progress (%)</label>
+                    {{ form.cost_progress_percentage }}
+                    {% if form.cost_progress_percentage.errors %}
+                        <div class="error-message">{{ form.cost_progress_percentage.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.physical_progress_percentage.id_for_label }}">Physical Progress (%)</label>
+                    {{ form.physical_progress_percentage }}
+                    {% if form.physical_progress_percentage.errors %}
+                        <div class="error-message">{{ form.physical_progress_percentage.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-submit">{{ action }} Project</button>
+                <a href="{% url 'non_infrastructure_project_list' %}" class="btn btn-cancel">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
