@@ -521,6 +521,9 @@
             {% if user.profile.department == 'engineer' %}
                 <li><a href="{% url 'project_dashboard' %}">Projects</a></li>
             {% endif %}
+            {% if user.profile.department == 'mayor' %}
+                <li><a href="{% url 'non_infrastructure_project_dashboard' %}">Projects</a></li>
+            {% endif %}
         </ul>
     </div>
 
@@ -618,6 +621,30 @@
     </div>
     {% endif %}
 
+    <!-- Non-Infrastructure Projects Section for Mayor's Office Users -->
+    {% if user.profile.department == 'mayor' %}
+    <div class="dashboard-section">
+        <h3><span class="section-icon"><img src="{% static 'images/projects-icon.png' %}" alt="Non-Infrastructure"></span>Non-Infrastructure Projects</h3>
+        <div class="action-grid">
+            <a href="{% url 'non_infrastructure_project_dashboard' %}" class="action-card">
+                <div class="action-card-icon"><img src="{% static 'images/dashboard-icon.png' %}" alt="Project dashboard"></div>
+                <div class="action-card-title">Project Dashboard</div>
+                <div class="action-card-desc">View project statistics and recent projects</div>
+            </a>
+            <a href="{% url 'non_infrastructure_project_list' %}" class="action-card">
+                <div class="action-card-icon"><img src="{% static 'images/project-icon.png' %}" alt="All projects"></div>
+                <div class="action-card-title">View All Projects</div>
+                <div class="action-card-desc">Browse and manage all non-infrastructure projects</div>
+            </a>
+            <a href="{% url 'non_infrastructure_project_create' %}" class="action-card">
+                <div class="action-card-icon"><img src="{% static 'images/add-icon.png' %}" alt="Create project"></div>
+                <div class="action-card-title">Create New Project</div>
+                <div class="action-card-desc">Start tracking a new non-infrastructure project</div>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Quick Actions Section -->
     <div class="dashboard-section">
         <h3><span class="section-icon">■</span>Quick Actions</h3>
@@ -630,6 +657,10 @@
             {% if user.profile.department == 'engineer' %}
                 <a href="{% url 'project_create' %}" class="action-button">Create Project</a>
                 <a href="{% url 'project_dashboard' %}" class="action-button">Go to Projects</a>
+            {% endif %}
+            {% if user.profile.department == 'mayor' %}
+                <a href="{% url 'non_infrastructure_project_create' %}" class="action-button">Create Project</a>
+                <a href="{% url 'non_infrastructure_project_dashboard' %}" class="action-button">Go to Projects</a>
             {% endif %}
             <a href="{% url 'logout' %}" class="action-button secondary">Sign Out</a>
         </div>
