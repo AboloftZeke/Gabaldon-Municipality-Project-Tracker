@@ -16,7 +16,7 @@ except ImportError:
 
 
 class ProjectManagerRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
-    """Allow only project managers and admins"""
+    """Allow only Mayor's Office users and admins"""
     login_url = 'login'
     raise_exception = True
 
@@ -24,13 +24,13 @@ class ProjectManagerRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
         if self.request.user.is_superuser:
             return True
         try:
-            return self.request.user.profile.department == 'admin'
+            return self.request.user.profile.department == 'mayor'
         except UserProfile.DoesNotExist:
             return False
 
 
 class ProjectManagerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
-    """Allow only project managers, explicitly exclude admins"""
+    """Allow only Mayor's Office users, explicitly exclude admins"""
     login_url = 'login'
     raise_exception = True
 
@@ -39,7 +39,7 @@ class ProjectManagerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
         if self.request.user.is_superuser:
             return False
         try:
-            return self.request.user.profile.department == 'admin'
+            return self.request.user.profile.department == 'mayor'
         except UserProfile.DoesNotExist:
             return False
 

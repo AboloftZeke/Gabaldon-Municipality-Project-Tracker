@@ -58,6 +58,12 @@ class LoginView(View):
                     self.template_name,
                     {'error': 'Your account does not have access to this module.'}
                 )
+            # Check user's department and redirect accordingly
+            try:
+                if user.profile.department == 'mayor':
+                    return redirect('non_infrastructure_project_dashboard')
+            except:
+                pass
             return redirect('admin_dashboard')
         else:
             return render(request, self.template_name, {'error': 'Invalid credentials'})
