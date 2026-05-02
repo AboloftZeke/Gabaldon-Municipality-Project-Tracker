@@ -9,14 +9,16 @@ urlpatterns = [
     path('logout/', views.LogoutView.as_view(), name='logout'),
     
     # Role-specific dashboards
-    path('admin/dashboard/', views.AdminDashboardView.as_view(), name='admin_dashboard'),
+    # Use a non-conflicting path so Django's admin site (mounted at /admin/) isn't intercepted.
+    path('admin-dashboard/', views.AdminDashboardView.as_view(), name='admin_dashboard'),
     path('engineering/dashboard/', views.EngineeringDashboardView.as_view(), name='engineering_dashboard'),
     path('engineering/dashboard/infrastructure/', include('apps.infrastructure.urls', namespace='engineering_projects')),
     path('mayor/dashboard/', views.MayorDashboardView.as_view(), name='mayor_dashboard'),
     path('mayor/dashboard/non-infrastructure/', include('apps.non_infrastructure.urls', namespace='mayor_projects')),
     
-    # Legacy admin dashboard URL (redirect)
-    path('admin-dashboard/', views.AdminDashboardView.as_view()),
+    # Legacy admin dashboard URL (kept for compatibility)
+    # The named `admin_dashboard` route above now points to `/admin-dashboard/` to avoid
+    # clashing with Django's built-in admin which is mounted at `/admin/`.
     
     # User management (admin only)
     path('users/', views.UserListView.as_view(), name='user_list'),

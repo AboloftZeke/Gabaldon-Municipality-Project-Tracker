@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse, NoReverseMatch
 from django.db import models
 from django.db.models import Q, Sum
 from .models import InfrastructureProject
@@ -42,6 +42,22 @@ class EngineerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
             return self.request.user.profile.department == 'engineer'
         except UserProfile.DoesNotExist:
             return False
+
+    def get_namespaced_url(self, url_name, *args, **kwargs):
+        """
+        Resolve a URL name within the current resolver match namespace.
+        Falls back to un-namespaced resolution if namespace resolution fails.
+        """
+        namespace = self.request.resolver_match.namespace
+        if namespace:
+            try:
+                return reverse(f"{namespace}:{url_name}", args=args, kwargs=kwargs)
+            except NoReverseMatch:
+                pass
+        try:
+            return reverse(url_name, args=args, kwargs=kwargs)
+        except NoReverseMatch:
+            return "/"
 
 
 class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
@@ -114,7 +130,18 @@ class ProjectCreateView(EngineerOnlyMixin, CreateView):
     model = InfrastructureProject
     form_class = InfrastructureProjectForm
     template_name = 'projects/project_form.html'
-    success_url = reverse_lazy('project_list')
+
+    def get_success_url(self):
+        namespace = self.request.resolver_match.namespace
+        if namespace:
+            try:
+                return reverse(f"{namespace}:project_list")
+            except NoReverseMatch:
+                pass
+        try:
+            return reverse('project_list')
+        except NoReverseMatch:
+            return reverse_lazy('project_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -143,7 +170,18 @@ class ProjectEditView(EngineerOnlyMixin, UpdateView):
     model = InfrastructureProject
     form_class = InfrastructureProjectForm
     template_name = 'projects/project_form.html'
-    success_url = reverse_lazy('project_list')
+
+    def get_success_url(self):
+        namespace = self.request.resolver_match.namespace
+        if namespace:
+            try:
+                return reverse(f"{namespace}:project_list")
+            except NoReverseMatch:
+                pass
+        try:
+            return reverse('project_list')
+        except NoReverseMatch:
+            return reverse_lazy('project_list')
 
     def get_queryset(self):
         if self.request.user.is_superuser:
@@ -164,9 +202,53 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
     """Delete an infrastructure project - engineers only"""
     model = InfrastructureProject
     template_name = 'projects/project_confirm_delete.html'
-    success_url = reverse_lazy('project_list')
+
+    def get_success_url(self):
+        namespace = self.request.resolver_match.namespace
+        if namespace:
+            try:
+                return reverse(f"{namespace}:project_list")
+            except NoReverseMatch:
+                pass
+        try:
+            return reverse('project_list')
+        except NoReverseMatch:
+            return reverse_lazy('project_list')
 
     def get_queryset(self):
         if self.request.user.is_superuser:
             return InfrastructureProject.objects.all()
         return InfrastructureProject.objects.filter(created_by=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        obj = self.get_object()
+
+        # Attempt to resolve the properly namespaced detail URL based on current resolver namespace.
+        namespace = self.request.resolver_match.namespace
+        cancel_url = None
+        if namespace:
+            try:
+                cancel_url = reverse(f"{namespace}:project_detail", args=[obj.pk])
+            except NoReverseMatch:
+                try:
+                    cancel_url = reverse('project_detail', args=[obj.pk])
+                except NoReverseMatch:
+                    cancel_url = None
+        else:
+            try:
+                cancel_url = reverse('project_detail', args=[obj.pk])
+            except NoReverseMatch:
+                cancel_url = None
+
+        # Fallback: build a path by removing the trailing 'delete/' segment from the current path
+        if not cancel_url:
+            path = self.request.path
+            if path.endswith('/delete/'):
+                cancel_url = path[:-7]
+            else:
+                cancel_url = path.rstrip('/').rsplit('/', 1)[0] + '/'
+
+        context['cancel_url'] = cancel_url
+        return context
+

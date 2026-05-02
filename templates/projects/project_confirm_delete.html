@@ -117,7 +117,7 @@
             {% csrf_token %}
             <div class="form-actions">
                 <button type="submit" class="btn btn-delete">Yes, Delete Project</button>
-                <a href="{% url 'project_detail' project.pk %}" class="btn btn-cancel">Cancel</a>
+                <a href="{{ cancel_url }}" class="btn btn-cancel">Cancel</a>
             </div>
         </form>
     </div>
