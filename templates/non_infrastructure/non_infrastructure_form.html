@@ -4,6 +4,29 @@
 
 {% block extra_head %}
 <style>
+    .breadcrumb-nav {
+        background: #7c3aed;
+        color: white;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .breadcrumb-nav a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 180ms ease;
+    }
+
+    .breadcrumb-nav a:hover {
+        color: white;
+    }
+
+    .breadcrumb-nav span {
+        color: rgba(255, 255, 255, 0.7);
+        margin: 0 0.5rem;
+    }
+
     .form-container {
         max-width: 700px;
         margin: 2rem auto;
@@ -120,6 +143,15 @@
 {% endblock %}
 
 {% block content %}
+<!-- Mayor's Office Navigation Breadcrumb -->
+{% if request.resolver_match.namespace == 'mayor_projects' %}
+<div class="breadcrumb-nav">
+    <a href="{% url 'mayor_projects:non_infrastructure_project_list' %}">← Back to Programs</a>
+    <span>/</span>
+    <strong>{{ action }} Program</strong>
+</div>
+{% endif %}
+
 <div class="form-container">
     <div class="form-card">
         <h2>{{ action }} Non-Infrastructure Project</h2>
@@ -178,6 +210,70 @@
             </div>
 
             <div class="fieldset">
+                <legend>Service Details</legend>
+
+                <div class="form-group">
+                    <label for="{{ form.service_description.id_for_label }}">What Service is Delivered?</label>
+                    {{ form.service_description }}
+                    {% if form.service_description.errors %}
+                        <div class="error-message">{{ form.service_description.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.beneficiaries_description.id_for_label }}">To Whom is Service Delivered?</label>
+                    {{ form.beneficiaries_description }}
+                    {% if form.beneficiaries_description.errors %}
+                        <div class="error-message">{{ form.beneficiaries_description.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.service_location_details.id_for_label }}">Where is Service Delivered?</label>
+                    {{ form.service_location_details }}
+                    {% if form.service_location_details.errors %}
+                        <div class="error-message">{{ form.service_location_details.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.service_period.id_for_label }}">When? (Schedule/Frequency)</label>
+                    {{ form.service_period }}
+                    {% if form.service_period.errors %}
+                        <div class="error-message">{{ form.service_period.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.service_time.id_for_label }}">Time of Service</label>
+                    {{ form.service_time }}
+                    {% if form.service_time.errors %}
+                        <div class="error-message">{{ form.service_time.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="fieldset">
+                <legend>Budget & Results</legend>
+
+                <div class="form-group">
+                    <label for="{{ form.budget_cost.id_for_label }}">Budget/Cost (₱)</label>
+                    {{ form.budget_cost }}
+                    {% if form.budget_cost.errors %}
+                        <div class="error-message">{{ form.budget_cost.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.results_achieved.id_for_label }}">Results/Outcomes Achieved</label>
+                    {{ form.results_achieved }}
+                    {% if form.results_achieved.errors %}
+                        <div class="error-message">{{ form.results_achieved.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="fieldset">
                 <legend>Funding & Timeline</legend>
 
                 <div class="form-group">
@@ -222,7 +318,7 @@
             </div>
 
             <div class="fieldset">
-                <legend>Progress</legend>
+                <legend>Progress Tracking</legend>
 
                 <div class="form-group">
                     <label for="{{ form.overall_progress_percentage.id_for_label }}">Overall Progress (%)</label>
@@ -235,11 +331,9 @@
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-submit">{{ action }} Project</button>
-                <a href="{% url 'non_infrastructure_project_list' %}" class="btn btn-cancel">Cancel</a>
+                <a href="{% url 'non_infrastructure:non_infrastructure_project_list' %}" class="btn btn-cancel">Cancel</a>
             </div>
         </form>
     </div>
 </div>
 {% endblock %}
-
-

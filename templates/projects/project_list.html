@@ -5,6 +5,29 @@
 
 {% block extra_head %}
 <style>
+    .breadcrumb-nav {
+        background: #1d4ed8;
+        color: white;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .breadcrumb-nav a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 180ms ease;
+    }
+
+    .breadcrumb-nav a:hover {
+        color: white;
+    }
+
+    .breadcrumb-nav span {
+        color: rgba(255, 255, 255, 0.7);
+        margin: 0 0.5rem;
+    }
+
     .projects-container {
         max-width: 1200px;
         margin: 2rem auto;
@@ -157,10 +180,23 @@
 {% endblock %}
 
 {% block content %}
+<!-- Engineering Office Navigation Breadcrumb -->
+{% if request.resolver_match.namespace == 'engineering_projects' %}
+<div class="breadcrumb-nav">
+    <a href="{% url 'engineering_dashboard' %}">← Back to Dashboard</a>
+    <span>/</span>
+    <strong>Infrastructure Projects</strong>
+</div>
+{% endif %}
+
 <div class="projects-container">
     <div class="projects-header">
         <h2>Infrastructure Projects</h2>
-        <a href="{% url 'project_create' %}" class="btn-create">+ New Project</a>
+        {% if request.resolver_match.namespace == 'engineering_projects' %}
+            <a href="{% url 'engineering_projects:project_create' %}" class="btn-create">+ New Project</a>
+        {% else %}
+            <a href="{% url 'project_create' %}" class="btn-create">+ New Project</a>
+        {% endif %}
     </div>
 
     {% if projects %}
@@ -191,8 +227,13 @@
                     {% endif %}
 
                     <div class="project-actions">
-                        <a href="{% url 'project_detail' project.pk %}" class="btn-small btn-view">View</a>
-                        <a href="{% url 'project_update' project.pk %}" class="btn-small btn-edit">Edit</a>
+                        {% if request.resolver_match.namespace == 'engineering_projects' %}
+                            <a href="{% url 'engineering_projects:project_detail' project.pk %}" class="btn-small btn-view">View</a>
+                            <a href="{% url 'engineering_projects:project_update' project.pk %}" class="btn-small btn-edit">Edit</a>
+                        {% else %}
+                            <a href="{% url 'project_detail' project.pk %}" class="btn-small btn-view">View</a>
+                            <a href="{% url 'project_update' project.pk %}" class="btn-small btn-edit">Edit</a>
+                        {% endif %}
                     </div>
                 </div>
             {% endfor %}
@@ -200,7 +241,11 @@
     {% else %}
         <div class="empty-state">
             <p>No infrastructure projects yet.</p>
-            <a href="{% url 'project_create' %}" class="btn-create">Create the first project</a>
+            {% if request.resolver_match.namespace == 'engineering_projects' %}
+                <a href="{% url 'engineering_projects:project_create' %}" class="btn-create">Create the first project</a>
+            {% else %}
+                <a href="{% url 'project_create' %}" class="btn-create">Create the first project</a>
+            {% endif %}
         </div>
     {% endif %}
 </div>

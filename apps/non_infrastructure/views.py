@@ -15,6 +15,21 @@ except ImportError:
     from system.models import UserProfile
 
 
+class MayorsOfficeOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Allow only Mayor's Office users, explicitly exclude admins"""
+    login_url = 'login'
+    raise_exception = True
+
+    def test_func(self):
+        # Explicitly exclude superusers/admins
+        if self.request.user.is_superuser:
+            return False
+        try:
+            return self.request.user.profile.department == 'mayor'
+        except UserProfile.DoesNotExist:
+            return False
+
+
 class MayorsOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Allow only Mayor's Office users and admins"""
     login_url = 'login'
@@ -29,15 +44,16 @@ class MayorsOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
             return False
 
 
-class MayorsOfficeOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
-    """Allow only Mayor's Office users, explicitly exclude admins"""
+class MayorsOfficeEditMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Allow Mayor's Office and admins to edit, prevent engineering office"""
     login_url = 'login'
     raise_exception = True
 
     def test_func(self):
-        # Explicitly exclude superusers/admins
+        # Allow admins
         if self.request.user.is_superuser:
-            return False
+            return True
+        # Allow Mayor's office only, deny engineering office
         try:
             return self.request.user.profile.department == 'mayor'
         except UserProfile.DoesNotExist:
@@ -129,8 +145,8 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
         return NonInfrastructureProject.objects.filter(created_by=self.request.user)
 
 
-class NonInfrastructureProjectEditView(MayorsOfficeOnlyMixin, UpdateView):
-    """Update an existing non-infrastructure project - Mayor's Office only"""
+class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
+    """Update an existing non-infrastructure project - Mayor's Office and admins only"""
     model = NonInfrastructureProject
     form_class = NonInfrastructureProjectForm
     template_name = 'non_infrastructure/non_infrastructure_form.html'
@@ -151,8 +167,8 @@ class NonInfrastructureProjectEditView(MayorsOfficeOnlyMixin, UpdateView):
         return super().form_valid(form)
 
 
-class NonInfrastructureProjectDeleteView(MayorsOfficeOnlyMixin, DeleteView):
-    """Delete a non-infrastructure project - Mayor's Office only"""
+class NonInfrastructureProjectDeleteView(MayorsOfficeEditMixin, DeleteView):
+    """Delete a non-infrastructure project - Mayor's Office and admins only"""
     model = NonInfrastructureProject
     template_name = 'non_infrastructure/non_infrastructure_confirm_delete.html'
     success_url = reverse_lazy('non_infrastructure_project_list')

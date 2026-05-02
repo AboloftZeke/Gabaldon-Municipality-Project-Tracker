@@ -110,7 +110,7 @@
     <div class="recent-section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
             <h3 class="section-title" style="margin: 0;">Recent Projects</h3>
-            <a href="{% url 'project_create' %}" class="btn-small btn-primary">+ New Project</a>
+            <a href="{% url 'infrastructure:project_create' %}" class="btn-small btn-primary">+ New Project</a>
         </div>
 
         {% if recent_projects %}
@@ -121,15 +121,15 @@
                         <div class="project-meta">{{ project.location|title }} • {{ project.get_category_display }}</div>
                     </div>
                     <div class="btn-group">
-                        <a href="{% url 'project_detail' project.pk %}" class="btn-small btn-primary">View</a>
-                        <a href="{% url 'project_update' project.pk %}" class="btn-small" style="background: #6b7280; color: white;">Edit</a>
+                        <a href="{% url 'infrastructure:project_detail' project.pk %}" class="btn-small btn-primary">View</a>
+                        <a href="{% url 'infrastructure:project_update' project.pk %}" class="btn-small" style="background: #6b7280; color: white;">Edit</a>
                     </div>
                 </div>
             {% endfor %}
         {% else %}
             <div class="empty-state">
                 <p>No projects yet. Create your first infrastructure project.</p>
-                <a href="{% url 'project_create' %}" class="btn-small btn-primary">Create Project</a>
+                <a href="{% url 'infrastructure:project_create' %}" class="btn-small btn-primary">Create Project</a>
             </div>
         {% endif %}
     </div>

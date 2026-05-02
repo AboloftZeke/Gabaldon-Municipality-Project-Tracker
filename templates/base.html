@@ -295,27 +295,44 @@
 <body>
     {% block show_header %}
     <header>
-        <nav>
-            <div class="header-brand">
-                <img src="{% static 'images/Gabaldon seal.png' %}" alt="Gabaldon Seal" class="header-logo">
-                <h1>Municipality Project Tracker</h1>
-            </div>
-            {% if user.is_authenticated %}
-                <ul>
+    <nav>
+        <div class="header-brand">
+            <img src="{% static 'images/Gabaldon seal.png' %}" alt="Gabaldon Seal" class="header-logo">
+            <h1>Municipality Project Tracker</h1>
+        </div>
+
+        {% if user.is_authenticated %}
+            <ul>
+
+                <!-- 🔥 ROLE-BASED DASHBOARD -->
+                {% if user.is_superuser %}
                     <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
-                    {% if user.is_superuser %}
-                        <li><a href="{% url 'user_list' %}">Users</a></li>
-                    {% endif %}
-                    <li><a href="{% url 'logout' %}">Logout</a></li>
-                    <li><span>Welcome, {{ user.username }}</span></li>
-                </ul>
-            {% else %}
-                <ul>
-                    <li><a href="{% url 'login' %}">Login</a></li>
-                </ul>
-            {% endif %}
-        </nav>
-    </header>
+
+                {% elif user.profile.department == "engineer" %}
+                    <li><a href="{% url 'engineering_dashboard' %}">Dashboard</a></li>
+
+                {% elif user.profile.department == "mayor" %}
+                    <li><a href="{% url 'mayor_dashboard' %}">Dashboard</a></li>
+
+                {% else %}
+                    <li><a href="{% url 'engineering_dashboard' %}">Dashboard</a></li>
+                {% endif %}
+
+                {% if user.is_superuser %}
+                    <li><a href="{% url 'user_list' %}">Users</a></li>
+                {% endif %}
+
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+                <li><span>Welcome, {{ user.username }}</span></li>
+
+            </ul>
+        {% else %}
+            <ul>
+                <li><a href="{% url 'login' %}">Login</a></li>
+            </ul>
+        {% endif %}
+    </nav>
+</header>
     {% endblock %}
 
     <main>

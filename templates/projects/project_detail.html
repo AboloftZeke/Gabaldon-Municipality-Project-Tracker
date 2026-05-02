@@ -135,7 +135,7 @@
 
 {% block content %}
 <div class="project-detail-container">
-    <a href="{% url 'project_list' %}" class="btn btn-back">← Back to Projects</a>
+    <a href="{% url 'infrastructure:project_list' %}" class="btn btn-back">← Back to Projects</a>
 
     <div class="project-detail-header">
         <h2>{{ project.title }}</h2>
@@ -192,8 +192,8 @@
     </div>
 
     <div class="action-buttons">
-        <a href="{% url 'project_update' project.pk %}" class="btn btn-edit">Edit Project</a>
-        <a href="{% url 'project_delete' project.pk %}" class="btn btn-delete">Delete Project</a>
+        <a href="{% url 'infrastructure:project_update' project.pk %}" class="btn btn-edit">Edit Project</a>
+        <a href="{% url 'infrastructure:project_delete' project.pk %}" class="btn btn-delete">Delete Project</a>
     </div>
 </div>
 {% endblock %}

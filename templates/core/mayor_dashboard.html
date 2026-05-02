@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Admin Dashboard - Municipality Project Tracker{% endblock %}
+{% block title %}Mayor's Office Dashboard - Municipality Project Tracker{% endblock %}
 
 {% block extra_head %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -9,16 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
     :root {
-        --panel-green: #1a5a3a;
+        --panel-purple: #7c3aed;
         --panel-overlay: rgba(6, 18, 34, 0.5);
         --panel-card: rgba(8, 22, 40, 0.58);
         --white: #ffffff;
         --ink-900: #111827;
         --ink-600: #4b5563;
         --line: #d1d5db;
-        --focus: #2E6F40;
-        --btn: #2E6F40;
-        --btn-hover: #235A32;
+        --focus: #7c3aed;
+        --btn: #7c3aed;
+        --btn-hover: #6d28d9;
         --success-bg: #ecfdf5;
         --success-text: #065f46;
         --bg-light: #f9fafb;
@@ -38,7 +38,7 @@
     }
 
     header {
-        background: var(--panel-green);
+        background: var(--panel-purple);
         color: var(--white);
         padding: 0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -227,7 +227,7 @@
     .welcome-text h3 {
         font-size: 1.5rem;
         font-weight: 700;
-        color: var(--panel-green);
+        color: var(--panel-purple);
         margin-bottom: 0.5rem;
     }
 
@@ -330,7 +330,7 @@
 
     .action-card:hover {
         border-color: var(--btn);
-        box-shadow: 0 8px 20px rgba(29, 78, 216, 0.12);
+        box-shadow: 0 8px 20px rgba(124, 58, 237, 0.12);
     }
 
     .action-card-icon {
@@ -497,10 +497,7 @@
         </div>
         {% if user.is_authenticated %}
             <ul>
-                <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
-                {% if user.is_superuser %}
-                    <li><a href="{% url 'user_list' %}">User Management</a></li>
-                {% endif %}
+                <li><a href="{% url 'mayor_dashboard' %}">Dashboard</a></li>
                 <li><a href="{% url 'logout' %}">Logout</a></li>
             </ul>
         {% endif %}
@@ -513,17 +510,8 @@
     <div class="sidebar-section">
         <p class="sidebar-title">Navigation</p>
         <ul class="sidebar-menu">
-            <li><a href="{% url 'admin_dashboard' %}" class="active">Dashboard</a></li>
-            {% if user.is_superuser %}
-                <li><a href="{% url 'user_list' %}">User Management</a></li>
-                <li><a href="{% url 'user_create' %}">Create User</a></li>
-            {% endif %}
-            {% if user.profile.department == 'engineer' %}
-                <li><a href="{% url 'project_dashboard' %}">Projects</a></li>
-            {% endif %}
-            {% if user.profile.department == 'mayor' %}
-                <li><a href="{% url 'non_infrastructure_project_dashboard' %}">Projects</a></li>
-            {% endif %}
+            <li><a href="{% url 'mayor_dashboard' %}" class="active">Dashboard</a></li>
+            <li><a href="{% url 'mayor_projects:non_infrastructure_project_dashboard' %}">Projects</a></li>
         </ul>
     </div>
 
@@ -538,12 +526,12 @@
 
 <div class="dashboard-content">
     <div class="dashboard-header">
-        <h2>Administrative Dashboard</h2>
+        <h2>Mayor's Office Dashboard</h2>
         <div class="user-info">
             <div class="user-avatar">{{ user.username|first|upper }}</div>
             <div>
                 <div class="user-name">{{ user.username }}</div>
-                <div style="font-size: 0.8rem; color: var(--ink-600);">{% if user.is_superuser %}System Administrator{% else %}Staff Member{% endif %}</div>
+                <div style="font-size: 0.8rem; color: var(--ink-600);">Mayor's Office Staff</div>
             </div>
         </div>
     </div>
@@ -554,116 +542,64 @@
             <img src="{% static 'images/gabaldon-seal.png' %}" alt="Municipality of Gabaldon seal">
         </div>
         <div class="welcome-text">
-            <h3>Municipality Project Tracker</h3>
-            <p>Manage municipal development initiatives, coordinate teams, and track project progress. Use the dashboard below to access key metrics and administrative tools.</p>
+            <h3>Non-Infrastructure Projects</h3>
+            <p>Manage and track municipality programs and services including livelihood, scholarships, health campaigns, trainings, and ICT initiatives.</p>
         </div>
     </div>
 
-    <!-- Statistics Section - Admin Only -->
-    {% if user.is_superuser %}
+    <!-- Statistics Section -->
     <div class="dashboard-stats">
         <div class="stat-card">
-            <h3>Total Users</h3>
-            <p class="stat-value">{{ total_users }}</p>
-            <div class="stat-subtitle">All system users</div>
+            <h3>Total Programs</h3>
+            <p class="stat-value">{{ total_projects }}</p>
+            <div class="stat-subtitle">All non-infrastructure projects</div>
         </div>
         <div class="stat-card">
-            <h3>Administrators</h3>
-            <p class="stat-value">{{ total_admins }}</p>
-            <div class="stat-subtitle">System administrators</div>
+            <h3>Planned</h3>
+            <p class="stat-value">{{ planned_projects }}</p>
+            <div class="stat-subtitle">Upcoming programs</div>
         </div>
         <div class="stat-card">
-            <h3>Staff Members</h3>
-            <p class="stat-value">{{ total_staff }}</p>
-            <div class="stat-subtitle">Active staff accounts</div>
+            <h3>In Progress</h3>
+            <p class="stat-value">{{ in_progress_projects }}</p>
+            <div class="stat-subtitle">Active programs</div>
+        </div>
+        <div class="stat-card">
+            <h3>Completed</h3>
+            <p class="stat-value">{{ completed_projects }}</p>
+            <div class="stat-subtitle">Finished programs</div>
         </div>
     </div>
-    {% endif %}
 
-    <!-- Admin Actions Section -->
-    {% if user.is_superuser %}
+    <!-- Non-Infrastructure Projects Section -->
     <div class="dashboard-section">
-        <h3><span class="section-icon">■</span>System Access Management</h3>
+        <h3><span class="section-icon">■</span>Program Management</h3>
         <div class="action-grid">
-            <a href="{% url 'user_list' %}" class="action-card">
-                <div class="action-card-icon">👤</div>
-                <div class="action-card-title">Manage Users</div>
-                <div class="action-card-desc">View, edit, enable or disable system user accounts and permissions</div>
-            </a>
-            <a href="{% url 'user_create' %}" class="action-card">
-                <div class="action-card-icon">✓</div>
-                <div class="action-card-title">Create New User</div>
-                <div class="action-card-desc">Add a new user account to Engineering Office, Mayor's Office, or Admin</div>
-            </a>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Infrastructure Projects Section for Engineering Users -->
-    {% if user.profile.department == 'engineer' %}
-    <div class="dashboard-section">
-        <h3><span class="section-icon"><img src="{% static 'images/infra-icon.png' %}" alt="Infrastructure"></span>Infrastructure Projects</h3>
-        <div class="action-grid">
-            <a href="{% url 'project_dashboard' %}" class="action-card">
+            <a href="{% url 'non_infrastructure:non_infrastructure_project_dashboard' %}" class="action-card">
                 <div class="action-card-icon"><img src="{% static 'images/dashboard-icon.png' %}" alt="Project dashboard"></div>
-                <div class="action-card-title">Project Dashboard</div>
-                <div class="action-card-desc">View project statistics and recent projects</div>
+                <div class="action-card-title">Program Dashboard</div>
+                <div class="action-card-desc">View detailed program statistics and recent activities</div>
             </a>
-            <a href="{% url 'project_list' %}" class="action-card">
+            <a href="{% url 'non_infrastructure:non_infrastructure_project_list' %}" class="action-card">
                 <div class="action-card-icon"><img src="{% static 'images/project-icon.png' %}" alt="All projects"></div>
-                <div class="action-card-title">View All Projects</div>
-                <div class="action-card-desc">Browse and manage all infrastructure projects</div>
+                <div class="action-card-title">View All Programs</div>
+                <div class="action-card-desc">Browse and manage all non-infrastructure programs</div>
             </a>
-            <a href="{% url 'project_create' %}" class="action-card">
+            <a href="{% url 'non_infrastructure:non_infrastructure_project_create' %}" class="action-card">
                 <div class="action-card-icon"><img src="{% static 'images/add-icon.png' %}" alt="Create project"></div>
-                <div class="action-card-title">Create New Project</div>
-                <div class="action-card-desc">Start tracking a new infrastructure project</div>
+                <div class="action-card-title">Create New Program</div>
+                <div class="action-card-desc">Start tracking a new program or service</div>
             </a>
         </div>
     </div>
-    {% endif %}
-
-    <!-- Non-Infrastructure Projects Section for Mayor's Office Users -->
-    {% if user.profile.department == 'mayor' %}
-    <div class="dashboard-section">
-        <h3><span class="section-icon"><img src="{% static 'images/projects-icon.png' %}" alt="Non-Infrastructure"></span>Non-Infrastructure Projects</h3>
-        <div class="action-grid">
-            <a href="{% url 'non_infrastructure_project_dashboard' %}" class="action-card">
-                <div class="action-card-icon"><img src="{% static 'images/dashboard-icon.png' %}" alt="Project dashboard"></div>
-                <div class="action-card-title">Project Dashboard</div>
-                <div class="action-card-desc">View project statistics and recent projects</div>
-            </a>
-            <a href="{% url 'non_infrastructure_project_list' %}" class="action-card">
-                <div class="action-card-icon"><img src="{% static 'images/project-icon.png' %}" alt="All projects"></div>
-                <div class="action-card-title">View All Projects</div>
-                <div class="action-card-desc">Browse and manage all non-infrastructure projects</div>
-            </a>
-            <a href="{% url 'non_infrastructure_project_create' %}" class="action-card">
-                <div class="action-card-icon"><img src="{% static 'images/add-icon.png' %}" alt="Create project"></div>
-                <div class="action-card-title">Create New Project</div>
-                <div class="action-card-desc">Start tracking a new non-infrastructure project</div>
-            </a>
-        </div>
-    </div>
-    {% endif %}
 
     <!-- Quick Actions Section -->
     <div class="dashboard-section">
         <h3><span class="section-icon">■</span>Quick Actions</h3>
         <div class="quick-actions">
             <h4>Common Tasks</h4>
-            {% if user.is_superuser %}
-                <a href="{% url 'user_list' %}" class="action-button">Manage Users</a>
-                <a href="{% url 'user_create' %}" class="action-button">Add New User</a>
-            {% endif %}
-            {% if user.profile.department == 'engineer' %}
-                <a href="{% url 'project_create' %}" class="action-button">Create Project</a>
-                <a href="{% url 'project_dashboard' %}" class="action-button">Go to Projects</a>
-            {% endif %}
-            {% if user.profile.department == 'mayor' %}
-                <a href="{% url 'non_infrastructure_project_create' %}" class="action-button">Create Project</a>
-                <a href="{% url 'non_infrastructure_project_dashboard' %}" class="action-button">Go to Projects</a>
-            {% endif %}
+            <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="action-button">Create Program</a>
+            <a href="{% url 'mayor_projects:non_infrastructure_project_dashboard' %}" class="action-button">Go to Programs</a>
             <a href="{% url 'logout' %}" class="action-button secondary">Sign Out</a>
         </div>
     </div>

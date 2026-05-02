@@ -21,7 +21,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('django.contrib.auth.urls')),
     path('', include('apps.system.urls')),
-    path('projects/', include('apps.infrastructure.urls')),
-    path('non-infrastructure/', include('apps.non_infrastructure.urls')),
+    path('projects/', include(('apps.infrastructure.urls', 'infrastructure'), namespace='infrastructure_default')),
+    path('non-infrastructure/', include(('apps.non_infrastructure.urls', 'non_infrastructure'), namespace='non_infrastructure_default')),
+    path('mayor/dashboard/non-infrastructure/',include('apps.non_infrastructure.urls')),
 ]
 

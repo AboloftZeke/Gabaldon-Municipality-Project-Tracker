@@ -52,6 +52,17 @@ class NonInfrastructureProject(models.Model):
     implementing_office = models.CharField(max_length=255, help_text="Office/Agency responsible for implementation")
     category = models.CharField(max_length=50, choices=PROJECT_CATEGORY_CHOICES)
 
+    # Service Details
+    service_description = models.TextField(blank=True, help_text="What service/program is being delivered?")
+    beneficiaries_description = models.TextField(blank=True, help_text="To whom is the service delivered? (e.g., students, farmers, PWD, elderly, etc.)")
+    service_location_details = models.CharField(max_length=255, blank=True, help_text="Specific location/venue where service is delivered")
+    service_period = models.CharField(max_length=255, blank=True, help_text="When is the service delivered? (e.g., weekly, monthly, semester, etc.)")
+    service_time = models.TimeField(null=True, blank=True, help_text="Time of service delivery")
+
+    # Cost & Results
+    budget_cost = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name="Budget/Cost Amount (₱)")
+    results_achieved = models.TextField(blank=True, help_text="What were the results/outcomes achieved? (e.g., number of beneficiaries, skills gained, health improvements, etc.)")
+
     # Funding & Timeline
     source_of_fund = models.CharField(max_length=255, blank=True, help_text="e.g., GAA, PRDP")
     planned_start_date = models.DateField(null=True, blank=True)

@@ -4,6 +4,29 @@
 
 {% block extra_head %}
 <style>
+    .breadcrumb-nav {
+        background: #1d4ed8;
+        color: white;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .breadcrumb-nav a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 180ms ease;
+    }
+
+    .breadcrumb-nav a:hover {
+        color: white;
+    }
+
+    .breadcrumb-nav span {
+        color: rgba(255, 255, 255, 0.7);
+        margin: 0 0.5rem;
+    }
+
     .form-container {
         max-width: 700px;
         margin: 2rem auto;
@@ -120,6 +143,15 @@
 {% endblock %}
 
 {% block content %}
+<!-- Engineering Office Navigation Breadcrumb -->
+{% if request.resolver_match.namespace == 'engineering_projects' %}
+<div class="breadcrumb-nav">
+    <a href="{% url 'engineering_projects:project_list' %}">← Back to Projects</a>
+    <span>/</span>
+    <strong>{{ action }} Project</strong>
+</div>
+{% endif %}
+
 <div class="form-container">
     <div class="form-card">
         <h2>{{ action }} Infrastructure Project</h2>
@@ -275,7 +307,7 @@
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-submit">{{ action }} Project</button>
-                <a href="{% url 'project_list' %}" class="btn btn-cancel">Cancel</a>
+                <a href="{% url 'infrastructure:project_list' %}" class="btn btn-cancel">Cancel</a>
             </div>
         </form>
     </div>

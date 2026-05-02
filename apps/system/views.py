@@ -38,6 +38,7 @@ class AdminRequiredMixin(StaffRequiredMixin):
 class LoginView(View):
     """
     Handle user login with Django's authentication system.
+    Redirects to role-specific dashboard.
     """
     template_name = 'core/login.html'
 
@@ -58,6 +59,16 @@ class LoginView(View):
                     self.template_name,
                     {'error': 'Your account does not have access to this module.'}
                 )
+            # Redirect based on user role
+            if user.is_superuser:
+                return redirect('admin_dashboard')
+            try:
+                if user.profile.department == 'engineer':
+                    return redirect('engineering_dashboard')
+                elif user.profile.department == 'mayor':
+                    return redirect('mayor_dashboard')
+            except:
+                pass
             return redirect('admin_dashboard')
         else:
             return render(request, self.template_name, {'error': 'Invalid credentials'})
@@ -71,15 +82,68 @@ class LogoutView(View):
 
 class AdminDashboardView(StaffRequiredMixin, TemplateView):
     """
-    Admin dashboard - placeholder view.
+    Admin dashboard for system administrators only.
     """
     template_name = 'core/admin_dashboard.html'
+
+    def test_func(self):
+        return self.request.user.is_superuser
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['total_users'] = User.objects.count()
         context['total_admins'] = User.objects.filter(is_superuser=True).count()
         context['total_staff'] = User.objects.filter(is_staff=True, is_superuser=False).count()
+        return context
+
+
+class EngineeringDashboardView(StaffRequiredMixin, TemplateView):
+    """
+    Engineering Office dashboard.
+    """
+    template_name = 'core/engineering_dashboard.html'
+
+    def test_func(self):
+        try:
+            return self.request.user.profile.department == 'engineer'
+        except:
+            return False
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from apps.infrastructure.models import InfrastructureProject
+        
+        user_projects = InfrastructureProject.objects.filter(created_by=self.request.user)
+        context['total_projects'] = user_projects.count()
+        context['awarded_projects'] = user_projects.filter(award_status='awarded').count()
+        context['ongoing_projects'] = user_projects.filter(award_status__in=['ongoing_bidding', 'awarded']).count()
+        context['completed_projects'] = user_projects.filter(award_status='completed').count()
+        
+        return context
+
+
+class MayorDashboardView(StaffRequiredMixin, TemplateView):
+    """
+    Mayor's Office dashboard.
+    """
+    template_name = 'core/mayor_dashboard.html'
+
+    def test_func(self):
+        try:
+            return self.request.user.profile.department == 'mayor'
+        except:
+            return False
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from apps.non_infrastructure.models import NonInfrastructureProject
+        
+        user_projects = NonInfrastructureProject.objects.filter(created_by=self.request.user)
+        context['total_projects'] = user_projects.count()
+        context['planned_projects'] = user_projects.filter(overall_progress_percentage__isnull=True).count()
+        context['in_progress_projects'] = user_projects.exclude(overall_progress_percentage__isnull=True).exclude(overall_progress_percentage=100).count()
+        context['completed_projects'] = user_projects.filter(overall_progress_percentage=100).count()
+        
         return context
 
 

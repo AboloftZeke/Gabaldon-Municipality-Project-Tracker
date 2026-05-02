@@ -140,7 +140,7 @@
 
 {% block content %}
 <div class="project-detail-container">
-    <a href="{% url 'non_infrastructure_project_list' %}" class="btn btn-back">← Back to Projects</a>
+    <a href="{% url 'non_infrastructure:non_infrastructure_project_list' %}" class="btn btn-back">← Back to Projects</a>
 
     <div class="project-detail-header">
         <h2>{{ project.title }}</h2>
@@ -189,6 +189,64 @@
     <div class="project-section">
         <h3>Description</h3>
         <div style="color: #111827; line-height: 1.6; white-space: pre-wrap;">{{ project.description }}</div>
+    </div>
+    {% endif %}
+
+    {% if project.service_description or project.beneficiaries_description or project.service_location_details or project.service_period %}
+    <div class="project-section">
+        <h3>Service Details</h3>
+        <div class="section-content">
+            {% if project.service_description %}
+                <div class="content-item">
+                    <div class="content-label">What Service is Delivered?</div>
+                    <div class="content-value" style="white-space: pre-wrap;">{{ project.service_description }}</div>
+                </div>
+            {% endif %}
+            {% if project.beneficiaries_description %}
+                <div class="content-item">
+                    <div class="content-label">To Whom is Service Delivered?</div>
+                    <div class="content-value" style="white-space: pre-wrap;">{{ project.beneficiaries_description }}</div>
+                </div>
+            {% endif %}
+            {% if project.service_location_details %}
+                <div class="content-item">
+                    <div class="content-label">Where is Service Delivered?</div>
+                    <div class="content-value">{{ project.service_location_details }}</div>
+                </div>
+            {% endif %}
+            {% if project.service_period %}
+                <div class="content-item">
+                    <div class="content-label">When? (Schedule/Frequency)</div>
+                    <div class="content-value">{{ project.service_period }}</div>
+                </div>
+            {% endif %}
+            {% if project.service_time %}
+                <div class="content-item">
+                    <div class="content-label">Time of Service</div>
+                    <div class="content-value">{{ project.service_time|time:"H:i" }}</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if project.budget_cost or project.results_achieved %}
+    <div class="project-section">
+        <h3>Budget & Results</h3>
+        <div class="section-content">
+            {% if project.budget_cost %}
+                <div class="content-item">
+                    <div class="content-label">Budget/Cost</div>
+                    <div class="content-value">₱ {{ project.budget_cost|floatformat:2 }}</div>
+                </div>
+            {% endif %}
+            {% if project.results_achieved %}
+                <div class="content-item" style="grid-column: 1/-1;">
+                    <div class="content-label">Results/Outcomes Achieved</div>
+                    <div class="content-value" style="white-space: pre-wrap;">{{ project.results_achieved }}</div>
+                </div>
+            {% endif %}
+        </div>
     </div>
     {% endif %}
 
@@ -248,8 +306,8 @@
     </div>
 
     <div class="action-buttons">
-        <a href="{% url 'non_infrastructure_project_update' project.pk %}" class="btn btn-edit">Edit Project</a>
-        <a href="{% url 'non_infrastructure_project_delete' project.pk %}" class="btn btn-delete">Delete Project</a>
+        <a href="{% url 'non_infrastructure:non_infrastructure_project_update' project.pk %}" class="btn btn-edit">Edit Project</a>
+        <a href="{% url 'non_infrastructure:non_infrastructure_project_delete' project.pk %}" class="btn btn-delete">Delete Project</a>
     </div>
 </div>
 {% endblock %}
