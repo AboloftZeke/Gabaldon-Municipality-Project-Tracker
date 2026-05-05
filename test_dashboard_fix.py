@@ -5,7 +5,8 @@ import django
 django.setup()
 
 from django.contrib.auth.models import User
-from core.models import InfrastructureProject, UserProfile
+from apps.infrastructure.models import InfrastructureProject
+from apps.system.models import UserProfile
 
 print("=" * 80)
 print("VERIFYING ADMIN DASHBOARD PROJECT VISIBILITY")
@@ -43,7 +44,6 @@ for i in range(3):
         category='road',
         implementing_office='Engineering Office',
         procurement_method='competitive_bidding',
-        publication_status='draft',
         created_by=engineer
     )
     projects.append(p)

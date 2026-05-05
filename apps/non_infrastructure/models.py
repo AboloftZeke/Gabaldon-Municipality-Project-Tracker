@@ -37,14 +37,6 @@ class NonInfrastructureProject(models.Model):
         ('other', 'Other'),
     ]
 
-    PUBLICATION_STATUS_CHOICES = [
-        ('draft', 'Draft'),
-        ('pending_review', 'Pending Review'),
-        ('published', 'Published'),
-        ('needs_revision', 'Needs Revision'),
-        ('rejected', 'Rejected'),
-    ]
-
     # Basic Information
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, help_text="Project description and objectives")
@@ -78,12 +70,6 @@ class NonInfrastructureProject(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='non_infrastructure_projects_updated')
-
-    # Publication & Approval
-    publication_status = models.CharField(max_length=50, choices=PUBLICATION_STATUS_CHOICES, default='draft', help_text="Current publication/approval status")
-    review_comments = models.TextField(blank=True, help_text="Admin comments for revision requests or rejections")
-    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='non_infrastructure_projects_reviewed')
-    reviewed_at = models.DateTimeField(null=True, blank=True, help_text="When the project was reviewed by admin")
 
     class Meta:
         ordering = ['-created_at']
