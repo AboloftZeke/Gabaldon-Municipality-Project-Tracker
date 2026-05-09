@@ -159,7 +159,7 @@
         border-radius: 12px;
         border: 2px solid var(--danger-border);
         padding: 2rem;
-        max-width: 500px;
+        max-width: 600px;
     }
 
     .delete-header {
@@ -225,6 +225,35 @@
     .warning-icon {
         flex-shrink: 0;
         font-size: 1.1rem;
+    }
+
+    .user-details {
+        background: var(--bg-light);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: var(--ink-600);
+    }
+
+    .detail-value {
+        color: var(--ink-900);
     }
 
     .form-actions {
@@ -353,22 +382,48 @@
 
     <div class="delete-confirm-wrapper">
         <div class="delete-header">
-            <div class="delete-icon"></div>
+            <div class="delete-icon">🗑️</div>
             <h3>Delete User Account?</h3>
         </div>
 
-        <div class="user-name-display">
-            {{ object.username }}
+        <div class="user-details">
+            <div class="detail-row">
+                <span class="detail-label">Username</span>
+                <span class="detail-value">{{ object.username }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Email</span>
+                <span class="detail-value">{{ object.email|default:"—" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Name</span>
+                <span class="detail-value">{{ object.first_name }} {{ object.last_name|default:"—" }}</span>
+            </div>
+            {% if object.profile %}
+            <div class="detail-row">
+                <span class="detail-label">Department</span>
+                <span class="detail-value">{{ object.profile.get_department_display }}</span>
+            </div>
+            {% endif %}
+            <div class="detail-row">
+                <span class="detail-label">Status</span>
+                <span class="detail-value">{% if object.is_active %}Active{% else %}Inactive{% endif %}</span>
+            </div>
         </div>
 
         <div class="delete-message">
-            <strong>This action cannot be undone.</strong>
-            The user account will be permanently deleted from the system, including all associated data and access records.
+            <strong>⚠️ This action cannot be undone.</strong>
+            <div style="margin-top: 0.5rem;">The user account will be <strong>permanently deleted</strong> from the system, along with:</div>
+            <ul style="margin: 0.75rem 0 0 1.5rem; padding: 0;">
+                <li>Password change history</li>
+                <li>Account creation and modification records</li>
+                <li>All associated audit logs</li>
+            </ul>
         </div>
 
         <div class="warning-text">
-            <span class="warning-icon"></span>
-            <span>Only delete users if you're certain they should no longer have access to the system.</span>
+            <span class="warning-icon">⚠️</span>
+            <span>Only delete users if you're absolutely certain they should no longer have access to the system. Consider deactivating the account instead if you might need to re-enable it later.</span>
         </div>
 
         <form method="post">

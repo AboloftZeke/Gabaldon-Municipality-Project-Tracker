@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.contrib import messages
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy, reverse
@@ -13,6 +14,7 @@ from django.conf import settings
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from .forms import CustomUserCreationForm, CustomUserChangeForm, UserListFilterForm
+import json
 
 
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -184,44 +186,186 @@ class UserListView(AdminRequiredMixin, ListView):
 
 class UserCreateView(AdminRequiredMixin, CreateView):
     """
-    Create a new user - placeholder view.
+    Create a new user - shows form, then redirects to confirmation.
     """
     model = User
     form_class = CustomUserCreationForm
     template_name = 'core/user_form.html'
-    success_url = reverse_lazy('user_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['action'] = 'Create'
         return context
 
+    def get_initial(self):
+        initial = super().get_initial()
+        form_data = self.request.session.get('user_create_form_data')
+        if form_data:
+            initial.update(form_data)
+        return initial
+
     def form_valid(self, form):
-        response = super().form_valid(form)
-        # Log password creation
-        from .models import PasswordChangeHistory
-        PasswordChangeHistory.objects.create(
-            user=self.object,
-            changed_by=self.request.user,
-            method='creation',
-            notes=f'User created by {self.request.user.username}'
-        )
-        return response
+        self.request.session['user_create_form_data'] = {
+            'username': form.cleaned_data['username'],
+            'email': form.cleaned_data['email'],
+            'first_name': form.cleaned_data['first_name'],
+            'last_name': form.cleaned_data['last_name'],
+            'role': form.cleaned_data['role'],
+            'password1': form.cleaned_data['password1'],
+        }
+        return redirect('user_create_confirm')
 
 
 class UserEditView(AdminRequiredMixin, UpdateView):
     """
-    Edit an existing user - placeholder view.
+    Edit an existing user - shows form, then redirects to confirmation.
     """
     model = User
     form_class = CustomUserChangeForm
     template_name = 'core/user_form.html'
-    success_url = reverse_lazy('user_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['action'] = 'Edit'
         return context
+
+    def get_initial(self):
+        initial = super().get_initial()
+        user = self.get_object()
+        form_data = self.request.session.get(f'user_edit_form_data_{user.pk}')
+        if form_data:
+            initial.update(form_data['new_data'])
+        return initial
+
+    def form_valid(self, form):
+        user = self.get_object()
+        old_data = {
+            'username': user.username,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'is_active': user.is_active,
+        }
+        if hasattr(user, 'profile'):
+            old_role_map = {'admin': 'admin', 'engineer': 'engineering', 'mayor': 'mayors'}
+            old_data['role'] = old_role_map.get(user.profile.department, 'engineering')
+
+        new_data = {
+            'username': form.cleaned_data['username'],
+            'email': form.cleaned_data['email'],
+            'first_name': form.cleaned_data['first_name'],
+            'last_name': form.cleaned_data['last_name'],
+            'is_active': form.cleaned_data['is_active'],
+            'role': form.cleaned_data['role'],
+        }
+
+        self.request.session[f'user_edit_form_data_{user.pk}'] = {
+            'old_data': old_data,
+            'new_data': new_data,
+        }
+        return redirect('user_edit_confirm', pk=user.pk)
+
+
+class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
+    """
+    Confirmation page for user creation - displays summary and saves on final confirmation.
+    """
+    template_name = 'core/user_create_confirm.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form_data = self.request.session.get('user_create_form_data')
+
+        if not form_data:
+            context['error'] = 'Session expired. Please try again.'
+            return context
+
+        context['form_data'] = form_data
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form_data = request.session.get('user_create_form_data')
+
+        if not form_data:
+            messages.error(request, 'Session expired. Please try again.')
+            return redirect('user_create')
+
+        try:
+            form = CustomUserCreationForm(form_data)
+            if form.is_valid():
+                user = form.save(commit=True)
+
+                from .models import PasswordChangeHistory
+                PasswordChangeHistory.objects.create(
+                    user=user,
+                    changed_by=request.user,
+                    method='creation',
+                    notes=f'User created by {request.user.username}'
+                )
+
+                del request.session['user_create_form_data']
+                messages.success(request, f"User '{user.username}' created successfully.")
+                return redirect('user_list')
+            else:
+                request.session['user_create_form_data'] = form_data
+                messages.error(request, 'Validation failed. Please check your input.')
+                return redirect('user_create')
+        except Exception as e:
+            messages.error(request, f'Error creating user: {str(e)}')
+            return redirect('user_create')
+
+
+class UserEditConfirmView(AdminRequiredMixin, TemplateView):
+    """
+    Confirmation page for user editing - displays old/new comparison and saves on final confirmation.
+    """
+    template_name = 'core/user_edit_confirm.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        pk = kwargs.get('pk')
+        form_data = self.request.session.get(f'user_edit_form_data_{pk}')
+
+        if not form_data:
+            context['error'] = 'Session expired. Please try again.'
+            return context
+
+        context['form_data'] = form_data
+        context['user_pk'] = pk
+
+        user = User.objects.get(pk=pk)
+        context['user'] = user
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        form_data = request.session.get(f'user_edit_form_data_{pk}')
+
+        if not form_data:
+            messages.error(request, 'Session expired. Please try again.')
+            return redirect('user_edit', pk=pk)
+
+        try:
+            user = User.objects.get(pk=pk)
+
+            new_data = form_data['new_data']
+            form = CustomUserChangeForm(new_data, instance=user)
+
+            if form.is_valid():
+                form.save(commit=True)
+                del request.session[f'user_edit_form_data_{pk}']
+                messages.success(request, f"User '{user.username}' updated successfully.")
+                return redirect('user_list')
+            else:
+                messages.error(request, 'Validation failed. Please check your input.')
+                return redirect('user_edit', pk=pk)
+        except User.DoesNotExist:
+            messages.error(request, 'User not found.')
+            return redirect('user_list')
+        except Exception as e:
+            messages.error(request, f'Error updating user: {str(e)}')
+            return redirect('user_edit', pk=pk)
 
 
 class UserDeleteView(AdminRequiredMixin, DeleteView):
@@ -231,6 +375,13 @@ class UserDeleteView(AdminRequiredMixin, DeleteView):
     model = User
     template_name = 'core/user_confirm_delete.html'
     success_url = reverse_lazy('user_list')
+
+    def delete(self, request, *args, **kwargs):
+        user = self.get_object()
+        username = user.username
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, f"User '{username}' deleted successfully.")
+        return response
 
 
 class UserPasswordResetInitiateView(AdminRequiredMixin, DetailView):

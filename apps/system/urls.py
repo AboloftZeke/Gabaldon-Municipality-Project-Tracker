@@ -23,7 +23,9 @@ urlpatterns = [
     # User management (admin only)
     path('users/', views.UserListView.as_view(), name='user_list'),
     path('users/create/', views.UserCreateView.as_view(), name='user_create'),
+    path('users/create/confirm/', views.UserCreateConfirmView.as_view(), name='user_create_confirm'),
     path('users/<int:pk>/edit/', views.UserEditView.as_view(), name='user_edit'),
+    path('users/<int:pk>/edit/confirm/', views.UserEditConfirmView.as_view(), name='user_edit_confirm'),
     path('users/<int:pk>/delete/', views.UserDeleteView.as_view(), name='user_delete'),
     path('users/<int:pk>/reset-password/', views.UserPasswordResetInitiateView.as_view(), name='user_initiate_password_reset'),
     path('users/<int:pk>/password-history/', views.UserPasswordHistoryView.as_view(), name='user_password_history'),
