@@ -291,7 +291,11 @@ class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
             return redirect('user_create')
 
         try:
-            form = CustomUserCreationForm(form_data)
+            # The confirmation step reuses the original form data, so mirror the
+            # password into password2 to satisfy the form's validation on submit.
+            confirm_data = form_data.copy()
+            confirm_data.setdefault('password2', confirm_data.get('password1', ''))
+            form = CustomUserCreationForm(confirm_data)
             if form.is_valid():
                 user = form.save(commit=True)
 
