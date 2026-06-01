@@ -115,7 +115,7 @@ class EngineeringDashboardView(StaffRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         from apps.infrastructure.models import InfrastructureProject
         
-        user_projects = InfrastructureProject.objects.filter(created_by=self.request.user)
+        user_projects = InfrastructureProject.objects.all()
         context['total_projects'] = user_projects.count()
         context['awarded_projects'] = user_projects.filter(award_status='awarded').count()
         context['ongoing_projects'] = user_projects.filter(award_status__in=['ongoing_bidding', 'awarded']).count()
@@ -140,7 +140,7 @@ class MayorDashboardView(StaffRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         from apps.non_infrastructure.models import NonInfrastructureProject
         
-        user_projects = NonInfrastructureProject.objects.filter(created_by=self.request.user)
+        user_projects = NonInfrastructureProject.objects.all()
         context['total_projects'] = user_projects.count()
         context['planned_projects'] = user_projects.filter(overall_progress_percentage__isnull=True).count()
         context['in_progress_projects'] = user_projects.exclude(overall_progress_percentage__isnull=True).exclude(overall_progress_percentage=100).count()

@@ -83,11 +83,8 @@ class NonInfrastructureProjectDashboardView(MayorsOfficeRequiredMixin, TemplateV
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Admins see all projects; Mayor's Office see only their own
-        if self.request.user.is_superuser:
-            user_projects = NonInfrastructureProject.objects.all()
-        else:
-            user_projects = NonInfrastructureProject.objects.filter(created_by=self.request.user)
+        # All Mayor's Office users see the same project pool.
+        user_projects = NonInfrastructureProject.objects.all()
 
         context['total_projects'] = user_projects.count()
 
@@ -108,10 +105,7 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            queryset = NonInfrastructureProject.objects.all()
-        else:
-            queryset = NonInfrastructureProject.objects.filter(created_by=self.request.user)
+        queryset = NonInfrastructureProject.objects.all()
 
         # Filter by location
         location = self.request.GET.get('location', '').strip()
@@ -167,9 +161,7 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
     context_object_name = 'project'
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            return NonInfrastructureProject.objects.all()
-        return NonInfrastructureProject.objects.filter(created_by=self.request.user)
+        return NonInfrastructureProject.objects.all()
 
 
 class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
@@ -191,9 +183,7 @@ class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
             return reverse_lazy('non_infrastructure_project_list')
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            return NonInfrastructureProject.objects.all()
-        return NonInfrastructureProject.objects.filter(created_by=self.request.user)
+        return NonInfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -223,9 +213,7 @@ class NonInfrastructureProjectDeleteView(MayorsOfficeEditMixin, DeleteView):
             return reverse_lazy('non_infrastructure_project_list')
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            return NonInfrastructureProject.objects.all()
-        return NonInfrastructureProject.objects.filter(created_by=self.request.user)
+        return NonInfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

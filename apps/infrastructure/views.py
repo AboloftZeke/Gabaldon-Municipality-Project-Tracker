@@ -67,11 +67,8 @@ class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Admins see all projects; engineers see only their own
-        if self.request.user.is_superuser:
-            user_projects = InfrastructureProject.objects.all()
-        else:
-            user_projects = InfrastructureProject.objects.filter(created_by=self.request.user)
+        # All engineering office users see the same project pool.
+        user_projects = InfrastructureProject.objects.all()
 
         context['total_projects'] = user_projects.count()
         context['awarded_projects'] = user_projects.filter(award_status='awarded').count()
@@ -95,10 +92,7 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            queryset = InfrastructureProject.objects.all()
-        else:
-            queryset = InfrastructureProject.objects.filter(created_by=self.request.user)
+        queryset = InfrastructureProject.objects.all()
 
         # Filter by location
         location = self.request.GET.get('location', '').strip()
@@ -160,9 +154,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
     context_object_name = 'project'
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            return InfrastructureProject.objects.all()
-        return InfrastructureProject.objects.filter(created_by=self.request.user)
+        return InfrastructureProject.objects.all()
 
 
 class ProjectEditView(EngineerOnlyMixin, UpdateView):
@@ -184,9 +176,7 @@ class ProjectEditView(EngineerOnlyMixin, UpdateView):
             return reverse_lazy('project_list')
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            return InfrastructureProject.objects.all()
-        return InfrastructureProject.objects.filter(created_by=self.request.user)
+        return InfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -216,9 +206,7 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
             return reverse_lazy('project_list')
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            return InfrastructureProject.objects.all()
-        return InfrastructureProject.objects.filter(created_by=self.request.user)
+        return InfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
