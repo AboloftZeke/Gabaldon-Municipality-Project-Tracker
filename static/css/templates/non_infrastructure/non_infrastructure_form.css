@@ -1,0 +1,135 @@
+.breadcrumb-nav {
+        background: #7c3aed;
+        color: white;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .breadcrumb-nav a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 180ms ease;
+    }
+
+    .breadcrumb-nav a:hover {
+        color: white;
+    }
+
+    .breadcrumb-nav span {
+        color: rgba(255, 255, 255, 0.7);
+        margin: 0 0.5rem;
+    }
+
+    .form-container {
+        max-width: 700px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .form-card {
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        padding: 2rem;
+    }
+
+    .form-card h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 0 1.5rem 0;
+        color: #111827;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #111827;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 0.95rem;
+        font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #7c3aed;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 180ms ease;
+        flex: 1;
+    }
+
+    .btn-submit {
+        background: #7c3aed;
+        color: white;
+    }
+
+    .btn-submit:hover {
+        background: #6d28d9;
+    }
+
+    .btn-cancel {
+        background: #e5e7eb;
+        color: #111827;
+    }
+
+    .btn-cancel:hover {
+        background: #d1d5db;
+    }
+
+    .error-message {
+        background: #fef2f2;
+        border: 1px solid #fca5a5;
+        color: #b91c1c;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .fieldset {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .fieldset legend {
+        font-weight: 700;
+        padding: 0 0.5rem;
+        color: #111827;
+    }

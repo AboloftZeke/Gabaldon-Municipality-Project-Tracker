@@ -1,0 +1,109 @@
+footer {
+        background: #1B4326;
+        color: #ffffff;
+        padding: 3rem clamp(1.5rem, 5vw, 4rem) 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .footer-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .footer-content {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2rem;
+        margin-bottom: 2rem;
+        padding: 0 clamp(1.5rem, 5vw, 4rem);
+    }
+
+    .footer-section h3 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 1.25rem;
+        color: #ffffff;
+    }
+
+    .footer-section ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .footer-section li {
+        margin-bottom: 0.75rem;
+    }
+
+    .footer-section a {
+        color: rgba(255, 255, 255, 0.85);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: color 180ms ease;
+    }
+
+    .footer-section a:hover {
+        color: #ffffff;
+    }
+
+    .footer-middle {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+        padding: 0 clamp(1.5rem, 5vw, 4rem);
+    }
+
+    .footer-seal {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+    }
+
+    .footer-bottom {
+        text-align: center;
+        padding: 2rem clamp(1.5rem, 5vw, 4rem);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+    }
+
+    .footer-accent {
+        height: 4px;
+        background: linear-gradient(90deg, #8b5cf6, #6366f1, #8b5cf6);
+    }
+
+    @media (max-width: 1024px) {
+        .footer-content {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+    }
+
+    @media (max-width: 640px) {
+        footer {
+            padding: 2rem clamp(1rem, 5vw, 2rem) 0;
+        }
+
+        .footer-content {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding: 0 clamp(1rem, 5vw, 2rem);
+        }
+
+        .footer-bottom {
+            padding: 1.5rem clamp(1rem, 5vw, 2rem);
+        }
+
+        .footer-middle {
+            padding: 0 clamp(1rem, 5vw, 2rem);
+        }
+
+        .footer-seal {
+            width: 70px;
+            height: 70px;
+        }
+    }
