@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path('', lambda request: redirect('login')),
+    path('dashboard/', views.PublicDashboardView.as_view(), name='public_dashboard'),
 
     path('login/', views.LoginView.as_view(), name='login'),
     path('logout/', views.LogoutView.as_view(), name='logout'),

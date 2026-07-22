@@ -1,88 +1,61 @@
-let currentTab = "infra";
-let currentFilter = "all";
-let lastFocusedElement = null;
+(function () {
+  const locationFilter = document.getElementById("location-filter");
+  const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
+  const statusButtons = Array.from(document.querySelectorAll(".status-btn"));
+  const visibleCount = document.getElementById("visible-count");
+  const rows = Array.from(document.querySelectorAll(".project-row"));
 
-function scrollToRegistry() {
-  document.getElementById("project-registry").scrollIntoView({ behavior: "smooth", block: "start" });
-}
+  let currentCategory = "all";
+  let currentStatus = "all";
 
-function switchTab(tab) {
-  currentTab = tab;
-  ["infra", "noninfra"].forEach(name => {
-    const button = document.getElementById(`tab-${name}`);
-    button.setAttribute("aria-selected", String(name === tab));
-  });
-  applyFilters();
-}
-
-function setFilter(status) {
-  currentFilter = status;
-  document.querySelectorAll(".filter-button").forEach(button => {
-    button.setAttribute("aria-pressed", String(button.dataset.filter === status));
-  });
-  applyFilters();
-}
-
-function applyFilters() {
-  const locVal = document.getElementById("location-select").value;
-  const records = document.querySelectorAll(".project-row, .mobile-project");
-  const visibleIds = new Set();
-
-  records.forEach(record => {
-    const categoryMatches = record.dataset.category === currentTab;
-    const statusMatches = currentFilter === "all" || record.dataset.status === currentFilter;
-
-    let locMatches = true;
-    if (locVal !== "all") {
-      locMatches = record.dataset.search.includes(locVal);
-      if (locVal === "school") {
-        locMatches = record.dataset.search.includes("school") || record.dataset.search.includes("deped") || record.dataset.search.includes("education");
-      } else if (locVal === "remote") {
-        locMatches = record.dataset.search.includes("remote") || record.dataset.search.includes("health");
-      }
+  if (!rows.length) {
+    if (visibleCount) {
+      visibleCount.textContent = "0";
     }
-
-    const shouldShow = categoryMatches && statusMatches && locMatches;
-    record.classList.toggle("hidden", !shouldShow);
-    if (shouldShow) visibleIds.add(record.dataset.record);
-  });
-
-  document.getElementById("visible-count").textContent = String(visibleIds.size);
-  document.getElementById("empty-state").classList.toggle("hidden", visibleIds.size !== 0);
-}
-
-function openDetails(id) {
-  lastFocusedElement = document.activeElement;
-  document.querySelectorAll(".detail-view").forEach(view => {
-    view.classList.toggle("hidden", view.dataset.detail !== id);
-  });
-  const overlay = document.getElementById("detail-overlay");
-  overlay.classList.remove("hidden");
-  document.body.style.overflow = "hidden";
-  document.querySelector('[data-template-id="detail-close-button"]').focus();
-}
-
-function closeDetails() {
-  document.getElementById("detail-overlay").classList.add("hidden");
-  document.body.style.overflow = "";
-  if (lastFocusedElement) lastFocusedElement.focus();
-}
-
-document.getElementById("filter-form").addEventListener("submit", event => event.preventDefault());
-document.getElementById("location-select").addEventListener("change", applyFilters);
-document.querySelectorAll(".filter-button").forEach(button => {
-  button.addEventListener("click", () => setFilter(button.dataset.filter));
-});
-
-document.getElementById("detail-overlay").addEventListener("click", event => {
-  if (event.target.id === "detail-overlay") closeDetails();
-});
-
-document.addEventListener("keydown", event => {
-  if (event.key === "Escape" && !document.getElementById("detail-overlay").classList.contains("hidden")) {
-    closeDetails();
+    return;
   }
-});
 
-lucide.createIcons();
-applyFilters();
+  function applyFilters() {
+    const location = locationFilter ? locationFilter.value : "all";
+    let shown = 0;
+
+    rows.forEach((row) => {
+      const matchesCategory = currentCategory === "all" || row.dataset.category === currentCategory;
+      const matchesStatus = currentStatus === "all" || row.dataset.status === currentStatus;
+      const matchesLocation = location === "all" || row.dataset.location === location;
+      const show = matchesCategory && matchesStatus && matchesLocation;
+      row.classList.toggle("hidden-row", !show);
+      if (show) {
+        shown += 1;
+      }
+    });
+
+    if (visibleCount) {
+      visibleCount.textContent = String(shown);
+    }
+  }
+
+  tabButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      currentCategory = button.dataset.category || "all";
+      tabButtons.forEach((item) => item.classList.remove("is-active"));
+      button.classList.add("is-active");
+      applyFilters();
+    });
+  });
+
+  statusButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      currentStatus = button.dataset.status || "all";
+      statusButtons.forEach((item) => item.classList.remove("is-active"));
+      button.classList.add("is-active");
+      applyFilters();
+    });
+  });
+
+  if (locationFilter) {
+    locationFilter.addEventListener("change", applyFilters);
+  }
+
+  applyFilters();
+})();

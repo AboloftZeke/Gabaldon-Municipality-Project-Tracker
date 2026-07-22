@@ -1,574 +1,185 @@
 {% load static %}
 <!doctype html>
-<html lang="en"><head><script>window["__codeletBootstrap__"]=JSON.parse('{"A":"A","B":"20260722-05-f3252b3"}');</script><script src="/_sdk/e358eac22bd01364.telemetry_sdk.js" integrity="sha512-KPxp3rw4K8Nu9ceWJc3gyM7srgaZxiFWOVbyu260EYzzAqdz10mfo5xyXrCx+wEKtGo77JbtmwXvFLbwrGzwvw=="></script>
+<html lang="en">
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gabaldon Transparency Portal</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700;900&amp;family=Libre+Franklin:wght@700;800&amp;display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <title>Gabaldon Transparency Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}">
-  <script src="/_sdk/935a53bc2e11fb8d.data_sdk.js" type="text/javascript" integrity="sha512-qr2oyPnEys1WebcOABaRh6hG77r5PWpqeWW6JTKbRJqly/INsfBi31CVNlTmHqjgeLpkVmmHZJUdxSx/32tOFQ=="></script>
-  <script src="/_sdk/7831c9b82769a23f.resizing_sdk.js" type="text/javascript" integrity="sha512-8T/qhF3yB5dtqHof6yvY2492zFsme1nYV1+FuXfYvPz63uo2L30fnKiOabmH0Sl3qhplMLgxjytDR8IvycRwKQ=="></script>
- </head>
- <body data-template-id="__page-root" class="w-full min-h-screen" style="background: rgb(245, 247, 241);">
-  <header>
-   <div data-template-id="utility-bar" class="canva-banner w-full border-b border-white/10" style="background: rgb(13, 47, 32);">
-    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs sm:px-6">
-     <p data-template-id="government-label" class="canva-text font-semibold uppercase tracking-[0.14em]" style="color: rgb(216, 242, 223); font-weight: 600; font-style: normal; font-size: 15px;">Republic of the Philippines · Municipality of Gabaldon</p>
-     <div class="flex flex-wrap items-center gap-4"><span data-template-id="last-updated-label" class="canva-text" style="color: rgb(216, 242, 223); font-weight: 400; font-style: normal; font-size: 15px;">Project data updated July 2026</span> <span data-template-id="public-info-label" class="canva-tag rounded-sm px-2 py-1 font-bold uppercase tracking-wide" style="background: rgb(184, 213, 52); color: rgb(22, 51, 31); font-weight: 700; font-style: normal; font-size: 15px;">Public Information</span>
-     </div>
-    </div>
-   </div>
-   <nav data-template-id="masthead" class="canva-header w-full border-b-4 border-[#b8d534]" aria-label="Main navigation" style="background: rgb(20, 83, 45);">
-    <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-     <div class="flex min-w-0 items-center gap-3 sm:gap-4"><img data-template-id="hero-seal" class="canva-image h-14 w-14 shrink-0 rounded-full border-2 border-white/40 object-cover sm:h-16 sm:w-16" loading="lazy" src="canva://MAHOnVq8ja4/1" alt="Municipality of Gabaldon official seal">
-      <div class="min-w-0">
-       <p data-template-id="agency-name" class="canva-text truncate text-xs font-bold uppercase tracking-[0.17em]" style="color: rgb(189, 233, 201); font-weight: 700; font-style: normal; font-size: 15px;">Municipality of Gabaldon</p>
-       <p data-template-id="masthead-title" class="canva-text display-font leading-tight" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 24px;">Transparency Portal</p>
+</head>
+<body>
+  <header class="hero-shell">
+    <div class="hero-overlay"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <div class="hero-kicker">Open Projects - Accountable Governance</div>
+        <h1>Building Gabaldon in Full Public View</h1>
+        <p>Explore local development projects, track public funds, and see how we are building a better home for every citizen of Gabaldon.</p>
       </div>
-     </div>
-     <div class="hidden items-center gap-2 md:flex"><button data-template-id="nav-dashboard" type="button" class="canva-button rounded-md px-4 py-2 font-bold" onclick="scrollToRegistry()" style="background: rgb(184, 213, 52); color: rgb(22, 51, 31); font-weight: 700; font-style: normal; font-size: 15px;">Dashboard</button> <button data-template-id="nav-projects" type="button" class="canva-button rounded-md border px-4 py-2 font-bold" onclick="scrollToRegistry()" style="background: transparent; color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">Project Registry</button>
-     </div>
+      <aside class="hero-summary-card">
+        <p class="summary-eyebrow">Municipal Portfolio Snapshot</p>
+        <div class="summary-grid">
+          <div>
+            <strong>{{ total_projects }}</strong>
+            <span>Total Projects</span>
+          </div>
+          <div>
+            <strong>P{{ total_budget|floatformat:2 }}</strong>
+            <span>Total Investment</span>
+          </div>
+          <div>
+            <strong>{{ completed_projects }}</strong>
+            <span>Completed</span>
+          </div>
+          <div>
+            <strong>{{ ongoing_projects }}</strong>
+            <span>Ongoing</span>
+          </div>
+        </div>
+      </aside>
     </div>
-   </nav>
-   <section class="relative isolate w-full overflow-hidden"><img data-template-id="hero-image" class="canva-image absolute inset-0 -z-20 h-full w-full object-cover" loading="lazy" src="https://images.pexels.com/photos/38336860/pexels-photo-38336860.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1280" alt="Wide-angle shot of a striking civic center with modern architecture and an expansive plaza">
-    <div class="absolute inset-0 -z-10 bg-gradient-to-r from-[#092b1c]/95 via-[#145334]/91 to-[#0d3624]/75"></div>
-    <div class="hero-grid absolute inset-0 -z-10"></div>
-    <div class="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 md:grid-cols-[1.35fr_.65fr] md:py-20">
-     <div class="max-w-3xl reveal">
-      <div data-template-id="hero-kicker" class="canva-tag mb-4 inline-flex items-center gap-2 rounded-sm px-3 py-1.5 font-bold uppercase tracking-[0.16em]" style="background: rgb(184, 213, 52); color: rgb(22, 51, 31); font-weight: 700; font-style: normal; font-size: 15px;">Open Projects · Accountable Governance</div>
-      <h1 data-template-id="portal-title" class="canva-text display-font max-w-3xl uppercase leading-[1.04]" style="color: rgb(255, 255, 255); font-weight: 800; font-style: normal; font-size: 44px; line-height: 1.04;">Building Gabaldon in Full Public View</h1>
-      <p data-template-id="portal-subtitle" class="canva-text mt-5 max-w-2xl leading-relaxed" style="color: rgb(214, 243, 221); font-weight: 400; font-style: normal; font-size: 18px; line-height: 1.55;">Explore local development projects, track public funds, and see how we are building a better home for every citizen of Gabaldon.</p><button data-template-id="hero-cta" type="button" class="canva-button mt-7 inline-flex items-center gap-2 rounded-md px-5 py-3 font-bold shadow-lg transition hover:-translate-y-0.5" onclick="scrollToRegistry()" style="background: rgb(184, 213, 52); color: rgb(22, 51, 31); font-weight: 700; font-style: normal; font-size: 15px;">Explore the Project Registry</button>
-     </div>
-     <aside data-template-id="hero-summary-card" class="canva-panel reveal reveal-delay-1 self-end rounded-sm border-l-4 p-5 backdrop-blur-sm" style="background: rgba(9, 38, 24, 0.78);">
-      <p data-template-id="hero-summary-eyebrow" class="canva-text text-xs font-bold uppercase tracking-[0.16em]" style="color: rgb(184, 213, 52); font-weight: 700; font-style: normal; font-size: 15px;">Municipal Portfolio Snapshot</p>
-      <div class="mt-4 grid grid-cols-2 gap-4">
-       <div><strong class="display-font block text-3xl text-white">6</strong> <span data-template-id="hero-total-label" class="canva-text text-sm" style="color: rgb(214, 243, 221); font-weight: 400; font-style: normal; font-size: 15px;">Total Projects</span>
-       </div>
-       <div><strong class="display-font block text-3xl text-white">₱16.35M</strong> <span data-template-id="hero-investment-label" class="canva-text text-sm" style="color: rgb(214, 243, 221); font-weight: 400; font-style: normal; font-size: 15px;">Total Investment</span>
-       </div>
-       <div><strong class="display-font block text-3xl text-white">4</strong> <span data-template-id="hero-completed-label" class="canva-text text-sm" style="color: rgb(214, 243, 221); font-weight: 400; font-style: normal; font-size: 15px;">Completed</span>
-       </div>
-       <div><strong class="display-font block text-3xl text-white">2</strong> <span data-template-id="hero-ongoing-label" class="canva-text text-sm" style="color: rgb(214, 243, 221); font-weight: 400; font-style: normal; font-size: 15px;">Ongoing</span>
-       </div>
+    <div class="hero-topbar">
+      <div class="hero-brand">
+        <img src="{% static 'images/gabaldon-seal.png' %}" alt="Gabaldon Municipality Seal" class="site-seal">
+        <div>
+          <p>Republic of the Philippines</p>
+          <h2>Municipality of Gabaldon</h2>
+        </div>
       </div>
-     </aside>
+      <a href="{% url 'login' %}" class="btn-login">Login</a>
     </div>
-   </section>
   </header>
-  <main class="w-full">
-   <section class="relative z-10 mx-auto -mt-6 max-w-7xl px-4 sm:px-6" aria-labelledby="overview-heading">
-    <h2 id="overview-heading" data-template-id="overview-heading" class="canva-text sr-only" style="font-weight: 400; font-style: normal; font-size: 23px;">Project overview</h2>
-    <div class="grid grid-cols-2 gap-3 lg:grid-cols-5">
-     <article data-template-id="metric-total-card" class="canva-card metric-card reveal rounded-sm border-t-4 p-4 institutional-shadow" style="background: rgb(255, 255, 255);">
-      <div class="flex items-center justify-between gap-3"><span class="rounded-full bg-green-50 p-2 text-green-800"><i data-lucide="folder-kanban" class="h-5 w-5" aria-hidden="true"></i></span> <strong class="display-font text-3xl text-[#123d2a]">6</strong>
-      </div>
-      <p data-template-id="metric-total-label" class="canva-text mt-3 text-sm font-bold uppercase tracking-wide" style="color: rgb(83, 102, 90); font-weight: 700; font-style: normal; font-size: 15px;">Total Projects</p>
-     </article>
-     <article data-template-id="metric-budget-card" class="canva-card metric-card reveal reveal-delay-1 rounded-sm border-t-4 p-4 institutional-shadow" style="background: rgb(255, 255, 255);">
-      <div class="flex items-center justify-between gap-3"><span class="rounded-full bg-blue-50 p-2 text-blue-800"><i data-lucide="philippine-peso" class="h-5 w-5" aria-hidden="true"></i></span> <strong class="display-font text-2xl text-[#123d2a]">₱16.35M</strong>
-      </div>
-      <p data-template-id="metric-budget-label" class="canva-text mt-3 text-sm font-bold uppercase tracking-wide" style="color: rgb(83, 102, 90); font-weight: 700; font-style: normal; font-size: 15px;">Programmed Budget</p>
-     </article>
-     <article data-template-id="metric-completed-card" class="canva-card metric-card reveal reveal-delay-2 rounded-sm border-t-4 p-4 institutional-shadow" style="background: rgb(255, 255, 255);">
-      <div class="flex items-center justify-between gap-3"><span class="rounded-full bg-emerald-50 p-2 text-emerald-700"><i data-lucide="badge-check" class="h-5 w-5" aria-hidden="true"></i></span> <strong class="display-font text-3xl text-[#123d2a]">4</strong>
-      </div>
-      <p data-template-id="metric-completed-label" class="canva-text mt-3 text-sm font-bold uppercase tracking-wide" style="color: rgb(83, 102, 90); font-weight: 700; font-style: normal; font-size: 15px;">Completed</p>
-     </article>
-     <article data-template-id="metric-ongoing-card" class="canva-card metric-card reveal reveal-delay-2 rounded-sm border-t-4 p-4 institutional-shadow" style="background: rgb(255, 255, 255);">
-      <div class="flex items-center justify-between gap-3"><span class="rounded-full bg-amber-50 p-2 text-amber-700"><i data-lucide="loader-circle" class="h-5 w-5" aria-hidden="true"></i></span> <strong class="display-font text-3xl text-[#123d2a]">2</strong>
-      </div>
-      <p data-template-id="metric-ongoing-label" class="canva-text mt-3 text-sm font-bold uppercase tracking-wide" style="color: rgb(83, 102, 90); font-weight: 700; font-style: normal; font-size: 15px;">Ongoing</p>
-     </article>
-     <article data-template-id="metric-progress-card" class="canva-card metric-card reveal reveal-delay-3 col-span-2 rounded-sm border-t-4 p-4 institutional-shadow lg:col-span-1" style="background: rgb(255, 255, 255);">
-      <div class="flex items-center justify-between gap-3"><span class="rounded-full bg-lime-50 p-2 text-lime-800"><i data-lucide="chart-no-axes-column-increasing" class="h-5 w-5" aria-hidden="true"></i></span> <strong class="display-font text-3xl text-[#123d2a]">84%</strong>
-      </div>
-      <p data-template-id="metric-progress-label" class="canva-text mt-3 text-sm font-bold uppercase tracking-wide" style="color: rgb(83, 102, 90); font-weight: 700; font-style: normal; font-size: 15px;">Portfolio Progress</p>
-     </article>
-    </div>
-   </section>
-   <section id="project-registry" class="mx-auto max-w-7xl px-4 py-12 sm:px-6" aria-labelledby="registry-title">
-    <div class="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-     <div>
-      <p data-template-id="registry-eyebrow" class="canva-text text-xs font-bold uppercase tracking-[0.2em]" style="color: rgb(47, 143, 85); font-weight: 700; font-style: normal; font-size: 15px;">Project Monitoring</p>
-      <h2 id="registry-title" data-template-id="registry-title" class="canva-text display-font mt-1" style="color: rgb(18, 61, 42); font-weight: 800; font-style: normal; font-size: 23px;">Municipal Project Registry</h2>
-      <p data-template-id="registry-description" class="canva-text mt-2 max-w-2xl" style="color: rgb(83, 102, 90); font-weight: 400; font-style: normal; font-size: 15px; line-height: 1.5;">Review current projects by category and implementation status. Select a record for its scope, schedule, and responsible office.</p>
-     </div>
-     <div data-template-id="records-chip" class="canva-tag inline-flex w-fit items-center gap-2 rounded-sm px-3 py-2 font-bold" style="background: rgb(228, 237, 223); color: rgb(35, 74, 49);"><i data-lucide="database" class="h-4 w-4" aria-hidden="true"></i> <span id="visible-count">3</span> <span data-template-id="records-chip-label" class="canva-text" style="color: rgb(35, 74, 49); font-weight: 700; font-style: normal; font-size: 15px;">records shown</span>
-     </div>
-    </div>
-    <div data-template-id="registry-panel" class="canva-panel overflow-hidden rounded-sm border institutional-shadow" style="background: rgb(255, 255, 255);">
-     <div class="border-b border-[#dbe4dc] bg-white p-4 sm:p-5">
-      <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-       <div class="inline-flex w-full rounded-md bg-[#edf3ed] p-1 sm:w-auto" role="tablist" aria-label="Project category"><button id="tab-infra" class="tab-button flex-1 rounded px-4 py-2.5 font-bold transition sm:flex-none" type="button" role="tab" aria-selected="true" aria-controls="infra-records" onclick="switchTab('infra')"> <span data-template-id="tab-infra-label" class="canva-text" style="color: rgb(49, 81, 62); font-weight: 700; font-style: normal; font-size: 15px;">Infrastructure</span> </button> <button id="tab-noninfra" class="tab-button flex-1 rounded px-4 py-2.5 font-bold text-[#31513e] transition sm:flex-none" type="button" role="tab" aria-selected="false" aria-controls="noninfra-records" onclick="switchTab('noninfra')"> <span data-template-id="tab-noninfra-label" class="canva-text" style="color: rgb(49, 81, 62); font-weight: 700; font-style: normal; font-size: 15px;">Non-Infrastructure</span> </button>
-       </div>
-       <form id="filter-form" class="flex w-full flex-col gap-3 sm:flex-row xl:max-w-2xl" role="search">
-        <div class="relative min-w-0 flex-1"><label data-template-id="location-filter-label" class="canva-text sr-only" for="location-select" style="font-weight: 400; font-style: normal; font-size: 15px;">Filter by location</label> <i data-lucide="map-pin" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#56705f]" aria-hidden="true"></i> <select id="location-select" data-template-id="location-select" class="canva-input w-full rounded-md border border-[#b9c8bc] bg-white py-2.5 pl-10 pr-8 text-[#15241c] appearance-none cursor-pointer" style="color: rgb(21, 36, 28);"> <option value="all" data-template-id="opt-all-locations" style="font-weight: 400; font-style: normal; font-size: 15px;">All Locations</option> <option value="cuyambay" data-template-id="opt-cuyambay" style="font-weight: 400; font-style: normal; font-size: 15px;">Brgy. Cuyambay</option> <option value="calabasa" data-template-id="opt-calabasa" style="font-weight: 400; font-style: normal; font-size: 15px;">Brgy. Calabasa</option> <option value="school" data-template-id="opt-school" style="font-weight: 400; font-style: normal; font-size: 15px;">Central School &amp; Education</option> <option value="five" data-template-id="opt-five" style="font-weight: 400; font-style: normal; font-size: 15px;">Five Barangays</option> <option value="remote" data-template-id="opt-remote" style="font-weight: 400; font-style: normal; font-size: 15px;">Remote Barangays</option> </select>
-         <div class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#56705f]"><i data-lucide="chevron-down" class="h-4 w-4" aria-hidden="true"></i>
-         </div>
-        </div>
-        <div class="flex gap-2" aria-label="Filter by status"><button data-filter="all" data-template-id="filter-all" class="canva-button filter-button flex-1 rounded-md border px-3 py-2 font-bold sm:flex-none" type="button" aria-pressed="true" style="background: rgb(184, 213, 52); color: rgb(22, 51, 31); font-weight: 700; font-style: normal; font-size: 15px;">All</button> <button data-filter="ongoing" data-template-id="filter-ongoing" class="canva-button filter-button flex-1 rounded-md border px-3 py-2 font-bold sm:flex-none" type="button" aria-pressed="false" style="background: rgb(255, 255, 255); color: rgb(49, 81, 62); font-weight: 700; font-style: normal; font-size: 15px;">Ongoing</button> <button data-filter="completed" data-template-id="filter-completed" class="canva-button filter-button flex-1 rounded-md border px-3 py-2 font-bold sm:flex-none" type="button" aria-pressed="false" style="background: rgb(255, 255, 255); color: rgb(49, 81, 62); font-weight: 700; font-style: normal; font-size: 15px;">Completed</button>
-        </div>
-       </form>
-      </div>
-     </div>
-     <div class="hidden overflow-x-auto md:block">
-      <table class="w-full min-w-[960px] border-collapse">
-       <thead data-template-id="table-header" class="canva-table text-left" style="background: rgb(18, 61, 42); color: rgb(255, 255, 255);">
-        <tr>
-         <th data-template-id="column-project" class="canva-text px-5 py-3 text-xs font-bold uppercase tracking-wide" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">Project / Location</th>
-         <th data-template-id="column-status" class="canva-text px-4 py-3 text-xs font-bold uppercase tracking-wide" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">Status</th>
-         <th data-template-id="column-budget" class="canva-text px-4 py-3 text-xs font-bold uppercase tracking-wide" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">Budget</th>
-         <th data-template-id="column-progress" class="canva-text px-4 py-3 text-xs font-bold uppercase tracking-wide" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">Physical Progress</th>
-         <th data-template-id="column-implementer" class="canva-text px-4 py-3 text-xs font-bold uppercase tracking-wide" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">Implementer</th>
-         <th data-template-id="column-action" class="canva-text px-5 py-3 text-right text-xs font-bold uppercase tracking-wide" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">Details</th>
-        </tr>
-       </thead>
-       <tbody id="desktop-projects" class="divide-y divide-[#e0e8e1] bg-white">
-        <tr class="project-row" data-record="infra-1" data-category="infra" data-status="completed" data-search="barangay access road brgy cuyambay highway jdg builders">
-         <td class="px-5 py-4">
-          <div class="flex items-center gap-3"><img data-template-id="infra-1-img" class="canva-image h-14 w-20 rounded object-cover" loading="lazy" src="https://images.pexels.com/photos/37463979/pexels-photo-37463979.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="Breathtaking view of a highway through lush mountains in Western Visayas, Philippines">
-           <div>
-            <h3 data-template-id="infra-1-title" class="canva-text font-bold leading-tight" style="color: rgb(23, 37, 29); font-weight: 700; font-style: normal; font-size: 16px;">Barangay Access Road — Brgy. Cuyambay</h3>
-            <p data-template-id="infra-1-location" class="canva-text mt-1 text-xs" style="color: rgb(102, 118, 107); font-weight: 400; font-style: normal; font-size: 15px;">Brgy. Cuyambay · Road Improvement</p>
-           </div>
-          </div></td>
-         <td class="px-4 py-4"><span data-template-id="status-completed-1" class="canva-tag inline-flex rounded-full px-2.5 py-1 text-xs font-bold uppercase" style="background: rgb(220, 252, 231); color: rgb(22, 101, 52); font-weight: 700; font-style: normal; font-size: 15px;">Completed</span></td>
-         <td class="px-4 py-4 font-bold">₱4.80M</td>
-         <td class="px-4 py-4">
-          <div class="w-36">
-           <div class="progress-track h-2 overflow-hidden rounded-full">
-            <div class="progress-fill h-full rounded-full bg-emerald-600" style="width:100%"></div>
-           </div><span class="mt-1 block text-xs font-bold text-emerald-700">100%</span>
-          </div></td>
-         <td data-template-id="infra-1-implementer" class="canva-text px-4 py-4 text-sm" style="color: rgb(49, 72, 58); font-weight: 400; font-style: normal; font-size: 15px;">JDG Builders</td>
-         <td class="px-5 py-4 text-right"><button data-template-id="view-infra-1" class="canva-button rounded px-3 py-2 font-bold" type="button" onclick="openDetails('infra-1')" style="background: rgb(23, 100, 61); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">View</button></td>
-        </tr>
-        <tr class="project-row" data-record="infra-2" data-category="infra" data-status="ongoing" data-search="pedestrian bridge brgy calabasa gabaldon river mrc construction">
-         <td class="px-5 py-4">
-          <div class="flex items-center gap-3"><img data-template-id="infra-2-img" class="canva-image h-14 w-20 rounded object-cover" loading="lazy" src="https://images.pexels.com/photos/4975434/pexels-photo-4975434.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="A scenic view of a rustic bridge set against the rolling hills of Carranglan, Philippines">
-           <div>
-            <h3 data-template-id="infra-2-title" class="canva-text font-bold leading-tight" style="color: rgb(23, 37, 29); font-weight: 700; font-style: normal; font-size: 16px;">Pedestrian Bridge — Brgy. Calabasa</h3>
-            <p data-template-id="infra-2-location" class="canva-text mt-1 text-xs" style="color: rgb(102, 118, 107); font-weight: 400; font-style: normal; font-size: 15px;">Brgy. Calabasa · River Crossing</p>
-           </div>
-          </div></td>
-         <td class="px-4 py-4"><span data-template-id="status-ongoing-1" class="canva-tag inline-flex rounded-full px-2.5 py-1 text-xs font-bold uppercase" style="background: rgb(254, 243, 199); color: rgb(146, 64, 14); font-weight: 700; font-style: normal; font-size: 15px;">Ongoing</span></td>
-         <td class="px-4 py-4 font-bold">₱3.20M</td>
-         <td class="px-4 py-4">
-          <div class="w-36">
-           <div class="progress-track h-2 overflow-hidden rounded-full">
-            <div class="progress-fill h-full rounded-full bg-amber-500" style="width:65%"></div>
-           </div><span class="mt-1 block text-xs font-bold text-amber-700">65%</span>
-          </div></td>
-         <td data-template-id="infra-2-implementer" class="canva-text px-4 py-4 text-sm" style="color: rgb(49, 72, 58); font-weight: 400; font-style: normal; font-size: 15px;">MRC Construction</td>
-         <td class="px-5 py-4 text-right"><button data-template-id="view-infra-2" class="canva-button rounded px-3 py-2 font-bold" type="button" onclick="openDetails('infra-2')" style="background: rgb(23, 100, 61); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">View</button></td>
-        </tr>
-        <tr class="project-row" data-record="infra-3" data-category="infra" data-status="ongoing" data-search="school building gabaldon central school nlex construction classrooms">
-         <td class="px-5 py-4">
-          <div class="flex items-center gap-3"><img data-template-id="infra-3-img" class="canva-image h-14 w-20 rounded object-cover" loading="lazy" src="https://images.pexels.com/photos/2676888/pexels-photo-2676888.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="Two backpackers walk through a modern courtyard, highlighting university life in Cebu City">
-           <div>
-            <h3 data-template-id="infra-3-title" class="canva-text font-bold leading-tight" style="color: rgb(23, 37, 29); font-weight: 700; font-style: normal; font-size: 16px;">2-Storey School Building — Gabaldon Central School</h3>
-            <p data-template-id="infra-3-location" class="canva-text mt-1 text-xs" style="color: rgb(102, 118, 107); font-weight: 400; font-style: normal; font-size: 15px;">Gabaldon Central School · Education Facility</p>
-           </div>
-          </div></td>
-         <td class="px-4 py-4"><span data-template-id="status-ongoing-2" class="canva-tag inline-flex rounded-full px-2.5 py-1 text-xs font-bold uppercase" style="background: rgb(254, 243, 199); color: rgb(146, 64, 14); font-weight: 700; font-style: normal; font-size: 15px;">Ongoing</span></td>
-         <td class="px-4 py-4 font-bold">₱6.50M</td>
-         <td class="px-4 py-4">
-          <div class="w-36">
-           <div class="progress-track h-2 overflow-hidden rounded-full">
-            <div class="progress-fill h-full rounded-full bg-amber-500" style="width:40%"></div>
-           </div><span class="mt-1 block text-xs font-bold text-amber-700">40%</span>
-          </div></td>
-         <td data-template-id="infra-3-implementer" class="canva-text px-4 py-4 text-sm" style="color: rgb(49, 72, 58); font-weight: 400; font-style: normal; font-size: 15px;">NLEX Construction</td>
-         <td class="px-5 py-4 text-right"><button data-template-id="view-infra-3" class="canva-button rounded px-3 py-2 font-bold" type="button" onclick="openDetails('infra-3')" style="background: rgb(23, 100, 61); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">View</button></td>
-        </tr>
-        <tr class="project-row hidden" data-record="noninfra-1" data-category="noninfra" data-status="completed" data-search="livelihood skills training organic farming food processing handicraft mswdo">
-         <td class="px-5 py-4">
-          <div class="flex items-center gap-3"><img data-template-id="noninfra-1-img" class="canva-image h-14 w-20 rounded object-cover" loading="lazy" src="https://images.pexels.com/photos/13118957/pexels-photo-13118957.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="A farmer walks alongside a carabao carrying goods on a countryside road, showcasing rural life">
-           <div>
-            <h3 data-template-id="noninfra-1-title" class="canva-text font-bold leading-tight" style="color: rgb(23, 37, 29); font-weight: 700; font-style: normal; font-size: 16px;">Livelihood Skills Training Program</h3>
-            <p data-template-id="noninfra-1-location" class="canva-text mt-1 text-xs" style="color: rgb(102, 118, 107); font-weight: 400; font-style: normal; font-size: 15px;">Five Barangays · Community Livelihood</p>
-           </div>
-          </div></td>
-         <td class="px-4 py-4"><span data-template-id="status-completed-2" class="canva-tag inline-flex rounded-full px-2.5 py-1 text-xs font-bold uppercase" style="background: rgb(220, 252, 231); color: rgb(22, 101, 52); font-weight: 700; font-style: normal; font-size: 15px;">Completed</span></td>
-         <td class="px-4 py-4 font-bold">₱850K</td>
-         <td class="px-4 py-4">
-          <div class="w-36">
-           <div class="progress-track h-2 overflow-hidden rounded-full">
-            <div class="progress-fill h-full rounded-full bg-emerald-600" style="width:100%"></div>
-           </div><span class="mt-1 block text-xs font-bold text-emerald-700">100%</span>
-          </div></td>
-         <td data-template-id="noninfra-1-implementer" class="canva-text px-4 py-4 text-sm" style="color: rgb(49, 72, 58); font-weight: 400; font-style: normal; font-size: 15px;">MSWDO</td>
-         <td class="px-5 py-4 text-right"><button data-template-id="view-noninfra-1" class="canva-button rounded px-3 py-2 font-bold" type="button" onclick="openDetails('noninfra-1')" style="background: rgb(23, 100, 61); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">View</button></td>
-        </tr>
-        <tr class="project-row hidden" data-record="noninfra-2" data-category="noninfra" data-status="ongoing" data-search="barangay health station outreach mobile medical dental senior citizens mho">
-         <td class="px-5 py-4">
-          <div class="flex items-center gap-3"><img data-template-id="noninfra-2-img" class="canva-image h-14 w-20 rounded object-cover" loading="lazy" src="https://images.pexels.com/photos/24847317/pexels-photo-24847317.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="An elderly woman stands in Iligan City, Philippines, wearing a face mask by a wooden store">
-           <div>
-            <h3 data-template-id="noninfra-2-title" class="canva-text font-bold leading-tight" style="color: rgb(23, 37, 29); font-weight: 700; font-style: normal; font-size: 16px;">Barangay Health Station Outreach</h3>
-            <p data-template-id="noninfra-2-location" class="canva-text mt-1 text-xs" style="color: rgb(102, 118, 107); font-weight: 400; font-style: normal; font-size: 15px;">Remote Barangays · Public Health</p>
-           </div>
-          </div></td>
-         <td class="px-4 py-4"><span data-template-id="status-ongoing-3" class="canva-tag inline-flex rounded-full px-2.5 py-1 text-xs font-bold uppercase" style="background: rgb(254, 243, 199); color: rgb(146, 64, 14); font-weight: 700; font-style: normal; font-size: 15px;">Ongoing</span></td>
-         <td class="px-4 py-4 font-bold">₱620K</td>
-         <td class="px-4 py-4">
-          <div class="w-36">
-           <div class="progress-track h-2 overflow-hidden rounded-full">
-            <div class="progress-fill h-full rounded-full bg-amber-500" style="width:72%"></div>
-           </div><span class="mt-1 block text-xs font-bold text-amber-700">72%</span>
-          </div></td>
-         <td data-template-id="noninfra-2-implementer" class="canva-text px-4 py-4 text-sm" style="color: rgb(49, 72, 58); font-weight: 400; font-style: normal; font-size: 15px;">Municipal Health Office</td>
-         <td class="px-5 py-4 text-right"><button data-template-id="view-noninfra-2" class="canva-button rounded px-3 py-2 font-bold" type="button" onclick="openDetails('noninfra-2')" style="background: rgb(23, 100, 61); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">View</button></td>
-        </tr>
-        <tr class="project-row hidden" data-record="noninfra-3" data-category="noninfra" data-status="completed" data-search="brigada eskwela school supplies distribution deped lgu students">
-         <td class="px-5 py-4">
-          <div class="flex items-center gap-3"><img data-template-id="noninfra-3-img" class="canva-image h-14 w-20 rounded object-cover" loading="lazy" src="https://images.pexels.com/photos/37190695/pexels-photo-37190695.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="A group of children participating in a drawing session indoors, showcasing creativity and learning">
-           <div>
-            <h3 data-template-id="noninfra-3-title" class="canva-text font-bold leading-tight" style="color: rgb(23, 37, 29); font-weight: 700; font-style: normal; font-size: 16px;">Brigada Eskwela School Supplies Distribution</h3>
-            <p data-template-id="noninfra-3-location" class="canva-text mt-1 text-xs" style="color: rgb(102, 118, 107); font-weight: 400; font-style: normal; font-size: 15px;">Municipal Elementary Schools · Education Aid</p>
-           </div>
-          </div></td>
-         <td class="px-4 py-4"><span data-template-id="status-completed-3" class="canva-tag inline-flex rounded-full px-2.5 py-1 text-xs font-bold uppercase" style="background: rgb(220, 252, 231); color: rgb(22, 101, 52); font-weight: 700; font-style: normal; font-size: 15px;">Completed</span></td>
-         <td class="px-4 py-4 font-bold">₱380K</td>
-         <td class="px-4 py-4">
-          <div class="w-36">
-           <div class="progress-track h-2 overflow-hidden rounded-full">
-            <div class="progress-fill h-full rounded-full bg-emerald-600" style="width:100%"></div>
-           </div><span class="mt-1 block text-xs font-bold text-emerald-700">100%</span>
-          </div></td>
-         <td data-template-id="noninfra-3-implementer" class="canva-text px-4 py-4 text-sm" style="color: rgb(49, 72, 58); font-weight: 400; font-style: normal; font-size: 15px;">DepEd / LGU Gabaldon</td>
-         <td class="px-5 py-4 text-right"><button data-template-id="view-noninfra-3" class="canva-button rounded px-3 py-2 font-bold" type="button" onclick="openDetails('noninfra-3')" style="background: rgb(23, 100, 61); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">View</button></td>
-        </tr>
-       </tbody>
-      </table>
-     </div>
-     <div id="mobile-projects" class="divide-y divide-[#dbe4dc] md:hidden">
-      <article class="mobile-project bg-white p-4" data-record="infra-1" data-category="infra" data-status="completed" data-search="barangay access road brgy cuyambay highway jdg builders">
-       <div class="flex gap-3"><img data-template-id="mobile-infra-1-img" class="canva-image h-20 w-24 shrink-0 rounded object-cover" loading="lazy" src="https://images.pexels.com/photos/37463979/pexels-photo-37463979.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="Breathtaking view of a highway through lush mountains in Western Visayas, Philippines">
-        <div class="min-w-0"><span data-template-id="mobile-status-completed-1" class="canva-tag inline-flex rounded-full px-2 py-1 text-xs font-bold uppercase" style="background: rgb(220, 252, 231); color: rgb(22, 101, 52); font-weight: 700; font-style: normal; font-size: 15px;">Completed</span>
-         <h3 data-template-id="mobile-infra-1-title" class="canva-text mt-2 font-bold leading-tight" style="color: rgb(23, 37, 29); font-weight: 700; font-style: normal; font-size: 18px;">Barangay Access Road — Brgy. Cuyambay</h3>
-         <p data-template-id="mobile-infra-1-location" class="canva-text mt-1 text-xs" style="color: rgb(102, 118, 107); font-weight: 400; font-style: normal; font-size: 15px;">Brgy. Cuyambay · Road Improvement</p>
-        </div>
-       </div>
-       <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <div>
-         <span data-template-id="mobile-budget-label-1" class="canva-text block text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Budget</span><strong>₱4.80M</strong>
-        </div>
-        <div>
-         <span data-template-id="mobile-progress-label-1" class="canva-text block text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Progress</span><strong>100%</strong>
-        </div>
-       </div><button data-template-id="mobile-view-infra-1" class="canva-button mt-4 w-full rounded px-3 py-2 font-bold" type="button" onclick="openDetails('infra-1')" style="background: rgb(23, 100, 61); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">View Project Details</button>
+
+  <main class="main-wrap">
+    <section class="metrics-row" aria-label="Project summary statistics">
+      <article class="metric-card">
+        <span class="metric-label">Total Projects</span>
+        <strong class="metric-value">{{ total_projects }}</strong>
       </article>
-      <article class="mobile-project bg-white p-4" data-record="infra-2" data-category="infra" data-status="ongoing" data-search="pedestrian bridge brgy calabasa gabaldon river mrc construction">
-       <div class="flex gap-3"><img data-template-id="mobile-infra-2-img" class="canva-image h-20 w-24 shrink-0 rounded object-cover" loading="lazy" src="https://images.pexels.com/photos/4975434/pexels-photo-4975434.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="A scenic view of a rustic bridge set against the rolling hills of Carranglan, Philippines">
-        <div class="min-w-0"><span data-template-id="mobile-status-ongoing-1" class="canva-tag inline-flex rounded-full px-2 py-1 text-xs font-bold uppercase" style="background: rgb(254, 243, 199); color: rgb(146, 64, 14); font-weight: 700; font-style: normal; font-size: 15px;">Ongoing</span>
-         <h3 data-template-id="mobile-infra-2-title" class="canva-text mt-2 font-bold leading-tight" style="color: rgb(23, 37, 29); font-weight: 700; font-style: normal; font-size: 18px;">Pedestrian Bridge — Brgy. Calabasa</h3>
-         <p data-template-id="mobile-infra-2-location" class="canva-text mt-1 text-xs" style="color: rgb(102, 118, 107); font-weight: 400; font-style: normal; font-size: 15px;">Brgy. Calabasa · River Crossing</p>
-        </div>
-       </div>
-       <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <div>
-         <span data-template-id="mobile-budget-label-2" class="canva-text block text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Budget</span><strong>₱3.20M</strong>
-        </div>
-        <div>
-         <span data-template-id="mobile-progress-label-2" class="canva-text block text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Progress</span><strong>65%</strong>
-        </div>
-       </div><button data-template-id="mobile-view-infra-2" class="canva-button mt-4 w-full rounded px-3 py-2 font-bold" type="button" onclick="openDetails('infra-2')" style="background: rgb(23, 100, 61); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">View Project Details</button>
+      <article class="metric-card">
+        <span class="metric-label">Programmed Budget</span>
+        <strong class="metric-value">P{{ total_budget|floatformat:2 }}</strong>
       </article>
-      <article class="mobile-project bg-white p-4" data-record="infra-3" data-category="infra" data-status="ongoing" data-search="school building gabaldon central school nlex construction classrooms">
-       <div class="flex gap-3"><img data-template-id="mobile-infra-3-img" class="canva-image h-20 w-24 shrink-0 rounded object-cover" loading="lazy" src="https://images.pexels.com/photos/2676888/pexels-photo-2676888.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="Two backpackers walk through a modern courtyard, highlighting university life in Cebu City">
-        <div class="min-w-0"><span data-template-id="mobile-status-ongoing-2" class="canva-tag inline-flex rounded-full px-2 py-1 text-xs font-bold uppercase" style="background: rgb(254, 243, 199); color: rgb(146, 64, 14); font-weight: 700; font-style: normal; font-size: 15px;">Ongoing</span>
-         <h3 data-template-id="mobile-infra-3-title" class="canva-text mt-2 font-bold leading-tight" style="color: rgb(23, 37, 29); font-weight: 700; font-style: normal; font-size: 18px;">2-Storey School Building — Gabaldon Central School</h3>
-         <p data-template-id="mobile-infra-3-location" class="canva-text mt-1 text-xs" style="color: rgb(102, 118, 107); font-weight: 400; font-style: normal; font-size: 15px;">Gabaldon Central School · Education Facility</p>
-        </div>
-       </div>
-       <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <div>
-         <span data-template-id="mobile-budget-label-3" class="canva-text block text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Budget</span><strong>₱6.50M</strong>
-        </div>
-        <div>
-         <span data-template-id="mobile-progress-label-3" class="canva-text block text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Progress</span><strong>40%</strong>
-        </div>
-       </div><button data-template-id="mobile-view-infra-3" class="canva-button mt-4 w-full rounded px-3 py-2 font-bold" type="button" onclick="openDetails('infra-3')" style="background: rgb(23, 100, 61); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">View Project Details</button>
+      <article class="metric-card">
+        <span class="metric-label">Completed</span>
+        <strong class="metric-value">{{ completed_projects }}</strong>
       </article>
-      <article class="mobile-project hidden bg-white p-4" data-record="noninfra-1" data-category="noninfra" data-status="completed" data-search="livelihood skills training organic farming food processing handicraft mswdo">
-       <div class="flex gap-3"><img data-template-id="mobile-noninfra-1-img" class="canva-image h-20 w-24 shrink-0 rounded object-cover" loading="lazy" src="https://images.pexels.com/photos/13118957/pexels-photo-13118957.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="A farmer walks alongside a carabao carrying goods on a countryside road, showcasing rural life">
-        <div class="min-w-0"><span data-template-id="mobile-status-completed-2" class="canva-tag inline-flex rounded-full px-2 py-1 text-xs font-bold uppercase" style="background: rgb(220, 252, 231); color: rgb(22, 101, 52); font-weight: 700; font-style: normal; font-size: 15px;">Completed</span>
-         <h3 data-template-id="mobile-noninfra-1-title" class="canva-text mt-2 font-bold leading-tight" style="color: rgb(23, 37, 29); font-weight: 700; font-style: normal; font-size: 18px;">Livelihood Skills Training Program</h3>
-         <p data-template-id="mobile-noninfra-1-location" class="canva-text mt-1 text-xs" style="color: rgb(102, 118, 107); font-weight: 400; font-style: normal; font-size: 15px;">Five Barangays · Community Livelihood</p>
-        </div>
-       </div>
-       <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <div>
-         <span data-template-id="mobile-budget-label-4" class="canva-text block text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Budget</span><strong>₱850K</strong>
-        </div>
-        <div>
-         <span data-template-id="mobile-progress-label-4" class="canva-text block text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Progress</span><strong>100%</strong>
-        </div>
-       </div><button data-template-id="mobile-view-noninfra-1" class="canva-button mt-4 w-full rounded px-3 py-2 font-bold" type="button" onclick="openDetails('noninfra-1')" style="background: rgb(23, 100, 61); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">View Project Details</button>
+      <article class="metric-card">
+        <span class="metric-label">Ongoing</span>
+        <strong class="metric-value">{{ ongoing_projects }}</strong>
       </article>
-      <article class="mobile-project hidden bg-white p-4" data-record="noninfra-2" data-category="noninfra" data-status="ongoing" data-search="barangay health station outreach mobile medical dental senior citizens mho">
-       <div class="flex gap-3"><img data-template-id="mobile-noninfra-2-img" class="canva-image h-20 w-24 shrink-0 rounded object-cover" loading="lazy" src="https://images.pexels.com/photos/24847317/pexels-photo-24847317.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="An elderly woman stands in Iligan City, Philippines, wearing a face mask by a wooden store">
-        <div class="min-w-0"><span data-template-id="mobile-status-ongoing-3" class="canva-tag inline-flex rounded-full px-2 py-1 text-xs font-bold uppercase" style="background: rgb(254, 243, 199); color: rgb(146, 64, 14); font-weight: 700; font-style: normal; font-size: 15px;">Ongoing</span>
-         <h3 data-template-id="mobile-noninfra-2-title" class="canva-text mt-2 font-bold leading-tight" style="color: rgb(23, 37, 29); font-weight: 700; font-style: normal; font-size: 18px;">Barangay Health Station Outreach</h3>
-         <p data-template-id="mobile-noninfra-2-location" class="canva-text mt-1 text-xs" style="color: rgb(102, 118, 107); font-weight: 400; font-style: normal; font-size: 15px;">Remote Barangays · Public Health</p>
-        </div>
-       </div>
-       <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+    </section>
+
+    <section class="panel" aria-labelledby="registry-heading">
+      <div class="panel-head top-copy">
         <div>
-         <span data-template-id="mobile-budget-label-5" class="canva-text block text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Budget</span><strong>₱620K</strong>
+          <p class="section-kicker">Project Monitoring</p>
+          <h2 id="registry-heading">Current Project Registry</h2>
+          <p>Live project records from your database. Use filters to narrow down.</p>
         </div>
-        <div>
-         <span data-template-id="mobile-progress-label-5" class="canva-text block text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Progress</span><strong>72%</strong>
-        </div>
-       </div><button data-template-id="mobile-view-noninfra-2" class="canva-button mt-4 w-full rounded px-3 py-2 font-bold" type="button" onclick="openDetails('noninfra-2')" style="background: rgb(23, 100, 61); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">View Project Details</button>
-      </article>
-      <article class="mobile-project hidden bg-white p-4" data-record="noninfra-3" data-category="noninfra" data-status="completed" data-search="brigada eskwela school supplies distribution deped lgu students">
-       <div class="flex gap-3"><img data-template-id="mobile-noninfra-3-img" class="canva-image h-20 w-24 shrink-0 rounded object-cover" loading="lazy" src="https://images.pexels.com/photos/37190695/pexels-photo-37190695.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="A group of children participating in a drawing session indoors, showcasing creativity and learning">
-        <div class="min-w-0"><span data-template-id="mobile-status-completed-3" class="canva-tag inline-flex rounded-full px-2 py-1 text-xs font-bold uppercase" style="background: rgb(220, 252, 231); color: rgb(22, 101, 52); font-weight: 700; font-style: normal; font-size: 15px;">Completed</span>
-         <h3 data-template-id="mobile-noninfra-3-title" class="canva-text mt-2 font-bold leading-tight" style="color: rgb(23, 37, 29); font-weight: 700; font-style: normal; font-size: 18px;">Brigada Eskwela School Supplies Distribution</h3>
-         <p data-template-id="mobile-noninfra-3-location" class="canva-text mt-1 text-xs" style="color: rgb(102, 118, 107); font-weight: 400; font-style: normal; font-size: 15px;">Municipal Elementary Schools · Education Aid</p>
-        </div>
-       </div>
-       <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <div>
-         <span data-template-id="mobile-budget-label-6" class="canva-text block text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Budget</span><strong>₱380K</strong>
-        </div>
-        <div>
-         <span data-template-id="mobile-progress-label-6" class="canva-text block text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Progress</span><strong>100%</strong>
-        </div>
-       </div><button data-template-id="mobile-view-noninfra-3" class="canva-button mt-4 w-full rounded px-3 py-2 font-bold" type="button" onclick="openDetails('noninfra-3')" style="background: rgb(23, 100, 61); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 15px;">View Project Details</button>
-      </article>
-     </div>
-     <div id="empty-state" class="hidden bg-white px-6 py-14 text-center" aria-live="polite">
-      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#edf3ed] text-[#17643d]">
-       <i data-lucide="search-x" class="h-6 w-6" aria-hidden="true"></i>
+        <div class="live-badge"><span id="visible-count">{{ project_rows|length }}</span> records shown</div>
       </div>
-      <h3 data-template-id="empty-title" class="canva-text mt-4 font-bold" style="color: rgb(18, 61, 42); font-weight: 700; font-style: normal; font-size: 20px;">No matching projects</h3>
-      <p data-template-id="empty-description" class="canva-text mt-1" style="color: rgb(102, 118, 107); font-weight: 400; font-style: normal; font-size: 15px;">Try another search term or choose a different status filter.</p>
-     </div>
-    </div>
-   </section>
+
+      <div class="toolbar" role="search">
+        <div class="tab-buttons">
+          <button type="button" class="tab-btn is-active" data-category="all">All Projects</button>
+          <button type="button" class="tab-btn" data-category="infra">Infrastructure</button>
+          <button type="button" class="tab-btn" data-category="noninfra">Non-Infrastructure</button>
+        </div>
+
+        <div class="filter-group">
+          <select id="location-filter" aria-label="Filter by location">
+            <option value="all">All Locations</option>
+            {% for code, label in location_options %}
+            <option value="{{ code }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+
+          <div class="status-buttons">
+            <button type="button" class="status-btn is-active" data-status="all">All</button>
+            <button type="button" class="status-btn" data-status="ongoing">Ongoing</button>
+            <button type="button" class="status-btn" data-status="completed">Completed</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Budget</th>
+              <th>Physical Progress</th>
+              <th>Office / Contractor</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="project-table-body">
+            {% for row in project_rows %}
+            <tr class="project-row"
+                data-category="{{ row.category }}"
+                data-status="{{ row.status_key }}"
+                data-location="{{ row.location_key }}">
+              <td>
+                <div class="project-cell">
+                  {% if row.category == 'infra' %}
+                  <img src="{% static 'images/infra-icon.png' %}" alt="Infrastructure" class="project-thumb">
+                  {% else %}
+                  <img src="{% static 'images/project-icon.png' %}" alt="Non-Infrastructure" class="project-thumb">
+                  {% endif %}
+                  <div>
+                    <div class="project-title">{{ row.title }}</div>
+                    <div class="project-subtext">{{ row.location }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>{{ row.type_label }}</td>
+              <td><span class="status-chip status-{{ row.status_key }}">{{ row.status_label }}</span></td>
+              <td>P{{ row.budget|floatformat:2 }}</td>
+              <td>{{ row.progress|floatformat:0 }}%</td>
+              <td>{{ row.office }}</td>
+              <td><a href="{{ row.detail_url }}" class="row-link">View</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="empty-row">No projects found in the database yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="recent-heading">
+      <div class="panel-head">
+        <h2 id="recent-heading">Recently Created Projects</h2>
+      </div>
+      <ul class="recent-list">
+        {% for row in recent_rows %}
+        <li>
+          <div>
+            <p class="recent-title">{{ row.title }}</p>
+            <p class="recent-subtext">{{ row.type_label }} - {{ row.location }} - {{ row.status_label }}</p>
+          </div>
+          <span class="recent-date">{{ row.created_at|date:"M d, Y" }}</span>
+        </li>
+        {% empty %}
+        <li class="empty-row">No recent projects yet.</li>
+        {% endfor %}
+      </ul>
+    </section>
   </main>
-  <footer data-template-id="footer-section" class="canva-footer w-full border-t-4 border-[#b8d534]" style="background: rgb(15, 63, 41);">
-   <div class="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.2fr_2fr]">
-    <div>
-     <div class="flex items-center gap-3"><img data-template-id="footer-seal" class="canva-image h-16 w-16 rounded-full object-cover" loading="lazy" src="canva://MAHOnVq8ja4/1" alt="Municipality of Gabaldon official seal">
-      <div>
-       <h2 data-template-id="footer-title" class="canva-text display-font" style="color: rgb(255, 255, 255); font-weight: 800; font-style: normal; font-size: 23px;">Municipality of Gabaldon</h2>
-       <p data-template-id="footer-subtitle" class="canva-text mt-1" style="color: rgb(184, 213, 52); font-weight: 700; font-style: normal; font-size: 15px;">Transparency Portal</p>
-      </div>
-     </div>
-     <p data-template-id="footer-description" class="canva-text mt-5 max-w-md leading-relaxed" style="color: rgb(208, 231, 214); font-weight: 400; font-style: normal; font-size: 15px;">Clear project information for a more informed, engaged, and empowered Gabaldon community.</p>
-    </div>
-    <div class="grid grid-cols-2 gap-6 sm:grid-cols-3">
-     <div>
-      <h3 data-template-id="footer-col1-title" class="canva-text mb-3 font-bold uppercase tracking-wide" style="color: rgb(184, 213, 52); font-weight: 700; font-style: normal; font-size: 18px;">Portal</h3>
-      <ul class="space-y-2">
-       <li><span data-template-id="footer-link-1a" class="canva-text" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Project Dashboard</span></li>
-       <li><span data-template-id="footer-link-1b" class="canva-text" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Infrastructure</span></li>
-       <li><span data-template-id="footer-link-1c" class="canva-text" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Community Programs</span></li>
-      </ul>
-     </div>
-     <div>
-      <h3 data-template-id="footer-col2-title" class="canva-text mb-3 font-bold uppercase tracking-wide" style="color: rgb(184, 213, 52); font-weight: 700; font-style: normal; font-size: 18px;">Resources</h3>
-      <ul class="space-y-2">
-       <li><span data-template-id="footer-link-2a" class="canva-text" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Budget Documents</span></li>
-       <li><span data-template-id="footer-link-2b" class="canva-text" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Project Reports</span></li>
-       <li><span data-template-id="footer-link-2c" class="canva-text" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Public Notices</span></li>
-      </ul>
-     </div>
-     <div class="col-span-2 sm:col-span-1">
-      <h3 data-template-id="footer-col3-title" class="canva-text mb-3 font-bold uppercase tracking-wide" style="color: rgb(184, 213, 52); font-weight: 700; font-style: normal; font-size: 18px;">Public Service</h3>
-      <ul class="space-y-2">
-       <li><span data-template-id="footer-link-3a" class="canva-text" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Contact the Municipality</span></li>
-       <li><span data-template-id="footer-link-3b" class="canva-text" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Submit Feedback</span></li>
-       <li><span data-template-id="footer-link-3c" class="canva-text" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Report an Issue</span></li>
-      </ul>
-     </div>
-    </div>
-   </div>
-   <div class="border-t border-white/15">
-    <p data-template-id="footer-text" class="canva-text mx-auto max-w-7xl px-4 py-4 text-center text-xs sm:px-6" style="color: rgb(204, 226, 210); font-weight: 400; font-style: normal; font-size: 15px;">© 2026 Municipality of Gabaldon · Transparent Governance for the Community.</p>
-   </div>
+
+  <footer class="site-footer">
+    <p>(c) 2026 Municipality of Gabaldon - Transparent Governance for the Community.</p>
   </footer>
-  <div id="detail-overlay" class="drawer-backdrop fixed inset-0 z-50 hidden" role="presentation">
-   <section id="detail-dialog" class="drawer-panel absolute left-1/2 top-1/2 flex max-h-[calc(92*min(var(--vh,1vh),1vh))] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-y-auto rounded-sm bg-white shadow-2xl sm:w-[calc(100%-3rem)]" role="dialog" aria-modal="true" aria-labelledby="detail-dialog-title">
-    <div class="sticky top-0 z-10 flex items-center justify-between border-b border-[#dbe4dc] bg-white px-5 py-4">
-     <p data-template-id="detail-eyebrow" class="canva-text text-xs font-bold uppercase tracking-[0.17em]" style="color: rgb(47, 143, 85); font-weight: 700; font-style: normal; font-size: 15px;">Project Record</p><button data-template-id="detail-close-button" class="canva-button inline-flex items-center gap-2 rounded-md px-3 py-2 font-bold" type="button" onclick="closeDetails()" style="background: rgb(237, 243, 237); color: rgb(18, 61, 42); font-weight: 700; font-style: normal; font-size: 15px;">Close</button>
-    </div>
-    <div class="detail-view hidden" data-detail="infra-1"><img data-template-id="detail-infra-1-img" class="canva-image h-60 w-full object-cover" loading="lazy" src="https://images.pexels.com/photos/37463979/pexels-photo-37463979.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="Breathtaking view of a highway through lush mountains in Western Visayas, Philippines">
-     <div class="p-6"><span data-template-id="detail-status-completed-1" class="canva-tag inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase" style="background: rgb(220, 252, 231); color: rgb(22, 101, 52); font-weight: 700; font-style: normal; font-size: 15px;">Completed</span>
-      <h2 id="detail-dialog-title" data-template-id="detail-infra-1-title" class="canva-text display-font mt-3" style="color: rgb(18, 61, 42); font-weight: 800; font-style: normal; font-size: 26px;">Barangay Access Road — Brgy. Cuyambay</h2>
-      <p data-template-id="detail-infra-1-desc" class="canva-text mt-4 leading-relaxed" style="color: rgb(64, 88, 73); font-weight: 400; font-style: normal; font-size: 15px;">Construction of 1.2 kilometers of concrete farm-to-market road connecting Barangay Cuyambay to the national highway.</p>
-      <dl class="mt-6 grid grid-cols-2 gap-4 rounded-sm bg-[#f1f6f2] p-4">
-       <div>
-        <dt data-template-id="detail-budget-label-1" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Budget</dt>
-        <dd class="mt-1 font-bold">
-         ₱4,800,000
-        </dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-progress-label-1" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Progress</dt>
-        <dd class="mt-1 font-bold">
-         100%
-        </dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-schedule-label-1" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Schedule</dt>
-        <dd data-template-id="detail-infra-1-schedule" class="canva-text mt-1" style="color: rgb(36, 61, 46); font-weight: 400; font-style: normal; font-size: 15px;">Completed March 2026</dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-office-label-1" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Contractor</dt>
-        <dd data-template-id="detail-infra-1-office" class="canva-text mt-1" style="color: rgb(36, 61, 46); font-weight: 400; font-style: normal; font-size: 15px;">JDG Builders</dd>
-       </div>
-      </dl>
-     </div>
-    </div>
-    <div class="detail-view hidden" data-detail="infra-2"><img data-template-id="detail-infra-2-img" class="canva-image h-60 w-full object-cover" loading="lazy" src="https://images.pexels.com/photos/4975434/pexels-photo-4975434.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="A scenic view of a rustic bridge set against the rolling hills of Carranglan, Philippines">
-     <div class="p-6"><span data-template-id="detail-status-ongoing-1" class="canva-tag inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase" style="background: rgb(254, 243, 199); color: rgb(146, 64, 14); font-weight: 700; font-style: normal; font-size: 15px;">Ongoing</span>
-      <h2 data-template-id="detail-infra-2-title" class="canva-text display-font mt-3" style="color: rgb(18, 61, 42); font-weight: 800; font-style: normal; font-size: 26px;">Pedestrian Bridge — Brgy. Calabasa</h2>
-      <p data-template-id="detail-infra-2-desc" class="canva-text mt-4 leading-relaxed" style="color: rgb(64, 88, 73); font-weight: 400; font-style: normal; font-size: 15px;">Steel and concrete pedestrian bridge spanning the Gabaldon River to improve safe access during the rainy season.</p>
-      <dl class="mt-6 grid grid-cols-2 gap-4 rounded-sm bg-[#f1f6f2] p-4">
-       <div>
-        <dt data-template-id="detail-budget-label-2" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Budget</dt>
-        <dd class="mt-1 font-bold">
-         ₱3,200,000
-        </dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-progress-label-2" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Progress</dt>
-        <dd class="mt-1 font-bold">
-         65%
-        </dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-schedule-label-2" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Target</dt>
-        <dd data-template-id="detail-infra-2-schedule" class="canva-text mt-1" style="color: rgb(36, 61, 46); font-weight: 400; font-style: normal; font-size: 15px;">September 2026</dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-office-label-2" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Contractor</dt>
-        <dd data-template-id="detail-infra-2-office" class="canva-text mt-1" style="color: rgb(36, 61, 46); font-weight: 400; font-style: normal; font-size: 15px;">MRC Construction</dd>
-       </div>
-      </dl>
-     </div>
-    </div>
-    <div class="detail-view hidden" data-detail="infra-3"><img data-template-id="detail-infra-3-img" class="canva-image h-60 w-full object-cover" loading="lazy" src="https://images.pexels.com/photos/2676888/pexels-photo-2676888.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="Two backpackers walk through a modern courtyard, highlighting university life in Cebu City">
-     <div class="p-6"><span data-template-id="detail-status-ongoing-2" class="canva-tag inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase" style="background: rgb(254, 243, 199); color: rgb(146, 64, 14); font-weight: 700; font-style: normal; font-size: 15px;">Ongoing</span>
-      <h2 data-template-id="detail-infra-3-title" class="canva-text display-font mt-3" style="color: rgb(18, 61, 42); font-weight: 800; font-style: normal; font-size: 26px;">2-Storey School Building — Gabaldon Central School</h2>
-      <p data-template-id="detail-infra-3-desc" class="canva-text mt-4 leading-relaxed" style="color: rgb(64, 88, 73); font-weight: 400; font-style: normal; font-size: 15px;">New four-classroom school building with comfort rooms, improved circulation, and a ramp for persons with disabilities.</p>
-      <dl class="mt-6 grid grid-cols-2 gap-4 rounded-sm bg-[#f1f6f2] p-4">
-       <div>
-        <dt data-template-id="detail-budget-label-3" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Budget</dt>
-        <dd class="mt-1 font-bold">
-         ₱6,500,000
-        </dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-progress-label-3" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Progress</dt>
-        <dd class="mt-1 font-bold">
-         40%
-        </dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-schedule-label-3" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Target</dt>
-        <dd data-template-id="detail-infra-3-schedule" class="canva-text mt-1" style="color: rgb(36, 61, 46); font-weight: 400; font-style: normal; font-size: 15px;">December 2026</dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-office-label-3" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Contractor</dt>
-        <dd data-template-id="detail-infra-3-office" class="canva-text mt-1" style="color: rgb(36, 61, 46); font-weight: 400; font-style: normal; font-size: 15px;">NLEX Construction</dd>
-       </div>
-      </dl>
-     </div>
-    </div>
-    <div class="detail-view hidden" data-detail="noninfra-1"><img data-template-id="detail-noninfra-1-img" class="canva-image h-60 w-full object-cover" loading="lazy" src="https://images.pexels.com/photos/13118957/pexels-photo-13118957.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="A farmer walks alongside a carabao carrying goods on a countryside road, showcasing rural life">
-     <div class="p-6"><span data-template-id="detail-status-completed-2" class="canva-tag inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase" style="background: rgb(220, 252, 231); color: rgb(22, 101, 52); font-weight: 700; font-style: normal; font-size: 15px;">Completed</span>
-      <h2 data-template-id="detail-noninfra-1-title" class="canva-text display-font mt-3" style="color: rgb(18, 61, 42); font-weight: 800; font-style: normal; font-size: 26px;">Livelihood Skills Training Program</h2>
-      <p data-template-id="detail-noninfra-1-desc" class="canva-text mt-4 leading-relaxed" style="color: rgb(64, 88, 73); font-weight: 400; font-style: normal; font-size: 15px;">Training for 120 residents in organic farming, food processing, and handicraft production across five barangays.</p>
-      <dl class="mt-6 grid grid-cols-2 gap-4 rounded-sm bg-[#f1f6f2] p-4">
-       <div>
-        <dt data-template-id="detail-budget-label-4" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Budget</dt>
-        <dd class="mt-1 font-bold">
-         ₱850,000
-        </dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-progress-label-4" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Progress</dt>
-        <dd class="mt-1 font-bold">
-         100%
-        </dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-schedule-label-4" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Schedule</dt>
-        <dd data-template-id="detail-noninfra-1-schedule" class="canva-text mt-1" style="color: rgb(36, 61, 46); font-weight: 400; font-style: normal; font-size: 15px;">Completed January 2026</dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-office-label-4" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Lead Office</dt>
-        <dd data-template-id="detail-noninfra-1-office" class="canva-text mt-1" style="color: rgb(36, 61, 46); font-weight: 400; font-style: normal; font-size: 15px;">MSWDO</dd>
-       </div>
-      </dl>
-     </div>
-    </div>
-    <div class="detail-view hidden" data-detail="noninfra-2"><img data-template-id="detail-noninfra-2-img" class="canva-image h-60 w-full object-cover" loading="lazy" src="https://images.pexels.com/photos/24847317/pexels-photo-24847317.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="An elderly woman stands in Iligan City, Philippines, wearing a face mask by a wooden store">
-     <div class="p-6"><span data-template-id="detail-status-ongoing-3" class="canva-tag inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase" style="background: rgb(254, 243, 199); color: rgb(146, 64, 14); font-weight: 700; font-style: normal; font-size: 15px;">Ongoing</span>
-      <h2 data-template-id="detail-noninfra-2-title" class="canva-text display-font mt-3" style="color: rgb(18, 61, 42); font-weight: 800; font-style: normal; font-size: 26px;">Barangay Health Station Outreach</h2>
-      <p data-template-id="detail-noninfra-2-desc" class="canva-text mt-4 leading-relaxed" style="color: rgb(64, 88, 73); font-weight: 400; font-style: normal; font-size: 15px;">Mobile medical and dental missions serving senior citizens and indigent families in remote barangays.</p>
-      <dl class="mt-6 grid grid-cols-2 gap-4 rounded-sm bg-[#f1f6f2] p-4">
-       <div>
-        <dt data-template-id="detail-budget-label-5" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Budget</dt>
-        <dd class="mt-1 font-bold">
-         ₱620,000
-        </dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-progress-label-5" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Progress</dt>
-        <dd class="mt-1 font-bold">
-         72%
-        </dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-schedule-label-5" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Status</dt>
-        <dd data-template-id="detail-noninfra-2-schedule" class="canva-text mt-1" style="color: rgb(36, 61, 46); font-weight: 400; font-style: normal; font-size: 15px;">Ongoing in 2026</dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-office-label-5" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Lead Office</dt>
-        <dd data-template-id="detail-noninfra-2-office" class="canva-text mt-1" style="color: rgb(36, 61, 46); font-weight: 400; font-style: normal; font-size: 15px;">Municipal Health Office</dd>
-       </div>
-      </dl>
-     </div>
-    </div>
-    <div class="detail-view hidden" data-detail="noninfra-3"><img data-template-id="detail-noninfra-3-img" class="canva-image h-60 w-full object-cover" loading="lazy" src="https://images.pexels.com/photos/37190695/pexels-photo-37190695.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800" alt="A group of children participating in a drawing session indoors, showcasing creativity and learning">
-     <div class="p-6"><span data-template-id="detail-status-completed-3" class="canva-tag inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase" style="background: rgb(220, 252, 231); color: rgb(22, 101, 52); font-weight: 700; font-style: normal; font-size: 15px;">Completed</span>
-      <h2 data-template-id="detail-noninfra-3-title" class="canva-text display-font mt-3" style="color: rgb(18, 61, 42); font-weight: 800; font-style: normal; font-size: 26px;">Brigada Eskwela School Supplies Distribution</h2>
-      <p data-template-id="detail-noninfra-3-desc" class="canva-text mt-4 leading-relaxed" style="color: rgb(64, 88, 73); font-weight: 400; font-style: normal; font-size: 15px;">Distribution of school supplies, bags, and uniforms to 500 elementary students for school year 2025–2026.</p>
-      <dl class="mt-6 grid grid-cols-2 gap-4 rounded-sm bg-[#f1f6f2] p-4">
-       <div>
-        <dt data-template-id="detail-budget-label-6" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Budget</dt>
-        <dd class="mt-1 font-bold">
-         ₱380,000
-        </dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-progress-label-6" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Progress</dt>
-        <dd class="mt-1 font-bold">
-         100%
-        </dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-schedule-label-6" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Schedule</dt>
-        <dd data-template-id="detail-noninfra-3-schedule" class="canva-text mt-1" style="color: rgb(36, 61, 46); font-weight: 400; font-style: normal; font-size: 15px;">Completed June 2025</dd>
-       </div>
-       <div>
-        <dt data-template-id="detail-office-label-6" class="canva-text text-xs font-bold uppercase" style="color: rgb(102, 118, 107); font-weight: 700; font-style: normal; font-size: 15px;">Lead Offices</dt>
-        <dd data-template-id="detail-noninfra-3-office" class="canva-text mt-1" style="color: rgb(36, 61, 46); font-weight: 400; font-style: normal; font-size: 15px;">DepEd / LGU Gabaldon</dd>
-       </div>
-      </dl>
-     </div>
-    </div>
-   </section>
-  </div>
-  <script src="/_sdk/47669dc8496955be.editing_sdk.js" integrity="sha512-SXgqvNdy3CX4R90Kr2d0cSNYZOv6KbcxTq/tprZCtYPHhvtgc5Aagp95xl8W/LNBFpixAlLGqjQW133qbh1QAg=="></script>
+
   <script src="{% static 'js/templates/Dashboard/dashboard.js' %}"></script>
- 
-</body></html>
+</body>
+</html>

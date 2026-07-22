@@ -82,6 +82,141 @@ class LogoutView(View):
         return render(request, 'core/logout.html')
 
 
+class PublicDashboardView(TemplateView):
+    """
+    Public transparency dashboard showing live project data.
+    """
+    template_name = 'Dashboard/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        from apps.infrastructure.models import InfrastructureProject
+        from apps.non_infrastructure.models import NonInfrastructureProject
+
+        infra_qs = InfrastructureProject.objects.all().order_by('-created_at')
+        noninfra_qs = NonInfrastructureProject.objects.all().order_by('-created_at')
+
+        infra_total = infra_qs.count()
+        noninfra_total = noninfra_qs.count()
+        total_projects = infra_total + noninfra_total
+
+        infra_completed = infra_qs.filter(award_status='completed').count()
+        infra_ongoing = infra_qs.filter(award_status__in=['ongoing_bidding', 'awarded']).count()
+
+        noninfra_completed = noninfra_qs.filter(overall_progress_percentage__gte=100).count()
+        noninfra_ongoing = noninfra_qs.filter(
+            overall_progress_percentage__gt=0,
+            overall_progress_percentage__lt=100,
+        ).count()
+        noninfra_planned = noninfra_qs.filter(
+            Q(overall_progress_percentage__isnull=True) | Q(overall_progress_percentage=0)
+        ).count()
+
+        completed_projects = infra_completed + noninfra_completed
+        ongoing_projects = infra_ongoing + noninfra_ongoing
+
+        infra_budget_total = sum((p.abc_amount or p.contract_price or 0) for p in infra_qs)
+        noninfra_budget_total = sum((p.budget_cost or 0) for p in noninfra_qs)
+        total_budget = infra_budget_total + noninfra_budget_total
+
+        if total_projects:
+            portfolio_progress = round((completed_projects / total_projects) * 100)
+        else:
+            portfolio_progress = 0
+
+        rows = []
+
+        infra_location_map = dict(InfrastructureProject.LOCATION_CHOICES)
+        noninfra_location_map = dict(NonInfrastructureProject.LOCATION_CHOICES)
+        location_options_map = {**infra_location_map, **noninfra_location_map}
+
+        for p in infra_qs:
+            if p.award_status == 'completed':
+                status_key = 'completed'
+                status_label = 'Completed'
+            elif p.award_status in ['ongoing_bidding', 'awarded']:
+                status_key = 'ongoing'
+                status_label = 'Ongoing'
+            else:
+                status_key = 'planned'
+                status_label = 'Planned'
+
+            detail_url = '#'
+            try:
+                detail_url = reverse('infrastructure_default:project_detail', args=[p.pk])
+            except Exception:
+                pass
+
+            rows.append({
+                'record_id': f'infra-{p.pk}',
+                'category': 'infra',
+                'type_label': 'Infrastructure',
+                'title': p.title,
+                'location_key': p.location,
+                'location': p.get_location_display(),
+                'status_key': status_key,
+                'status_label': status_label,
+                'budget': p.abc_amount or p.contract_price or 0,
+                'progress': p.physical_progress_percentage or 0,
+                'office': p.contractor or p.implementing_office,
+                'created_at': p.created_at,
+                'detail_url': detail_url,
+            })
+
+        for p in noninfra_qs:
+            progress_value = p.overall_progress_percentage or 0
+            if progress_value >= 100:
+                status_key = 'completed'
+                status_label = 'Completed'
+            elif progress_value > 0:
+                status_key = 'ongoing'
+                status_label = 'Ongoing'
+            else:
+                status_key = 'planned'
+                status_label = 'Planned'
+
+            detail_url = '#'
+            try:
+                detail_url = reverse('non_infrastructure_default:non_infrastructure_project_detail', args=[p.pk])
+            except Exception:
+                pass
+
+            rows.append({
+                'record_id': f'noninfra-{p.pk}',
+                'category': 'noninfra',
+                'type_label': 'Non-Infrastructure',
+                'title': p.title,
+                'location_key': p.location,
+                'location': p.get_location_display(),
+                'status_key': status_key,
+                'status_label': status_label,
+                'budget': p.budget_cost or 0,
+                'progress': progress_value,
+                'office': p.implementing_office,
+                'created_at': p.created_at,
+                'detail_url': detail_url,
+            })
+
+        rows.sort(key=lambda x: x['created_at'], reverse=True)
+
+        context.update({
+            'total_projects': total_projects,
+            'infra_total': infra_total,
+            'noninfra_total': noninfra_total,
+            'completed_projects': completed_projects,
+            'ongoing_projects': ongoing_projects,
+            'planned_projects': noninfra_planned,
+            'portfolio_progress': portfolio_progress,
+            'total_budget': total_budget,
+            'project_rows': rows,
+            'recent_rows': rows[:8],
+            'location_options': sorted(location_options_map.items(), key=lambda x: x[1]),
+        })
+
+        return context
+
+
 class AdminDashboardView(StaffRequiredMixin, TemplateView):
     """
     Admin dashboard for system administrators only.
