@@ -11,17 +11,29 @@
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}">
 </head>
 <body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="site-brand">
+        <img src="{% static 'images/gabaldon-seal.png' %}" alt="Gabaldon Municipality Seal" class="site-seal">
+        <div class="site-brand-text">
+          <p>Republic of the Philippines</p>
+          <h2>Municipality of Gabaldon</h2>
+        </div>
+      </div>
+    </div>
+  </header>
+
   <header class="hero-shell">
     <div class="hero-overlay"></div>
     <div class="hero-grid"></div>
     <div class="hero-inner">
       <div class="hero-copy">
-        <div class="hero-kicker">Open Projects - Accountable Governance</div>
-        <h1>Building Gabaldon in Full Public View</h1>
-        <p>Explore local development projects, track public funds, and see how we are building a better home for every citizen of Gabaldon.</p>
+        <div class="hero-kicker">Official Public Works Dashboard</div>
+        <h1>Municipal Project Dashboard</h1>
+        <p>An official summary of local development projects, program allocations, and implementation progress for the Municipality of Gabaldon.</p>
       </div>
       <aside class="hero-summary-card">
-        <p class="summary-eyebrow">Municipal Portfolio Snapshot</p>
+        <p class="summary-eyebrow">Official Municipal Snapshot</p>
         <div class="summary-grid">
           <div>
             <strong>{{ total_projects }}</strong>
@@ -41,16 +53,6 @@
           </div>
         </div>
       </aside>
-    </div>
-    <div class="hero-topbar">
-      <div class="hero-brand">
-        <img src="{% static 'images/gabaldon-seal.png' %}" alt="Gabaldon Municipality Seal" class="site-seal">
-        <div>
-          <p>Republic of the Philippines</p>
-          <h2>Municipality of Gabaldon</h2>
-        </div>
-      </div>
-      <a href="{% url 'login' %}" class="btn-login">Login</a>
     </div>
   </header>
 

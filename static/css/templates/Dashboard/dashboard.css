@@ -21,11 +21,46 @@ body {
   background: var(--surface);
 }
 
+.site-header {
+  position: relative;
+  z-index: 3;
+  background: linear-gradient(180deg, #f9faf7, #eef2eb);
+  border-bottom: 1px solid #d7ded6;
+}
+
+.site-header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.95rem 1rem;
+}
+
+.site-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.site-brand-text p {
+  margin: 0;
+  color: var(--leaf-500);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.site-brand-text h2 {
+  margin: 0.08rem 0 0;
+  font-family: "Libre Franklin", sans-serif;
+  font-size: 1.08rem;
+  color: var(--pine-900);
+}
+
 .hero-shell {
   position: relative;
-  min-height: 500px;
+  min-height: 480px;
   overflow: hidden;
-  border-top: 4px solid var(--lime-400);
+  border-top: 4px solid var(--pine-800);
   background-image: url("https://images.pexels.com/photos/38336860/pexels-photo-38336860.jpeg?auto=compress&cs=tinysrgb&w=1600");
   background-size: cover;
   background-position: center;
@@ -41,67 +76,18 @@ body {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-  background-size: 36px 36px;
-}
-
-.hero-topbar {
-  position: relative;
-  z-index: 2;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 1.2rem 1rem 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.hero-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
 }
 
 .site-seal {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.14);
-  object-fit: cover;
-}
-
-.hero-brand p {
-  margin: 0;
-  color: #cae8d4;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.hero-brand h2 {
-  margin: 0.1rem 0 0;
-  color: #ffffff;
-  font-family: "Libre Franklin", sans-serif;
-  font-size: 1.05rem;
-}
-
-.btn-login {
-  display: inline-block;
-  text-decoration: none;
-  border-radius: 8px;
-  padding: 0.5rem 0.92rem;
+  border: 2px solid rgba(255, 255, 255, 0.32);
   background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.42);
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 0.9rem;
-}
-
-.btn-login:hover {
-  background: rgba(255, 255, 255, 0.2);
+  object-fit: cover;
 }
 
 .hero-inner {
@@ -109,7 +95,7 @@ body {
   z-index: 2;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2.6rem 1rem 4.8rem;
+  padding: 2.2rem 1rem 4.8rem;
   display: grid;
   grid-template-columns: 1fr 360px;
   gap: 1.2rem;
@@ -119,14 +105,15 @@ body {
 .hero-kicker {
   display: inline-block;
   margin-bottom: 0.9rem;
-  background: var(--lime-400);
-  color: #223a2a;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.11em;
+  background: rgba(255, 255, 255, 0.12);
+  color: #f2f4ef;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   padding: 0.35rem 0.55rem;
-  border-radius: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .hero-copy h1 {
@@ -134,33 +121,34 @@ body {
   max-width: 700px;
   color: #ffffff;
   font-size: clamp(2rem, 4.2vw, 3.6rem);
-  text-transform: uppercase;
-  line-height: 1.02;
-  font-weight: 800;
+  line-height: 1.06;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .hero-copy p {
   margin: 1.1rem 0 0;
   max-width: 620px;
-  color: #d9edde;
-  font-size: 1.02rem;
-  line-height: 1.52;
+  color: #e2e8e1;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .hero-summary-card {
-  border-left: 4px solid var(--lime-400);
-  background: rgba(6, 38, 24, 0.72);
-  backdrop-filter: blur(2px);
+  border-left: 4px solid #d9c88e;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(4px);
   color: #ffffff;
-  padding: 1rem 1.1rem;
+  padding: 1.1rem 1.15rem;
 }
 
 .summary-eyebrow {
   margin: 0;
-  color: var(--lime-400);
+  color: #d9c88e;
   font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
@@ -173,7 +161,7 @@ body {
 
 .summary-grid strong {
   display: block;
-  font-size: 2rem;
+  font-size: 1.9rem;
   line-height: 1;
 }
 
