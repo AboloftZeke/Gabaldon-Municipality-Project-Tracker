@@ -84,10 +84,18 @@
     The user will no longer be able to log in to the Municipality Project Tracker. Their account information and activity history will remain in the system and can be reactivated later by an administrator.
 </div>
 
+        {% if warning_message %}
+            <div style="margin-top: 1rem; padding: 0.9rem 1rem; border: 1px solid #f59e0b; background: #fff7ed; color: #9a2c00; border-radius: 8px;">
+                <strong>Warning:</strong> {{ warning_message }}
+            </div>
+        {% endif %}
+
         <form method="post">
             {% csrf_token %}
             <div class="form-actions">
-                <button type="submit" class="btn btn-danger">Deactivate User</button>
+                <button type="submit" class="btn btn-danger" {% if not can_deactivate %}disabled title="{{ warning_message }}"{% endif %}>
+                    {% if can_deactivate %}Deactivate User{% else %}Cannot Deactivate{% endif %}
+                </button>
                 <a href="{% url 'user_list' %}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>

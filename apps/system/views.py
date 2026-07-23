@@ -527,8 +527,24 @@ class UserDeactivateView(AdminRequiredMixin, View):
     def get(self, request, pk):
         user = get_object_or_404(User, pk=pk)
 
+        can_deactivate = True
+        warning_message = None
+
+        if user == request.user:
+            can_deactivate = False
+            warning_message = 'You cannot deactivate your own account.'
+        elif (
+            user.is_superuser
+            and user.is_active
+            and User.objects.filter(is_superuser=True, is_active=True).count() == 1
+        ):
+            can_deactivate = False
+            warning_message = 'Cannot deactivate the last active administrator.'
+
         return render(request, self.template_name, {
-            'object': user
+            'object': user,
+            'can_deactivate': can_deactivate,
+            'warning_message': warning_message,
         })
 
     def post(self, request, pk):
