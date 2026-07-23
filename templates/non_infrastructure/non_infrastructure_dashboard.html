@@ -52,7 +52,7 @@
         {% else %}
             <div class="empty-state">
                 <p>No projects yet. Create your first non-infrastructure project.</p>
-                <a href="{% url 'non_infrastructure_project_create' %}" class="btn-small btn-primary">Create Project</a>
+                <a href="{% url 'non_infrastructure:non_infrastructure_project_create' %}" class="btn-small btn-primary">Create Project</a>
             </div>
         {% endif %}
     </div>

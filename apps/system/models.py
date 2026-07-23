@@ -21,7 +21,7 @@ class UserProfile(models.Model):
     department = models.CharField(
         max_length=20,
         choices=DEPARTMENT_CHOICES,
-        default='engineer'
+        default='admin'
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
