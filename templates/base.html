@@ -23,7 +23,7 @@
         {% if user.is_authenticated %}
             <ul>
 
-                <!-- 🔥 ROLE-BASED DASHBOARD -->
+                <!-- ROLE-BASED DASHBOARD -->
                 {% if user.is_superuser %}
                     <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
 
@@ -53,9 +53,6 @@
     </nav>
 </header>
     {% endblock %}
-    {% block show_header %}
-...
-{% endblock %}
 
 {% if messages %}
 <div class="messages-container">
@@ -66,8 +63,6 @@
     {% endfor %}
 </div>
 {% endif %}
-
-<main>
 
     <main>
         {% block content %}
