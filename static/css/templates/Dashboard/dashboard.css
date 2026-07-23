@@ -61,7 +61,7 @@ body {
   min-height: 480px;
   overflow: hidden;
   border-top: 4px solid var(--pine-800);
-  background-image: url("https://images.pexels.com/photos/38336860/pexels-photo-38336860.jpeg?auto=compress&cs=tinysrgb&w=1600");
+  background-image: url("../../../images/Image-1.jpg");
   background-size: cover;
   background-position: center;
 }
