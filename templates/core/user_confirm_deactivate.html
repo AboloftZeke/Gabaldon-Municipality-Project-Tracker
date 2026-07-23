@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Delete User - Municipality Project Tracker{% endblock %}
+{% block title %}Deactivate User - Municipality Project Tracker{% endblock %}
 
 {% block extra_head %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/templates/core/user_confirm_delete.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/core/user_confirm_deactivate.css' %}">
 {% endblock %}
 
 {% block show_header %}
@@ -45,12 +45,12 @@
 </div>
 
 <div>
-    <h2 class="page-title">Delete User</h2>
+    <h2 class="page-title">Deactivate User</h2>
 
     <div class="delete-confirm-wrapper">
         <div class="delete-header">
             <div class="delete-icon">🗑️</div>
-            <h3>Delete User Account?</h3>
+            <h3>Deactivate User Account?</h3>
         </div>
 
         <div class="user-details">
@@ -79,24 +79,15 @@
         </div>
 
         <div class="delete-message">
-            <strong>⚠️ This action cannot be undone.</strong>
-            <div style="margin-top: 0.5rem;">The user account will be <strong>permanently deleted</strong> from the system, along with:</div>
-            <ul style="margin: 0.75rem 0 0 1.5rem; padding: 0;">
-                <li>Password change history</li>
-                <li>Account creation and modification records</li>
-                <li>All associated audit logs</li>
-            </ul>
-        </div>
-
-        <div class="warning-text">
-            <span class="warning-icon">⚠️</span>
-            <span>Only delete users if you're absolutely certain they should no longer have access to the system. Consider deactivating the account instead if you might need to re-enable it later.</span>
-        </div>
+            <strong>⚠️ The account will be deactivated.</strong>
+            <div style="margin-top: 0.5rem;">
+    The user will no longer be able to log in to the Municipality Project Tracker. Their account information and activity history will remain in the system and can be reactivated later by an administrator.
+</div>
 
         <form method="post">
             {% csrf_token %}
             <div class="form-actions">
-                <button type="submit" class="btn btn-danger">Delete User</button>
+                <button type="submit" class="btn btn-danger">Deactivate User</button>
                 <a href="{% url 'user_list' %}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
