@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth import authenticate, login, logout
@@ -518,20 +518,54 @@ class UserEditConfirmView(AdminRequiredMixin, TemplateView):
             return redirect('user_edit', pk=pk)
 
 
-class UserDeleteView(AdminRequiredMixin, DeleteView):
+class UserDeactivateView(AdminRequiredMixin, View):
     """
-    Delete a user - placeholder view.
+    Deactivate a user.
     """
-    model = User
-    template_name = 'core/user_confirm_delete.html'
-    success_url = reverse_lazy('user_list')
+    template_name = 'core/user_confirm_deactivate.html'
 
-    def delete(self, request, *args, **kwargs):
-        user = self.get_object()
-        username = user.username
-        response = super().delete(request, *args, **kwargs)
-        messages.success(request, f"User '{username}' deleted successfully.")
-        return response
+    def get(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+
+        return render(request, self.template_name, {
+            'object': user
+        })
+
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+
+        # Prevent deactivating yourself
+        if user == request.user:
+            messages.error(request, "You cannot deactivate your own account.")
+            return redirect('user_list')
+
+        # Prevent deactivating the last active admin
+        if (
+            user.is_superuser
+            and user.is_active
+            and User.objects.filter(is_superuser=True, is_active=True).count() == 1
+        ):
+            messages.error(request, "Cannot deactivate the last active administrator.")
+            return redirect('user_list')
+
+        user.is_active = False
+        user.save()
+
+        messages.success(request, f"User '{user.username}' has been deactivated.")
+        return redirect('user_list')
+    
+class UserActivateView(AdminRequiredMixin, View):
+    """
+    Activate a user - placeholder view.
+    """
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+
+        user.is_active = True
+        user.save()
+
+        messages.success(request, f"User '{user.username}' has been activated.")
+        return redirect('user_list')
 
 
 class UserPasswordResetInitiateView(AdminRequiredMixin, DetailView):

@@ -131,20 +131,6 @@
                                     </td>
                                 </tr>
                             {% endif %}
-
-                            {% if old.is_active != new.is_active %}
-                                <tr class="changed">
-                                    <td class="field-name">Account Status <span class="changed-indicator">CHANGED</span></td>
-                                    <td class="field-value">{% if old.is_active %}Active{% else %}Inactive{% endif %}</td>
-                                    <td class="field-value new">{% if new.is_active %}Active{% else %}Inactive{% endif %}</td>
-                                </tr>
-                            {% else %}
-                                <tr class="unchanged">
-                                    <td class="field-name">Account Status</td>
-                                    <td class="field-value">{% if old.is_active %}Active{% else %}Inactive{% endif %}</td>
-                                    <td class="field-value new">{% if new.is_active %}Active{% else %}Inactive{% endif %}</td>
-                                </tr>
-                            {% endif %}
                         {% endwith %}
                     </tbody>
                 </table>
