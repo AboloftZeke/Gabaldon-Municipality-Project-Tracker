@@ -1,4 +1,5 @@
 (function () {
+  const categoryFilter = document.getElementById("category-filter");
   const locationFilter = document.getElementById("location-filter");
   const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
   const statusButtons = Array.from(document.querySelectorAll(".status-btn"));
@@ -6,6 +7,7 @@
   const rows = Array.from(document.querySelectorAll(".project-row"));
 
   let currentCategory = "all";
+  let currentProjectCategory = "all";
   let currentStatus = "all";
 
   if (!rows.length) {
@@ -16,14 +18,16 @@
   }
 
   function applyFilters() {
+    const projectCategory = categoryFilter ? categoryFilter.value : "all";
     const location = locationFilter ? locationFilter.value : "all";
     let shown = 0;
 
     rows.forEach((row) => {
       const matchesCategory = currentCategory === "all" || row.dataset.category === currentCategory;
+      const matchesProjectCategory = projectCategory === "all" || row.dataset.projectCategory === projectCategory;
       const matchesStatus = currentStatus === "all" || row.dataset.status === currentStatus;
       const matchesLocation = location === "all" || row.dataset.location === location;
-      const show = matchesCategory && matchesStatus && matchesLocation;
+      const show = matchesCategory && matchesProjectCategory && matchesStatus && matchesLocation;
       row.classList.toggle("hidden-row", !show);
       if (show) {
         shown += 1;
@@ -43,6 +47,13 @@
       applyFilters();
     });
   });
+
+  if (categoryFilter) {
+    categoryFilter.addEventListener("change", () => {
+      currentProjectCategory = categoryFilter.value || "all";
+      applyFilters();
+    });
+  }
 
   statusButtons.forEach((button) => {
     button.addEventListener("click", () => {

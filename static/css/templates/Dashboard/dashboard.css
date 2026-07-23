@@ -311,6 +311,14 @@ body {
   font-size: 0.95rem;
 }
 
+#category-filter {
+  border: 1px solid #c8d8cd;
+  border-radius: 7px;
+  padding: 0.54rem 0.65rem;
+  min-width: 210px;
+  font-size: 0.95rem;
+}
+
 .status-buttons {
   display: inline-flex;
   gap: 0.36rem;
@@ -487,6 +495,7 @@ th {
     flex-wrap: wrap;
   }
 
+  #category-filter,
   #location-filter {
     min-width: 100%;
   }

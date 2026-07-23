@@ -131,6 +131,12 @@ class PublicDashboardView(TemplateView):
         noninfra_location_map = dict(NonInfrastructureProject.LOCATION_CHOICES)
         location_options_map = {**infra_location_map, **noninfra_location_map}
 
+        category_options = []
+        for value, label in InfrastructureProject.PROJECT_CATEGORY_CHOICES:
+            category_options.append((f'infra:{value}', f'Infrastructure - {label}'))
+        for value, label in NonInfrastructureProject.PROJECT_CATEGORY_CHOICES:
+            category_options.append((f'noninfra:{value}', f'Non-Infrastructure - {label}'))
+
         for p in infra_qs:
             if p.award_status == 'completed':
                 status_key = 'completed'
@@ -151,6 +157,8 @@ class PublicDashboardView(TemplateView):
             rows.append({
                 'record_id': f'infra-{p.pk}',
                 'category': 'infra',
+                'project_category_key': f'infra:{p.category}',
+                'project_category_label': f'Infrastructure - {p.get_category_display()}',
                 'type_label': 'Infrastructure',
                 'title': p.title,
                 'location_key': p.location,
@@ -185,6 +193,8 @@ class PublicDashboardView(TemplateView):
             rows.append({
                 'record_id': f'noninfra-{p.pk}',
                 'category': 'noninfra',
+                'project_category_key': f'noninfra:{p.category}',
+                'project_category_label': f'Non-Infrastructure - {p.get_category_display()}',
                 'type_label': 'Non-Infrastructure',
                 'title': p.title,
                 'location_key': p.location,
@@ -211,6 +221,7 @@ class PublicDashboardView(TemplateView):
             'total_budget': total_budget,
             'project_rows': rows,
             'recent_rows': rows[:8],
+            'project_categories': category_options,
             'location_options': sorted(location_options_map.items(), key=lambda x: x[1]),
         })
 

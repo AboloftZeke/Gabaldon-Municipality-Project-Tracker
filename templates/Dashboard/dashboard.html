@@ -81,7 +81,7 @@
         <div>
           <p class="section-kicker">Project Monitoring</p>
           <h2 id="registry-heading">Current Project Registry</h2>
-          <p>Live project records from your database. Use filters to narrow down.</p>
+          <p>Live project records from your database. Use the category, type, location, and status filters to narrow down.</p>
         </div>
         <div class="live-badge"><span id="visible-count">{{ project_rows|length }}</span> records shown</div>
       </div>
@@ -94,6 +94,13 @@
         </div>
 
         <div class="filter-group">
+          <select id="category-filter" aria-label="Filter by project category">
+            <option value="all">All Categories</option>
+            {% for code, label in project_categories %}
+            <option value="{{ code }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+
           <select id="location-filter" aria-label="Filter by location">
             <option value="all">All Locations</option>
             {% for code, label in location_options %}
@@ -126,6 +133,7 @@
             {% for row in project_rows %}
             <tr class="project-row"
                 data-category="{{ row.category }}"
+              data-project-category="{{ row.project_category_key }}"
                 data-status="{{ row.status_key }}"
                 data-location="{{ row.location_key }}">
               <td>
