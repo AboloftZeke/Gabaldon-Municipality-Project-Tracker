@@ -35,10 +35,10 @@
     <div class="sidebar-section">
         <p class="sidebar-title">Menu</p>
         <ul class="sidebar-menu">
-            <li><a href="{% url 'admin_dashboard' %}">📊 Dashboard</a></li>
+            <li><a href="{% url 'admin_dashboard' %}"> Dashboard</a></li>
             {% if user.is_superuser %}
-                <li><a href="{% url 'user_list' %}" class="active">👥 Manage Users</a></li>
-                <li><a href="{% url 'user_create' %}">➕ Create User</a></li>
+                <li><a href="{% url 'user_list' %}" class="active"> Manage Users</a></li>
+                <li><a href="{% url 'user_create' %}"> Create User</a></li>
             {% endif %}
         </ul>
     </div>
