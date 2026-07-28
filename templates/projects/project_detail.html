@@ -13,35 +13,102 @@
 
     <div class="project-detail-header">
         <h2>{{ project.title }}</h2>
-        <span class="status-badge status-{{ project.status }}">{{ project.get_status_display }}</span>
+        <span class="status-badge status-{{ project.status }}">{{ project.get_status_display|default:"No status" }}</span>
 
         <div class="project-meta">
             <div class="meta-item">
                 <div class="meta-label">Location</div>
-                <div class="meta-value">{{ project.location }}</div>
+                <div class="meta-value">{{ project.get_location_display|default:project.location }}</div>
             </div>
-            {% if project.budget %}
+
+            {% if project.implementing_office %}
                 <div class="meta-item">
-                    <div class="meta-label">Budget</div>
-                    <div class="meta-value">₱{{ project.budget|floatformat:2 }}</div>
+                    <div class="meta-label">Implementing Office</div>
+                    <div class="meta-value">{{ project.implementing_office }}</div>
                 </div>
             {% endif %}
-            {% if project.start_date %}
+
+            {% if project.category %}
                 <div class="meta-item">
-                    <div class="meta-label">Start Date</div>
-                    <div class="meta-value">{{ project.start_date|date:"M d, Y" }}</div>
+                    <div class="meta-label">Category</div>
+                    <div class="meta-value">{{ project.get_category_display }}</div>
                 </div>
             {% endif %}
-            {% if project.end_date %}
+
+            {% if project.contractor %}
                 <div class="meta-item">
-                    <div class="meta-label">End Date</div>
-                    <div class="meta-value">{{ project.end_date|date:"M d, Y" }}</div>
+                    <div class="meta-label">Contractor</div>
+                    <div class="meta-value">{{ project.contractor }}</div>
                 </div>
             {% endif %}
-            {% if project.assigned_to %}
+
+            {% if project.procurement_method %}
                 <div class="meta-item">
-                    <div class="meta-label">Assigned To</div>
-                    <div class="meta-value">{{ project.assigned_to.get_full_name|default:project.assigned_to.username }}</div>
+                    <div class="meta-label">Procurement Method</div>
+                    <div class="meta-value">{{ project.get_procurement_method_display }}</div>
+                </div>
+            {% endif %}
+
+            {% if project.award_status %}
+                <div class="meta-item">
+                    <div class="meta-label">Award Status</div>
+                    <div class="meta-value">{{ project.get_award_status_display }}</div>
+                </div>
+            {% endif %}
+
+            {% if project.source_of_fund %}
+                <div class="meta-item">
+                    <div class="meta-label">Source of Fund</div>
+                    <div class="meta-value">{{ project.source_of_fund }}</div>
+                </div>
+            {% endif %}
+
+            {% if project.abc_amount is not None %}
+                <div class="meta-item">
+                    <div class="meta-label">Approved Budget for Contract (₱)</div>
+                    <div class="meta-value">{{ project.abc_amount|floatformat:2 }}</div>
+                </div>
+            {% endif %}
+
+            {% if project.contract_price is not None %}
+                <div class="meta-item">
+                    <div class="meta-label">Contract Price (₱)</div>
+                    <div class="meta-value">{{ project.contract_price|floatformat:2 }}</div>
+                </div>
+            {% endif %}
+
+            {% if project.planned_start_date %}
+                <div class="meta-item">
+                    <div class="meta-label">Planned Start Date</div>
+                    <div class="meta-value">{{ project.planned_start_date|date:"M d, Y" }}</div>
+                </div>
+            {% endif %}
+
+            {% if project.planned_end_date %}
+                <div class="meta-item">
+                    <div class="meta-label">Planned End Date</div>
+                    <div class="meta-value">{{ project.planned_end_date|date:"M d, Y" }}</div>
+                </div>
+            {% endif %}
+
+            {% if project.actual_start_date %}
+                <div class="meta-item">
+                    <div class="meta-label">Actual Start Date</div>
+                    <div class="meta-value">{{ project.actual_start_date|date:"M d, Y" }}</div>
+                </div>
+            {% endif %}
+
+            {% if project.cost_progress_percentage is not None %}
+                <div class="meta-item">
+                    <div class="meta-label">Cost Progress (%)</div>
+                    <div class="meta-value">{{ project.cost_progress_percentage|floatformat:2 }}%</div>
+                </div>
+            {% endif %}
+
+            {% if project.physical_progress_percentage is not None %}
+                <div class="meta-item">
+                    <div class="meta-label">Physical Progress (%)</div>
+                    <div class="meta-value">{{ project.physical_progress_percentage|floatformat:2 }}%</div>
                 </div>
             {% endif %}
         </div>
