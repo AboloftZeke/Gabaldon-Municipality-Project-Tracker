@@ -579,15 +579,27 @@ class UserDeactivateView(AdminRequiredMixin, View):
     
 class UserActivateView(AdminRequiredMixin, View):
     """
-    Activate a user - placeholder view.
+    Activate a user.
     """
+    template_name = 'core/user_confirm_activate.html'
+
+    def get(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+
+        return render(request, self.template_name, {
+            'object': user,
+        })
+
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
 
         user.is_active = True
         user.save()
 
-        messages.success(request, f"User '{user.username}' has been activated.")
+        messages.success(
+            request,
+            f"User '{user.username}' has been activated."
+        )
         return redirect('user_list')
 
 

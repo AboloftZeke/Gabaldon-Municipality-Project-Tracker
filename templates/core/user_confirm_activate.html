@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Activate User - Municipality Project Tracker{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/templates/core/user_confirm_activate.css' %}">
+{% endblock %}
+
+{% block show_header %}
+<header>
+    <nav>
+        <div class="header-brand">
+            <img src="{% static 'images/Gabaldon seal.png' %}" alt="Gabaldon Seal" class="header-logo">
+            <h1>Municipality Project Tracker</h1>
+        </div>
+        {% if user.is_authenticated %}
+            <ul>
+                <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+                {% if user.is_superuser %}
+                    <li><a href="{% url 'user_list' %}">User Management</a></li>
+                {% endif %}
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+            </ul>
+        {% endif %}
+    </nav>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="sidebar">
+    <div class="sidebar-section">
+        <p class="sidebar-title">Menu</p>
+        <ul class="sidebar-menu">
+            <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+            {% if user.is_superuser %}
+                <li><a href="{% url 'user_list' %}" class="active">Manage Users</a></li>
+                <li><a href="{% url 'user_create' %}">Create User</a></li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+
+<div>
+    <h2 class="page-title">Activate User</h2>
+
+    <div class="delete-confirm-wrapper">
+        <div class="delete-header">
+            <div class="delete-icon">✅</div>
+            <h3>Activate User Account?</h3>
+        </div>
+
+        <div class="user-details">
+            <div class="detail-row">
+                <span class="detail-label">Username</span>
+                <span class="detail-value">{{ object.username }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Email</span>
+                <span class="detail-value">{{ object.email|default:"—" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Name</span>
+                <span class="detail-value">{{ object.first_name }} {{ object.last_name|default:"—" }}</span>
+            </div>
+
+            {% if object.profile %}
+            <div class="detail-row">
+                <span class="detail-label">Department</span>
+                <span class="detail-value">{{ object.profile.get_department_display }}</span>
+            </div>
+            {% endif %}
+
+            <div class="detail-row">
+                <span class="detail-label">Status</span>
+                <span class="detail-value">
+                    {% if object.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+            </div>
+        </div>
+
+        <div class="delete-message">
+            <strong>✅ The account will be activated.</strong>
+            <div style="margin-top: 0.5rem;">
+                The user will regain access to the Municipality Project Tracker and will be able to log in using their existing credentials.
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">
+                    Activate User
+                </button>
+                <a href="{% url 'user_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

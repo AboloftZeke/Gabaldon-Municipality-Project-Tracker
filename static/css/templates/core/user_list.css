@@ -366,6 +366,11 @@
         display: flex;
         gap: 0.5rem;
     }
+    
+    .action-buttons form {
+        display: inline;
+        margin: 0;
+    }
 
     .action-btn {
         padding: 0.5rem 0.75rem;
@@ -379,6 +384,12 @@
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
+    }
+
+    .action-buttons button.action-btn {
+        appearance: none;
+        -webkit-appearance: none;
+        font: inherit;
     }
 
     .action-btn-primary {
@@ -397,6 +408,16 @@
 
     .action-btn-danger:hover {
         background: rgba(220, 38, 38, 0.2);
+    }
+
+    .action-btn-success {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+        border: none;
+    }
+
+    .action-btn-success:hover {
+        background: rgba(34, 197, 94, 0.2);
     }
 
     .empty-state {
