@@ -14,7 +14,13 @@ from django.conf import settings
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.utils.crypto import get_random_string
-from .forms import CustomUserCreationForm, CustomUserChangeForm, UserListFilterForm
+from .forms import (
+    CustomUserCreationForm,
+    CustomUserChangeForm,
+    UserListFilterForm,
+    UserPasswordChangeForm,
+)
+from .models import UserProfile
 import json
 
 
@@ -41,7 +47,8 @@ class AdminRequiredMixin(StaffRequiredMixin):
 class LoginView(View):
     """
     Handle user login with Django's authentication system.
-    Redirects to role-specific dashboard.
+    Redirects to password change if a temporary password must be replaced.
+    Otherwise redirects to the user's role-specific dashboard.
     """
     template_name = 'core/login.html'
 
@@ -62,6 +69,12 @@ class LoginView(View):
                     self.template_name,
                     {'error': 'Your account does not have access to this module.'}
                 )
+            try:
+                if user.profile.must_change_password:
+                    return redirect('password_change')
+            except UserProfile.DoesNotExist:
+                pass
+
             # Redirect based on user role
             if user.is_superuser:
                 return redirect('admin_dashboard')
@@ -837,3 +850,67 @@ class PasswordHistoryListView(AdminRequiredMixin, ListView):
         context['date_to'] = self.request.GET.get('date_to', '')
 
         return context
+
+class PasswordChangeView(LoginRequiredMixin, View):
+    """
+    Allow the logged-in user to change their password.
+    Used for both mandatory temporary-password changes and normal
+    password changes.
+    """
+    template_name = 'core/password_change.html'
+
+    def get(self, request):
+        form = UserPasswordChangeForm(request.user)
+
+        return render(
+            request,
+            self.template_name,
+            {'form': form}
+        )
+
+    def post(self, request):
+        form = UserPasswordChangeForm(
+            request.user,
+            request.POST
+        )
+
+        if form.is_valid():
+            form.save()
+
+            # Clear the temporary-password requirement.
+            request.user.profile.must_change_password = False
+            request.user.profile.save(
+                update_fields=['must_change_password']
+            )
+
+            messages.success(
+                request,
+                'Your password has been changed successfully.'
+            )
+
+            # Re-authenticate the session because set_password()
+            # changes the user's password hash.
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+
+            # Return the user to their normal dashboard.
+            if request.user.is_superuser:
+                return redirect('admin_dashboard')
+
+            try:
+                if request.user.profile.department == 'engineer':
+                    return redirect('engineering_dashboard')
+
+                elif request.user.profile.department == 'mayor':
+                    return redirect('mayor_dashboard')
+
+            except UserProfile.DoesNotExist:
+                pass
+
+            return redirect('admin_dashboard')
+
+        return render(
+            request,
+            self.template_name,
+            {'form': form}
+        )

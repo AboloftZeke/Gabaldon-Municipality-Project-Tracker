@@ -173,3 +173,69 @@ class UserListFilterForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={'placeholder': 'Search by username or email'})
     )
+
+class UserPasswordChangeForm(forms.Form):
+    """
+    Form for users to change their password.
+    Used when an employee is required to replace their temporary password.
+    """
+
+    current_password = forms.CharField(
+        label='Current Password',
+        widget=forms.PasswordInput
+    )
+
+    new_password = forms.CharField(
+        label='New Password',
+        widget=forms.PasswordInput
+    )
+
+    confirm_password = forms.CharField(
+        label='Confirm New Password',
+        widget=forms.PasswordInput
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_current_password(self):
+        current_password = self.cleaned_data.get('current_password')
+
+        if current_password and not self.user.check_password(current_password):
+            raise forms.ValidationError('Current password is incorrect.')
+
+        return current_password
+
+    def clean_new_password(self):
+        new_password = self.cleaned_data.get('new_password')
+
+        if new_password:
+            validate_password(new_password, self.user)
+
+        return new_password
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        new_password = cleaned_data.get('new_password')
+        confirm_password = cleaned_data.get('confirm_password')
+
+        if (
+            new_password
+            and confirm_password
+            and new_password != confirm_password
+        ):
+            raise forms.ValidationError(
+                'New passwords do not match.'
+            )
+
+        return cleaned_data
+
+    def save(self):
+        self.user.set_password(
+            self.cleaned_data['new_password']
+        )
+        self.user.save(update_fields=['password'])
+
+        return self.user

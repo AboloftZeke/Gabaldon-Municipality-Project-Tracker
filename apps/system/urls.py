@@ -32,4 +32,5 @@ urlpatterns = [
     path('users/<int:pk>/reset-password/', views.UserPasswordResetInitiateView.as_view(), name='user_initiate_password_reset'),
     path('users/<int:pk>/password-history/', views.UserPasswordHistoryView.as_view(), name='user_password_history'),
     path('password-history/', views.PasswordHistoryListView.as_view(), name='password_history_list'),
+    path('password-change/', views.PasswordChangeView.as_view(),name='password_change'),
 ]
