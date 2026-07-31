@@ -5,6 +5,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/projects/project_list.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/projects/project_modal.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -56,10 +57,58 @@
 
                     <div class="project-actions">
                         {% if request.resolver_match.namespace == 'engineering_projects' %}
-                            <a href="{% url 'engineering_projects:project_detail' project.pk %}" class="btn-small btn-view">View</a>
+                            <a href="{% url 'engineering_projects:project_detail' project.pk %}"
+                               class="btn-small btn-view"
+                               data-project-modal-trigger
+                               data-project-title="{{ project.title|escape }}"
+                               data-project-location="{{ project.get_location_display|default:project.location|escape }}"
+                               data-project-implementing-office="{{ project.implementing_office|escape }}"
+                               data-project-category="{{ project.get_category_display|escape }}"
+                               data-project-contractor="{{ project.contractor|default_if_none:''|escape }}"
+                               data-project-procurement-method="{{ project.get_procurement_method_display|escape }}"
+                               data-project-award-status="{{ project.get_award_status_display|escape }}"
+                               data-project-award-status-label="{{ project.get_award_status_display|escape }}"
+                               data-project-status-class="status-{{ project.award_status }}"
+                               data-project-source-of-fund="{{ project.source_of_fund|default_if_none:''|escape }}"
+                               data-project-abc-amount="{% if project.abc_amount is not None %}₱{{ project.abc_amount|floatformat:2 }}{% endif %}"
+                               data-project-contract-price="{% if project.contract_price is not None %}₱{{ project.contract_price|floatformat:2 }}{% endif %}"
+                               data-project-planned-start-date="{% if project.planned_start_date %}{{ project.planned_start_date|date:'M d, Y' }}{% endif %}"
+                               data-project-planned-end-date="{% if project.planned_end_date %}{{ project.planned_end_date|date:'M d, Y' }}{% endif %}"
+                               data-project-actual-start-date="{% if project.actual_start_date %}{{ project.actual_start_date|date:'M d, Y' }}{% endif %}"
+                               data-project-cost-progress-percentage="{% if project.cost_progress_percentage is not None %}{{ project.cost_progress_percentage|floatformat:2 }}{% endif %}"
+                               data-project-physical-progress-percentage="{% if project.physical_progress_percentage is not None %}{{ project.physical_progress_percentage|floatformat:2 }}{% endif %}"
+                               data-project-created-by="{{ project.created_by.get_full_name|default:project.created_by.username|escape }}"
+                               data-project-created-at="{{ project.created_at|date:'M d, Y \a\t H:i' }}"
+                               data-project-updated-at="{{ project.updated_at|date:'M d, Y \a\t H:i' }}"
+                               data-project-description="{{ project.description|default_if_none:''|escape }}"
+                               data-project-detail-url="{% url 'project_detail' project.pk %}">View</a>
                             <a href="{% url 'engineering_projects:project_update' project.pk %}" class="btn-small btn-edit">Edit</a>
                         {% else %}
-                            <a href="{% url 'project_detail' project.pk %}" class="btn-small btn-view">View</a>
+                            <a href="{% url 'project_detail' project.pk %}"
+                               class="btn-small btn-view"
+                               data-project-modal-trigger
+                               data-project-title="{{ project.title|escape }}"
+                               data-project-location="{{ project.get_location_display|default:project.location|escape }}"
+                               data-project-implementing-office="{{ project.implementing_office|escape }}"
+                               data-project-category="{{ project.get_category_display|escape }}"
+                               data-project-contractor="{{ project.contractor|default_if_none:''|escape }}"
+                               data-project-procurement-method="{{ project.get_procurement_method_display|escape }}"
+                               data-project-award-status="{{ project.get_award_status_display|escape }}"
+                               data-project-award-status-label="{{ project.get_award_status_display|escape }}"
+                               data-project-status-class="status-{{ project.award_status }}"
+                               data-project-source-of-fund="{{ project.source_of_fund|default_if_none:''|escape }}"
+                               data-project-abc-amount="{% if project.abc_amount is not None %}₱{{ project.abc_amount|floatformat:2 }}{% endif %}"
+                               data-project-contract-price="{% if project.contract_price is not None %}₱{{ project.contract_price|floatformat:2 }}{% endif %}"
+                               data-project-planned-start-date="{% if project.planned_start_date %}{{ project.planned_start_date|date:'M d, Y' }}{% endif %}"
+                               data-project-planned-end-date="{% if project.planned_end_date %}{{ project.planned_end_date|date:'M d, Y' }}{% endif %}"
+                               data-project-actual-start-date="{% if project.actual_start_date %}{{ project.actual_start_date|date:'M d, Y' }}{% endif %}"
+                               data-project-cost-progress-percentage="{% if project.cost_progress_percentage is not None %}{{ project.cost_progress_percentage|floatformat:2 }}{% endif %}"
+                               data-project-physical-progress-percentage="{% if project.physical_progress_percentage is not None %}{{ project.physical_progress_percentage|floatformat:2 }}{% endif %}"
+                               data-project-created-by="{{ project.created_by.get_full_name|default:project.created_by.username|escape }}"
+                               data-project-created-at="{{ project.created_at|date:'M d, Y \a\t H:i' }}"
+                               data-project-updated-at="{{ project.updated_at|date:'M d, Y \a\t H:i' }}"
+                               data-project-description="{{ project.description|default_if_none:''|escape }}"
+                               data-project-detail-url="{% url 'project_detail' project.pk %}">View</a>
                             <a href="{% url 'project_update' project.pk %}" class="btn-small btn-edit">Edit</a>
                         {% endif %}
                     </div>
@@ -77,4 +126,9 @@
         </div>
     {% endif %}
 </div>
+{% include "projects/project_detail_modal.html" %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/templates/projects/project_modal.js' %}"></script>
 {% endblock %}

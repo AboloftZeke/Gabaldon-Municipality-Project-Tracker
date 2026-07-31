@@ -1,0 +1,138 @@
+<div class="project-modal" data-project-modal hidden aria-hidden="true">
+    <div class="project-modal__backdrop" data-project-modal-close></div>
+
+    <div class="project-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="project-modal-title">
+        <button type="button" class="project-modal__close" data-project-modal-close aria-label="Close project details">&times;</button>
+
+        <div class="project-modal__header">
+            <p class="project-modal__eyebrow">Full Project Disclosure</p>
+            <h3 class="project-modal__title" id="project-modal-title" data-project-modal-field="title"></h3>
+            <div class="project-modal__type" data-project-modal-group="type">
+                <span class="project-modal__type-label">Project Type</span>
+                <span class="project-modal__type-value" data-project-modal-field="type"></span>
+            </div>
+            <span class="project-modal__status" data-project-modal-field="status"></span>
+        </div>
+
+        <div class="project-modal__grid">
+            <div class="project-modal__item" data-project-modal-group="office">
+                <div class="project-modal__label">Office</div>
+                <div class="project-modal__value" data-project-modal-field="office"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="location">
+                <div class="project-modal__label">Location</div>
+                <div class="project-modal__value" data-project-modal-field="location"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="category">
+                <div class="project-modal__label">Category</div>
+                <div class="project-modal__value" data-project-modal-field="category"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="contractor">
+                <div class="project-modal__label">Contractor</div>
+                <div class="project-modal__value" data-project-modal-field="contractor"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="procurement_method">
+                <div class="project-modal__label">Procurement Method</div>
+                <div class="project-modal__value" data-project-modal-field="procurement_method"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="award_status">
+                <div class="project-modal__label">Award Status</div>
+                <div class="project-modal__value" data-project-modal-field="award_status"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="source_of_fund">
+                <div class="project-modal__label">Source of Fund</div>
+                <div class="project-modal__value" data-project-modal-field="source_of_fund"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="budget_amount">
+                <div class="project-modal__label">Budget / Cost</div>
+                <div class="project-modal__value" data-project-modal-field="budget_amount"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="abc_amount">
+                <div class="project-modal__label">Approved Budget for Contract</div>
+                <div class="project-modal__value" data-project-modal-field="abc_amount"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="contract_price">
+                <div class="project-modal__label">Contract Price</div>
+                <div class="project-modal__value" data-project-modal-field="contract_price"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="progress_percentage">
+                <div class="project-modal__label">Progress</div>
+                <div class="project-modal__value" data-project-modal-field="progress_percentage"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="overall_progress_percentage">
+                <div class="project-modal__label">Overall Progress</div>
+                <div class="project-modal__value" data-project-modal-field="overall_progress_percentage"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="service_location_details">
+                <div class="project-modal__label">Service Location Details</div>
+                <div class="project-modal__value" data-project-modal-field="service_location_details"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="service_period">
+                <div class="project-modal__label">Service Period</div>
+                <div class="project-modal__value" data-project-modal-field="service_period"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="service_time">
+                <div class="project-modal__label">Service Time</div>
+                <div class="project-modal__value" data-project-modal-field="service_time"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="planned_start_date">
+                <div class="project-modal__label">Planned Start Date</div>
+                <div class="project-modal__value" data-project-modal-field="planned_start_date"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="planned_end_date">
+                <div class="project-modal__label">Planned End Date</div>
+                <div class="project-modal__value" data-project-modal-field="planned_end_date"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="actual_start_date">
+                <div class="project-modal__label">Actual Start Date</div>
+                <div class="project-modal__value" data-project-modal-field="actual_start_date"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="revised_completion_date">
+                <div class="project-modal__label">Revised Completion Date</div>
+                <div class="project-modal__value" data-project-modal-field="revised_completion_date"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="cost_progress_percentage">
+                <div class="project-modal__label">Cost Progress</div>
+                <div class="project-modal__value" data-project-modal-field="cost_progress_percentage"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="physical_progress_percentage">
+                <div class="project-modal__label">Physical Progress</div>
+                <div class="project-modal__value" data-project-modal-field="physical_progress_percentage"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="service_description">
+                <div class="project-modal__label">Service Description</div>
+                <div class="project-modal__value" data-project-modal-field="service_description"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="beneficiaries_description">
+                <div class="project-modal__label">Beneficiaries</div>
+                <div class="project-modal__value" data-project-modal-field="beneficiaries_description"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="results_achieved">
+                <div class="project-modal__label">Results Achieved</div>
+                <div class="project-modal__value" data-project-modal-field="results_achieved"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="created_by">
+                <div class="project-modal__label">Created By</div>
+                <div class="project-modal__value" data-project-modal-field="created_by"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="created_at">
+                <div class="project-modal__label">Created</div>
+                <div class="project-modal__value" data-project-modal-field="created_at"></div>
+            </div>
+            <div class="project-modal__item" data-project-modal-group="updated_at">
+                <div class="project-modal__label">Last Updated</div>
+                <div class="project-modal__value" data-project-modal-field="updated_at"></div>
+            </div>
+        </div>
+
+        <section class="project-modal__section" data-project-modal-group="description">
+            <h4>Description</h4>
+            <div class="project-modal__description" data-project-modal-field="description"></div>
+        </section>
+
+        <div class="project-modal__actions">
+            <a class="project-modal__button project-modal__button--secondary" data-project-modal-detail-link href="#">Open full page</a>
+            <button type="button" class="project-modal__button" data-project-modal-close>Close</button>
+        </div>
+    </div>
+</div>

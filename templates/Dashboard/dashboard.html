@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/templates/projects/project_modal.css' %}">
 </head>
 <body>
   <header class="site-header">
@@ -154,7 +155,43 @@
               <td>P{{ row.budget|floatformat:2 }}</td>
               <td>{{ row.progress|floatformat:0 }}%</td>
               <td>{{ row.office }}</td>
-              <td><a href="{{ row.detail_url }}" class="row-link">View</a></td>
+              <td>
+                <a href="{{ row.detail_url }}"
+                   class="row-link"
+                   data-project-modal-trigger
+                   data-project-title="{{ row.title|escape }}"
+                   data-project-type-label="{{ row.type_label|escape }}"
+                   data-project-office="{{ row.office|default_if_none:''|escape }}"
+                   data-project-location="{{ row.location|escape }}"
+                   data-project-category="{{ row.project_category_label|default_if_none:row.type_label|escape }}"
+                   data-project-contractor="{{ row.contractor|default_if_none:''|escape }}"
+                   data-project-procurement-method="{{ row.procurement_method|default_if_none:''|escape }}"
+                   data-project-status-label="{{ row.status_label|escape }}"
+                   data-project-status-class="status-{{ row.status_key }}"
+                   data-project-source-of-fund="{{ row.source_of_fund|default_if_none:''|escape }}"
+                   data-project-budget-amount="{{ row.budget|floatformat:2 }}"
+                   data-project-abc-amount="{{ row.abc_amount|default_if_none:''|floatformat:2 }}"
+                   data-project-contract-price="{{ row.contract_price|default_if_none:''|floatformat:2 }}"
+                   data-project-progress-percentage="{{ row.progress|floatformat:0 }}%"
+                   data-project-overall-progress-percentage="{{ row.overall_progress_percentage|default_if_none:''|floatformat:2 }}"
+                   data-project-service-description="{{ row.service_description|default_if_none:''|escape }}"
+                   data-project-beneficiaries-description="{{ row.beneficiaries_description|default_if_none:''|escape }}"
+                   data-project-service-location-details="{{ row.service_location_details|default_if_none:''|escape }}"
+                   data-project-service-period="{{ row.service_period|default_if_none:''|escape }}"
+                   data-project-service-time="{{ row.service_time|default_if_none:''|escape }}"
+                   data-project-results-achieved="{{ row.results_achieved|default_if_none:''|escape }}"
+                   data-project-planned-start-date="{% if row.planned_start_date %}{{ row.planned_start_date|date:'M d, Y' }}{% endif %}"
+                   data-project-planned-end-date="{% if row.planned_end_date %}{{ row.planned_end_date|date:'M d, Y' }}{% endif %}"
+                   data-project-actual-start-date="{% if row.actual_start_date %}{{ row.actual_start_date|date:'M d, Y' }}{% endif %}"
+                   data-project-revised-completion-date="{% if row.revised_completion_date %}{{ row.revised_completion_date|date:'M d, Y' }}{% endif %}"
+                   data-project-cost-progress-percentage="{{ row.cost_progress_percentage|default_if_none:''|floatformat:2 }}"
+                   data-project-physical-progress-percentage="{{ row.physical_progress_percentage|default_if_none:''|floatformat:2 }}"
+                   data-project-created-by="{{ row.created_by_name|default_if_none:''|escape }}"
+                   data-project-created-at="{{ row.created_at|date:'M d, Y \a\t H:i' }}"
+                   data-project-updated-at="{{ row.updated_at|date:'M d, Y \a\t H:i' }}"
+                   data-project-description="{{ row.description|default_if_none:''|escape }}"
+                   data-project-detail-url="{{ row.detail_url }}">View</a>
+              </td>
             </tr>
             {% empty %}
             <tr>
@@ -190,6 +227,9 @@
     <p>(c) 2026 Municipality of Gabaldon - Transparent Governance for the Community.</p>
   </footer>
 
+  {% include "projects/project_detail_modal.html" %}
+
   <script src="{% static 'js/templates/Dashboard/dashboard.js' %}"></script>
+  <script src="{% static 'js/templates/projects/project_modal.js' %}"></script>
 </body>
 </html>

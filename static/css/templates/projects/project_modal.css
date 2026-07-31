@@ -1,0 +1,244 @@
+.project-modal[hidden] {
+    display: none;
+}
+
+.project-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+}
+
+.project-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.68);
+    backdrop-filter: blur(5px);
+}
+
+.project-modal__dialog {
+    position: relative;
+    width: min(1100px, calc(100vw - 2rem));
+    max-height: min(90vh, 980px);
+    margin: 5vh auto;
+    overflow: auto;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 24px;
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.35);
+    border: 1px solid rgba(209, 213, 219, 0.9);
+    padding: 2rem;
+}
+
+.project-modal__close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(17, 24, 39, 0.08);
+    color: #111827;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.project-modal__close:hover {
+    background: rgba(17, 24, 39, 0.14);
+}
+
+.project-modal__header {
+    padding-right: 3rem;
+    margin-bottom: 1.5rem;
+}
+
+.project-modal__type {
+    margin-top: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(46, 111, 64, 0.08);
+    color: #1f2937;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.project-modal__type-label {
+    color: #64748b;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.project-modal__type-value {
+    color: #0f172a;
+}
+
+.project-modal__eyebrow {
+    margin: 0 0 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #2E6F40;
+}
+
+.project-modal__title {
+    margin: 0;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    line-height: 1.1;
+    color: #0f172a;
+}
+
+.project-modal__status {
+    display: inline-flex;
+    margin-top: 1rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    font-weight: 700;
+    text-transform: capitalize;
+    background: #e5e7eb;
+    color: #334155;
+}
+
+.project-modal__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.project-modal__item,
+.project-modal__section {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(209, 213, 219, 0.85);
+    border-radius: 18px;
+    padding: 1rem 1.1rem;
+}
+
+.project-modal__label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+}
+
+.project-modal__value {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: #0f172a;
+    word-break: break-word;
+}
+
+.project-modal__section {
+    margin-top: 1rem;
+}
+
+.project-modal__section h4 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    color: #0f172a;
+}
+
+.project-modal__description {
+    white-space: pre-wrap;
+    line-height: 1.7;
+    color: #334155;
+}
+
+.project-modal__actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+.project-modal__button {
+    border: 0;
+    border-radius: 12px;
+    padding: 0.85rem 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: #2E6F40;
+    color: #ffffff;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 160ms ease, background 160ms ease;
+}
+
+.project-modal__button:hover {
+    background: #235A32;
+    transform: translateY(-1px);
+}
+
+.project-modal__button--secondary {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.project-modal__button--secondary:hover {
+    background: #cbd5e1;
+}
+
+body.project-modal-open {
+    overflow: hidden;
+}
+
+.status-awarded {
+    background: #dbeafe;
+    color: #1e3a8a;
+}
+
+.status-planned,
+.status-ongoing {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-ongoing_bidding {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-rebid {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+.status-completed {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+@media (max-width: 900px) {
+    .project-modal__dialog {
+        width: min(100vw - 1rem, 900px);
+        margin: 0.5rem auto;
+        max-height: calc(100vh - 1rem);
+        padding: 1.25rem;
+        border-radius: 18px;
+    }
+
+    .project-modal__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .project-modal__actions {
+        flex-direction: column;
+    }
+
+    .project-modal__button {
+        width: 100%;
+    }
+}
