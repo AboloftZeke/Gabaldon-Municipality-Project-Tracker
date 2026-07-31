@@ -13,6 +13,7 @@ from django.db.models import Q
 from django.conf import settings
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from django.utils.crypto import get_random_string
 from .forms import CustomUserCreationForm, CustomUserChangeForm, UserListFilterForm
 import json
 
@@ -442,8 +443,26 @@ class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
             confirm_data = form_data.copy()
             confirm_data.setdefault('password2', confirm_data.get('password1', ''))
             form = CustomUserCreationForm(confirm_data)
+            print("CONFIRM ROLE:", confirm_data.get('role'))
+            print("FORM ROLE:", form.data.get('role'))
             if form.is_valid():
-                user = form.save(commit=True)
+                temporary_password = get_random_string(
+                    length=12,
+                    allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()'
+                    )
+                user = form.save(
+                    commit=True,
+                    temporary_password=temporary_password
+                )
+
+                user.profile.must_change_password = True
+                user.profile.save()
+
+                user.profile.refresh_from_db()
+
+                print("AFTER PROFILE SAVE - USER:", user.username)
+                print("AFTER PROFILE SAVE - DEPARTMENT:", user.profile.department)
+                print("AFTER PROFILE SAVE - MUST CHANGE:", user.profile.must_change_password)
 
                 from .models import PasswordChangeHistory
                 PasswordChangeHistory.objects.create(
@@ -454,7 +473,10 @@ class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
                 )
 
                 del request.session['user_create_form_data']
-                messages.success(request, f"User '{user.username}' created successfully.")
+                messages.success(
+                    request,
+                     f"User '{user.username}' created successfully. "
+                     f" Temporary password: {temporary_password}. User will be required to change password on first login.")
                 return redirect('user_list')
             else:
                 request.session['user_create_form_data'] = form_data

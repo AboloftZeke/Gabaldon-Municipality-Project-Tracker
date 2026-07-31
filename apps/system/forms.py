@@ -48,11 +48,16 @@ class CustomUserCreationForm(forms.ModelForm):
 
         return cleaned_data
 
-    def save(self, commit=True):
+    def save(self, commit=True, temporary_password=None):
         user = super().save(commit=False)
         role = self.cleaned_data.get('role', self.ROLE_ENGINEERING)
+        
 
-        user.set_password(self.cleaned_data['password1'])
+        if temporary_password:
+            user.set_password(temporary_password)
+        else:
+            user.set_password(self.cleaned_data['password1'])
+
         user.is_staff = True
         user.is_superuser = role == self.ROLE_ADMIN
 
@@ -71,9 +76,17 @@ class CustomUserCreationForm(forms.ModelForm):
             self.ROLE_ENGINEERING: 'engineer',
             self.ROLE_MAYORS: 'mayor',
         }
+        print("PROFILE ROLE:", role)
+        print("DEPARTMENT MAP RESULT:", department_map.get(role))
+
         profile, created = UserProfile.objects.get_or_create(user=user)
+
+        print("PROFILE CREATED:", created)
+        print("PROFILE BEFORE:", profile.department)
         profile.department = department_map.get(role, 'engineer')
         profile.save()
+
+        print("PROFILE AFTER:", profile.department)
 
 
 class CustomUserChangeForm(forms.ModelForm):

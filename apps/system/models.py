@@ -24,6 +24,11 @@ class UserProfile(models.Model):
         default='admin'
     )
 
+    must_change_password = models.BooleanField(
+        default=False,
+        help_text="Require the user to change their password upon next login."
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
