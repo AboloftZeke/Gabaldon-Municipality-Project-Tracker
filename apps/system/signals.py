@@ -78,6 +78,8 @@ def create_user_profile(sender, instance, created, **kwargs):
         **kwargs: Additional signal arguments
     """
     if created:
-        # Only auto-create if profile doesn't already exist
-        if not UserProfile.objects.filter(user=instance).exists():
-            UserProfile.objects.create(user=instance, department='engineer')
+        # Use get_or_create for atomicity - it won't duplicate even if called twice
+        UserProfile.objects.get_or_create(
+            user=instance,
+            defaults={'department': 'engineer'}
+        )
