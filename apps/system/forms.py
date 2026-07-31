@@ -80,8 +80,6 @@ class CustomUserCreationForm(forms.ModelForm):
         # Map the form role to the model department
         department = department_map.get(role, 'engineer')
         
-        # Always use update_or_create to ensure the correct department is set
-        # This prevents the signal's default 'admin' value from persisting
         profile, created = UserProfile.objects.update_or_create(
             user=user,
             defaults={'department': department}

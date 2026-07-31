@@ -493,8 +493,7 @@ class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
             confirm_data = form_data.copy()
             confirm_data.setdefault('password2', confirm_data.get('password1', ''))
             form = CustomUserCreationForm(confirm_data)
-            print("CONFIRM ROLE:", confirm_data.get('role'))
-            print("FORM ROLE:", form.data.get('role'))
+
             if form.is_valid():
                 temporary_password = get_random_string(
                     length=12,
@@ -509,10 +508,6 @@ class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
                 user.profile.save()
 
                 user.profile.refresh_from_db()
-
-                print("AFTER PROFILE SAVE - USER:", user.username)
-                print("AFTER PROFILE SAVE - DEPARTMENT:", user.profile.department)
-                print("AFTER PROFILE SAVE - MUST CHANGE:", user.profile.must_change_password)
 
                 from .models import PasswordChangeHistory
                 PasswordChangeHistory.objects.create(
