@@ -76,17 +76,16 @@ class CustomUserCreationForm(forms.ModelForm):
             self.ROLE_ENGINEERING: 'engineer',
             self.ROLE_MAYORS: 'mayor',
         }
-        print("PROFILE ROLE:", role)
-        print("DEPARTMENT MAP RESULT:", department_map.get(role))
-
-        profile, created = UserProfile.objects.get_or_create(user=user)
-
-        print("PROFILE CREATED:", created)
-        print("PROFILE BEFORE:", profile.department)
-        profile.department = department_map.get(role, 'engineer')
-        profile.save()
-
-        print("PROFILE AFTER:", profile.department)
+        
+        # Map the form role to the model department
+        department = department_map.get(role, 'engineer')
+        
+        # Always use update_or_create to ensure the correct department is set
+        # This prevents the signal's default 'admin' value from persisting
+        profile, created = UserProfile.objects.update_or_create(
+            user=user,
+            defaults={'department': department}
+        )
 
 
 class CustomUserChangeForm(forms.ModelForm):
@@ -154,9 +153,15 @@ class CustomUserChangeForm(forms.ModelForm):
             self.ROLE_ENGINEERING: 'engineer',
             self.ROLE_MAYORS: 'mayor',
         }
-        profile, created = UserProfile.objects.get_or_create(user=user)
-        profile.department = department_map.get(role, 'engineer')
-        profile.save()
+        
+        # Map the form role to the model department
+        department = department_map.get(role, 'engineer')
+        
+        # Use update_or_create to ensure the correct department is set
+        profile, created = UserProfile.objects.update_or_create(
+            user=user,
+            defaults={'department': department}
+        )
 
 
 class UserListFilterForm(forms.Form):

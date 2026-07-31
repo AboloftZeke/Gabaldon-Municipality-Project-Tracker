@@ -65,10 +65,11 @@ def track_password_change(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     """
-    Signal handler to create a UserProfile when a new User is created.
+    Signal handler to create a UserProfile when a new User is created via admin.
 
-    This automatically creates a UserProfile entry with default department
-    (Engineering Office) whenever a new User is created.
+    NOTE: Users created through CustomUserCreationForm handle profile creation
+    directly to ensure the correct department is assigned. This signal is a
+    fallback for users created through other methods (e.g., Django admin panel).
 
     Args:
         sender: The model class (User)
@@ -77,4 +78,6 @@ def create_user_profile(sender, instance, created, **kwargs):
         **kwargs: Additional signal arguments
     """
     if created:
-        UserProfile.objects.get_or_create(user=instance)
+        # Only auto-create if profile doesn't already exist
+        if not UserProfile.objects.filter(user=instance).exists():
+            UserProfile.objects.create(user=instance, department='engineer')
