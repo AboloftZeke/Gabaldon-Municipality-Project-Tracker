@@ -512,10 +512,9 @@ class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
                     temporary_password=temporary_password
                 )
 
-                user.profile.must_change_password = True
-                user.profile.save()
-
-                user.profile.refresh_from_db()
+                profile = UserProfile.objects.get(user=user)
+                profile.must_change_password = True
+                profile.save(update_fields=['must_change_password', 'updated_at'])
 
                 from .models import PasswordChangeHistory
                 PasswordChangeHistory.objects.create(

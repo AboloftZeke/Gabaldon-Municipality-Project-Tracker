@@ -75,3 +75,31 @@ class UserCreationFormTests(TestCase):
 
         self.assertTrue(user.check_password('TempPass123!'))
         self.assertEqual(user.profile.department, 'engineer')
+
+
+class UserCreateConfirmViewTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username='admin2',
+            email='admin2@example.com',
+            password='password123',
+        )
+
+    def test_confirm_creation_preserves_mayor_department(self):
+        self.client.force_login(self.admin)
+        session = self.client.session
+        session['user_create_form_data'] = {
+            'username': 'mayoruser',
+            'email': 'mayoruser@example.com',
+            'first_name': 'Mayor',
+            'last_name': 'User',
+            'role': 'mayors',
+        }
+        session.save()
+
+        response = self.client.post(reverse('user_create_confirm'))
+
+        self.assertEqual(response.status_code, 302)
+        created_user = User.objects.get(username='mayoruser')
+        self.assertEqual(created_user.profile.department, 'mayor')
+        self.assertTrue(created_user.profile.must_change_password)
