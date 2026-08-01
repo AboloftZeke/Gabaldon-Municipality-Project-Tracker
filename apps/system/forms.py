@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 class CustomUserCreationForm(forms.ModelForm):
     """
     Form for creating new users.
-    Uses built-in password validators and simple role assignment.
+    Passwords are generated later as temporary passwords.
     """
     ROLE_ADMIN = 'admin'
     ROLE_ENGINEERING = 'engineering'
@@ -18,8 +18,6 @@ class CustomUserCreationForm(forms.ModelForm):
         (ROLE_MAYORS, "Mayor's Office"),
     )
 
-    password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
-    password2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput)
     role = forms.ChoiceField(label='Department', choices=ROLE_CHOICES, initial=ROLE_ENGINEERING)
 
     class Meta:
@@ -32,31 +30,14 @@ class CustomUserCreationForm(forms.ModelForm):
             raise forms.ValidationError('Email is already in use.')
         return email
 
-    def clean(self):
-        cleaned_data = super().clean()
-        password1 = cleaned_data.get('password1')
-        password2 = cleaned_data.get('password2')
-
-        if password1 and password2 and password1 != password2:
-            raise forms.ValidationError('Passwords do not match.')
-
-        if password1:
-            try:
-                validate_password(password1)
-            except ValidationError as error:
-                self.add_error('password1', error)
-
-        return cleaned_data
-
     def save(self, commit=True, temporary_password=None):
         user = super().save(commit=False)
         role = self.cleaned_data.get('role', self.ROLE_ENGINEERING)
-        
 
-        if temporary_password:
-            user.set_password(temporary_password)
-        else:
-            user.set_password(self.cleaned_data['password1'])
+        if not temporary_password:
+            raise ValueError('temporary_password is required when creating a user.')
+
+        user.set_password(temporary_password)
 
         user.is_staff = True
         user.is_superuser = role == self.ROLE_ADMIN

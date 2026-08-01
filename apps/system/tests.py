@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
+from .forms import CustomUserCreationForm
 from .models import UserProfile
 
 
@@ -35,3 +36,23 @@ class SuperuserProfileTests(TestCase):
 
         self.assertTrue(user.is_superuser)
         self.assertEqual(profile.department, 'admin')
+
+
+class UserCreationFormTests(TestCase):
+    def test_user_creation_form_does_not_require_manual_password(self):
+        form = CustomUserCreationForm(
+            data={
+                'username': 'tempuser',
+                'email': 'tempuser@example.com',
+                'first_name': 'Temp',
+                'last_name': 'User',
+                'role': 'engineering',
+            }
+        )
+
+        self.assertTrue(form.is_valid())
+
+        user = form.save(commit=True, temporary_password='TempPass123!')
+
+        self.assertTrue(user.check_password('TempPass123!'))
+        self.assertEqual(user.profile.department, 'engineer')
