@@ -39,6 +39,11 @@ class SuperuserProfileTests(TestCase):
 
 
 class UserCreationFormTests(TestCase):
+    def test_user_creation_form_defaults_to_no_department(self):
+        form = CustomUserCreationForm()
+
+        self.assertEqual(form.fields['role'].initial, '')
+
     def test_user_creation_form_does_not_require_manual_password(self):
         form = CustomUserCreationForm(
             data={

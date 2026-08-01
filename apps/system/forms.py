@@ -13,12 +13,13 @@ class CustomUserCreationForm(forms.ModelForm):
     ROLE_ENGINEERING = 'engineering'
     ROLE_MAYORS = 'mayors'
     ROLE_CHOICES = (
+        ('', 'Select Department'),
         (ROLE_ADMIN, 'Admin'),
         (ROLE_ENGINEERING, 'Engineering Office'),
         (ROLE_MAYORS, "Mayor's Office"),
     )
 
-    role = forms.ChoiceField(label='Department', choices=ROLE_CHOICES, initial=ROLE_ENGINEERING)
+    role = forms.ChoiceField(label='Department', choices=ROLE_CHOICES, initial='')
 
     class Meta:
         model = User
