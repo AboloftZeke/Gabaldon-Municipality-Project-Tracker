@@ -5,136 +5,18 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/projects/project_detail.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/projects/project_detail_gis.css' %}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 {% endblock %}
 
 {% block content %}
-<div class="project-detail-container">
+<div class="project-detail-container project-detail-container--gis">
     <a href="{% url 'infrastructure:project_list' %}" class="btn btn-back">← Back to Projects</a>
-
-    <div class="project-detail-header">
-        <h2>{{ project.title }}</h2>
-        <span class="status-badge status-{{ project.status }}">{{ project.get_status_display|default:"No status" }}</span>
-
-        <div class="project-meta">
-            <div class="meta-item">
-                <div class="meta-label">Location</div>
-                <div class="meta-value">{{ project.get_location_display|default:project.location }}</div>
-            </div>
-
-            {% if project.implementing_office %}
-                <div class="meta-item">
-                    <div class="meta-label">Implementing Office</div>
-                    <div class="meta-value">{{ project.implementing_office }}</div>
-                </div>
-            {% endif %}
-
-            {% if project.category %}
-                <div class="meta-item">
-                    <div class="meta-label">Category</div>
-                    <div class="meta-value">{{ project.get_category_display }}</div>
-                </div>
-            {% endif %}
-
-            {% if project.contractor %}
-                <div class="meta-item">
-                    <div class="meta-label">Contractor</div>
-                    <div class="meta-value">{{ project.contractor }}</div>
-                </div>
-            {% endif %}
-
-            {% if project.procurement_method %}
-                <div class="meta-item">
-                    <div class="meta-label">Procurement Method</div>
-                    <div class="meta-value">{{ project.get_procurement_method_display }}</div>
-                </div>
-            {% endif %}
-
-            {% if project.award_status %}
-                <div class="meta-item">
-                    <div class="meta-label">Award Status</div>
-                    <div class="meta-value">{{ project.get_award_status_display }}</div>
-                </div>
-            {% endif %}
-
-            {% if project.source_of_fund %}
-                <div class="meta-item">
-                    <div class="meta-label">Source of Fund</div>
-                    <div class="meta-value">{{ project.source_of_fund }}</div>
-                </div>
-            {% endif %}
-
-            {% if project.abc_amount is not None %}
-                <div class="meta-item">
-                    <div class="meta-label">Approved Budget for Contract (₱)</div>
-                    <div class="meta-value">{{ project.abc_amount|floatformat:2 }}</div>
-                </div>
-            {% endif %}
-
-            {% if project.contract_price is not None %}
-                <div class="meta-item">
-                    <div class="meta-label">Contract Price (₱)</div>
-                    <div class="meta-value">{{ project.contract_price|floatformat:2 }}</div>
-                </div>
-            {% endif %}
-
-            {% if project.planned_start_date %}
-                <div class="meta-item">
-                    <div class="meta-label">Planned Start Date</div>
-                    <div class="meta-value">{{ project.planned_start_date|date:"M d, Y" }}</div>
-                </div>
-            {% endif %}
-
-            {% if project.planned_end_date %}
-                <div class="meta-item">
-                    <div class="meta-label">Planned End Date</div>
-                    <div class="meta-value">{{ project.planned_end_date|date:"M d, Y" }}</div>
-                </div>
-            {% endif %}
-
-            {% if project.actual_start_date %}
-                <div class="meta-item">
-                    <div class="meta-label">Actual Start Date</div>
-                    <div class="meta-value">{{ project.actual_start_date|date:"M d, Y" }}</div>
-                </div>
-            {% endif %}
-
-            {% if project.cost_progress_percentage is not None %}
-                <div class="meta-item">
-                    <div class="meta-label">Cost Progress (%)</div>
-                    <div class="meta-value">{{ project.cost_progress_percentage|floatformat:2 }}%</div>
-                </div>
-            {% endif %}
-
-            {% if project.physical_progress_percentage is not None %}
-                <div class="meta-item">
-                    <div class="meta-label">Physical Progress (%)</div>
-                    <div class="meta-value">{{ project.physical_progress_percentage|floatformat:2 }}%</div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
-    {% if project.description %}
-        <div class="project-section">
-            <h3>Description</h3>
-            <div class="project-description">{{ project.description }}</div>
-        </div>
-    {% endif %}
-
-    <div class="project-section">
-        <h3>Project Information</h3>
-        <div style="color: #6b7280; line-height: 1.8;">
-            <p><strong>Created:</strong> {{ project.created_at|date:"M d, Y \a\t H:i" }}</p>
-            <p><strong>Last Updated:</strong> {{ project.updated_at|date:"M d, Y \a\t H:i" }}</p>
-            {% if project.created_by %}
-                <p><strong>Created By:</strong> {{ project.created_by.get_full_name|default:project.created_by.username }}</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="action-buttons">
-        <a href="{% url 'infrastructure:project_update' project.pk %}" class="btn btn-edit">Edit Project</a>
-        <a href="{% url 'infrastructure:project_delete' project.pk %}" class="btn btn-delete">Delete Project</a>
-    </div>
+    {% include "projects/project_detail_gis_section.html" %}
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{% static 'js/templates/projects/project_detail_gis.js' %}"></script>
 {% endblock %}

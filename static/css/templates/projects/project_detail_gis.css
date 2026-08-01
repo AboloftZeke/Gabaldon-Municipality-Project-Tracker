@@ -1,0 +1,411 @@
+.project-detail-container--gis {
+    max-width: 1480px;
+}
+
+.project-detail-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+    margin-top: 1rem;
+}
+
+.project-detail-panel {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 20px;
+    box-shadow: 0 18px 40px rgba(17, 24, 39, 0.08);
+    padding: 1.5rem;
+}
+
+.project-detail-panel--summary {
+    position: sticky;
+    top: 1rem;
+}
+
+.project-summary-top h2,
+.map-card h3,
+.gis-info-card h3,
+.images-card h3 {
+    margin: 0;
+    color: #111827;
+}
+
+.project-eyebrow {
+    margin: 0 0 0.35rem;
+    color: #2E6F40;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.project-status-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 0.85rem 0 1.25rem;
+}
+
+.project-type-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    background: #f8f5e8;
+    color: #7c5a00;
+    font-weight: 700;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.status-planning { background: #fef3c7; color: #92400e; }
+.status-ongoing { background: #dbeafe; color: #1e3a8a; }
+.status-completed { background: #dcfce7; color: #166534; }
+.status-on_hold { background: #fecaca; color: #7c2d12; }
+.status-cancelled { background: #e0e7ff; color: #3730a3; }
+.status-awarded { background: #dbeafe; color: #1e3a8a; }
+.status-ongoing_bidding { background: #dbeafe; color: #1e3a8a; }
+.status-rebid { background: #e9d5ff; color: #6b21a8; }
+.status-delayed { background: #fecaca; color: #991b1b; }
+
+.project-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.info-card {
+    background: linear-gradient(180deg, #f9fafb, #ffffff);
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 1rem;
+}
+
+.info-card--wide {
+    grid-column: 1 / -1;
+}
+
+.info-label {
+    display: block;
+    margin-bottom: 0.45rem;
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.info-value {
+    color: #111827;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.info-value--body {
+    line-height: 1.7;
+    white-space: pre-wrap;
+    font-weight: 500;
+}
+
+.project-meta-foot {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    color: #6b7280;
+    line-height: 1.8;
+}
+
+.action-buttons--detail {
+    margin-top: 1.25rem;
+}
+
+.project-detail-panel--gis {
+    display: grid;
+    gap: 1rem;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+.map-card,
+.gis-info-card,
+.images-card {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 20px;
+    box-shadow: 0 18px 40px rgba(17, 24, 39, 0.08);
+    padding: 1.25rem;
+}
+
+.map-card__header,
+.gis-info-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.9rem;
+}
+
+.map-fullscreen-button,
+.gis-google-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.7rem 1rem;
+    border-radius: 999px;
+    border: none;
+    background: #2E6F40;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(46, 111, 64, 0.18);
+}
+
+.map-fullscreen-button:hover,
+.gis-google-button:hover,
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.project-map-shell {
+    position: relative;
+    min-height: 460px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #d1d5db;
+    background: #edf2ef;
+}
+
+.project-map {
+    min-height: 460px;
+    width: 100%;
+}
+
+.project-map-message {
+    position: absolute;
+    inset: 1rem;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 1rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.82);
+    color: #145334;
+    font-weight: 700;
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+}
+
+.gis-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.gis-info-item {
+    background: #f9fafb;
+    border-radius: 14px;
+    padding: 0.9rem;
+    border: 1px solid #e5e7eb;
+}
+
+.gis-info-item span {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.gis-info-item strong {
+    color: #111827;
+    font-size: 0.98rem;
+}
+
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1rem;
+}
+
+.image-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 12px 28px rgba(17, 24, 39, 0.08);
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+}
+
+.image-card img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    background: #f3f4f6;
+}
+
+.image-card span {
+    display: block;
+    padding: 0.85rem 0.95rem;
+    color: #111827;
+    font-weight: 700;
+}
+
+.image-card--placeholder {
+    cursor: default;
+}
+
+.lightbox[hidden] {
+    display: none;
+}
+
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+}
+
+.lightbox__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(6px);
+}
+
+.lightbox__figure {
+    position: relative;
+    z-index: 1;
+    max-width: min(96vw, 1100px);
+    max-height: 90vh;
+    margin: 5vh auto;
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.36);
+}
+
+.lightbox__figure img {
+    display: block;
+    width: 100%;
+    max-height: 78vh;
+    object-fit: contain;
+    background: #0f172a;
+}
+
+.lightbox__figure figcaption {
+    padding: 1rem 1.25rem;
+    color: #111827;
+    font-weight: 700;
+}
+
+.lightbox__close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2;
+    width: 2.6rem;
+    height: 2.6rem;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.88);
+    color: #111827;
+    font-size: 1.6rem;
+    cursor: pointer;
+}
+
+.project-map-marker {
+    width: 36px;
+    height: 36px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 2px solid rgba(255, 255, 255, 0.94);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.3);
+    display: grid;
+    place-items: center;
+}
+
+.project-map-marker span {
+    transform: rotate(45deg);
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.project-map-marker--infra { background: #2E6F40; }
+.project-map-marker--noninfra { background: #1d4ed8; }
+
+.project-map-popup {
+    min-width: 230px;
+}
+
+.project-map-popup h4 {
+    margin: 0 0 0.5rem;
+    color: #111827;
+}
+
+.project-map-popup p {
+    margin: 0.25rem 0;
+    color: #374151;
+}
+
+.project-map-popup .popup-badge {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: #f8f5e8;
+    color: #7c5a00;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.project-map-popup a {
+    display: inline-flex;
+    margin-top: 0.65rem;
+    color: #2E6F40;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+@media (max-width: 1100px) {
+    .project-detail-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .project-detail-panel--summary {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .project-info-grid,
+    .gis-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .map-card__header,
+    .gis-info-card__header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .project-map-shell,
+    .project-map {
+        min-height: 360px;
+    }
+}

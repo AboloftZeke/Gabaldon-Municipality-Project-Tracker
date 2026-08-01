@@ -5,6 +5,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.urls import reverse_lazy, reverse, NoReverseMatch
 from django.db import models
 from django.db.models import Q, Sum
+from django.templatetags.static import static
 from .models import InfrastructureProject
 from .forms import InfrastructureProjectForm
 
@@ -155,6 +156,52 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
 
     def get_queryset(self):
         return InfrastructureProject.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.object
+        has_coordinates = project.latitude is not None and project.longitude is not None
+        fallback_lat = 15.2915
+        fallback_lng = 121.3386
+        map_lat = float(project.latitude) if has_coordinates else fallback_lat
+        map_lng = float(project.longitude) if has_coordinates else fallback_lng
+
+        context['project_code'] = f'INF-{project.pk:05d}'
+        context['project_type_label'] = 'Infrastructure'
+        context['project_manager'] = project.created_by.get_full_name() or project.created_by.username
+        context['project_progress_value'] = project.physical_progress_percentage if project.physical_progress_percentage is not None else project.cost_progress_percentage
+        context['project_budget_value'] = project.abc_amount if project.abc_amount is not None else project.contract_price
+        context['project_target_completion_date'] = project.planned_end_date
+        context['project_google_maps_url'] = f'https://www.google.com/maps?q={map_lat},{map_lng}'
+        context['project_images'] = []
+        context['project_placeholder_image'] = static('images/project-placeholder.svg')
+        context['project_gis'] = {
+            'has_coordinates': has_coordinates,
+            'latitude': float(project.latitude) if has_coordinates else '',
+            'longitude': float(project.longitude) if has_coordinates else '',
+            'map_center_lat': map_lat,
+            'map_center_lng': map_lng,
+            'google_maps_url': f'https://www.google.com/maps?q={map_lat},{map_lng}',
+            'barangay': project.get_location_display(),
+            'municipality': 'Gabaldon',
+            'province': 'Nueva Ecija',
+            'status_label': project.get_award_status_display(),
+            'progress_label': f'{context["project_progress_value"]:.2f}%' if context['project_progress_value'] is not None else '0%',
+            'budget_label': f'₱ {context["project_budget_value"]:,.2f}' if context['project_budget_value'] is not None else 'N/A',
+            'project_name': project.title,
+            'project_code': context['project_code'],
+            'project_type': 'Infrastructure',
+            'description': project.description or '',
+            'project_manager': context['project_manager'],
+            'contractor': project.contractor or '',
+            'funding_source': project.source_of_fund or '',
+            'implementing_office': project.implementing_office or '',
+            'start_date': project.planned_start_date,
+            'target_completion_date': project.planned_end_date,
+            'coordinate_message': 'Location has not yet been assigned.' if not has_coordinates else '',
+            'detail_url': reverse('infrastructure:project_detail', args=[project.pk]),
+        }
+        return context
 
 
 class ProjectEditView(EngineerOnlyMixin, UpdateView):

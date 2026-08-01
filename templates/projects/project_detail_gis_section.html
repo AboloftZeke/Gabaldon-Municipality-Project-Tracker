@@ -1,0 +1,182 @@
+{% load static %}
+
+<div class="project-detail-layout">
+    <section class="project-detail-panel project-detail-panel--summary">
+        <div class="project-summary-top">
+            <p class="project-eyebrow">Project Details</p>
+            <h2>{{ project.title }}</h2>
+            <div class="project-status-row">
+                <span class="status-badge status-{{ project_gis.status_key }}">{{ project_gis.status_label }}</span>
+                <span class="project-type-pill">{{ project_gis.project_type }}</span>
+            </div>
+        </div>
+
+        <div class="project-info-grid">
+            <div class="info-card">
+                <span class="info-label">Project Name</span>
+                <strong class="info-value">{{ project.title }}</strong>
+            </div>
+            <div class="info-card">
+                <span class="info-label">Project Code</span>
+                <strong class="info-value">{{ project_code }}</strong>
+            </div>
+            <div class="info-card">
+                <span class="info-label">Project Type</span>
+                <strong class="info-value">{{ project_type_label }}</strong>
+            </div>
+            <div class="info-card info-card--wide">
+                <span class="info-label">Description</span>
+                <div class="info-value info-value--body">{{ project.description|default:"No description provided." }}</div>
+            </div>
+            <div class="info-card">
+                <span class="info-label">Status</span>
+                <strong class="info-value">{{ project_gis.status_label }}</strong>
+            </div>
+            <div class="info-card">
+                <span class="info-label">Progress Percentage</span>
+                <strong class="info-value">{{ project_gis.progress_label }}</strong>
+            </div>
+            <div class="info-card">
+                <span class="info-label">Budget</span>
+                <strong class="info-value">{{ project_gis.budget_label }}</strong>
+            </div>
+            <div class="info-card">
+                <span class="info-label">Funding Source</span>
+                <strong class="info-value">{{ project_gis.funding_source|default:"Not provided" }}</strong>
+            </div>
+            <div class="info-card">
+                <span class="info-label">Implementing Office</span>
+                <strong class="info-value">{{ project_gis.implementing_office|default:"Not provided" }}</strong>
+            </div>
+            <div class="info-card">
+                <span class="info-label">Barangay</span>
+                <strong class="info-value">{{ project_gis.barangay }}</strong>
+            </div>
+            <div class="info-card">
+                <span class="info-label">Start Date</span>
+                <strong class="info-value">{{ project_gis.start_date|date:"M d, Y"|default:"Not assigned" }}</strong>
+            </div>
+            <div class="info-card">
+                <span class="info-label">Target Completion Date</span>
+                <strong class="info-value">{{ project_gis.target_completion_date|date:"M d, Y"|default:"Not assigned" }}</strong>
+            </div>
+            <div class="info-card">
+                <span class="info-label">Project Manager</span>
+                <strong class="info-value">{{ project_manager }}</strong>
+            </div>
+            {% if project_gis.contractor %}
+            <div class="info-card info-card--wide">
+                <span class="info-label">Contractor</span>
+                <strong class="info-value">{{ project_gis.contractor }}</strong>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="project-meta-foot">
+            <p><strong>Created:</strong> {{ project.created_at|date:"M d, Y \a\t H:i" }}</p>
+            <p><strong>Last Updated:</strong> {{ project.updated_at|date:"M d, Y \a\t H:i" }}</p>
+            {% if project.created_by %}
+                <p><strong>Created By:</strong> {{ project.created_by.get_full_name|default:project.created_by.username }}</p>
+            {% endif %}
+        </div>
+
+        <div class="action-buttons action-buttons--detail">
+            <a href="{% if project_type_label == 'Infrastructure' %}{% url 'infrastructure:project_update' project.pk %}{% else %}{% url 'non_infrastructure:non_infrastructure_project_update' project.pk %}{% endif %}" class="btn btn-edit">Edit Project</a>
+            <a href="{% if project_type_label == 'Infrastructure' %}{% url 'infrastructure:project_delete' project.pk %}{% else %}{% url 'non_infrastructure:non_infrastructure_project_delete' project.pk %}{% endif %}" class="btn btn-delete">Delete Project</a>
+        </div>
+    </section>
+
+    <section class="project-detail-panel project-detail-panel--gis">
+        <div class="map-card">
+            <div class="map-card__header">
+                <div>
+                    <p class="project-eyebrow">GIS Map</p>
+                    <h3>Project Location</h3>
+                </div>
+                <button type="button" class="map-fullscreen-button" data-map-fullscreen>Fullscreen</button>
+            </div>
+
+            <div class="project-map-shell" data-project-gis-shell data-has-coordinates="{{ project_gis.has_coordinates|yesno:'true,false' }}" data-map-center-lat="{{ project_gis.map_center_lat }}" data-map-center-lng="{{ project_gis.map_center_lng }}">
+                <div class="project-map" data-project-map
+                     data-project-name="{{ project.title|escape }}"
+                     data-project-code="{{ project_code|escape }}"
+                     data-project-type="{{ project_type_label|escape }}"
+                     data-project-barangay="{{ project_gis.barangay|escape }}"
+                     data-project-status="{{ project_gis.status_label|escape }}"
+                     data-project-budget="{{ project_gis.budget_label|escape }}"
+                     data-project-progress="{{ project_gis.progress_label|escape }}"
+                     data-project-gis-message="{{ project_gis.coordinate_message|escape }}"
+                     data-google-maps-url="{{ project_gis.google_maps_url|escape }}"
+                     data-detail-url="{{ project_gis.detail_url|escape }}"
+                     data-has-coordinates="{{ project_gis.has_coordinates|yesno:'true,false' }}"
+                     data-map-center-lat="{{ project_gis.map_center_lat }}"
+                     data-map-center-lng="{{ project_gis.map_center_lng }}"
+                     data-map-zoom="16"></div>
+                <div class="project-map-message" data-project-map-message{% if project_gis.has_coordinates %} hidden{% endif %}>
+                    {{ project_gis.coordinate_message }}
+                </div>
+            </div>
+
+            <div class="gis-info-card">
+                <div class="gis-info-card__header">
+                    <h3>Location Information</h3>
+                    <a href="{{ project_gis.google_maps_url }}" target="_blank" rel="noopener noreferrer" class="gis-google-button">📍 Open in Google Maps</a>
+                </div>
+
+                <div class="gis-info-grid">
+                    <div class="gis-info-item">
+                        <span>Latitude</span>
+                        <strong>{% if project_gis.has_coordinates %}{{ project_gis.latitude }}{% else %}Not yet assigned{% endif %}</strong>
+                    </div>
+                    <div class="gis-info-item">
+                        <span>Longitude</span>
+                        <strong>{% if project_gis.has_coordinates %}{{ project_gis.longitude }}{% else %}Not yet assigned{% endif %}</strong>
+                    </div>
+                    <div class="gis-info-item">
+                        <span>Barangay</span>
+                        <strong>{{ project_gis.barangay }}</strong>
+                    </div>
+                    <div class="gis-info-item">
+                        <span>Municipality</span>
+                        <strong>{{ project_gis.municipality }}</strong>
+                    </div>
+                    <div class="gis-info-item">
+                        <span>Province</span>
+                        <strong>{{ project_gis.province }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="images-card">
+                <div class="gis-info-card__header">
+                    <h3>Project Images</h3>
+                </div>
+
+                {% if project_images %}
+                    <div class="image-grid">
+                        {% for image in project_images %}
+                            <button type="button" class="image-card" data-image-src="{{ image.url }}" data-image-caption="{{ image.caption|default:project.title|escape }}">
+                                <img src="{{ image.url }}" alt="{{ image.caption|default:project.title|escape }}">
+                                <span>{{ image.caption|default:project.title }}</span>
+                            </button>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <button type="button" class="image-card image-card--placeholder" data-image-src="{{ project_placeholder_image }}" data-image-caption="No project image uploaded.">
+                        <img src="{{ project_placeholder_image }}" alt="No project image uploaded.">
+                        <span>No project image uploaded.</span>
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+
+<div class="lightbox" data-lightbox hidden>
+    <button type="button" class="lightbox__close" data-lightbox-close aria-label="Close image">&times;</button>
+    <div class="lightbox__backdrop" data-lightbox-close></div>
+    <figure class="lightbox__figure">
+        <img data-lightbox-image alt="Project image preview">
+        <figcaption data-lightbox-caption></figcaption>
+    </figure>
+</div>

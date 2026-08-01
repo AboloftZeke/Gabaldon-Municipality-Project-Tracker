@@ -8,14 +8,15 @@ class InfrastructureProjectForm(forms.ModelForm):
     class Meta:
         model = InfrastructureProject
         fields = [
-            'title', 'location', 'implementing_office', 'category', 'contractor',
+            'title', 'description', 'location', 'implementing_office', 'category', 'contractor',
             'procurement_method', 'award_status', 'source_of_fund', 'abc_amount',
             'contract_price', 'planned_start_date', 'planned_end_date',
-            'actual_start_date', 'cost_progress_percentage',
+            'actual_start_date', 'latitude', 'longitude', 'cost_progress_percentage',
             'physical_progress_percentage',
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Project Title'}),
+            'description': forms.Textarea(attrs={'class': 'form-textarea', 'placeholder': 'Optional project description', 'rows': 4}),
             'location': forms.Select(attrs={'class': 'form-select'}),
             'implementing_office': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Office/Agency'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
@@ -28,6 +29,8 @@ class InfrastructureProjectForm(forms.ModelForm):
             'planned_start_date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
             'planned_end_date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
             'actual_start_date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
+            'latitude': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'Latitude', 'step': '0.0000001'}),
+            'longitude': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'Longitude', 'step': '0.0000001'}),
             'cost_progress_percentage': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'Percentage (0-100)', 'min': '0', 'max': '100', 'step': '0.01'}),
             'physical_progress_percentage': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'Percentage (0-100)', 'min': '0', 'max': '100', 'step': '0.01'}),
         }

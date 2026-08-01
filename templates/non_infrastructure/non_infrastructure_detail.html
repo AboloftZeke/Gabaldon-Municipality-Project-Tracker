@@ -5,179 +5,19 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_detail.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/projects/project_detail_gis.css' %}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 {% endblock %}
 
 {% block content %}
-<div class="project-detail-container">
+<div class="project-detail-container project-detail-container--gis">
     <a href="{% url 'non_infrastructure:non_infrastructure_project_list' %}" class="btn btn-back">← Back to Projects</a>
-
-    <div class="project-detail-header">
-        <h2>{{ project.title }}</h2>
-
-        <div class="project-meta">
-            <div class="meta-item">
-                <div class="meta-label">Location</div>
-                <div class="meta-value">{{ project.get_location_display }}</div>
-            </div>
-            <div class="meta-item">
-                <div class="meta-label">Category</div>
-                <div class="meta-value">{{ project.get_category_display }}</div>
-            </div>
-            {% if project.planned_start_date %}
-                <div class="meta-item">
-                    <div class="meta-label">Start Date</div>
-                    <div class="meta-value">{{ project.planned_start_date|date:"M d, Y" }}</div>
-                </div>
-            {% endif %}
-            {% if project.planned_end_date %}
-                <div class="meta-item">
-                    <div class="meta-label">End Date</div>
-                    <div class="meta-value">{{ project.planned_end_date|date:"M d, Y" }}</div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="project-section">
-        <h3>Basic Information</h3>
-        <div class="section-content">
-            <div class="content-item">
-                <div class="content-label">Implementing Office</div>
-                <div class="content-value">{{ project.implementing_office }}</div>
-            </div>
-            {% if project.source_of_fund %}
-                <div class="content-item">
-                    <div class="content-label">Source of Fund</div>
-                    <div class="content-value">{{ project.source_of_fund }}</div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
-    {% if project.description %}
-    <div class="project-section">
-        <h3>Description</h3>
-        <div style="color: #111827; line-height: 1.6; white-space: pre-wrap;">{{ project.description }}</div>
-    </div>
-    {% endif %}
-
-    {% if project.service_description or project.beneficiaries_description or project.service_location_details or project.service_period %}
-    <div class="project-section">
-        <h3>Service Details</h3>
-        <div class="section-content">
-            {% if project.service_description %}
-                <div class="content-item">
-                    <div class="content-label">What Service is Delivered?</div>
-                    <div class="content-value" style="white-space: pre-wrap;">{{ project.service_description }}</div>
-                </div>
-            {% endif %}
-            {% if project.beneficiaries_description %}
-                <div class="content-item">
-                    <div class="content-label">To Whom is Service Delivered?</div>
-                    <div class="content-value" style="white-space: pre-wrap;">{{ project.beneficiaries_description }}</div>
-                </div>
-            {% endif %}
-            {% if project.service_location_details %}
-                <div class="content-item">
-                    <div class="content-label">Where is Service Delivered?</div>
-                    <div class="content-value">{{ project.service_location_details }}</div>
-                </div>
-            {% endif %}
-            {% if project.service_period %}
-                <div class="content-item">
-                    <div class="content-label">When? (Schedule/Frequency)</div>
-                    <div class="content-value">{{ project.service_period }}</div>
-                </div>
-            {% endif %}
-            {% if project.service_time %}
-                <div class="content-item">
-                    <div class="content-label">Time of Service</div>
-                    <div class="content-value">{{ project.service_time|time:"H:i" }}</div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-
-    {% if project.budget_cost or project.results_achieved %}
-    <div class="project-section">
-        <h3>Budget & Results</h3>
-        <div class="section-content">
-            {% if project.budget_cost %}
-                <div class="content-item">
-                    <div class="content-label">Budget/Cost</div>
-                    <div class="content-value">₱ {{ project.budget_cost|floatformat:2 }}</div>
-                </div>
-            {% endif %}
-            {% if project.results_achieved %}
-                <div class="content-item" style="grid-column: 1/-1;">
-                    <div class="content-label">Results/Outcomes Achieved</div>
-                    <div class="content-value" style="white-space: pre-wrap;">{{ project.results_achieved }}</div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-
-    {% if project.planned_start_date or project.actual_start_date or project.revised_completion_date %}
-    <div class="project-section">
-        <h3>Timeline</h3>
-        <div class="section-content">
-            {% if project.planned_start_date %}
-                <div class="content-item">
-                    <div class="content-label">Planned Start</div>
-                    <div class="content-value">{{ project.planned_start_date|date:"M d, Y" }}</div>
-                </div>
-            {% endif %}
-            {% if project.planned_end_date %}
-                <div class="content-item">
-                    <div class="content-label">Planned End</div>
-                    <div class="content-value">{{ project.planned_end_date|date:"M d, Y" }}</div>
-                </div>
-            {% endif %}
-            {% if project.actual_start_date %}
-                <div class="content-item">
-                    <div class="content-label">Actual Start</div>
-                    <div class="content-value">{{ project.actual_start_date|date:"M d, Y" }}</div>
-                </div>
-            {% endif %}
-            {% if project.revised_completion_date %}
-                <div class="content-item">
-                    <div class="content-label">Revised Completion</div>
-                    <div class="content-value">{{ project.revised_completion_date|date:"M d, Y" }}</div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-
-    {% if project.overall_progress_percentage %}
-    <div class="project-section">
-        <h3>Progress</h3>
-        <div class="section-content">
-            <div class="content-item">
-                <div class="content-label">Overall Progress</div>
-                <div class="content-value">{{ project.overall_progress_percentage }}%</div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="project-section">
-        <h3>Project Information</h3>
-        <div style="color: #6b7280; line-height: 1.8;">
-            <p><strong>Created:</strong> {{ project.created_at|date:"M d, Y \a\t H:i" }}</p>
-            <p><strong>Last Updated:</strong> {{ project.updated_at|date:"M d, Y \a\t H:i" }}</p>
-            {% if project.created_by %}
-                <p><strong>Created By:</strong> {{ project.created_by.get_full_name|default:project.created_by.username }}</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="action-buttons">
-        <a href="{% url 'non_infrastructure:non_infrastructure_project_update' project.pk %}" class="btn btn-edit">Edit Project</a>
-        <a href="{% url 'non_infrastructure:non_infrastructure_project_delete' project.pk %}" class="btn btn-delete">Delete Project</a>
-    </div>
+    {% include "projects/project_detail_gis_section.html" %}
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{% static 'js/templates/projects/project_detail_gis.js' %}"></script>
 {% endblock %}
 

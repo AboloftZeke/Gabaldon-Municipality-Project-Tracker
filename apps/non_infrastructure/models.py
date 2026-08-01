@@ -61,6 +61,8 @@ class NonInfrastructureProject(models.Model):
     planned_end_date = models.DateField(null=True, blank=True)
     actual_start_date = models.DateField(null=True, blank=True)
     revised_completion_date = models.DateField(null=True, blank=True, help_text="If there's extension of time")
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
 
     # Progress Tracking - Single overall progress field
     overall_progress_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Overall Progress (%)")
@@ -70,6 +72,7 @@ class NonInfrastructureProject(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='non_infrastructure_projects_updated')
+    is_public = models.BooleanField(default=True)
 
     class Meta:
         ordering = ['-created_at']

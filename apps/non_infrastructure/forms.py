@@ -12,7 +12,7 @@ class NonInfrastructureProjectForm(forms.ModelForm):
             'service_description', 'beneficiaries_description', 'service_location_details', 'service_period', 'service_time',
             'budget_cost', 'results_achieved',
             'source_of_fund', 'planned_start_date', 'planned_end_date',
-            'actual_start_date', 'revised_completion_date', 'overall_progress_percentage',
+            'actual_start_date', 'revised_completion_date', 'latitude', 'longitude', 'overall_progress_percentage',
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Project Title'}),
@@ -32,6 +32,8 @@ class NonInfrastructureProjectForm(forms.ModelForm):
             'planned_end_date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
             'actual_start_date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
             'revised_completion_date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
+            'latitude': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'Latitude', 'step': '0.0000001'}),
+            'longitude': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'Longitude', 'step': '0.0000001'}),
             'overall_progress_percentage': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'Percentage (0-100)', 'min': '0', 'max': '100', 'step': '0.01'}),
         }
 

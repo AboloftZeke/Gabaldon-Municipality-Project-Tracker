@@ -57,6 +57,7 @@ class InfrastructureProject(models.Model):
 
     # Basic Information
     title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, default='')
     location = models.CharField(max_length=50, choices=LOCATION_CHOICES, help_text="Select barangay location")
     implementing_office = models.CharField(max_length=255, help_text="Office/Agency responsible for implementation")
     category = models.CharField(max_length=50, choices=PROJECT_CATEGORY_CHOICES)
@@ -75,6 +76,8 @@ class InfrastructureProject(models.Model):
     planned_start_date = models.DateField(null=True, blank=True)
     planned_end_date = models.DateField(null=True, blank=True)
     actual_start_date = models.DateField(null=True, blank=True)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
     # Progress Tracking
     cost_progress_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Cost Progress (%)")
     physical_progress_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Physical Progress (%)")
@@ -84,6 +87,7 @@ class InfrastructureProject(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='projects_updated')
+    is_public = models.BooleanField(default=True)
 
     class Meta:
         ordering = ['-created_at']
