@@ -143,7 +143,45 @@
                 {% endif %}
             </div>
 
-          
+            <!-- Account Status Section -->
+            <div class="form-section">
+                <h3>Account Status</h3>
+
+                {% if form.is_active %}
+                    <div class="form-group">
+                        <label for="{{ form.is_active.id_for_label }}">
+                            <div class="checkbox-group">
+                                {{ form.is_active }}
+                                <span>User account is active</span>
+                            </div>
+                        </label>
+                        <div class="form-help">Uncheck to disable user access without deleting the account</div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Password Section -->
+            {% if form.password1 %}
+            <div class="form-section">
+                <h3>Password</h3>
+
+                <div class="form-group {% if form.password1.errors %}form-group-error{% endif %}">
+                    <label for="{{ form.password1.id_for_label }}" class="{% if action == 'Create' %}required{% endif %}">{{ form.password1.label }}</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <div class="field-error">{{ form.password1.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group {% if form.password2.errors %}form-group-error{% endif %}">
+                    <label for="{{ form.password2.id_for_label }}" class="{% if action == 'Create' %}required{% endif %}">{{ form.password2.label }}</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <div class="field-error">{{ form.password2.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Form Actions -->
             <div class="form-actions">
