@@ -44,6 +44,20 @@ class UserCreationFormTests(TestCase):
 
         self.assertEqual(form.fields['role'].initial, '')
 
+    def test_user_creation_form_rejects_blank_department(self):
+        form = CustomUserCreationForm(
+            data={
+                'username': 'tempuser2',
+                'email': 'tempuser2@example.com',
+                'first_name': 'Temp',
+                'last_name': 'User',
+                'role': '',
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('role', form.errors)
+
     def test_user_creation_form_does_not_require_manual_password(self):
         form = CustomUserCreationForm(
             data={

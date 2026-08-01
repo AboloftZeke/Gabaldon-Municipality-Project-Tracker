@@ -31,9 +31,15 @@ class CustomUserCreationForm(forms.ModelForm):
             raise forms.ValidationError('Email is already in use.')
         return email
 
+    def clean_role(self):
+        role = self.cleaned_data.get('role', '')
+        if not role:
+            raise forms.ValidationError('Please select a department.')
+        return role
+
     def save(self, commit=True, temporary_password=None):
         user = super().save(commit=False)
-        role = self.cleaned_data.get('role', self.ROLE_ENGINEERING)
+        role = self.cleaned_data['role']
 
         if not temporary_password:
             raise ValueError('temporary_password is required when creating a user.')
@@ -60,7 +66,7 @@ class CustomUserCreationForm(forms.ModelForm):
         }
         
         # Map the form role to the model department
-        department = department_map.get(role, 'engineer')
+        department = department_map[role]
         
         profile, created = UserProfile.objects.update_or_create(
             user=user,
