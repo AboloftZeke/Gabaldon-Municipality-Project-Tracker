@@ -40,10 +40,10 @@
                 <li><a href="{% url 'user_list' %}">User Management</a></li>
                 <li><a href="{% url 'user_create' %}">Create User</a></li>
             {% endif %}
-            {% if user.profile.department == 'engineer' %}
+            {% if user.profile.department == 'engineer' and not user.is_superuser %}
                 <li><a href="{% url 'engineering_projects:project_dashboard' %}">Projects</a></li>
             {% endif %}
-            {% if user.profile.department == 'mayor' %}
+            {% if user.profile.department == 'mayor' and not user.is_superuser %}
                 <li><a href="{% url 'mayor_projects:non_infrastructure_project_dashboard' %}">Projects</a></li>
             {% endif %}
         </ul>
@@ -122,7 +122,7 @@
     {% endif %}
 
     <!-- Infrastructure Projects Section for Engineering Users -->
-    {% if user.profile.department == 'engineer' %}
+    {% if user.profile.department == 'engineer' and not user.is_superuser %}
     <div class="dashboard-section">
         <h3><span class="section-icon"><img src="{% static 'images/infra-icon.png' %}" alt="Infrastructure"></span>Infrastructure Projects</h3>
         <div class="action-grid">
@@ -146,7 +146,7 @@
     {% endif %}
 
     <!-- Non-Infrastructure Projects Section for Mayor's Office Users -->
-    {% if user.profile.department == 'mayor' %}
+    {% if user.profile.department == 'mayor' and not user.is_superuser %}
     <div class="dashboard-section">
         <h3><span class="section-icon"><img src="{% static 'images/projects-icon.png' %}" alt="Non-Infrastructure"></span>Non-Infrastructure Projects</h3>
         <div class="action-grid">
@@ -178,11 +178,11 @@
                 <a href="{% url 'user_list' %}" class="action-button">Manage Users</a>
                 <a href="{% url 'user_create' %}" class="action-button">Add New User</a>
             {% endif %}
-            {% if user.profile.department == 'engineer' %}
+            {% if user.profile.department == 'engineer' and not user.is_superuser %}
                 <a href="{% url 'engineering_projects:project_create' %}" class="action-button">Create Project</a>
                 <a href="{% url 'engineering_projects:project_dashboard' %}" class="action-button">Go to Projects</a>
             {% endif %}
-            {% if user.profile.department == 'mayor' %}
+            {% if user.profile.department == 'mayor' and not user.is_superuser %}
                 <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="action-button">Create Project</a>
                 <a href="{% url 'mayor_projects:non_infrastructure_project_dashboard' %}" class="action-button">Go to Programs</a>
             {% endif %}

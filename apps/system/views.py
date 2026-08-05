@@ -421,7 +421,6 @@ class UserCreateView(AdminRequiredMixin, CreateView):
             'first_name': form.cleaned_data['first_name'],
             'last_name': form.cleaned_data['last_name'],
             'role': form.cleaned_data['role'],
-            'password1': form.cleaned_data['password1'],
         }
         return redirect('user_create_confirm')
 
@@ -501,11 +500,7 @@ class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
             return redirect('user_create')
 
         try:
-            # The confirmation step reuses the original form data, so mirror the
-            # password into password2 to satisfy the form's validation on submit.
-            confirm_data = form_data.copy()
-            confirm_data.setdefault('password2', confirm_data.get('password1', ''))
-            form = CustomUserCreationForm(confirm_data)
+            form = CustomUserCreationForm(form_data)
 
             if form.is_valid():
                 temporary_password = get_random_string(
@@ -517,10 +512,9 @@ class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
                     temporary_password=temporary_password
                 )
 
-                user.profile.must_change_password = True
-                user.profile.save()
-
-                user.profile.refresh_from_db()
+                profile = UserProfile.objects.get(user=user)
+                profile.must_change_password = True
+                profile.save(update_fields=['must_change_password', 'updated_at'])
 
                 from .models import PasswordChangeHistory
                 PasswordChangeHistory.objects.create(

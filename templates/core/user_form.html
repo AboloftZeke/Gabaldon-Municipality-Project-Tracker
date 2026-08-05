@@ -143,7 +143,22 @@
                 {% endif %}
             </div>
 
-          
+            <!-- Account Status Section -->
+            <div class="form-section">
+                <h3>Account Status</h3>
+
+                {% if form.is_active %}
+                    <div class="form-group">
+                        <label for="{{ form.is_active.id_for_label }}">
+                            <div class="checkbox-group">
+                                {{ form.is_active }}
+                                <span>User account is active</span>
+                            </div>
+                        </label>
+                        <div class="form-help">Uncheck to disable user access without deleting the account</div>
+                    </div>
+                {% endif %}
+            </div>
 
             <!-- Form Actions -->
             <div class="form-actions">

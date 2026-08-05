@@ -79,7 +79,8 @@ def create_user_profile(sender, instance, created, **kwargs):
     """
     if created:
         # Use get_or_create for atomicity - it won't duplicate even if called twice
+        department = 'admin' if instance.is_superuser else 'engineer'
         UserProfile.objects.get_or_create(
             user=instance,
-            defaults={'department': 'engineer'}
+            defaults={'department': department}
         )
