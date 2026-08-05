@@ -24,7 +24,7 @@
         {% if request.resolver_match.namespace == 'engineering_projects' %}
             <a href="{% url 'engineering_projects:project_create' %}" class="btn-create">+ New Project</a>
         {% else %}
-            <a href="{% url 'project_create' %}" class="btn-create">+ New Project</a>
+            <a href="{% url 'infrastructure_default:project_create' %}" class="btn-create">+ New Project</a>
         {% endif %}
     </div>
 
@@ -81,10 +81,10 @@
                                data-project-created-at="{{ project.created_at|date:'M d, Y \a\t H:i' }}"
                                data-project-updated-at="{{ project.updated_at|date:'M d, Y \a\t H:i' }}"
                                data-project-description="{{ project.description|default_if_none:''|escape }}"
-                               data-project-detail-url="{% url 'project_detail' project.pk %}">View</a>
+                               data-project-detail-url="{% url 'engineering_projects:project_detail' project.pk %}">View</a>
                             <a href="{% url 'engineering_projects:project_update' project.pk %}" class="btn-small btn-edit">Edit</a>
                         {% else %}
-                            <a href="{% url 'project_detail' project.pk %}"
+                            <a href="{% url 'engineering_projects:project_detail' project.pk %}"
                                class="btn-small btn-view"
                                data-project-modal-trigger
                                data-project-title="{{ project.title|escape }}"
@@ -108,8 +108,8 @@
                                data-project-created-at="{{ project.created_at|date:'M d, Y \a\t H:i' }}"
                                data-project-updated-at="{{ project.updated_at|date:'M d, Y \a\t H:i' }}"
                                data-project-description="{{ project.description|default_if_none:''|escape }}"
-                               data-project-detail-url="{% url 'project_detail' project.pk %}">View</a>
-                            <a href="{% url 'project_update' project.pk %}" class="btn-small btn-edit">Edit</a>
+                                         data-project-detail-url="{% url 'infrastructure_default:project_detail' project.pk %}">View</a>
+                                     <a href="{% url 'infrastructure_default:project_update' project.pk %}" class="btn-small btn-edit">Edit</a>
                         {% endif %}
                     </div>
                 </div>
@@ -121,7 +121,7 @@
             {% if request.resolver_match.namespace == 'engineering_projects' %}
                 <a href="{% url 'engineering_projects:project_create' %}" class="btn-create">Create the first project</a>
             {% else %}
-                <a href="{% url 'project_create' %}" class="btn-create">Create the first project</a>
+                <a href="{% url 'infrastructure_default:project_create' %}" class="btn-create">Create the first project</a>
             {% endif %}
         </div>
     {% endif %}
