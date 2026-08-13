@@ -1,45 +1,60 @@
 from django import forms
-from .models import NonInfrastructureProject
+
+from apps.system.models import (
+    Project,
+    Non_Infrastructure_Project,
+    Address,
+)
 
 
-class NonInfrastructureProjectForm(forms.ModelForm):
-    """Form for creating and editing non-infrastructure projects"""
+class NonInfrastructureProjectForm(forms.Form):
+    title = forms.CharField(required=True, max_length=255)
+    description = forms.CharField(required=False, widget=forms.Textarea, max_length=2000)
+    location = forms.CharField(required=False, max_length=100)
+    implementing_office = forms.CharField(required=False, max_length=255)
+    category = forms.CharField(required=False, max_length=50)
+    service_description = forms.CharField(required=False, widget=forms.Textarea)
+    beneficiaries_description = forms.CharField(required=False, widget=forms.Textarea)
+    service_location_details = forms.CharField(required=False, max_length=255)
+    service_period = forms.CharField(required=False, max_length=100)
+    service_time = forms.TimeField(required=False)
+    budget_cost = forms.DecimalField(required=False, max_digits=15, decimal_places=2)
+    results_achieved = forms.CharField(required=False, widget=forms.Textarea)
+    source_of_fund = forms.CharField(required=False, max_length=255)
+    planned_start_date = forms.DateField(required=False)
+    planned_end_date = forms.DateField(required=False)
+    actual_start_date = forms.DateField(required=False)
+    revised_completion_date = forms.DateField(required=False)
+    latitude = forms.DecimalField(required=False, max_digits=10, decimal_places=7)
+    longitude = forms.DecimalField(required=False, max_digits=10, decimal_places=7)
+    overall_progress_percentage = forms.DecimalField(required=False, max_digits=5, decimal_places=2)
 
-    class Meta:
-        model = NonInfrastructureProject
-        fields = [
-            'title', 'description', 'location', 'implementing_office', 'category',
-            'service_description', 'beneficiaries_description', 'service_location_details', 'service_period', 'service_time',
-            'budget_cost', 'results_achieved',
-            'source_of_fund', 'planned_start_date', 'planned_end_date',
-            'actual_start_date', 'revised_completion_date', 'latitude', 'longitude', 'overall_progress_percentage',
-        ]
-        widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Project Title'}),
-            'description': forms.Textarea(attrs={'class': 'form-textarea', 'placeholder': 'Project description and objectives', 'rows': 4}),
-            'location': forms.Select(attrs={'class': 'form-select'}),
-            'implementing_office': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Office/Agency'}),
-            'category': forms.Select(attrs={'class': 'form-select'}),
-            'service_description': forms.Textarea(attrs={'class': 'form-textarea', 'placeholder': 'What service or program is being delivered?', 'rows': 3}),
-            'beneficiaries_description': forms.Textarea(attrs={'class': 'form-textarea', 'placeholder': 'To whom is the service delivered? (e.g., students, farmers, PWD, elderly)', 'rows': 3}),
-            'service_location_details': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Specific location/venue where service is delivered'}),
-            'service_period': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'When? (e.g., weekly, monthly, semester, one-time event)'}),
-            'service_time': forms.TimeInput(attrs={'class': 'form-input', 'type': 'time'}),
-            'budget_cost': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'Amount in Pesos', 'min': '0', 'step': '0.01'}),
-            'results_achieved': forms.Textarea(attrs={'class': 'form-textarea', 'placeholder': 'What were the results/outcomes? (e.g., number of beneficiaries, skills gained, health improvements)', 'rows': 4}),
-            'source_of_fund': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'e.g., GAA, PRDP'}),
-            'planned_start_date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
-            'planned_end_date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
-            'actual_start_date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
-            'revised_completion_date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
-            'latitude': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'Latitude', 'step': '0.0000001'}),
-            'longitude': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'Longitude', 'step': '0.0000001'}),
-            'overall_progress_percentage': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'Percentage (0-100)', 'min': '0', 'max': '100', 'step': '0.01'}),
-        }
+    def save(self, user=None, instance=None):
+        data = self.cleaned_data
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields:
-            if field not in ['category']:
-                self.fields[field].required = False
+        if instance is None:
+            proj = Project.objects.create(project_type='non_infrastructure', created_by=user, updated_by=user)
+        else:
+            proj = Project.objects.filter(project_id=instance.non_infra_id).first()
+            if proj is None:
+                proj = Project.objects.create(project_type='non_infrastructure', created_by=user, updated_by=user)
+
+        non = Non_Infrastructure_Project.objects.filter(project=proj).first()
+        if non is None:
+            non = Non_Infrastructure_Project(project=proj)
+
+        non.non_infra_name = data.get('title')
+        non.description = data.get('description') or ''
+
+        loc = data.get('location')
+        if loc:
+            addr = Address.objects.create(barangay=loc, municipality='Gabaldon', province='Nueva Ecija')
+            non.address = addr
+
+        non.event_date = data.get('planned_start_date')
+        non.start_time = data.get('service_time')
+        non.end_time = None
+        non.save()
+
+        return non
 

@@ -8,3 +8,57 @@ class SystemConfig(AppConfig):
     def ready(self):
         """Register signal handlers when the app is ready."""
         import apps.system.signals  # noqa: F401
+        # Provide a runtime-only `profile` compatibility property on User so
+        # templates and code referencing `user.profile` work without touching
+        # the archived profile table.
+        from django.contrib.auth.models import User
+
+        def _profile(self):
+            # Persist a small compatibility dict on the user instance so that
+            # attributes set at runtime (e.g., `must_change_password`) remain
+            # available for the duration of the process (tests/requests).
+            if not hasattr(self, '_compat_profile'):
+                # default inferred department
+                if getattr(self, 'is_superuser', False):
+                    dept = 'admin'
+                elif getattr(self, 'is_staff', False):
+                    dept = 'engineer'
+                else:
+                    dept = 'mayor'
+                # Only store the inferred department in-memory; do not
+                # set `must_change_password` here so the DB-backed
+                # `UserFlag` can be consulted for that flag on fresh
+                # instances loaded from the database.
+                self._compat_profile = {'department': dept}
+
+            class _P:
+                def __init__(self, user):
+                    object.__setattr__(self, '_user', user)
+
+                def __getattr__(self, item):
+                    # Check in-memory compat profile first
+                    if item in self._user._compat_profile:
+                        return self._user._compat_profile.get(item)
+                    # Fallback: check persistent UserFlag for must_change_password
+                    if item == 'must_change_password':
+                        try:
+                            from apps.system.models import UserFlag
+                            flag = UserFlag.objects.filter(user=self._user).first()
+                            if flag:
+                                return flag.must_change_password
+                        except Exception:
+                            return False
+                    return None
+
+                def __setattr__(self, key, value):
+                    self._user._compat_profile[key] = value
+
+                def __repr__(self):
+                    return f"CompatProfile({self._user._compat_profile})"
+
+            return _P(self)
+
+        # Replace any existing `profile` attribute on User with a runtime-only
+        # compatibility property so code and templates do not attempt to access
+        # the archived profile table at runtime.
+        setattr(User, 'profile', property(_profile))

@@ -31,11 +31,9 @@ class SuperuserProfileTests(TestCase):
             email='root@example.com',
             password='password123',
         )
-
-        profile = UserProfile.objects.get(user=user)
-
+        # Runtime no longer creates archive-backed profiles; department is inferred.
         self.assertTrue(user.is_superuser)
-        self.assertEqual(profile.department, 'admin')
+        self.assertEqual(user.profile.department, 'admin')
 
 
 class UserCreationFormTests(TestCase):

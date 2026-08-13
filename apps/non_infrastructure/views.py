@@ -6,14 +6,14 @@ from django.urls import reverse_lazy, reverse, NoReverseMatch
 from django.db import models
 from django.db.models import Q, Sum
 from django.templatetags.static import static
-from .models import NonInfrastructureProject
 from .forms import NonInfrastructureProjectForm
+from apps.system.models import NonInfrastructureProject as SystemNonInfrastructureProject
+from apps.system.models import Non_Infrastructure_Project, Project
 
-# Import UserProfile from system app
-try:
-    from apps.system.models import UserProfile
-except ImportError:
-    from system.models import UserProfile
+
+def _department_for_user(user):
+    profile = getattr(user, 'profile', None)
+    return getattr(profile, 'department', None) if profile is not None else None
 
 
 class MayorsOfficeOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -25,10 +25,8 @@ class MayorsOfficeOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
         # Explicitly exclude superusers/admins
         if self.request.user.is_superuser:
             return False
-        try:
-            return self.request.user.profile.department == 'mayor'
-        except UserProfile.DoesNotExist:
-            return False
+        department = _department_for_user(self.request.user)
+        return department == 'mayor'
 
 
 class MayorsOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -39,10 +37,8 @@ class MayorsOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
         if self.request.user.is_superuser:
             return True
-        try:
-            return self.request.user.profile.department == 'mayor'
-        except UserProfile.DoesNotExist:
-            return False
+        department = _department_for_user(self.request.user)
+        return department == 'mayor'
 
 
 class MayorsOfficeEditMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -55,10 +51,8 @@ class MayorsOfficeEditMixin(LoginRequiredMixin, UserPassesTestMixin):
         if self.request.user.is_superuser:
             return True
         # Allow Mayor's office only, deny engineering office
-        try:
-            return self.request.user.profile.department == 'mayor'
-        except UserProfile.DoesNotExist:
-            return False
+        department = _department_for_user(self.request.user)
+        return department == 'mayor'
 
     def get_namespaced_url(self, url_name, *args, **kwargs):
         """
@@ -84,8 +78,8 @@ class NonInfrastructureProjectDashboardView(MayorsOfficeRequiredMixin, TemplateV
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # All Mayor's Office users see the same project pool.
-        user_projects = NonInfrastructureProject.objects.all()
+        # All Mayor's Office users see the same project pool using the normalized compatibility model.
+        user_projects = SystemNonInfrastructureProject.objects.all()
 
         context['total_projects'] = user_projects.count()
 
@@ -100,13 +94,13 @@ class NonInfrastructureProjectDashboardView(MayorsOfficeRequiredMixin, TemplateV
 
 class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
     """Display list of non-infrastructure projects"""
-    model = NonInfrastructureProject
+    model = SystemNonInfrastructureProject
     template_name = 'non_infrastructure/non_infrastructure_list.html'
     context_object_name = 'projects'
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = NonInfrastructureProject.objects.all()
+        queryset = SystemNonInfrastructureProject.objects.all()
 
         # Filter by location
         location = self.request.GET.get('location', '').strip()
@@ -122,14 +116,14 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['locations'] = NonInfrastructureProject.LOCATION_CHOICES
-        context['categories'] = NonInfrastructureProject.PROJECT_CATEGORY_CHOICES
+        context['locations'] = getattr(SystemNonInfrastructureProject, 'LOCATION_CHOICES', [])
+        context['categories'] = getattr(SystemNonInfrastructureProject, 'PROJECT_CATEGORY_CHOICES', [])
         return context
 
 
 class NonInfrastructureProjectCreateView(MayorsOfficeOnlyMixin, CreateView):
     """Create a new non-infrastructure project - Mayor's Office only"""
-    model = NonInfrastructureProject
+    model = SystemNonInfrastructureProject
     form_class = NonInfrastructureProjectForm
     template_name = 'non_infrastructure/non_infrastructure_form.html'
 
@@ -151,18 +145,19 @@ class NonInfrastructureProjectCreateView(MayorsOfficeOnlyMixin, CreateView):
         return context
 
     def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
+        non = form.save(user=self.request.user)
+        self.object = SystemNonInfrastructureProject.objects.filter(non_infra_name=non.non_infra_name).first()
+        return redirect(self.get_success_url())
 
 
 class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
     """Display project details"""
-    model = NonInfrastructureProject
+    model = SystemNonInfrastructureProject
     template_name = 'non_infrastructure/non_infrastructure_detail.html'
     context_object_name = 'project'
 
     def get_queryset(self):
-        return NonInfrastructureProject.objects.all()
+        return SystemNonInfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -213,7 +208,7 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
 
 class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
     """Update an existing non-infrastructure project - Mayor's Office and admins only"""
-    model = NonInfrastructureProject
+    model = SystemNonInfrastructureProject
     form_class = NonInfrastructureProjectForm
     template_name = 'non_infrastructure/non_infrastructure_form.html'
 
@@ -230,7 +225,7 @@ class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
             return reverse_lazy('non_infrastructure_project_list')
 
     def get_queryset(self):
-        return NonInfrastructureProject.objects.all()
+        return SystemNonInfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -238,13 +233,14 @@ class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        form.instance.updated_by = self.request.user
-        return super().form_valid(form)
+        non = form.save(user=self.request.user, instance=self.get_object())
+        self.object = SystemNonInfrastructureProject.objects.filter(non_infra_name=non.non_infra_name).first()
+        return redirect(self.get_success_url())
 
 
 class NonInfrastructureProjectDeleteView(MayorsOfficeEditMixin, DeleteView):
     """Delete a non-infrastructure project - Mayor's Office and admins only"""
-    model = NonInfrastructureProject
+    model = SystemNonInfrastructureProject
     template_name = 'non_infrastructure/non_infrastructure_confirm_delete.html'
 
     def get_success_url(self):
@@ -260,7 +256,7 @@ class NonInfrastructureProjectDeleteView(MayorsOfficeEditMixin, DeleteView):
             return reverse_lazy('non_infrastructure_project_list')
 
     def get_queryset(self):
-        return NonInfrastructureProject.objects.all()
+        return SystemNonInfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

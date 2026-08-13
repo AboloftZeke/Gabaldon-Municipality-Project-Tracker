@@ -8,7 +8,10 @@ PasswordChangeHistory entries when a password is modified.
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
-from .models import PasswordChangeHistory, UserProfile
+
+
+def _password_history_model():
+    return User._meta.get_field('password_changes').related_model
 
 
 @receiver(post_save, sender=User)
@@ -32,8 +35,9 @@ def track_password_change(sender, instance, created, **kwargs):
         return
 
     # Check if password actually changed by comparing with last history entry
+    history_model = _password_history_model()
     last_history = (
-        PasswordChangeHistory.objects
+        history_model.objects
         .filter(user=instance)
         .order_by('-changed_at')
         .first()
@@ -54,7 +58,7 @@ def track_password_change(sender, instance, created, **kwargs):
         # Password was changed - create history entry
         # Note: We don't know who changed it or the method (caught by signal),
         # so we default to 'signal' method
-        PasswordChangeHistory.objects.create(
+        history_model.objects.create(
             user=instance,
             changed_by=None,  # Signal doesn't know who made the change
             method='signal',
@@ -77,10 +81,7 @@ def create_user_profile(sender, instance, created, **kwargs):
         created: Boolean indicating if this is a new User
         **kwargs: Additional signal arguments
     """
-    if created:
-        # Use get_or_create for atomicity - it won't duplicate even if called twice
-        department = 'admin' if instance.is_superuser else 'engineer'
-        UserProfile.objects.get_or_create(
-            user=instance,
-            defaults={'department': department}
-        )
+    # During migration/cleanup we keep archive tables for historical purposes
+    # but must not depend on them for runtime behavior. Do not create archive
+    # rows here; the admin or migration tooling can archive separately.
+    return

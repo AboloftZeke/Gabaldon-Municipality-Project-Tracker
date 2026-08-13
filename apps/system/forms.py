@@ -46,7 +46,8 @@ class CustomUserCreationForm(forms.ModelForm):
 
         user.set_password(temporary_password)
 
-        user.is_staff = True
+        # Mark staff for admin and engineering roles only; mayors are not staff.
+        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING)
         user.is_superuser = role == self.ROLE_ADMIN
 
         if commit:
@@ -58,20 +59,15 @@ class CustomUserCreationForm(forms.ModelForm):
 
     def _save_user_profile(self, user, role):
         """Helper method to save user profile with department."""
-        from .models import UserProfile
+        # Do not write to the archived UserProfile at runtime. Persist a
+        # compatibility department on the user instance instead.
         department_map = {
             self.ROLE_ADMIN: 'admin',
             self.ROLE_ENGINEERING: 'engineer',
             self.ROLE_MAYORS: 'mayor',
         }
-        
-        # Map the form role to the model department
         department = department_map[role]
-        
-        profile, created = UserProfile.objects.update_or_create(
-            user=user,
-            defaults={'department': department}
-        )
+        user.profile.department = department
 
 
 class CustomUserChangeForm(forms.ModelForm):
@@ -96,15 +92,16 @@ class CustomUserChangeForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Set initial role based on user profile or superuser status
-        if hasattr(self.instance, 'profile') and self.instance.profile:
+        # Set initial role based on the compatibility profile or superuser status.
+        profile = getattr(self.instance, 'profile', None)
+        if profile:
             department_reverse_map = {
                 'admin': self.ROLE_ADMIN,
                 'engineer': self.ROLE_ENGINEERING,
                 'mayor': self.ROLE_MAYORS,
             }
             self.fields['role'].initial = department_reverse_map.get(
-                self.instance.profile.department,
+                profile.department,
                 self.ROLE_ENGINEERING
             )
         else:
@@ -121,7 +118,8 @@ class CustomUserChangeForm(forms.ModelForm):
         user = super().save(commit=False)
         role = self.cleaned_data.get('role', self.ROLE_ENGINEERING)
 
-        user.is_staff = True
+        # Mark staff for admin and engineering roles only; mayors are not staff.
+        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING)
         user.is_superuser = role == self.ROLE_ADMIN
 
         if commit:
@@ -133,21 +131,14 @@ class CustomUserChangeForm(forms.ModelForm):
 
     def _save_user_profile(self, user, role):
         """Helper method to save user profile with department."""
-        from .models import UserProfile
+        # Persist the department on the runtime compatibility profile only.
         department_map = {
             self.ROLE_ADMIN: 'admin',
             self.ROLE_ENGINEERING: 'engineer',
             self.ROLE_MAYORS: 'mayor',
         }
-        
-        # Map the form role to the model department
         department = department_map.get(role, 'engineer')
-        
-        # Use update_or_create to ensure the correct department is set
-        profile, created = UserProfile.objects.update_or_create(
-            user=user,
-            defaults={'department': department}
-        )
+        user.profile.department = department
 
 
 class UserListFilterForm(forms.Form):

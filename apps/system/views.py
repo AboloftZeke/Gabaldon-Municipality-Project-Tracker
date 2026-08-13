@@ -20,8 +20,16 @@ from .forms import (
     UserListFilterForm,
     UserPasswordChangeForm,
 )
-from .models import UserProfile
 import json
+
+
+def _department_for_user(user):
+    profile = getattr(user, 'profile', None)
+    return getattr(profile, 'department', None) if profile is not None else None
+
+
+def _password_history_model():
+    return User._meta.get_field('password_changes').related_model
 
 
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -69,22 +77,17 @@ class LoginView(View):
                     self.template_name,
                     {'error': 'Your account does not have access to this module.'}
                 )
-            try:
-                if user.profile.must_change_password:
-                    return redirect('password_change')
-            except UserProfile.DoesNotExist:
-                pass
+            department = _department_for_user(user)
+            if department is not None and getattr(user.profile, 'must_change_password', False):
+                return redirect('password_change')
 
             # Redirect based on user role
             if user.is_superuser:
                 return redirect('admin_dashboard')
-            try:
-                if user.profile.department == 'engineer':
-                    return redirect('engineering_dashboard')
-                elif user.profile.department == 'mayor':
-                    return redirect('mayor_dashboard')
-            except:
-                pass
+            if department == 'engineer':
+                return redirect('engineering_dashboard')
+            elif department == 'mayor':
+                return redirect('mayor_dashboard')
             return redirect('admin_dashboard')
         else:
             return render(request, self.template_name, {'error': 'Invalid credentials'})
@@ -105,8 +108,7 @@ class PublicDashboardView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        from apps.infrastructure.models import InfrastructureProject
-        from apps.non_infrastructure.models import NonInfrastructureProject
+        from apps.system.models import InfrastructureProject, NonInfrastructureProject
 
         infra_qs = InfrastructureProject.objects.all().order_by('-created_at')
         noninfra_qs = NonInfrastructureProject.objects.all().order_by('-created_at')
@@ -316,14 +318,12 @@ class EngineeringDashboardView(StaffRequiredMixin, TemplateView):
     template_name = 'core/engineering_dashboard.html'
 
     def test_func(self):
-        try:
-            return self.request.user.profile.department == 'engineer'
-        except:
-            return False
+        department = _department_for_user(self.request.user)
+        return department == 'engineer'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from apps.infrastructure.models import InfrastructureProject
+        from apps.system.models import InfrastructureProject
         
         user_projects = InfrastructureProject.objects.all()
         context['total_projects'] = user_projects.count()
@@ -341,14 +341,12 @@ class MayorDashboardView(StaffRequiredMixin, TemplateView):
     template_name = 'core/mayor_dashboard.html'
 
     def test_func(self):
-        try:
-            return self.request.user.profile.department == 'mayor'
-        except:
-            return False
+        department = _department_for_user(self.request.user)
+        return department == 'mayor'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from apps.non_infrastructure.models import NonInfrastructureProject
+        from apps.system.models import NonInfrastructureProject
         
         user_projects = NonInfrastructureProject.objects.all()
         context['total_projects'] = user_projects.count()
@@ -512,17 +510,10 @@ class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
                     temporary_password=temporary_password
                 )
 
-                profile = UserProfile.objects.get(user=user)
-                profile.must_change_password = True
-                profile.save(update_fields=['must_change_password', 'updated_at'])
-
-                from .models import PasswordChangeHistory
-                PasswordChangeHistory.objects.create(
-                    user=user,
-                    changed_by=request.user,
-                    method='creation',
-                    notes=f'User created by {request.user.username}'
-                )
+                # Persist a runtime flag so the application enforces password
+                # change on first login without recreating the archived profile.
+                from .models import UserFlag
+                UserFlag.objects.update_or_create(user=user, defaults={'must_change_password': True})
 
                 del request.session['user_create_form_data']
                 messages.success(
@@ -737,8 +728,8 @@ class UserPasswordResetInitiateView(AdminRequiredMixin, DetailView):
             )
 
             # Log password reset in history
-            from .models import PasswordChangeHistory
-            PasswordChangeHistory.objects.create(
+            history_model = _password_history_model()
+            history_model.objects.create(
                 user=user,
                 changed_by=request.user,
                 method='reset_link',
@@ -770,10 +761,10 @@ class UserPasswordHistoryView(AdminRequiredMixin, DetailView):
     context_object_name = 'history_user'
 
     def get_context_data(self, **kwargs):
-        from .models import PasswordChangeHistory
         context = super().get_context_data(**kwargs)
         user = self.get_object()
-        context['password_changes'] = PasswordChangeHistory.objects.filter(
+        history_model = _password_history_model()
+        context['password_changes'] = history_model.objects.filter(
             user=user
         ).order_by('-changed_at')
         return context
@@ -788,8 +779,8 @@ class PasswordHistoryListView(AdminRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        from .models import PasswordChangeHistory
-        queryset = PasswordChangeHistory.objects.select_related(
+        history_model = _password_history_model()
+        queryset = history_model.objects.select_related(
             'user', 'changed_by'
         ).order_by('-changed_at')
 
@@ -828,11 +819,11 @@ class PasswordHistoryListView(AdminRequiredMixin, ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
-        from .models import PasswordChangeHistory
         context = super().get_context_data(**kwargs)
+        history_model = _password_history_model()
 
         # Add method choices for filter dropdown
-        context['method_choices'] = PasswordChangeHistory.CHANGE_METHOD_CHOICES
+        context['method_choices'] = history_model.CHANGE_METHOD_CHOICES
 
         # Get all users for filter dropdown
         context['all_users'] = User.objects.all().order_by('username')
@@ -872,9 +863,10 @@ class PasswordChangeView(LoginRequiredMixin, View):
             form.save()
 
             # Clear the temporary-password requirement.
-            request.user.profile.must_change_password = False
-            request.user.profile.save(
-                update_fields=['must_change_password']
+            from .models import UserFlag
+            UserFlag.objects.update_or_create(
+                user=request.user,
+                defaults={'must_change_password': False},
             )
 
             messages.success(
@@ -891,15 +883,11 @@ class PasswordChangeView(LoginRequiredMixin, View):
             if request.user.is_superuser:
                 return redirect('admin_dashboard')
 
-            try:
-                if request.user.profile.department == 'engineer':
-                    return redirect('engineering_dashboard')
-
-                elif request.user.profile.department == 'mayor':
-                    return redirect('mayor_dashboard')
-
-            except UserProfile.DoesNotExist:
-                pass
+            department = _department_for_user(request.user)
+            if department == 'engineer':
+                return redirect('engineering_dashboard')
+            elif department == 'mayor':
+                return redirect('mayor_dashboard')
 
             return redirect('admin_dashboard')
 

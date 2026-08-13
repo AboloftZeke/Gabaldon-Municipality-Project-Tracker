@@ -5,8 +5,8 @@ import django
 django.setup()
 
 from django.contrib.auth.models import User
-from apps.infrastructure.models import InfrastructureProject
-from apps.system.models import UserProfile
+from apps.system.models import InfrastructureProject
+from apps.infrastructure.forms import InfrastructureProjectForm
 
 print("=" * 80)
 print("VERIFYING ADMIN DASHBOARD PROJECT VISIBILITY")
@@ -20,8 +20,7 @@ engineer, _ = User.objects.get_or_create(
 engineer.set_password('testpass123')
 engineer.save()
 
-eng_prof, _ = UserProfile.objects.get_or_create(user=engineer, defaults={'department': 'engineer'})
-
+# No archive-backed profile creation: runtime now infers department from `is_staff`/`is_superuser`.
 admin, _ = User.objects.get_or_create(
     username='dash_admin',
     defaults={'email': 'dash@admin.test', 'is_staff': True, 'is_superuser': True}
@@ -29,24 +28,25 @@ admin, _ = User.objects.get_or_create(
 admin.set_password('testpass123')
 admin.save()
 
-admin_prof, _ = UserProfile.objects.get_or_create(user=admin, defaults={'department': 'admin'})
-
 print(f"✅ Users prepared:")
 print(f"   - Engineer: {engineer.username}")
 print(f"   - Admin: {admin.username}")
 
-# Create projects by engineer
+# Create projects by engineer via compatibility form which persists to normalized tables
 projects = []
 for i in range(3):
-    p = InfrastructureProject.objects.create(
-        title=f'Dashboard Test Project {i+1}',
-        location='bagong_sikat',
-        category='road',
-        implementing_office='Engineering Office',
-        procurement_method='competitive_bidding',
-        created_by=engineer
-    )
-    projects.append(p)
+    form = InfrastructureProjectForm(data={
+        'title': f'Dashboard Test Project {i+1}',
+        'location': 'bagong_sikat',
+        'category': 'road',
+        'implementing_office': 'Engineering Office',
+        'procurement_method': 'competitive_bidding',
+    })
+    if form.is_valid():
+        infra = form.save(user=engineer)
+        projects.append(infra)
+    else:
+        raise RuntimeError(f"Form invalid: {form.errors}")
 
 print(f"\n✅ Created 3 test projects by {engineer.username}")
 

@@ -6,14 +6,14 @@ from django.urls import reverse_lazy, reverse, NoReverseMatch
 from django.db import models
 from django.db.models import Q, Sum
 from django.templatetags.static import static
-from .models import InfrastructureProject
 from .forms import InfrastructureProjectForm
+from apps.system.models import InfrastructureProject as SystemInfrastructureProject
+from apps.system.models import Infrastructure_Project, Project
 
-# Import UserProfile from system app
-try:
-    from apps.system.models import UserProfile
-except ImportError:
-    from system.models import UserProfile
+
+def _department_for_user(user):
+    profile = getattr(user, 'profile', None)
+    return getattr(profile, 'department', None) if profile is not None else None
 
 
 class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -24,10 +24,8 @@ class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
         if self.request.user.is_superuser:
             return True
-        try:
-            return self.request.user.profile.department == 'engineer'
-        except UserProfile.DoesNotExist:
-            return False
+        department = _department_for_user(self.request.user)
+        return department == 'engineer'
 
 
 class EngineerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -39,10 +37,8 @@ class EngineerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
         # Explicitly exclude superusers/admins
         if self.request.user.is_superuser:
             return False
-        try:
-            return self.request.user.profile.department == 'engineer'
-        except UserProfile.DoesNotExist:
-            return False
+        department = _department_for_user(self.request.user)
+        return department == 'engineer'
 
     def get_namespaced_url(self, url_name, *args, **kwargs):
         """
@@ -68,8 +64,8 @@ class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # All engineering office users see the same project pool.
-        user_projects = InfrastructureProject.objects.all()
+        # All engineering office users see the same project pool. Use normalized compatibility model.
+        user_projects = SystemInfrastructureProject.objects.all()
 
         context['total_projects'] = user_projects.count()
         context['awarded_projects'] = user_projects.filter(award_status='awarded').count()
@@ -87,13 +83,13 @@ class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
 
 class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
     """Display list of infrastructure projects"""
-    model = InfrastructureProject
+    model = SystemInfrastructureProject
     template_name = 'projects/project_list.html'
     context_object_name = 'projects'
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = InfrastructureProject.objects.all()
+        queryset = SystemInfrastructureProject.objects.all()
 
         # Filter by location
         location = self.request.GET.get('location', '').strip()
@@ -114,15 +110,16 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['locations'] = InfrastructureProject.LOCATION_CHOICES
-        context['categories'] = InfrastructureProject.PROJECT_CATEGORY_CHOICES
-        context['statuses'] = InfrastructureProject.AWARD_STATUS_CHOICES
+        # Provide legacy choice constants from normalized/compatibility model if present
+        context['locations'] = getattr(SystemInfrastructureProject, 'LOCATION_CHOICES', [])
+        context['categories'] = getattr(SystemInfrastructureProject, 'PROJECT_CATEGORY_CHOICES', [])
+        context['statuses'] = getattr(SystemInfrastructureProject, 'AWARD_STATUS_CHOICES', [])
         return context
 
 
 class ProjectCreateView(EngineerOnlyMixin, CreateView):
     """Create a new infrastructure project - engineers only"""
-    model = InfrastructureProject
+    model = SystemInfrastructureProject
     form_class = InfrastructureProjectForm
     template_name = 'projects/project_form.html'
 
@@ -144,18 +141,21 @@ class ProjectCreateView(EngineerOnlyMixin, CreateView):
         return context
 
     def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
+        # Use the compatibility form save which writes to normalized tables
+        infra = form.save(user=self.request.user)
+        # Set the created object for the view to a compatibility instance
+        self.object = SystemInfrastructureProject.objects.filter(infrastructure_title=infra.infrastructure_title).first()
+        return redirect(self.get_success_url())
 
 
 class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
     """Display project details"""
-    model = InfrastructureProject
+    model = SystemInfrastructureProject
     template_name = 'projects/project_detail.html'
     context_object_name = 'project'
 
     def get_queryset(self):
-        return InfrastructureProject.objects.all()
+        return SystemInfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -206,7 +206,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
 
 class ProjectEditView(EngineerOnlyMixin, UpdateView):
     """Update an existing infrastructure project - engineers only"""
-    model = InfrastructureProject
+    model = SystemInfrastructureProject
     form_class = InfrastructureProjectForm
     template_name = 'projects/project_form.html'
 
@@ -223,7 +223,7 @@ class ProjectEditView(EngineerOnlyMixin, UpdateView):
             return reverse_lazy('project_list')
 
     def get_queryset(self):
-        return InfrastructureProject.objects.all()
+        return SystemInfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -231,13 +231,14 @@ class ProjectEditView(EngineerOnlyMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        form.instance.updated_by = self.request.user
-        return super().form_valid(form)
+        infra = form.save(user=self.request.user, instance=self.get_object())
+        self.object = SystemInfrastructureProject.objects.filter(infrastructure_title=infra.infrastructure_title).first()
+        return redirect(self.get_success_url())
 
 
 class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
     """Delete an infrastructure project - engineers only"""
-    model = InfrastructureProject
+    model = SystemInfrastructureProject
     template_name = 'projects/project_confirm_delete.html'
 
     def get_success_url(self):
@@ -253,7 +254,7 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
             return reverse_lazy('project_list')
 
     def get_queryset(self):
-        return InfrastructureProject.objects.all()
+        return SystemInfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
