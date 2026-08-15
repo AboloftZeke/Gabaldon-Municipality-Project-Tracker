@@ -72,24 +72,26 @@ class MayorsOfficeEditMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 
 class NonInfrastructureProjectDashboardView(MayorsOfficeRequiredMixin, TemplateView):
-    """Dashboard for Mayor's Office to manage non-infrastructure projects"""
-    template_name = 'non_infrastructure/non_infrastructure_dashboard.html'
+        """Dashboard for Mayor's Office to manage non-infrastructure projects"""
+        template_name = 'non_infrastructure/non_infrastructure_dashboard.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
 
-        # All Mayor's Office users see the same project pool using the normalized compatibility model.
-        user_projects = SystemNonInfrastructureProject.objects.all()
+            # All Mayor's Office users see the same project pool using the normalized compatibility model.
+            user_projects = SystemNonInfrastructureProject.objects.all()
 
-        context['total_projects'] = user_projects.count()
+            context['total_projects'] = user_projects.count()
 
-        # Count projects by progress
-        context['planned_projects'] = user_projects.filter(overall_progress_percentage__isnull=True).count()
-        context['in_progress_projects'] = user_projects.exclude(overall_progress_percentage__isnull=True).exclude(overall_progress_percentage=100).count()
-        context['completed_projects'] = user_projects.filter(overall_progress_percentage=100).count()
-        context['recent_projects'] = user_projects.order_by('-created_at')[:5]
+            # Non-infrastructure projects no longer have a progress/status field
+            # in the redesigned schema, so these cannot be calculated reliably.
+            context['planned_projects'] = 0
+            context['in_progress_projects'] = 0
+            context['completed_projects'] = 0
 
-        return context
+            context['recent_projects'] = user_projects.order_by('-created_at')[:5]
+
+            return context
 
 
 class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
