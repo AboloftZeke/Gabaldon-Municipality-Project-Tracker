@@ -70,6 +70,12 @@ class LoginView(View):
 
         if user is not None:
             login(request, user)
+
+            department = _department_for_user(user)
+
+            if getattr(getattr(user, 'flags', None), 'must_change_password', False):
+                return redirect('password_change')
+
             if not user.is_staff:
                 logout(request)
                 return render(
@@ -77,9 +83,7 @@ class LoginView(View):
                     self.template_name,
                     {'error': 'Your account does not have access to this module.'}
                 )
-            department = _department_for_user(user)
-            if department is not None and getattr(user.profile, 'must_change_password', False):
-                return redirect('password_change')
+            
 
             # Redirect based on user role
             if user.is_superuser:
@@ -120,14 +124,11 @@ class PublicDashboardView(TemplateView):
         infra_completed = infra_qs.filter(award_status='completed').count()
         infra_ongoing = infra_qs.filter(award_status__in=['ongoing_bidding', 'awarded']).count()
 
-        noninfra_completed = noninfra_qs.filter(overall_progress_percentage__gte=100).count()
-        noninfra_ongoing = noninfra_qs.filter(
-            overall_progress_percentage__gt=0,
-            overall_progress_percentage__lt=100,
-        ).count()
-        noninfra_planned = noninfra_qs.filter(
-            Q(overall_progress_percentage__isnull=True) | Q(overall_progress_percentage=0)
-        ).count()
+        # Non-infrastructure projects no longer have a progress/status field.
+        # They are not included in completed/ongoing/portfolio-progress calculations.
+        noninfra_completed = 0
+        noninfra_ongoing = 0
+        noninfra_planned = noninfra_total
 
         completed_projects = infra_completed + noninfra_completed
         ongoing_projects = infra_ongoing + noninfra_ongoing
@@ -349,10 +350,14 @@ class MayorDashboardView(StaffRequiredMixin, TemplateView):
         from apps.system.models import NonInfrastructureProject
         
         user_projects = NonInfrastructureProject.objects.all()
+
         context['total_projects'] = user_projects.count()
-        context['planned_projects'] = user_projects.filter(overall_progress_percentage__isnull=True).count()
-        context['in_progress_projects'] = user_projects.exclude(overall_progress_percentage__isnull=True).exclude(overall_progress_percentage=100).count()
-        context['completed_projects'] = user_projects.filter(overall_progress_percentage=100).count()
+
+        # Non-infrastructure projects no longer have a progress/status field
+        # in the redesigned schema, so these cannot be calculated reliably.
+        context['planned_projects'] = 0
+        context['in_progress_projects'] = 0
+        context['completed_projects'] = 0
         
         return context
 
