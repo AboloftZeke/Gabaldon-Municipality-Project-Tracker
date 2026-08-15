@@ -562,8 +562,8 @@ class Project_Image(models.Model):
     project_image_id = models.BigAutoField(primary_key=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='images')
     image_url = models.URLField(max_length=500, blank=True, null=True)
-    image_name = models.CharField(max_length=255, blank=True, null=True)
-    caption = models.CharField(max_length=255, blank=True, null=True)
+    # Removed `image_name` and `caption` fields to simplify image storage.
+    # Use `image_url` and `created_at` to identify/label images. Run migrations after this change.
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -608,9 +608,19 @@ class InfrastructureProject(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='infrastructure_id')
     title = models.CharField(max_length=255, db_column='infrastructure_title')
     description = models.TextField(db_column='infrastructure_description')
-    # contractor and implementing office are stored as FKs in normalized table; expose them as simple fields for compatibility
-    contractor_id = models.BigIntegerField(null=True, blank=True, db_column='contractor_id')
-    implementing_office_id = models.BigIntegerField(null=True, blank=True, db_column='implementing_office_id')
+    # contractor and implementing office are stored as FKs in the normalized table.
+    # Expose them as read-only compatibility properties instead of real model fields
+    # so Django won't attempt to SELECT non-existent legacy columns on the
+    # `system_infrastructure_project` compatibility table (managed=False).
+    @property
+    def contractor_id(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('contractor').first()
+        return infra.contractor.contractor_id if infra and infra.contractor else None
+
+    @property
+    def implementing_office_id(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('implementing_office').first()
+        return infra.implementing_office.office_id if infra and infra.implementing_office else None
     procurement_method = models.CharField(max_length=50, null=True, blank=True)
     award_status = models.CharField(max_length=50, null=True, blank=True)
     planned_start_date = models.DateField(null=True, blank=True)
@@ -628,6 +638,99 @@ class InfrastructureProject(models.Model):
     def created_by(self):
         infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('project').first()
         return infra.project.created_by_user if infra and infra.project else None
+
+    # Compatibility accessors for template/display helpers
+    @property
+    def location(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('address').first()
+        if infra and infra.address and infra.address.barangay:
+            return infra.address.barangay
+        return ''
+
+    @property
+    def latitude(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('address').first()
+        if infra and infra.address and infra.address.latitude is not None:
+            return infra.address.latitude
+        return None
+
+    @property
+    def longitude(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('address').first()
+        if infra and infra.address and infra.address.longitude is not None:
+            return infra.address.longitude
+        return None
+
+    def get_location_display(self):
+        return self.location
+
+    def get_category_display(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('category').first()
+        return infra.category.category_name if infra and infra.category else ''
+
+    def get_procurement_method_display(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
+        if infra and getattr(infra, 'procurement_method', None):
+            return dict(Infrastructure_Project.PROCUREMENT_METHOD_CHOICES).get(infra.procurement_method, infra.procurement_method)
+        return ''
+
+    def get_award_status_display(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
+        if infra and getattr(infra, 'award_status', None):
+            return dict(Infrastructure_Project.AWARD_STATUS_CHOICES).get(infra.award_status, infra.award_status)
+        return ''
+
+    @property
+    def abc_amount(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
+        if infra:
+            fin = infra.financial_records.first()
+            return fin.approved_budget if fin else None
+        return None
+
+    @property
+    def contract_price(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
+        if infra:
+            fin = infra.financial_records.first()
+            return fin.bid_amount if fin else None
+        return None
+
+    @property
+    def cost_progress_percentage(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
+        return infra.cost_progress_percentage if infra and getattr(infra, 'cost_progress_percentage', None) is not None else None
+
+    @property
+    def physical_progress_percentage(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
+        return infra.physical_progress_percentage if infra and getattr(infra, 'physical_progress_percentage', None) is not None else None
+
+    @property
+    def contractor(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
+        contractor_id = getattr(infra, 'contractor_id', None) if infra else None
+        if contractor_id:
+            c = Contractor.objects.filter(contractor_id=contractor_id).first()
+            return c.contractor_name if c else None
+        return None
+
+    @property
+    def implementing_office(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
+        office_id = getattr(infra, 'implementing_office_id', None) if infra else None
+        if office_id:
+            o = ImplementingOffice.objects.filter(office_id=office_id).first()
+            return o.office_name if o else None
+        return None
+
+    @property
+    def source_of_fund(self):
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
+        if infra:
+            fin = infra.financial_records.first()
+            return fin.fund_source.fund_source_name if fin and fin.fund_source else None
+        return None
 
 
 class NonInfrastructureProject(models.Model):

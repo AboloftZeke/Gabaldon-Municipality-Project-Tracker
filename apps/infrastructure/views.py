@@ -71,11 +71,31 @@ class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
         context['awarded_projects'] = user_projects.filter(award_status='awarded').count()
         context['ongoing_projects'] = user_projects.filter(award_status__in=['ongoing_bidding', 'awarded']).count()
         context['completed_projects'] = user_projects.filter(award_status='completed').count()
-        context['recent_projects'] = user_projects.order_by('-created_at')[:5]
+        # Build recent projects list and attach a `cover_image_url` attribute
+        recent_qs = SystemInfrastructureProject.objects.order_by('-created_at')[:5]
+        recent_projects = []
+        for p in recent_qs:
+            # Resolve normalized infra -> project -> first image (if any)
+            infra_obj = Infrastructure_Project.objects.filter(infrastructure_id=p.id).select_related('project').first()
+            cover = ''
+            if infra_obj and getattr(infra_obj, 'project', None):
+                # Use the latest uploaded image as the cover image
+                first_img = infra_obj.project.images.order_by('-created_at').first()
+                if first_img and getattr(first_img, 'image_url', None):
+                    cover = first_img.image_url
+            setattr(p, 'cover_image_url', cover)
+            recent_projects.append(p)
+        context['recent_projects'] = recent_projects
 
-        total_abc = user_projects.filter(abc_amount__isnull=False).aggregate(
-            total=models.Sum('abc_amount')
-        )['total'] or 0
+        # `SystemInfrastructureProject` is a compatibility (legacy) model that
+        # does not expose `abc_amount` as a queryable DB field. Use the
+        # normalized `Infrastructure_Project` model's related `Financial`
+        # records to compute the total approved budget instead.
+        infra_ids = list(user_projects.values_list('id', flat=True))
+        total_abc = Infrastructure_Project.objects.filter(
+            infrastructure_id__in=infra_ids,
+            financial_records__approved_budget__isnull=False
+        ).aggregate(total=Sum('financial_records__approved_budget'))['total'] or 0
         context['total_investment'] = total_abc
 
         return context
@@ -144,7 +164,10 @@ class ProjectCreateView(EngineerOnlyMixin, CreateView):
         # Use the compatibility form save which writes to normalized tables
         infra = form.save(user=self.request.user)
         # Set the created object for the view to a compatibility instance
-        self.object = SystemInfrastructureProject.objects.filter(infrastructure_title=infra.infrastructure_title).first()
+        # `SystemInfrastructureProject` is a compatibility model where the pk
+        # column is `infrastructure_id`. Match by that id to reliably get the
+        # compatibility instance for redirects and context.
+        self.object = SystemInfrastructureProject.objects.filter(id=infra.infrastructure_id).first()
         return redirect(self.get_success_url())
 
 
@@ -173,7 +196,12 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
         context['project_budget_value'] = project.abc_amount if project.abc_amount is not None else project.contract_price
         context['project_target_completion_date'] = project.planned_end_date
         context['project_google_maps_url'] = f'https://www.google.com/maps?q={map_lat},{map_lng}'
-        context['project_images'] = []
+        # Populate project images (latest first)
+        imgs = []
+        infra = Infrastructure_Project.objects.filter(infrastructure_id=project.id).select_related('project').first()
+        if infra and getattr(infra, 'project', None):
+            imgs = list(infra.project.images.order_by('-created_at'))
+        context['project_images'] = imgs
         context['project_placeholder_image'] = static('images/project-placeholder.svg')
         context['project_gis'] = {
             'has_coordinates': has_coordinates,
@@ -232,7 +260,7 @@ class ProjectEditView(EngineerOnlyMixin, UpdateView):
 
     def form_valid(self, form):
         infra = form.save(user=self.request.user, instance=self.get_object())
-        self.object = SystemInfrastructureProject.objects.filter(infrastructure_title=infra.infrastructure_title).first()
+        self.object = SystemInfrastructureProject.objects.filter(id=infra.infrastructure_id).first()
         return redirect(self.get_success_url())
 
 

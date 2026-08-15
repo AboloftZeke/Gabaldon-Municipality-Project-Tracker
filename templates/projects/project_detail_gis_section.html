@@ -155,17 +155,17 @@
                 {% if project_images %}
                     <div class="image-grid">
                         {% for image in project_images %}
-                            <button type="button" class="image-card" data-image-src="{{ image.url }}" data-image-caption="{{ image.caption|default:project.title|escape }}">
-                                <img src="{{ image.url }}" alt="{{ image.caption|default:project.title|escape }}">
-                                <span>{{ image.caption|default:project.title }}</span>
-                            </button>
+                            <a href="{{ image.image_url }}" class="image-card" target="_blank" rel="noopener noreferrer" data-image-src="{{ image.image_url }}" data-image-caption="{{ project.title|escape }}">
+                                <img src="{{ image.image_url }}" alt="{{ project.title|escape }}">
+                                <span>{{ project.title }}</span>
+                            </a>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <button type="button" class="image-card image-card--placeholder" data-image-src="{{ project_placeholder_image }}" data-image-caption="No project image uploaded.">
+                    <a href="{{ project_placeholder_image }}" class="image-card image-card--placeholder" target="_blank" rel="noopener noreferrer">
                         <img src="{{ project_placeholder_image }}" alt="No project image uploaded.">
                         <span>No project image uploaded.</span>
-                    </button>
+                    </a>
                 {% endif %}
             </div>
         </div>
