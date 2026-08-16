@@ -34,6 +34,10 @@ class NonInfrastructureProjectForm(forms.Form):
     longitude = forms.DecimalField(required=False, max_digits=10, decimal_places=7)
     overall_progress_percentage = forms.DecimalField(required=False, max_digits=5, decimal_places=2)
 
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
+        super().__init__(*args, **kwargs)
+
     def save(self, user=None, instance=None):
         data = self.cleaned_data
 
