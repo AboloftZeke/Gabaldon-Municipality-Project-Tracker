@@ -46,8 +46,8 @@ class CustomUserCreationForm(forms.ModelForm):
 
         user.set_password(temporary_password)
 
-        # Mark staff for admin and engineering roles only; mayors are not staff.
-        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING)
+        # Mark staff for admin, engineering, and mayor roles.
+        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING, self.ROLE_MAYORS.)
         user.is_superuser = role == self.ROLE_ADMIN
 
         if commit:

@@ -104,18 +104,24 @@ class LogoutView(View):
 
 
 class PublicDashboardView(TemplateView):
-    """
-    Public transparency dashboard showing live project data.
-    """
     template_name = 'Dashboard/dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        from apps.system.models import InfrastructureProject, NonInfrastructureProject
+        from django.utils import timezone
+        from apps.system.models import InfrastructureProject, Non_Infrastructure_Project
+        # Static choice lists still only live on the legacy model classes.
+        # We use them here purely as UI lookup data (barangay/category labels),
+        # not for storage or querying — the normalized models are source of truth for data.
+        from apps.infrastructure.models import InfrastructureProject as LegacyInfrastructureProject
+        from apps.non_infrastructure.models import NonInfrastructureProject as LegacyNonInfrastructureProject
+        from apps.system.models import InfrastructureCategory, NonInfrastructureCategory
 
         infra_qs = InfrastructureProject.objects.all().order_by('-created_at')
-        noninfra_qs = NonInfrastructureProject.objects.all().order_by('-created_at')
+        noninfra_qs = Non_Infrastructure_Project.objects.select_related(
+            'project', 'project__created_by_user', 'address', 'non_infra_category'
+        ).order_by('-created_at')
 
         infra_total = infra_qs.count()
         noninfra_total = noninfra_qs.count()
@@ -124,17 +130,22 @@ class PublicDashboardView(TemplateView):
         infra_completed = infra_qs.filter(award_status='completed').count()
         infra_ongoing = infra_qs.filter(award_status__in=['ongoing_bidding', 'awarded']).count()
 
-        # Non-infrastructure projects no longer have a progress/status field.
-        # They are not included in completed/ongoing/portfolio-progress calculations.
-        noninfra_completed = 0
-        noninfra_ongoing = 0
-        noninfra_planned = noninfra_total
+        # Non-infra has no progress/status field in the normalized schema yet.
+        # Deriving a rough status from event_date so rows aren't all "Planned" forever;
+        # revisit if/when a real status field is added (see MIGRATION_PLAN item 6).
+        today = timezone.now().date()
+        noninfra_completed = noninfra_qs.filter(event_date__lt=today).count()
+        noninfra_ongoing = noninfra_qs.filter(event_date=today).count()
+        noninfra_planned = noninfra_total - noninfra_completed - noninfra_ongoing
 
         completed_projects = infra_completed + noninfra_completed
         ongoing_projects = infra_ongoing + noninfra_ongoing
 
         infra_budget_total = sum((p.abc_amount or p.contract_price or 0) for p in infra_qs)
-        noninfra_budget_total = sum((p.budget_cost or 0) for p in noninfra_qs)
+        # No Financial record exists for non-infra projects in the normalized schema
+        # (Financial only FKs to Infrastructure_Project right now). Contributes 0
+        # until that's resolved — see MIGRATION_PLAN item 6.
+        noninfra_budget_total = 0
         total_budget = infra_budget_total + noninfra_budget_total
 
         if total_projects:
@@ -144,132 +155,102 @@ class PublicDashboardView(TemplateView):
 
         rows = []
 
-        infra_location_map = dict(InfrastructureProject.LOCATION_CHOICES)
-        noninfra_location_map = dict(NonInfrastructureProject.LOCATION_CHOICES)
+        infra_location_map = dict(LegacyInfrastructureProject.LOCATION_CHOICES)
+        noninfra_location_map = dict(LegacyNonInfrastructureProject.LOCATION_CHOICES)
         location_options_map = {**infra_location_map, **noninfra_location_map}
 
         category_options = []
-        for value, label in InfrastructureProject.PROJECT_CATEGORY_CHOICES:
+        for value, label in LegacyInfrastructureProject.PROJECT_CATEGORY_CHOICES:
             category_options.append((f'infra:{value}', f'Infrastructure - {label}'))
-        for value, label in NonInfrastructureProject.PROJECT_CATEGORY_CHOICES:
-            category_options.append((f'noninfra:{value}', f'Non-Infrastructure - {label}'))
-
-        for p in infra_qs:
-            if p.award_status == 'completed':
-                status_key = 'completed'
-                status_label = 'Completed'
-            elif p.award_status in ['ongoing_bidding', 'awarded']:
-                status_key = 'ongoing'
-                status_label = 'Ongoing'
-            else:
-                status_key = 'planned'
-                status_label = 'Planned'
-
-            detail_url = '#'
-            try:
-                detail_url = reverse('infrastructure_default:project_detail', args=[p.pk])
-            except Exception:
-                pass
-
-            rows.append({
-                'record_id': f'infra-{p.pk}',
-                'category': 'infra',
-                'project_category_key': f'infra:{p.category}',
-                'project_category_label': f'Infrastructure - {p.get_category_display()}',
-                'type_label': 'Infrastructure',
-                'title': p.title,
-                'location_key': p.location,
-                'location': p.get_location_display(),
-                'status_key': status_key,
-                'status_label': status_label,
-                'office': p.implementing_office,
-                'implementing_office': p.implementing_office,
-                'category_label': p.get_category_display(),
-                'contractor': p.contractor,
-                'procurement_method': p.get_procurement_method_display(),
-                'source_of_fund': p.source_of_fund,
-                'budget': p.abc_amount or p.contract_price or 0,
-                'budget_amount': p.abc_amount or p.contract_price or 0,
-                'abc_amount': p.abc_amount,
-                'contract_price': p.contract_price,
-                'progress': p.physical_progress_percentage or 0,
-                'progress_percentage': p.physical_progress_percentage or 0,
-                'cost_progress_percentage': p.cost_progress_percentage,
-                'physical_progress_percentage': p.physical_progress_percentage,
-                'description': '',
-                'service_description': '',
-                'beneficiaries_description': '',
-                'service_location_details': '',
-                'service_period': '',
-                'service_time': '',
-                'results_achieved': '',
-                'revised_completion_date': '',
-                'planned_start_date': p.planned_start_date,
-                'planned_end_date': p.planned_end_date,
-                'actual_start_date': p.actual_start_date,
-                'overall_progress_percentage': '',
-                'created_by_name': p.created_by.get_full_name() or p.created_by.username,
-                'created_at': p.created_at,
-                'updated_at': p.updated_at,
-                'detail_url': detail_url,
-            })
+        for cat in NonInfrastructureCategory.objects.all().order_by('type_name'):
+            category_options.append((f'noninfra:{cat.type_code}', f'Non-Infrastructure - {cat.type_name}'))
 
         for p in noninfra_qs:
-            progress_value = p.overall_progress_percentage or 0
-            if progress_value >= 100:
-                status_key = 'completed'
-                status_label = 'Completed'
-            elif progress_value > 0:
-                status_key = 'ongoing'
-                status_label = 'Ongoing'
-            else:
-                status_key = 'planned'
-                status_label = 'Planned'
+            status_key = 'planned'
+            status_label = 'Planned'
+
+            category_code = (
+                p.non_infra_category.type_code
+                if p.non_infra_category else ''
+            )
+            category_name = (
+                p.non_infra_category.type_name
+                if p.non_infra_category else ''
+            )
+
+            location = str(p.address) if p.address else ''
+
+            creator = p.project.created_by_user if p.project else None
 
             detail_url = '#'
             try:
-                detail_url = reverse('non_infrastructure_default:non_infrastructure_project_detail', args=[p.pk])
+                detail_url = reverse(
+                    'non_infrastructure_default:non_infrastructure_project_detail',
+                    args=[p.pk]
+                )
             except Exception:
                 pass
 
             rows.append({
                 'record_id': f'noninfra-{p.pk}',
                 'category': 'noninfra',
-                'project_category_key': f'noninfra:{p.category}',
-                'project_category_label': f'Non-Infrastructure - {p.get_category_display()}',
+                'project_category_key': f'noninfra:{category_code}',
+                'project_category_label': (
+                    f'Non-Infrastructure - {category_name}'
+                    if category_name
+                    else 'Non-Infrastructure'
+                ),
                 'type_label': 'Non-Infrastructure',
-                'title': p.title,
-                'location_key': p.location,
-                'location': p.get_location_display(),
+
+                'title': p.non_infra_name,
+
+                'location_key': p.address_id,
+                'location': location,
+
                 'status_key': status_key,
                 'status_label': status_label,
-                'office': p.implementing_office,
-                'implementing_office': p.implementing_office,
-                'category_label': p.get_category_display(),
+
+                'office': '',
+                'implementing_office': '',
+                'category_label': category_name,
+
                 'contractor': '',
                 'procurement_method': '',
-                'source_of_fund': p.source_of_fund,
-                'budget': p.budget_cost or 0,
-                'budget_amount': p.budget_cost or 0,
+                'source_of_fund': '',
+
+                'budget': 0,
+                'budget_amount': 0,
                 'abc_amount': '',
                 'contract_price': '',
-                'progress': progress_value,
-                'progress_percentage': progress_value,
-                'overall_progress_percentage': p.overall_progress_percentage,
+
+                'progress': 0,
+                'progress_percentage': 0,
+                'overall_progress_percentage': '',
                 'cost_progress_percentage': '',
                 'physical_progress_percentage': '',
+
                 'description': p.description,
-                'service_description': p.service_description,
-                'beneficiaries_description': p.beneficiaries_description,
-                'service_location_details': p.service_location_details,
-                'service_period': p.service_period,
-                'service_time': p.service_time.strftime('%H:%M') if p.service_time else '',
-                'results_achieved': p.results_achieved,
-                'revised_completion_date': p.revised_completion_date,
-                'planned_start_date': p.planned_start_date,
-                'planned_end_date': p.planned_end_date,
-                'actual_start_date': p.actual_start_date,
-                'created_by_name': p.created_by.get_full_name() or p.created_by.username,
+
+                'venue_name': p.venue_name or '',
+                'event_date': p.event_date,
+                'start_time': (
+                    p.start_time.strftime('%H:%M')
+                    if p.start_time else ''
+                ),
+                'end_time': (
+                    p.end_time.strftime('%H:%M')
+                    if p.end_time else ''
+                ),
+
+                'planned_start_date': p.event_date,
+                'planned_end_date': None,
+                'actual_start_date': None,
+
+                'created_by_name': (
+                    creator.get_full_name() or creator.username
+                    if creator else ''
+                ),
+
                 'created_at': p.created_at,
                 'updated_at': p.updated_at,
                 'detail_url': detail_url,

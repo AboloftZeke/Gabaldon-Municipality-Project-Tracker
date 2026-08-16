@@ -48,8 +48,18 @@ class NonInfrastructureProjectForm(forms.Form):
 
         loc = data.get('location')
         if loc:
-            addr = Address.objects.create(barangay=loc, municipality='Gabaldon', province='Nueva Ecija')
-            non.address = addr
+            if non.address:
+                non.address.address = loc
+                non.address.municipality = "Gabaldon"
+                non.address.province = "Nueva Ecija"
+                non.address.save()
+            else:
+                addr = Address.objects.create(
+                    barangay=loc,
+                    municipality="Gabaldon",
+                    province="Nueva Ecija"
+                )
+                non.address = addr
 
         non.event_date = data.get('planned_start_date')
         non.start_time = data.get('service_time')
