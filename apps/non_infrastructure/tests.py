@@ -30,16 +30,14 @@ class NonInfrastructureProjectFormTests(TestCase):
                 'non_infra_name': 'Community Health Fair',
                 'description': 'Free medical and health education event.',
                 'non_infra_category': str(self.category.non_infrastructure_category_id),
+                'proponent': 'Municipal Health Office',
+                'beneficiaries': '250',
                 'event_date': '2026-08-20',
                 'start_time': '08:00',
                 'end_time': '12:00',
                 'venue_name': 'Municipal Plaza',
                 'street': 'Rizal Street',
                 'barangay': 'bagting',
-                'municipality': 'Gabaldon',
-                'province': 'Nueva Ecija',
-                'latitude': '15.3000000',
-                'longitude': '121.3500000',
             },
             files={
                 'project_images': [
@@ -54,6 +52,8 @@ class NonInfrastructureProjectFormTests(TestCase):
 
         self.assertEqual(project.non_infra_name, 'Community Health Fair')
         self.assertEqual(project.non_infra_category, self.category)
+        self.assertEqual(project.proponent, 'Municipal Health Office')
+        self.assertEqual(project.beneficiaries, 250)
         self.assertEqual(project.address.barangay, 'bagting')
         self.assertEqual(project.address.municipality, 'Gabaldon')
         self.assertEqual(project.address.province, 'Nueva Ecija')
@@ -81,14 +81,14 @@ class NonInfrastructureProjectFormTests(TestCase):
                 'non_infra_name': 'Updated Community Fair',
                 'description': 'Updated description.',
                 'non_infra_category': str(self.category.non_infrastructure_category_id),
+                'proponent': 'Barangay Nutrition Council',
+                'beneficiaries': '180',
                 'event_date': '2026-09-15',
                 'start_time': '09:00',
                 'end_time': '13:00',
                 'venue_name': 'New Event Grounds',
                 'street': 'Main Avenue',
                 'barangay': 'bagting',
-                'municipality': 'Gabaldon',
-                'province': 'Nueva Ecija',
             },
             files={
                 'project_images': [
@@ -102,7 +102,17 @@ class NonInfrastructureProjectFormTests(TestCase):
         updated = form.save(user=self.user, instance=existing)
 
         self.assertEqual(updated.non_infra_name, 'Updated Community Fair')
+        self.assertEqual(updated.proponent, 'Barangay Nutrition Council')
+        self.assertEqual(updated.beneficiaries, 180)
         self.assertEqual(updated.event_date.isoformat(), '2026-09-15')
         self.assertEqual(updated.venue_name, 'New Event Grounds')
         self.assertEqual(updated.address.barangay, 'bagting')
         self.assertEqual(updated.project.images.count(), 2)
+
+    def test_form_seeds_missing_categories_when_database_is_empty(self):
+        NonInfrastructureCategory.objects.all().delete()
+
+        form = NonInfrastructureProjectForm()
+
+        self.assertTrue(form.fields['non_infra_category'].queryset.exists())
+        self.assertIn('Social Services', list(form.fields['non_infra_category'].queryset.values_list('type_name', flat=True)))

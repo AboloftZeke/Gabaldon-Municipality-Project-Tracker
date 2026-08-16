@@ -478,6 +478,8 @@ class Non_Infrastructure_Project(models.Model):
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     venue_name = models.CharField(max_length=255, blank=True, null=True)
+    proponent = models.CharField(max_length=255, blank=True, default='')
+    beneficiaries = models.IntegerField(null=True, blank=True)
     address = models.ForeignKey(
         Address,
         on_delete=models.SET_NULL,
@@ -768,6 +770,8 @@ class NonInfrastructureProject(models.Model):
     event_date = models.DateField(null=True, blank=True, db_column='event_date')
     start_time = models.TimeField(null=True, blank=True, db_column='start_time')
     end_time = models.TimeField(null=True, blank=True, db_column='end_time')
+    proponent = models.CharField(max_length=255, blank=True, default='', db_column='proponent')
+    beneficiaries = models.IntegerField(null=True, blank=True, db_column='beneficiaries')
     description = models.TextField(db_column='description')
     created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
     updated_at = models.DateTimeField(auto_now=True, db_column='updated_at')

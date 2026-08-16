@@ -30,14 +30,30 @@ class MultipleFileField(forms.FileField):
         return cleaned
 
 
+NON_INFRA_CATEGORY_DEFAULTS = [
+    ('social_services', 'Social Services'),
+    ('community_development', 'Community Development'),
+    ('livelihood', 'Livelihood Programs'),
+    ('governance', 'Governance'),
+    ('education_support', 'Education Support'),
+    ('health_support', 'Health Support'),
+    ('cultural', 'Cultural & Heritage'),
+    ('tourism', 'Tourism Development'),
+    ('disaster_management', 'Disaster Management'),
+    ('other', 'Other'),
+]
+
+
 class NonInfrastructureProjectForm(forms.Form):
     non_infra_name = forms.CharField(required=True, max_length=255)
     description = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 4}), max_length=2000)
     non_infra_category = forms.ModelChoiceField(
-        queryset=NonInfrastructureCategory.objects.all().order_by('type_name'),
+        queryset=NonInfrastructureCategory.objects.none(),
         required=False,
         empty_label='Select Category',
     )
+    proponent = forms.CharField(required=False, max_length=255)
+    beneficiaries = forms.IntegerField(required=False, min_value=0)
     event_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     start_time = forms.TimeField(required=False, widget=forms.TimeInput(attrs={'type': 'time'}))
     end_time = forms.TimeField(required=False, widget=forms.TimeInput(attrs={'type': 'time'}))
@@ -52,14 +68,14 @@ class NonInfrastructureProjectForm(forms.Form):
         required=False,
         max_length=200,
         widget=forms.TextInput(attrs={'readonly': 'readonly'}),
+        disabled=True,
     )
     province = forms.CharField(
         required=False,
         max_length=200,
         widget=forms.TextInput(attrs={'readonly': 'readonly'}),
+        disabled=True,
     )
-    latitude = forms.DecimalField(required=False, max_digits=10, decimal_places=7)
-    longitude = forms.DecimalField(required=False, max_digits=10, decimal_places=7)
     project_images = MultipleFileField(
         required=False,
         widget=MultipleFileInput(attrs={'accept': 'image/*'}),
@@ -69,8 +85,13 @@ class NonInfrastructureProjectForm(forms.Form):
         self.instance = kwargs.pop('instance', None)
         super().__init__(*args, **kwargs)
 
+        self._ensure_categories_exist()
+        self.fields['non_infra_category'].queryset = NonInfrastructureCategory.objects.all().order_by('type_name')
+
         self.fields['municipality'].initial = 'Gabaldon'
         self.fields['province'].initial = 'Nueva Ecija'
+        self.fields['municipality'].widget.attrs['readonly'] = 'readonly'
+        self.fields['province'].widget.attrs['readonly'] = 'readonly'
 
         if self.instance is not None:
             normalized = self._resolve_instance(self.instance)
@@ -78,6 +99,8 @@ class NonInfrastructureProjectForm(forms.Form):
                 self.fields['non_infra_name'].initial = normalized.non_infra_name
                 self.fields['description'].initial = normalized.description
                 self.fields['non_infra_category'].initial = normalized.non_infra_category_id
+                self.fields['proponent'].initial = normalized.proponent
+                self.fields['beneficiaries'].initial = normalized.beneficiaries
                 self.fields['event_date'].initial = normalized.event_date
                 self.fields['start_time'].initial = normalized.start_time
                 self.fields['end_time'].initial = normalized.end_time
@@ -87,8 +110,20 @@ class NonInfrastructureProjectForm(forms.Form):
                     self.fields['barangay'].initial = normalized.address.barangay
                     self.fields['municipality'].initial = normalized.address.municipality or 'Gabaldon'
                     self.fields['province'].initial = normalized.address.province or 'Nueva Ecija'
-                    self.fields['latitude'].initial = normalized.address.latitude
-                    self.fields['longitude'].initial = normalized.address.longitude
+
+    @staticmethod
+    def _ensure_categories_exist():
+        for code, name in NON_INFRA_CATEGORY_DEFAULTS:
+            NonInfrastructureCategory.objects.get_or_create(
+                type_code=code,
+                defaults={'type_name': name, 'description': name},
+            )
+
+    def clean_municipality(self):
+        return 'Gabaldon'
+
+    def clean_province(self):
+        return 'Nueva Ecija'
 
     @staticmethod
     def _resolve_instance(instance):
@@ -150,6 +185,8 @@ class NonInfrastructureProjectForm(forms.Form):
         non.non_infra_name = data.get('non_infra_name') or non.non_infra_name
         non.description = data.get('description') or ''
         non.non_infra_category = data.get('non_infra_category')
+        non.proponent = data.get('proponent') or ''
+        non.beneficiaries = data.get('beneficiaries')
         non.event_date = data.get('event_date')
         non.start_time = data.get('start_time')
         non.end_time = data.get('end_time')
@@ -157,12 +194,10 @@ class NonInfrastructureProjectForm(forms.Form):
 
         street = data.get('street') or ''
         barangay = data.get('barangay') or ''
-        municipality = data.get('municipality') or 'Gabaldon'
-        province = data.get('province') or 'Nueva Ecija'
-        latitude = data.get('latitude')
-        longitude = data.get('longitude')
+        municipality = 'Gabaldon'
+        province = 'Nueva Ecija'
 
-        if street or barangay or municipality or province or latitude is not None or longitude is not None:
+        if street or barangay or municipality or province:
             if non.address:
                 addr = non.address
             else:
@@ -178,8 +213,6 @@ class NonInfrastructureProjectForm(forms.Form):
             addr.barangay = barangay or addr.barangay
             addr.municipality = municipality or addr.municipality
             addr.province = province or addr.province
-            addr.latitude = latitude if latitude is not None else addr.latitude
-            addr.longitude = longitude if longitude is not None else addr.longitude
             addr.save()
             non.address = addr
 

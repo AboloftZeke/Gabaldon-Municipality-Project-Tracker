@@ -49,6 +49,22 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="{{ form.proponent.id_for_label }}">Proponent</label>
+                        {{ form.proponent }}
+                        {% if form.proponent.errors %}
+                            <div class="error-message">{{ form.proponent.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.beneficiaries.id_for_label }}">Beneficiaries</label>
+                        {{ form.beneficiaries }}
+                        {% if form.beneficiaries.errors %}
+                            <div class="error-message">{{ form.beneficiaries.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
                         <label for="{{ form.event_date.id_for_label }}">Event Date</label>
                         {{ form.event_date }}
                         {% if form.event_date.errors %}
@@ -130,21 +146,6 @@
                         {% endif %}
                     </div>
 
-                    <div class="form-group">
-                        <label for="{{ form.latitude.id_for_label }}">Latitude</label>
-                        {{ form.latitude }}
-                        {% if form.latitude.errors %}
-                            <div class="error-message">{{ form.latitude.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group">
-                        <label for="{{ form.longitude.id_for_label }}">Longitude</label>
-                        {{ form.longitude }}
-                        {% if form.longitude.errors %}
-                            <div class="error-message">{{ form.longitude.errors.0 }}</div>
-                        {% endif %}
-                    </div>
                 </div>
             </div>
 
