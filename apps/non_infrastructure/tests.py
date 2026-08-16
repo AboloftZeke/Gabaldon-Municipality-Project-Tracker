@@ -4,7 +4,9 @@ from django.test import TestCase
 
 from apps.non_infrastructure.forms import NonInfrastructureProjectForm
 from apps.system.models import (
+    Address,
     NonInfrastructureCategory,
+    NonInfrastructureProject as SystemNonInfrastructureProject,
     Non_Infrastructure_Project,
     Project,
     Project_Image,
@@ -116,3 +118,26 @@ class NonInfrastructureProjectFormTests(TestCase):
 
         self.assertTrue(form.fields['non_infra_category'].queryset.exists())
         self.assertIn('Social Services', list(form.fields['non_infra_category'].queryset.values_list('type_name', flat=True)))
+
+    def test_compatibility_model_maps_redesigned_fields_for_ui(self):
+        project = Project.objects.create(project_type='non_infrastructure', created_by_user=self.user, updated_by_user=self.user)
+        address = Address.objects.create(barangay='Bagting', municipality='Gabaldon', province='Nueva Ecija')
+        normalized = Non_Infrastructure_Project.objects.create(
+            project=project,
+            non_infra_name='Community Health Fair',
+            non_infra_category=self.category,
+            description='Health fair description',
+            address=address,
+        )
+        Project_Image.objects.create(project=project, image_url='https://example.com/one.jpg')
+        Project_Image.objects.create(project=project, image_url='https://example.com/two.jpg')
+
+        compat = SystemNonInfrastructureProject.objects.filter(non_infra_id=normalized.non_infra_id).first()
+
+        self.assertIsNotNone(compat)
+        self.assertEqual(compat.title, 'Community Health Fair')
+        self.assertEqual(compat.location, 'Bagting')
+        self.assertEqual(compat.category, 'Health Care')
+        self.assertEqual(compat.get_category_display(), 'Health Care')
+        self.assertEqual(len(compat.images), 2)
+        self.assertEqual(compat.cover_image_url, 'https://example.com/two.jpg')

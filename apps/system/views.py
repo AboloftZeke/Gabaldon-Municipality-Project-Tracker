@@ -185,7 +185,7 @@ class PublicDashboardView(TemplateView):
             detail_url = '#'
             try:
                 detail_url = reverse(
-                    'non_infrastructure_default:non_infrastructure_project_detail',
+                    'mayor_projects:non_infrastructure_project_detail',
                     args=[p.pk]
                 )
             except Exception:

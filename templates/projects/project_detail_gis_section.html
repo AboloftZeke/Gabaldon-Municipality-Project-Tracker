@@ -81,8 +81,8 @@
         </div>
 
         <div class="action-buttons action-buttons--detail">
-            <a href="{% if project_type_label == 'Infrastructure' %}{% url 'infrastructure:project_update' project.pk %}{% else %}{% url 'non_infrastructure:non_infrastructure_project_update' project.pk %}{% endif %}" class="btn btn-edit">Edit Project</a>
-            <a href="{% if project_type_label == 'Infrastructure' %}{% url 'infrastructure:project_delete' project.pk %}{% else %}{% url 'non_infrastructure:non_infrastructure_project_delete' project.pk %}{% endif %}" class="btn btn-delete">Delete Project</a>
+            <a href="{% if project_type_label == 'Infrastructure' %}{% url 'engineering_projects:project_update' project.pk %}{% else %}{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}{% endif %}" class="btn btn-edit">Edit Project</a>
+            <a href="{% if project_type_label == 'Infrastructure' %}{% url 'engineering_projects:project_delete' project.pk %}{% else %}{% url 'mayor_projects:non_infrastructure_project_delete' project.pk %}{% endif %}" class="btn btn-delete">Delete Project</a>
         </div>
     </section>
 
@@ -97,26 +97,29 @@
             </div>
 
             <div class="project-map-shell" data-project-gis-shell data-has-coordinates="{{ project_gis.has_coordinates|yesno:'true,false' }}" data-map-center-lat="{{ project_gis.map_center_lat }}" data-map-center-lng="{{ project_gis.map_center_lng }}">
-                <div class="project-map" data-project-map
-                     data-project-name="{{ project.title|escape }}"
-                     data-project-code="{{ project_code|escape }}"
-                     data-project-type="{{ project_type_label|escape }}"
-                     data-project-barangay="{{ project_gis.barangay|escape }}"
-                     data-project-status="{{ project_gis.status_label|escape }}"
-                     data-project-budget="{{ project_gis.budget_label|escape }}"
-                     data-project-progress="{{ project_gis.progress_label|escape }}"
-                     data-project-gis-message="{{ project_gis.coordinate_message|escape }}"
-                     data-google-maps-url="{{ project_gis.google_maps_url|escape }}"
-                     data-detail-url="{{ project_gis.detail_url|escape }}"
-                     data-has-coordinates="{{ project_gis.has_coordinates|yesno:'true,false' }}"
-                     data-map-center-lat="{{ project_gis.map_center_lat }}"
-                     data-map-center-lng="{{ project_gis.map_center_lng }}"
-                     data-map-zoom="16"></div>
+                {% if project_gis.has_coordinates %}
+                    <div class="project-map" data-project-map
+                         data-project-name="{{ project.title|escape }}"
+                         data-project-code="{{ project_code|escape }}"
+                         data-project-type="{{ project_type_label|escape }}"
+                         data-project-barangay="{{ project_gis.barangay|escape }}"
+                         data-project-status="{{ project_gis.status_label|escape }}"
+                         data-project-budget="{{ project_gis.budget_label|escape }}"
+                         data-project-progress="{{ project_gis.progress_label|escape }}"
+                         data-project-gis-message="{{ project_gis.coordinate_message|escape }}"
+                         data-google-maps-url="{{ project_gis.google_maps_url|escape }}"
+                         data-detail-url="{{ project_gis.detail_url|escape }}"
+                         data-has-coordinates="{{ project_gis.has_coordinates|yesno:'true,false' }}"
+                         data-map-center-lat="{{ project_gis.map_center_lat }}"
+                         data-map-center-lng="{{ project_gis.map_center_lng }}"
+                         data-map-zoom="16"></div>
+                {% endif %}
                 <div class="project-map-message" data-project-map-message{% if project_gis.has_coordinates %} hidden{% endif %}>
                     {{ project_gis.coordinate_message }}
                 </div>
             </div>
 
+            {% if project_gis.has_coordinates %}
             <div class="gis-info-card">
                 <div class="gis-info-card__header">
                     <h3>Location Information</h3>
@@ -126,11 +129,11 @@
                 <div class="gis-info-grid">
                     <div class="gis-info-item">
                         <span>Latitude</span>
-                        <strong>{% if project_gis.has_coordinates %}{{ project_gis.latitude }}{% else %}Not yet assigned{% endif %}</strong>
+                        <strong>{{ project_gis.latitude }}</strong>
                     </div>
                     <div class="gis-info-item">
                         <span>Longitude</span>
-                        <strong>{% if project_gis.has_coordinates %}{{ project_gis.longitude }}{% else %}Not yet assigned{% endif %}</strong>
+                        <strong>{{ project_gis.longitude }}</strong>
                     </div>
                     <div class="gis-info-item">
                         <span>Barangay</span>
@@ -146,6 +149,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
             <div class="images-card">
                 <div class="gis-info-card__header">

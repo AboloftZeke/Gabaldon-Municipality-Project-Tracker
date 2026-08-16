@@ -8,13 +8,11 @@
 {% endblock %}
 
 {% block content %}
-{% if request.resolver_match.namespace == 'mayor_projects' %}
 <div class="breadcrumb-nav">
     <a href="{% url 'mayor_projects:non_infrastructure_project_list' %}">← Back to Programs</a>
     <span>/</span>
     <strong>{{ action }} Program</strong>
 </div>
-{% endif %}
 
 <div class="form-container">
     <div class="form-card">
@@ -163,7 +161,7 @@
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-submit">{{ action }} Project</button>
-                <a href="{% url 'non_infrastructure:non_infrastructure_project_list' %}" class="btn btn-cancel">Cancel</a>
+                <a href="{% url 'mayor_projects:non_infrastructure_project_list' %}" class="btn btn-cancel">Cancel</a>
             </div>
         </form>
     </div>

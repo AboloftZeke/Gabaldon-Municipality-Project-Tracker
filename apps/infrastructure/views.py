@@ -144,16 +144,7 @@ class ProjectCreateView(EngineerOnlyMixin, CreateView):
     template_name = 'projects/project_form.html'
 
     def get_success_url(self):
-        namespace = self.request.resolver_match.namespace
-        if namespace:
-            try:
-                return reverse(f"{namespace}:project_list")
-            except NoReverseMatch:
-                pass
-        try:
-            return reverse('project_list')
-        except NoReverseMatch:
-            return reverse_lazy('project_list')
+        return reverse('engineering_projects:project_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -227,7 +218,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
             'start_date': project.planned_start_date,
             'target_completion_date': project.planned_end_date,
             'coordinate_message': 'Location has not yet been assigned.' if not has_coordinates else '',
-            'detail_url': reverse('infrastructure:project_detail', args=[project.pk]),
+            'detail_url': reverse('engineering_projects:project_detail', args=[project.pk]),
         }
         return context
 
@@ -239,16 +230,7 @@ class ProjectEditView(EngineerOnlyMixin, UpdateView):
     template_name = 'projects/project_form.html'
 
     def get_success_url(self):
-        namespace = self.request.resolver_match.namespace
-        if namespace:
-            try:
-                return reverse(f"{namespace}:project_list")
-            except NoReverseMatch:
-                pass
-        try:
-            return reverse('project_list')
-        except NoReverseMatch:
-            return reverse_lazy('project_list')
+        return reverse('engineering_projects:project_list')
 
     def get_queryset(self):
         return SystemInfrastructureProject.objects.all()
@@ -270,16 +252,7 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
     template_name = 'projects/project_confirm_delete.html'
 
     def get_success_url(self):
-        namespace = self.request.resolver_match.namespace
-        if namespace:
-            try:
-                return reverse(f"{namespace}:project_list")
-            except NoReverseMatch:
-                pass
-        try:
-            return reverse('project_list')
-        except NoReverseMatch:
-            return reverse_lazy('project_list')
+        return reverse('engineering_projects:project_list')
 
     def get_queryset(self):
         return SystemInfrastructureProject.objects.all()
@@ -288,31 +261,6 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         obj = self.get_object()
 
-        # Attempt to resolve the properly namespaced detail URL based on current resolver namespace.
-        namespace = self.request.resolver_match.namespace
-        cancel_url = None
-        if namespace:
-            try:
-                cancel_url = reverse(f"{namespace}:project_detail", args=[obj.pk])
-            except NoReverseMatch:
-                try:
-                    cancel_url = reverse('project_detail', args=[obj.pk])
-                except NoReverseMatch:
-                    cancel_url = None
-        else:
-            try:
-                cancel_url = reverse('project_detail', args=[obj.pk])
-            except NoReverseMatch:
-                cancel_url = None
-
-        # Fallback: build a path by removing the trailing 'delete/' segment from the current path
-        if not cancel_url:
-            path = self.request.path
-            if path.endswith('/delete/'):
-                cancel_url = path[:-7]
-            else:
-                cancel_url = path.rstrip('/').rsplit('/', 1)[0] + '/'
-
-        context['cancel_url'] = cancel_url
+        context['cancel_url'] = reverse('engineering_projects:project_detail', args=[obj.pk])
         return context
 

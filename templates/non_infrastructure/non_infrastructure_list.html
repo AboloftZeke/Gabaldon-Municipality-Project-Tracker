@@ -8,61 +8,52 @@
 {% endblock %}
 
 {% block content %}
-<!-- Mayor's Office Navigation Breadcrumb -->
-{% if request.resolver_match.namespace == 'mayor_projects' %}
 <div class="breadcrumb-nav">
-    <a href="{% url 'mayor_dashboard' %}">← Back to Dashboard</a>
+    {% if request.META.HTTP_REFERER %}
+        <a href="{{ request.META.HTTP_REFERER }}">← Back to Dashboard</a>
+    {% else %}
+        <a href="{% url 'mayor_dashboard' %}">← Back to Dashboard</a>
+    {% endif %}
     <span>/</span>
     <strong>Non-Infrastructure Programs</strong>
 </div>
-{% endif %}
 
 <div class="projects-container">
     <div class="projects-header">
         <h2>Non-Infrastructure Projects</h2>
-        {% if request.resolver_match.namespace == 'mayor_projects' %}
-            <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create">+ New Project</a>
-        {% else %}
-            <a href="{% url 'non_infrastructure_project_create' %}" class="btn-create">+ New Project</a>
-        {% endif %}
+        <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create">+ New Project</a>
     </div>
 
     {% if projects %}
         <div class="projects-grid">
             {% for project in projects %}
                 <div class="project-card">
-                    <div class="project-title">{{ project.title }}</div>
-                    <div class="project-location">📍 {{ project.get_location_display }}</div>
+                    <div class="project-card-image">
+                        {% if project.cover_image_url %}
+                            <img src="{{ project.cover_image_url }}" alt="{{ project.title }} cover">
+                        {% else %}
+                            <img src="{% static 'images/project-placeholder.svg' %}" alt="{{ project.title }} cover">
+                        {% endif %}
+                    </div>
+                    <div class="project-card-body">
+                        <div class="project-title">{{ project.title }}</div>
+                        <div class="project-location">📍 {{ project.location|default:'Barangay not specified' }}</div>
+                        <div class="project-category">{{ project.category|default:'Uncategorized' }}</div>
 
-                    {% if project.overall_progress_percentage %}
-                        <div class="project-status status-ongoing">
-                            Progress: {{ project.overall_progress_percentage }}%
-                        </div>
-                    {% else %}
-                        <div class="project-status status-planning">
-                            Planned
-                        </div>
-                    {% endif %}
+                        {% if project.event_date %}
+                            <div class="project-dates">
+                                <strong>Date:</strong> {{ project.event_date|date:"M d, Y" }}
+                            </div>
+                        {% endif %}
 
-                    {% if project.planned_start_date or project.planned_end_date %}
-                        <div class="project-dates">
-                            {% if project.planned_start_date %}
-                                <strong>Start:</strong> {{ project.planned_start_date|date:"M d, Y" }}<br>
-                            {% endif %}
-                            {% if project.planned_end_date %}
-                                <strong>End:</strong> {{ project.planned_end_date|date:"M d, Y" }}
-                            {% endif %}
+                        <div class="project-status {% if project.status_label == 'Completed' %}status-completed{% elif project.status_label == 'Planned' %}status-planning{% else %}status-ongoing{% endif %}">
+                            {{ project.status_label }}
                         </div>
-                    {% endif %}
 
-                    <div class="project-actions">
-                        {% if request.resolver_match.namespace == 'mayor_projects' %}
+                        <div class="project-actions">
                             <a href="{% url 'mayor_projects:non_infrastructure_project_detail' project.pk %}" class="btn-small btn-view">View</a>
                             <a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}" class="btn-small btn-edit">Edit</a>
-                        {% else %}
-                            <a href="{% url 'non_infrastructure_project_detail' project.pk %}" class="btn-small btn-view">View</a>
-                            <a href="{% url 'non_infrastructure_project_update' project.pk %}" class="btn-small btn-edit">Edit</a>
-                        {% endif %}
+                        </div>
                     </div>
                 </div>
             {% endfor %}
@@ -70,11 +61,7 @@
     {% else %}
         <div class="empty-state">
             <p>No non-infrastructure projects yet.</p>
-            {% if request.resolver_match.namespace == 'mayor_projects' %}
-                <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create">Create the first project</a>
-            {% else %}
-                <a href="{% url 'non_infrastructure_project_create' %}" class="btn-create">Create the first project</a>
-            {% endif %}
+            <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create">Create the first project</a>
         </div>
     {% endif %}
 </div>

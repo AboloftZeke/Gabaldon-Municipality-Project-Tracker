@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class UserProfile(models.Model):
@@ -779,6 +780,57 @@ class NonInfrastructureProject(models.Model):
     class Meta:
         managed = False
         db_table = 'system_non_infrastructure_project'
+
+    @property
+    def title(self):
+        return self.non_infra_name
+
+    @title.setter
+    def title(self, value):
+        self.non_infra_name = value
+
+    @property
+    def location(self):
+        normalized = Non_Infrastructure_Project.objects.filter(non_infra_id=self.non_infra_id).select_related('address').first()
+        if normalized and normalized.address and normalized.address.barangay:
+            return normalized.address.barangay
+        return ''
+
+    @property
+    def category(self):
+        normalized = Non_Infrastructure_Project.objects.filter(non_infra_id=self.non_infra_id).select_related('non_infra_category').first()
+        if normalized and normalized.non_infra_category:
+            return normalized.non_infra_category.type_name
+        return ''
+
+    def get_location_display(self):
+        return self.location
+
+    def get_category_display(self):
+        return self.category
+
+    @property
+    def images(self):
+        normalized = Non_Infrastructure_Project.objects.filter(non_infra_id=self.non_infra_id).select_related('project').first()
+        if normalized and normalized.project:
+            return list(normalized.project.images.order_by('-created_at'))
+        return []
+
+    @property
+    def cover_image_url(self):
+        images = self.images
+        if images:
+            return images[0].image_url or ''
+        return ''
+
+    @property
+    def status_label(self):
+        if self.event_date:
+            today = timezone.now().date()
+            if self.event_date < today:
+                return 'Completed'
+            return 'Planned'
+        return 'Planned'
 
     @property
     def created_by(self):

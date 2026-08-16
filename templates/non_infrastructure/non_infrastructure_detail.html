@@ -11,7 +11,11 @@
 
 {% block content %}
 <div class="project-detail-container project-detail-container--gis">
-    <a href="{% url 'non_infrastructure:non_infrastructure_project_list' %}" class="btn btn-back">← Back to Projects</a>
+    {% if request.META.HTTP_REFERER %}
+        <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-back">← Back to Dashboard</a>
+    {% else %}
+        <a href="{% url 'mayor_dashboard' %}" class="btn btn-back">← Back to Dashboard</a>
+    {% endif %}
     {% include "projects/project_detail_gis_section.html" %}
 </div>
 {% endblock %}

@@ -6,9 +6,10 @@ from django.urls import reverse_lazy, reverse, NoReverseMatch
 from django.db import models
 from django.db.models import Q, Sum
 from django.templatetags.static import static
+from django.utils import timezone
 from .forms import NonInfrastructureProjectForm
 from apps.system.models import NonInfrastructureProject as SystemNonInfrastructureProject
-from apps.system.models import Non_Infrastructure_Project, Project
+from apps.system.models import Non_Infrastructure_Project, Project, Project_Image
 
 
 def _department_for_user(user):
@@ -130,16 +131,7 @@ class NonInfrastructureProjectCreateView(MayorsOfficeOnlyMixin, CreateView):
     template_name = 'non_infrastructure/non_infrastructure_form.html'
 
     def get_success_url(self):
-        namespace = self.request.resolver_match.namespace
-        if namespace:
-            try:
-                return reverse(f"{namespace}:non_infrastructure_project_list")
-            except NoReverseMatch:
-                pass
-        try:
-            return reverse('non_infrastructure_project_list')
-        except NoReverseMatch:
-            return reverse_lazy('non_infrastructure_project_list')
+        return reverse('mayor_projects:non_infrastructure_project_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -163,47 +155,69 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        project = self.object
-        has_coordinates = project.latitude is not None and project.longitude is not None
-        fallback_lat = 15.2915
-        fallback_lng = 121.3386
-        map_lat = float(project.latitude) if has_coordinates else fallback_lat
-        map_lng = float(project.longitude) if has_coordinates else fallback_lng
+        compat_project = self.object
 
-        context['project_code'] = f'NINF-{project.pk:05d}'
+        normalized = Non_Infrastructure_Project.objects.filter(
+            non_infra_id=compat_project.non_infra_id
+        ).select_related(
+            'project',
+            'project__created_by_user',
+            'address',
+            'non_infra_category',
+        ).first()
+
+        project = normalized if normalized is not None else compat_project
+        project_name = getattr(project, 'non_infra_name', '') or 'Non-Infrastructure Project'
+        creator = getattr(project.project, 'created_by_user', None) if getattr(project, 'project', None) else None
+        project_manager = creator.get_full_name() or creator.username if creator else 'N/A'
+
+        event_date = getattr(project, 'event_date', None)
+        category_name = getattr(getattr(project, 'non_infra_category', None), 'type_name', '')
+        address = getattr(project, 'address', None)
+        barangay = getattr(address, 'barangay', '') if address else ''
+
+        project_images = []
+        if getattr(project, 'project', None):
+            project_images = list(project.project.images.order_by('-created_at'))
+
+        context['project_code'] = f'NINF-{compat_project.pk:05d}'
         context['project_type_label'] = 'Non-Infrastructure'
-        context['project_manager'] = project.created_by.get_full_name() or project.created_by.username
-        context['project_progress_value'] = project.overall_progress_percentage
-        context['project_budget_value'] = project.budget_cost
-        context['project_target_completion_date'] = project.revised_completion_date or project.planned_end_date
-        context['project_google_maps_url'] = f'https://www.google.com/maps?q={map_lat},{map_lng}'
-        context['project_images'] = []
+        context['project_manager'] = project_manager
+        context['project_progress_value'] = None
+        context['project_budget_value'] = None
+        context['project_target_completion_date'] = event_date
+        context['project_google_maps_url'] = ''
+        context['project_images'] = project_images
         context['project_placeholder_image'] = static('images/project-placeholder.svg')
         context['project_gis'] = {
-            'has_coordinates': has_coordinates,
-            'latitude': float(project.latitude) if has_coordinates else '',
-            'longitude': float(project.longitude) if has_coordinates else '',
-            'map_center_lat': map_lat,
-            'map_center_lng': map_lng,
-            'google_maps_url': f'https://www.google.com/maps?q={map_lat},{map_lng}',
-            'barangay': project.get_location_display(),
+            'has_coordinates': False,
+            'latitude': '',
+            'longitude': '',
+            'map_center_lat': 15.2915,
+            'map_center_lng': 121.3386,
+            'google_maps_url': '',
+            'barangay': barangay,
             'municipality': 'Gabaldon',
             'province': 'Nueva Ecija',
-            'status_label': 'Completed' if (project.overall_progress_percentage or 0) >= 100 else ('Ongoing' if (project.overall_progress_percentage or 0) > 0 else 'Planned'),
-            'progress_label': f'{project.overall_progress_percentage:.2f}%' if project.overall_progress_percentage is not None else '0%',
-            'budget_label': f'₱ {project.budget_cost:,.2f}' if project.budget_cost is not None else 'N/A',
-            'project_name': project.title,
+            'status_label': 'Planned',
+            'progress_label': 'Not available',
+            'budget_label': 'N/A',
+            'project_name': project_name,
             'project_code': context['project_code'],
             'project_type': 'Non-Infrastructure',
-            'description': project.description or '',
-            'project_manager': context['project_manager'],
+            'description': getattr(project, 'description', '') or '',
+            'project_manager': project_manager,
             'contractor': '',
-            'funding_source': project.source_of_fund or '',
-            'implementing_office': project.implementing_office or '',
-            'start_date': project.planned_start_date,
-            'target_completion_date': context['project_target_completion_date'],
-            'coordinate_message': 'Location has not yet been assigned.' if not has_coordinates else '',
-            'detail_url': reverse('non_infrastructure:non_infrastructure_project_detail', args=[project.pk]),
+            'funding_source': '',
+            'implementing_office': '',
+            'start_date': event_date,
+            'target_completion_date': event_date,
+            'coordinate_message': 'Location has not yet been assigned.',
+            'detail_url': reverse('mayor_projects:non_infrastructure_project_detail', args=[compat_project.pk]),
+            'category_name': category_name,
+            'proponent': getattr(project, 'proponent', '') or '',
+            'beneficiaries': getattr(project, 'beneficiaries', None),
+            'address': address,
         }
         return context
 
@@ -215,16 +229,7 @@ class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
     template_name = 'non_infrastructure/non_infrastructure_form.html'
 
     def get_success_url(self):
-        namespace = self.request.resolver_match.namespace
-        if namespace:
-            try:
-                return reverse(f"{namespace}:non_infrastructure_project_list")
-            except NoReverseMatch:
-                pass
-        try:
-            return reverse('non_infrastructure_project_list')
-        except NoReverseMatch:
-            return reverse_lazy('non_infrastructure_project_list')
+        return reverse('mayor_projects:non_infrastructure_project_list')
 
     def get_queryset(self):
         return SystemNonInfrastructureProject.objects.all()
@@ -246,16 +251,7 @@ class NonInfrastructureProjectDeleteView(MayorsOfficeEditMixin, DeleteView):
     template_name = 'non_infrastructure/non_infrastructure_confirm_delete.html'
 
     def get_success_url(self):
-        namespace = self.request.resolver_match.namespace
-        if namespace:
-            try:
-                return reverse(f"{namespace}:non_infrastructure_project_list")
-            except NoReverseMatch:
-                pass
-        try:
-            return reverse('non_infrastructure_project_list')
-        except NoReverseMatch:
-            return reverse_lazy('non_infrastructure_project_list')
+        return reverse('mayor_projects:non_infrastructure_project_list')
 
     def get_queryset(self):
         return SystemNonInfrastructureProject.objects.all()
@@ -264,31 +260,6 @@ class NonInfrastructureProjectDeleteView(MayorsOfficeEditMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         obj = self.get_object()
 
-        # Attempt to resolve the properly namespaced detail URL based on current resolver namespace.
-        namespace = self.request.resolver_match.namespace
-        cancel_url = None
-        if namespace:
-            try:
-                cancel_url = reverse(f"{namespace}:non_infrastructure_project_detail", args=[obj.pk])
-            except NoReverseMatch:
-                try:
-                    cancel_url = reverse('non_infrastructure_project_detail', args=[obj.pk])
-                except NoReverseMatch:
-                    cancel_url = None
-        else:
-            try:
-                cancel_url = reverse('non_infrastructure_project_detail', args=[obj.pk])
-            except NoReverseMatch:
-                cancel_url = None
-
-        # Fallback: build a path by removing the trailing 'delete/' segment from the current path
-        if not cancel_url:
-            path = self.request.path
-            if path.endswith('/delete/'):
-                cancel_url = path[:-7]
-            else:
-                cancel_url = path.rstrip('/').rsplit('/', 1)[0] + '/'
-
-        context['cancel_url'] = cancel_url
+        context['cancel_url'] = reverse('mayor_projects:non_infrastructure_project_detail', args=[obj.pk])
         return context
 
