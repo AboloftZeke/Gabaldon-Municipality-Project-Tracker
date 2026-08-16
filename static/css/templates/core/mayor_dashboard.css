@@ -1,19 +1,20 @@
 :root {
-        --panel-blue: #1a5a3a;
+        --panel-purple: #7c3aed;
         --panel-overlay: rgba(6, 18, 34, 0.5);
         --panel-card: rgba(8, 22, 40, 0.58);
         --white: #ffffff;
         --ink-900: #111827;
         --ink-600: #4b5563;
         --line: #d1d5db;
-        --focus:#1a5a3a;
-        --btn: #1a5a3a;
-        --btn-hover: #1a5a3a;
+        --focus: #7c3aed;
+        --btn: #7c3aed;
+        --btn-hover: #6d28d9;
         --success-bg: #ecfdf5;
         --success-text: #065f46;
         --bg-light: #f9fafb;
-        --accent-blue: #1a5a3a;
+        --accent-blue: #0284c7;
     }
+
     * {
         margin: 0;
         padding: 0;
