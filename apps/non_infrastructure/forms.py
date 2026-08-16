@@ -4,6 +4,7 @@ from apps.system.models import (
     Project,
     Non_Infrastructure_Project,
     Address,
+    NonInfrastructureCategory,
 )
 
 
@@ -12,7 +13,11 @@ class NonInfrastructureProjectForm(forms.Form):
     description = forms.CharField(required=False, widget=forms.Textarea, max_length=2000)
     location = forms.CharField(required=False, max_length=100)
     implementing_office = forms.CharField(required=False, max_length=255)
-    category = forms.CharField(required=False, max_length=50)
+    category = forms.ModelChoiceField(
+            queryset=NonInfrastructureCategory.objects.all().order_by('type_name'),
+            required=False,
+            empty_label='Select Category'
+        )
     service_description = forms.CharField(required=False, widget=forms.Textarea)
     beneficiaries_description = forms.CharField(required=False, widget=forms.Textarea)
     service_location_details = forms.CharField(required=False, max_length=255)
@@ -45,6 +50,7 @@ class NonInfrastructureProjectForm(forms.Form):
 
         non.non_infra_name = data.get('title')
         non.description = data.get('description') or ''
+        non.non_infra_category = data.get('category')
 
         loc = data.get('location')
         if loc:
