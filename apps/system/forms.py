@@ -46,10 +46,9 @@ class CustomUserCreationForm(forms.ModelForm):
 
         user.set_password(temporary_password)
 
-        # Only admin and engineering staff users should be Django staff. Mayor's
-        # Office users are not generic staff members and must be identified by
-        # their explicit department instead of the `is_staff` flag.
-        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING)
+        # Treat all module-access roles as Django staff so mayor's office users
+        # can log in like the other restricted access roles.
+        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING, self.ROLE_MAYORS)
         user.is_superuser = role == self.ROLE_ADMIN
 
         if commit:
@@ -60,9 +59,9 @@ class CustomUserCreationForm(forms.ModelForm):
         return user
 
     def _save_user_profile(self, user, role):
-        """Helper method to save user profile with department."""
-        # Do not write to the archived UserProfile at runtime. Persist a
-        # compatibility department on the user instance instead.
+        """Helper method to save the runtime department for access checks."""
+        from apps.system.models import UserFlag
+
         department_map = {
             self.ROLE_ADMIN: 'admin',
             self.ROLE_ENGINEERING: 'engineer',
@@ -70,6 +69,10 @@ class CustomUserCreationForm(forms.ModelForm):
         }
         department = department_map[role]
         user.profile.department = department
+        UserFlag.objects.update_or_create(
+            user=user,
+            defaults={'department': department, 'must_change_password': False},
+        )
 
 
 class CustomUserChangeForm(forms.ModelForm):
@@ -120,9 +123,9 @@ class CustomUserChangeForm(forms.ModelForm):
         user = super().save(commit=False)
         role = self.cleaned_data.get('role', self.ROLE_ENGINEERING)
 
-        # Mayor's Office users are not generic Django staff; they are tracked via
-        # their explicit department profile instead of `is_staff`.
-        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING)
+        # Keep Mayor's Office accounts in the staff-access group so they can log
+        # into the application like the other module-approved roles.
+        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING, self.ROLE_MAYORS)
         user.is_superuser = role == self.ROLE_ADMIN
 
         if commit:
@@ -133,8 +136,9 @@ class CustomUserChangeForm(forms.ModelForm):
         return user
 
     def _save_user_profile(self, user, role):
-        """Helper method to save user profile with department."""
-        # Persist the department on the runtime compatibility profile only.
+        """Helper method to save the runtime department for access checks."""
+        from apps.system.models import UserFlag
+
         department_map = {
             self.ROLE_ADMIN: 'admin',
             self.ROLE_ENGINEERING: 'engineer',
@@ -142,6 +146,10 @@ class CustomUserChangeForm(forms.ModelForm):
         }
         department = department_map.get(role, 'engineer')
         user.profile.department = department
+        UserFlag.objects.update_or_create(
+            user=user,
+            defaults={'department': department, 'must_change_password': False},
+        )
 
 
 class UserListFilterForm(forms.Form):

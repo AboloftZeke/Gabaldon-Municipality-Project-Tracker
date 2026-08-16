@@ -18,20 +18,20 @@ class SystemConfig(AppConfig):
             # attributes set at runtime (e.g., `must_change_password`) remain
             # available for the duration of the process (tests/requests).
             if '_compat_profile' not in self.__dict__:
-                # Prefer the explicit department already stored on the user when
-                # available. Generic Django `is_staff` is not a reliable proxy for
-                # a Mayor's Office account, so it should only be a fallback for
-                # Engineering access if no explicit department is present.
+                dept = 'mayor'
                 if getattr(self, 'is_superuser', False):
                     dept = 'admin'
-                elif getattr(self, 'is_staff', False):
-                    dept = 'engineer'
                 else:
-                    dept = 'mayor'
-                # Only store the inferred department in-memory; do not
-                # set `must_change_password` here so the DB-backed
-                # `UserFlag` can be consulted for that flag on fresh
-                # instances loaded from the database.
+                    try:
+                        from apps.system.models import UserFlag
+                        flag = UserFlag.objects.filter(user=self).first()
+                        if flag and getattr(flag, 'department', None):
+                            dept = flag.department
+                        elif getattr(self, 'is_staff', False):
+                            dept = 'engineer'
+                    except Exception:
+                        if getattr(self, 'is_staff', False):
+                            dept = 'engineer'
                 self.__dict__['_compat_profile'] = {'department': dept}
 
             class _P:

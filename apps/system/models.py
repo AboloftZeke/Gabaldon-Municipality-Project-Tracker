@@ -39,14 +39,22 @@ class UserProfile(models.Model):
     def department_for_user(cls, user):
         """Compatibility helper for access patterns that still rely on the legacy profile table."""
         # Runtime should no longer depend on the archived profile table.
-        # Prefer the explicit department stored on the runtime compatibility
-        # profile. Mayor accounts are not generic Django staff members, so the
-        # `is_staff` flag must not be treated as evidence of an Engineering
-        # department.
+        # Prefer the explicit department stored in the persisted compatibility
+        # flag or runtime profile. Only fall back to the Django staff flag when no
+        # explicit department is available.
         if user is None:
             return None
         if getattr(user, 'is_superuser', False):
             return 'admin'
+
+        try:
+            from apps.system.models import UserFlag
+            flag = UserFlag.objects.filter(user=user).first()
+            if flag and getattr(flag, 'department', None):
+                return flag.department
+        except Exception:
+            pass
+
         profile = getattr(user, 'profile', None)
         if profile is not None:
             department = getattr(profile, 'department', None)
@@ -181,9 +189,21 @@ class Project(models.Model):
 
 class UserFlag(models.Model):
     """Persistent runtime flags for users without reintroducing legacy profile."""
+    DEPARTMENT_CHOICES = [
+        ('engineer', 'Engineering Office'),
+        ('mayor', "Mayor's Office"),
+        ('admin', 'Administration'),
+    ]
+
     id = models.BigAutoField(primary_key=True)
     user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='flags')
     must_change_password = models.BooleanField(default=False)
+    department = models.CharField(
+        max_length=20,
+        choices=DEPARTMENT_CHOICES,
+        default='admin',
+        blank=True,
+    )
 
     class Meta:
         verbose_name = 'User Flag'
