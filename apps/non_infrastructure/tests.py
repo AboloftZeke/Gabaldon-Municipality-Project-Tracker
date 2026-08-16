@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 from apps.non_infrastructure.forms import NonInfrastructureProjectForm
@@ -34,13 +35,18 @@ class NonInfrastructureProjectFormTests(TestCase):
                 'end_time': '12:00',
                 'venue_name': 'Municipal Plaza',
                 'street': 'Rizal Street',
-                'barangay': 'Mabini',
+                'barangay': 'bagting',
                 'municipality': 'Gabaldon',
                 'province': 'Nueva Ecija',
                 'latitude': '15.3000000',
                 'longitude': '121.3500000',
-                'project_images': 'https://example.com/one.jpg\nhttps://example.com/two.jpg',
-            }
+            },
+            files={
+                'project_images': [
+                    SimpleUploadedFile('one.jpg', b'content-one', content_type='image/jpeg'),
+                    SimpleUploadedFile('two.jpg', b'content-two', content_type='image/jpeg'),
+                ]
+            },
         )
 
         self.assertTrue(form.is_valid(), form.errors)
@@ -48,13 +54,14 @@ class NonInfrastructureProjectFormTests(TestCase):
 
         self.assertEqual(project.non_infra_name, 'Community Health Fair')
         self.assertEqual(project.non_infra_category, self.category)
-        self.assertEqual(project.address.barangay, 'Mabini')
+        self.assertEqual(project.address.barangay, 'bagting')
+        self.assertEqual(project.address.municipality, 'Gabaldon')
+        self.assertEqual(project.address.province, 'Nueva Ecija')
         self.assertEqual(project.venue_name, 'Municipal Plaza')
         self.assertEqual(project.project.created_by_user, self.user)
-        self.assertEqual(
-            list(project.project.images.order_by('project_image_id').values_list('image_url', flat=True)),
-            ['https://example.com/one.jpg', 'https://example.com/two.jpg'],
-        )
+        saved_urls = list(project.project.images.order_by('project_image_id').values_list('image_url', flat=True))
+        self.assertEqual(len(saved_urls), 2)
+        self.assertTrue(all(url.startswith('/media/') for url in saved_urls))
 
     def test_form_updates_existing_project_and_images(self):
         proj = Project.objects.create(project_type='non_infrastructure', created_by_user=self.user, updated_by_user=self.user)
@@ -79,10 +86,15 @@ class NonInfrastructureProjectFormTests(TestCase):
                 'end_time': '13:00',
                 'venue_name': 'New Event Grounds',
                 'street': 'Main Avenue',
-                'barangay': 'San Francisco',
+                'barangay': 'bagting',
                 'municipality': 'Gabaldon',
                 'province': 'Nueva Ecija',
-                'project_images': 'https://example.com/new-one.jpg\nhttps://example.com/new-two.jpg',
+            },
+            files={
+                'project_images': [
+                    SimpleUploadedFile('new-one.jpg', b'content-one', content_type='image/jpeg'),
+                    SimpleUploadedFile('new-two.jpg', b'content-two', content_type='image/jpeg'),
+                ]
             },
         )
 
@@ -92,7 +104,5 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.assertEqual(updated.non_infra_name, 'Updated Community Fair')
         self.assertEqual(updated.event_date.isoformat(), '2026-09-15')
         self.assertEqual(updated.venue_name, 'New Event Grounds')
-        self.assertEqual(
-            list(updated.project.images.order_by('project_image_id').values_list('image_url', flat=True)),
-            ['https://example.com/new-one.jpg', 'https://example.com/new-two.jpg'],
-        )
+        self.assertEqual(updated.address.barangay, 'bagting')
+        self.assertEqual(updated.project.images.count(), 2)
