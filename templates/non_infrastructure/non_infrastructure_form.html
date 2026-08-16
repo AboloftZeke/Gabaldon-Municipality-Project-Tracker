@@ -8,7 +8,6 @@
 {% endblock %}
 
 {% block content %}
-<!-- Mayor's Office Navigation Breadcrumb -->
 {% if request.resolver_match.namespace == 'mayor_projects' %}
 <div class="breadcrumb-nav">
     <a href="{% url 'mayor_projects:non_infrastructure_project_list' %}">← Back to Programs</a>
@@ -27,185 +26,136 @@
             {% endfor %}
         {% endif %}
 
-        <form method="post">
+        <form method="post" novalidate>
             {% csrf_token %}
 
             <div class="fieldset">
-                <legend>Basic Information</legend>
+                <legend>Project Information</legend>
+                <div class="form-grid">
+                    <div class="form-group full-span">
+                        <label for="{{ form.non_infra_name.id_for_label }}">Project Title*</label>
+                        {{ form.non_infra_name }}
+                        {% if form.non_infra_name.errors %}
+                            <div class="error-message">{{ form.non_infra_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.title.id_for_label }}">Project Title*</label>
-                    {{ form.title }}
-                    {% if form.title.errors %}
-                        <div class="error-message">{{ form.title.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                    <div class="form-group">
+                        <label for="{{ form.non_infra_category.id_for_label }}">Category</label>
+                        {{ form.non_infra_category }}
+                        {% if form.non_infra_category.errors %}
+                            <div class="error-message">{{ form.non_infra_category.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.description.id_for_label }}">Project Description</label>
-                    {{ form.description }}
-                    {% if form.description.errors %}
-                        <div class="error-message">{{ form.description.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                    <div class="form-group">
+                        <label for="{{ form.event_date.id_for_label }}">Event Date</label>
+                        {{ form.event_date }}
+                        {% if form.event_date.errors %}
+                            <div class="error-message">{{ form.event_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.location.id_for_label }}">Location*</label>
-                    {{ form.location }}
-                    {% if form.location.errors %}
-                        <div class="error-message">{{ form.location.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.implementing_office.id_for_label }}">Implementing Office*</label>
-                    {{ form.implementing_office }}
-                    {% if form.implementing_office.errors %}
-                        <div class="error-message">{{ form.implementing_office.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.category.id_for_label }}">Category*</label>
-                    {{ form.category }}
-                    {% if form.category.errors %}
-                        <div class="error-message">{{ form.category.errors.0 }}</div>
-                    {% endif %}
+                    <div class="form-group full-span">
+                        <label for="{{ form.description.id_for_label }}">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="error-message">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
             <div class="fieldset">
-                <legend>Service Details</legend>
+                <legend>Event/Activity Details</legend>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.start_time.id_for_label }}">Start Time</label>
+                        {{ form.start_time }}
+                        {% if form.start_time.errors %}
+                            <div class="error-message">{{ form.start_time.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.service_description.id_for_label }}">What Service is Delivered?</label>
-                    {{ form.service_description }}
-                    {% if form.service_description.errors %}
-                        <div class="error-message">{{ form.service_description.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                    <div class="form-group">
+                        <label for="{{ form.end_time.id_for_label }}">End Time</label>
+                        {{ form.end_time }}
+                        {% if form.end_time.errors %}
+                            <div class="error-message">{{ form.end_time.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.beneficiaries_description.id_for_label }}">To Whom is Service Delivered?</label>
-                    {{ form.beneficiaries_description }}
-                    {% if form.beneficiaries_description.errors %}
-                        <div class="error-message">{{ form.beneficiaries_description.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.service_location_details.id_for_label }}">Where is Service Delivered?</label>
-                    {{ form.service_location_details }}
-                    {% if form.service_location_details.errors %}
-                        <div class="error-message">{{ form.service_location_details.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.service_period.id_for_label }}">When? (Schedule/Frequency)</label>
-                    {{ form.service_period }}
-                    {% if form.service_period.errors %}
-                        <div class="error-message">{{ form.service_period.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.service_time.id_for_label }}">Time of Service</label>
-                    {{ form.service_time }}
-                    {% if form.service_time.errors %}
-                        <div class="error-message">{{ form.service_time.errors.0 }}</div>
-                    {% endif %}
+                    <div class="form-group full-span">
+                        <label for="{{ form.venue_name.id_for_label }}">Venue Name</label>
+                        {{ form.venue_name }}
+                        {% if form.venue_name.errors %}
+                            <div class="error-message">{{ form.venue_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
             <div class="fieldset">
-                <legend>Budget & Results</legend>
+                <legend>Location</legend>
+                <div class="form-grid">
+                    <div class="form-group full-span">
+                        <label for="{{ form.street.id_for_label }}">Street</label>
+                        {{ form.street }}
+                        {% if form.street.errors %}
+                            <div class="error-message">{{ form.street.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.budget_cost.id_for_label }}">Budget/Cost (₱)</label>
-                    {{ form.budget_cost }}
-                    {% if form.budget_cost.errors %}
-                        <div class="error-message">{{ form.budget_cost.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                    <div class="form-group">
+                        <label for="{{ form.barangay.id_for_label }}">Barangay</label>
+                        {{ form.barangay }}
+                        {% if form.barangay.errors %}
+                            <div class="error-message">{{ form.barangay.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.results_achieved.id_for_label }}">Results/Outcomes Achieved</label>
-                    {{ form.results_achieved }}
-                    {% if form.results_achieved.errors %}
-                        <div class="error-message">{{ form.results_achieved.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
+                    <div class="form-group">
+                        <label for="{{ form.municipality.id_for_label }}">Municipality</label>
+                        {{ form.municipality }}
+                        {% if form.municipality.errors %}
+                            <div class="error-message">{{ form.municipality.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-            <div class="fieldset">
-                <legend>Funding & Timeline</legend>
+                    <div class="form-group">
+                        <label for="{{ form.province.id_for_label }}">Province</label>
+                        {{ form.province }}
+                        {% if form.province.errors %}
+                            <div class="error-message">{{ form.province.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.source_of_fund.id_for_label }}">Source of Fund</label>
-                    {{ form.source_of_fund }}
-                    {% if form.source_of_fund.errors %}
-                        <div class="error-message">{{ form.source_of_fund.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                    <div class="form-group">
+                        <label for="{{ form.latitude.id_for_label }}">Latitude</label>
+                        {{ form.latitude }}
+                        {% if form.latitude.errors %}
+                            <div class="error-message">{{ form.latitude.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.planned_start_date.id_for_label }}">Planned Start Date</label>
-                    {{ form.planned_start_date }}
-                    {% if form.planned_start_date.errors %}
-                        <div class="error-message">{{ form.planned_start_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.planned_end_date.id_for_label }}">Planned End Date</label>
-                    {{ form.planned_end_date }}
-                    {% if form.planned_end_date.errors %}
-                        <div class="error-message">{{ form.planned_end_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.actual_start_date.id_for_label }}">Actual Start Date</label>
-                    {{ form.actual_start_date }}
-                    {% if form.actual_start_date.errors %}
-                        <div class="error-message">{{ form.actual_start_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.revised_completion_date.id_for_label }}">Revised Completion Date</label>
-                    {{ form.revised_completion_date }}
-                    {% if form.revised_completion_date.errors %}
-                        <div class="error-message">{{ form.revised_completion_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.latitude.id_for_label }}">Latitude</label>
-                    {{ form.latitude }}
-                    {% if form.latitude.errors %}
-                        <div class="error-message">{{ form.latitude.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.longitude.id_for_label }}">Longitude</label>
-                    {{ form.longitude }}
-                    {% if form.longitude.errors %}
-                        <div class="error-message">{{ form.longitude.errors.0 }}</div>
-                    {% endif %}
+                    <div class="form-group">
+                        <label for="{{ form.longitude.id_for_label }}">Longitude</label>
+                        {{ form.longitude }}
+                        {% if form.longitude.errors %}
+                            <div class="error-message">{{ form.longitude.errors.0 }}</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
             <div class="fieldset">
-                <legend>Progress Tracking</legend>
-
-                <div class="form-group">
-                    <label for="{{ form.overall_progress_percentage.id_for_label }}">Overall Progress (%)</label>
-                    {{ form.overall_progress_percentage }}
-                    {% if form.overall_progress_percentage.errors %}
-                        <div class="error-message">{{ form.overall_progress_percentage.errors.0 }}</div>
+                <legend>Project Images</legend>
+                <div class="form-group full-span">
+                    <label for="{{ form.project_images.id_for_label }}">Image URLs</label>
+                    {{ form.project_images }}
+                    <small class="helper-text">Add one image URL per line to save multiple project images.</small>
+                    {% if form.project_images.errors %}
+                        <div class="error-message">{{ form.project_images.errors.0 }}</div>
                     {% endif %}
                 </div>
             </div>
