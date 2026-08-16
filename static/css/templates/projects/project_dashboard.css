@@ -60,8 +60,8 @@
 
     .btn-group { display: flex; gap: 0.75rem; }
     .btn-small { padding: 0.5rem 1rem; font-size: 0.85rem; text-decoration: none; border-radius: 6px; border: none; cursor: pointer; }
-    .btn-primary { background: #1d4ed8; color: white; }
-    .btn-primary:hover { background: #1e40af; }
+    .btn-primary { background: #1a5a3a; color: white; }
+    .btn-primary:hover { background: #154b2d; }
 
     .empty-state { text-align: center; padding: 3rem; color: #6b7280; }
     .empty-state a { display: inline-block; margin-top: 1rem; }
