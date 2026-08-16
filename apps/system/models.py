@@ -39,11 +39,19 @@ class UserProfile(models.Model):
     def department_for_user(cls, user):
         """Compatibility helper for access patterns that still rely on the legacy profile table."""
         # Runtime should no longer depend on the archived profile table.
-        # Infer department from existing Django user attributes as a safe fallback.
+        # Prefer the explicit department stored on the runtime compatibility
+        # profile. Mayor accounts are not generic Django staff members, so the
+        # `is_staff` flag must not be treated as evidence of an Engineering
+        # department.
         if user is None:
             return None
         if getattr(user, 'is_superuser', False):
             return 'admin'
+        profile = getattr(user, 'profile', None)
+        if profile is not None:
+            department = getattr(profile, 'department', None)
+            if department:
+                return department
         if getattr(user, 'is_staff', False):
             return 'engineer'
         return 'mayor'

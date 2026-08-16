@@ -17,8 +17,11 @@ class SystemConfig(AppConfig):
             # Persist a small compatibility dict on the user instance so that
             # attributes set at runtime (e.g., `must_change_password`) remain
             # available for the duration of the process (tests/requests).
-            if not hasattr(self, '_compat_profile'):
-                # default inferred department
+            if '_compat_profile' not in self.__dict__:
+                # Prefer the explicit department already stored on the user when
+                # available. Generic Django `is_staff` is not a reliable proxy for
+                # a Mayor's Office account, so it should only be a fallback for
+                # Engineering access if no explicit department is present.
                 if getattr(self, 'is_superuser', False):
                     dept = 'admin'
                 elif getattr(self, 'is_staff', False):
@@ -29,7 +32,7 @@ class SystemConfig(AppConfig):
                 # set `must_change_password` here so the DB-backed
                 # `UserFlag` can be consulted for that flag on fresh
                 # instances loaded from the database.
-                self._compat_profile = {'department': dept}
+                self.__dict__['_compat_profile'] = {'department': dept}
 
             class _P:
                 def __init__(self, user):

@@ -74,6 +74,25 @@ class UserCreationFormTests(TestCase):
         self.assertTrue(user.check_password('TempPass123!'))
         self.assertEqual(user.profile.department, 'engineer')
 
+    def test_mayor_user_is_not_staff_and_keeps_mayor_department(self):
+        form = CustomUserCreationForm(
+            data={
+                'username': 'mayoruser2',
+                'email': 'mayoruser2@example.com',
+                'first_name': 'Mayor',
+                'last_name': 'User',
+                'role': 'mayors',
+            }
+        )
+
+        self.assertTrue(form.is_valid())
+
+        user = form.save(commit=True, temporary_password='TempPass123!')
+
+        self.assertFalse(user.is_staff)
+        self.assertFalse(user.is_superuser)
+        self.assertEqual(user.profile.department, 'mayor')
+
 
 class UserCreateConfirmViewTests(TestCase):
     def setUp(self):

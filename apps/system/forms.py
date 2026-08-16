@@ -46,8 +46,10 @@ class CustomUserCreationForm(forms.ModelForm):
 
         user.set_password(temporary_password)
 
-        # Mark staff for admin, engineering, and mayor roles.
-        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING, self.ROLE_MAYORS)
+        # Only admin and engineering staff users should be Django staff. Mayor's
+        # Office users are not generic staff members and must be identified by
+        # their explicit department instead of the `is_staff` flag.
+        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING)
         user.is_superuser = role == self.ROLE_ADMIN
 
         if commit:
@@ -118,7 +120,8 @@ class CustomUserChangeForm(forms.ModelForm):
         user = super().save(commit=False)
         role = self.cleaned_data.get('role', self.ROLE_ENGINEERING)
 
-        # Mark staff for admin and engineering roles only; mayors are not staff.
+        # Mayor's Office users are not generic Django staff; they are tracked via
+        # their explicit department profile instead of `is_staff`.
         user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING)
         user.is_superuser = role == self.ROLE_ADMIN
 
