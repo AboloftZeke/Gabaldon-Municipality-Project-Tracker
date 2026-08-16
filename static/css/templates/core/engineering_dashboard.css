@@ -1,18 +1,18 @@
 :root {
-        --panel-blue: #1a5a3a;
+         --panel-green: #1a5a3a;
         --panel-overlay: rgba(6, 18, 34, 0.5);
         --panel-card: rgba(8, 22, 40, 0.58);
         --white: #ffffff;
         --ink-900: #111827;
         --ink-600: #4b5563;
         --line: #d1d5db;
-        --focus:#1a5a3a;
-        --btn: #1a5a3a;
-        --btn-hover: #1a5a3a;
+        --focus: #2E6F40;
+        --btn: #2E6F40;
+        --btn-hover: #235A32;
         --success-bg: #ecfdf5;
         --success-text: #065f46;
         --bg-light: #f9fafb;
-        --accent-blue: #1a5a3a;
+        --accent-blue: #0284c7;
     }
 
     * {
