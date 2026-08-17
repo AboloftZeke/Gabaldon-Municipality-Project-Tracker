@@ -1,14 +1,14 @@
 :root {
-        --panel-purple: #7c3aed;
+        --panel-green: #1a5a3a;
         --panel-overlay: rgba(6, 18, 34, 0.5);
         --panel-card: rgba(8, 22, 40, 0.58);
         --white: #ffffff;
         --ink-900: #111827;
         --ink-600: #4b5563;
         --line: #d1d5db;
-        --focus: #7c3aed;
-        --btn: #7c3aed;
-        --btn-hover: #6d28d9;
+        --focus: #2E6F40;
+        --btn: #2E6F40;
+        --btn-hover: #235A32;
         --success-bg: #ecfdf5;
         --success-text: #065f46;
         --bg-light: #f9fafb;
