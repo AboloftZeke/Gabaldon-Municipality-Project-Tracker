@@ -55,6 +55,8 @@ class InfrastructureProjectFormTests(TestCase):
                 'barangay': 'San Jose',
                 'municipality': 'Gabaldon',
                 'province': 'Nueva Ecija',
+                'latitude': '15.1234567',
+                'longitude': '120.9876543',
                 'planned_start_date': '2026-01-01',
                 'planned_end_date': '2026-12-31',
                 'cost_progress_percentage': '25.00',
@@ -78,3 +80,9 @@ class InfrastructureProjectFormTests(TestCase):
         self.assertEqual(infra.financial_records.first().fund_source_id, self.fund_source.fund_source_id)
         self.assertEqual(infra.address.municipality, 'Gabaldon')
         self.assertEqual(infra.address.province, 'Nueva Ecija')
+        self.assertEqual(float(infra.address.latitude), 15.1234567)
+        self.assertEqual(float(infra.address.longitude), 120.9876543)
+
+        edit_form = InfrastructureProjectForm(instance=infra.project)
+        self.assertEqual(float(edit_form.initial['latitude']), 15.1234567)
+        self.assertEqual(float(edit_form.initial['longitude']), 120.9876543)
