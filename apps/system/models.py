@@ -429,8 +429,14 @@ class Infrastructure_Project(models.Model):
     @contractor.setter
     def contractor(self, name):
         if name:
-            contractor_obj, _ = Contractor.objects.get_or_create(contractor_name=str(name).strip(), defaults={'is_active': True})
-            self.contractor = contractor_obj
+            if hasattr(name, 'contractor_id'):
+                self.contractor_id = name.contractor_id
+                return
+            contractor_obj, _ = Contractor.objects.get_or_create(
+                contractor_name=str(name).strip(),
+                defaults={'is_active': True},
+            )
+            self.contractor_id = contractor_obj.contractor_id
 
     @property
     def implementing_office(self):
@@ -439,8 +445,14 @@ class Infrastructure_Project(models.Model):
     @implementing_office.setter
     def implementing_office(self, name):
         if name:
-            office_obj, _ = ImplementingOffice.objects.get_or_create(office_name=str(name).strip(), defaults={'is_active': True})
-            self.implementing_office = office_obj
+            if hasattr(name, 'office_id'):
+                self.implementing_office_id = name.office_id
+                return
+            office_obj, _ = ImplementingOffice.objects.get_or_create(
+                office_name=str(name).strip(),
+                defaults={'is_active': True},
+            )
+            self.implementing_office_id = office_obj.office_id
 
     @property
     def source_of_fund(self):
