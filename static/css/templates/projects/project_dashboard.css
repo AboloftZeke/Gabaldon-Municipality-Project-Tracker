@@ -1,67 +1,503 @@
-.dashboard-container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
-    .dashboard-title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; color: #111827; }
+/* =========================================
+   SIDEBAR
+   ========================================= */
 
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 3rem;
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 250px;
+    height: 100vh;
+
+    box-sizing: border-box;
+
+    background: #1a5a3a;
+    color: white;
+
+    padding: 2rem 1rem;
+
+    overflow-y: auto;
+
+    z-index: 1000;
+}
+
+
+/* Sidebar Sections */
+
+.sidebar-section {
+    margin-bottom: 2rem;
+}
+
+
+/* Sidebar Section Title */
+
+.sidebar-title {
+    margin: 0 0 0.75rem 0;
+    padding: 0 0.75rem;
+
+    font-size: 0.75rem;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+
+    color: rgba(255, 255, 255, 0.65);
+}
+
+
+/* Sidebar Navigation */
+
+.sidebar-menu {
+    list-style: none;
+
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar-menu li {
+    margin-bottom: 0.35rem;
+}
+
+.sidebar-menu a {
+    display: block;
+
+    padding: 0.75rem;
+
+    border-radius: 8px;
+
+    color: white;
+    text-decoration: none;
+
+    font-size: 0.95rem;
+    font-weight: 500;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.sidebar-menu a:hover {
+    background: rgba(255, 255, 255, 0.10);
+}
+
+.sidebar-menu a.active {
+    background: rgba(255, 255, 255, 0.18);
+
+    font-weight: 600;
+}
+
+
+/* Sidebar Account */
+
+.sidebar .quick-actions {
+    padding: 0 0.75rem;
+}
+
+.sidebar .quick-actions h4 {
+    margin: 0 0 1rem 0;
+
+    color: white;
+
+    font-size: 0.95rem;
+    font-weight: 600;
+
+    word-break: break-word;
+}
+
+
+/* Sign Out */
+
+.sidebar .action-button {
+    display: block;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 0.65rem 0.75rem;
+
+    border-radius: 7px;
+
+    text-align: center;
+    text-decoration: none;
+
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.sidebar .action-button.secondary {
+    background: rgba(255, 255, 255, 0.12);
+
+    color: white;
+}
+
+.sidebar .action-button.secondary:hover {
+    background: rgba(255, 255, 255, 0.20);
+}
+
+
+/* =========================================
+   MAIN CONTENT LAYOUT
+   ========================================= */
+
+.dashboard-content {
+    margin-left: 250px;
+
+    min-height: 100vh;
+
+    box-sizing: border-box;
+}
+
+
+/* =========================================
+   DASHBOARD CONTAINER
+   ========================================= */
+
+.dashboard-container {
+    max-width: 1200px;
+
+    margin: 2rem auto;
+
+    padding: 0 1.5rem;
+}
+
+
+/* =========================================
+   DASHBOARD TITLE
+   ========================================= */
+
+.dashboard-title {
+    font-size: 2rem;
+
+    font-weight: 700;
+
+    margin-bottom: 2rem;
+
+    color: #111827;
+}
+
+
+/* =========================================
+   STATISTICS
+   ========================================= */
+
+.stats-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(200px, 1fr));
+
+    gap: 1.5rem;
+
+    margin-bottom: 3rem;
+}
+
+
+.stat-card {
+    background: white;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 12px;
+
+    padding: 1.5rem;
+
+    text-align: center;
+}
+
+
+.stat-value {
+    font-size: 2.5rem;
+
+    font-weight: 700;
+
+    color: #1a5a3a;
+
+    margin: 0.5rem 0;
+}
+
+
+.stat-label {
+    font-size: 0.85rem;
+
+    color: #6b7280;
+
+    text-transform: uppercase;
+
+    font-weight: 600;
+}
+
+
+/* =========================================
+   RECENT PROJECTS
+   ========================================= */
+
+.recent-section {
+    background: white;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 12px;
+
+    padding: 2rem;
+}
+
+
+.recent-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 1.5rem;
+}
+
+
+.section-title {
+    font-size: 1.25rem;
+
+    font-weight: 700;
+
+    margin: 0;
+
+    color: #111827;
+}
+
+
+/* =========================================
+   PROJECT ITEM
+   ========================================= */
+
+.project-item {
+    padding: 1rem;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 1rem;
+}
+
+
+.project-item:last-child {
+    border-bottom: none;
+}
+
+
+/* =========================================
+   PROJECT THUMBNAIL
+   ========================================= */
+
+.project-thumb {
+    width: 70px;
+    height: 55px;
+
+    flex-shrink: 0;
+
+    overflow: hidden;
+
+    border-radius: 6px;
+
+    background: #f3f4f6;
+}
+
+
+.project-thumb img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    display: block;
+}
+
+
+/* =========================================
+   PROJECT INFORMATION
+   ========================================= */
+
+.project-info {
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+.project-name {
+    font-weight: 600;
+
+    color: #111827;
+}
+
+
+.project-meta {
+    font-size: 0.85rem;
+
+    color: #6b7280;
+
+    margin-top: 0.25rem;
+}
+
+
+/* =========================================
+   BUTTONS
+   ========================================= */
+
+.btn-group {
+    display: flex;
+
+    gap: 0.75rem;
+
+    flex-shrink: 0;
+}
+
+
+.btn-small {
+    padding: 0.5rem 1rem;
+
+    font-size: 0.85rem;
+
+    text-decoration: none;
+
+    border-radius: 6px;
+
+    border: none;
+
+    cursor: pointer;
+
+    display: inline-block;
+
+    box-sizing: border-box;
+}
+
+
+.btn-primary {
+    background: #1a5a3a;
+
+    color: white;
+}
+
+
+.btn-primary:hover {
+    background: #154b2d;
+}
+
+
+.btn-edit {
+    background: #6b7280;
+
+    color: white;
+}
+
+
+.btn-edit:hover {
+    background: #4b5563;
+}
+
+
+/* =========================================
+   EMPTY STATE
+   ========================================= */
+
+.empty-state {
+    text-align: center;
+
+    padding: 3rem;
+
+    color: #6b7280;
+}
+
+
+.empty-state a {
+    display: inline-block;
+
+    margin-top: 1rem;
+}
+
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+
+@media (max-width: 900px) {
+
+    .sidebar {
+        width: 220px;
     }
 
-    .stat-card {
-        background: white;
-        border: 1px solid #d1d5db;
-        border-radius: 12px;
-        padding: 1.5rem;
-        text-align: center;
+    .dashboard-content {
+        margin-left: 220px;
     }
 
-    .stat-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #1a5a3a;
-        margin: 0.5rem 0;
+    .dashboard-container {
+        padding: 0 1rem;
     }
 
-    .stat-label {
-        font-size: 0.85rem;
-        color: #6b7280;
-        text-transform: uppercase;
-        font-weight: 600;
+}
+
+
+@media (max-width: 700px) {
+
+    .sidebar {
+        position: static;
+
+        width: 100%;
+        height: auto;
+
+        padding: 1rem;
     }
 
-    .recent-section {
-        background: white;
-        border: 1px solid #d1d5db;
-        border-radius: 12px;
-        padding: 2rem;
+    .dashboard-content {
+        margin-left: 0;
     }
 
-    .section-title {
-        font-size: 1.25rem;
-        font-weight: 700;
-        margin-bottom: 1.5rem;
-        color: #111827;
+    .dashboard-container {
+        margin-top: 1.5rem;
+    }
+
+    .sidebar-menu {
+        display: flex;
+
+        gap: 0.5rem;
+    }
+
+    .sidebar-menu li {
+        margin-bottom: 0;
+    }
+
+    .sidebar-section {
+        margin-bottom: 1rem;
     }
 
     .project-item {
-        padding: 1rem;
-        border-bottom: 1px solid #e5e7eb;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-wrap: wrap;
     }
 
-    .project-item:last-child { border-bottom: none; }
+    .btn-group {
+        width: 100%;
+    }
 
-    .project-info { flex: 1; }
-    .project-name { font-weight: 600; color: #111827; }
-    .project-meta { font-size: 0.85rem; color: #6b7280; margin-top: 0.25rem; }
+}
 
-    .btn-group { display: flex; gap: 0.75rem; }
-    .btn-small { padding: 0.5rem 1rem; font-size: 0.85rem; text-decoration: none; border-radius: 6px; border: none; cursor: pointer; }
-    .btn-primary { background: #1a5a3a; color: white; }
-    .btn-primary:hover { background: #154b2d; }
 
-    .empty-state { text-align: center; padding: 3rem; color: #6b7280; }
-    .empty-state a { display: inline-block; margin-top: 1rem; }
+@media (max-width: 500px) {
+
+    .recent-header {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 1rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
