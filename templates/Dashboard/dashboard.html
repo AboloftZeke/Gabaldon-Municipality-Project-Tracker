@@ -124,8 +124,8 @@
               <th>Project</th>
               <th>Type</th>
               <th>Status</th>
-              <th>Budget</th>
-              <th>Physical Progress</th>
+              <th id="budget-column">Budget</th>
+              <th id="progress-column">Physical Progress</th>
               <th>Office / Contractor</th>
               <th>Action</th>
             </tr>
@@ -136,7 +136,8 @@
                 data-category="{{ row.category }}"
               data-project-category="{{ row.project_category_key }}"
                 data-status="{{ row.status_key }}"
-                data-location="{{ row.location_key }}">
+                data-location="{{ row.location_key }}"
+                data-hide-financial="{{ row.hide_financial|lower }}">
               <td>
                 <div class="project-cell">
                   {% if row.category == 'infra' %}
@@ -152,8 +153,8 @@
               </td>
               <td>{{ row.type_label }}</td>
               <td><span class="status-chip status-{{ row.status_key }}">{{ row.status_label }}</span></td>
-              <td>P{{ row.budget|floatformat:2 }}</td>
-              <td>{{ row.progress|floatformat:0 }}%</td>
+              <td class="financial-cell">{% if not row.hide_financial %}P{{ row.budget|floatformat:2 }}{% else %}—{% endif %}</td>
+              <td class="financial-cell">{% if not row.hide_financial %}{{ row.progress|floatformat:0 }}%{% else %}—{% endif %}</td>
               <td>{{ row.office }}</td>
               <td>
                 <a href="{{ row.detail_url }}" class="row-link">View</a>

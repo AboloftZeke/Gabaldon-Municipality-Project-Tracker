@@ -165,6 +165,67 @@ class PublicDashboardView(TemplateView):
         for cat in NonInfrastructureCategory.objects.all().order_by('type_name'):
             category_options.append((f'noninfra:{cat.type_code}', f'Non-Infrastructure - {cat.type_name}'))
 
+        # Add Infrastructure Projects to rows
+        for p in infra_qs:
+            status_key = p.award_status or 'planned'
+            status_label = p.get_award_status_display() or 'Planned'
+
+            category_name = p.get_category_display()
+            
+            location = p.location or ''
+            
+            creator = p.created_by
+
+            detail_url = '#'
+            try:
+                detail_url = reverse(
+                    'engineering_projects:project_detail',
+                    args=[p.id]
+                )
+            except Exception:
+                pass
+
+            rows.append({
+                'record_id': f'infra-{p.id}',
+                'category': 'infra',
+                'project_category_key': f'infra:' + category_name.lower().replace(' ', '_'),
+                'project_category_label': f'Infrastructure - {category_name}',
+                'type_label': 'Infrastructure',
+                'title': p.title,
+                'location_key': p.location,
+                'location': location,
+                'status_key': status_key,
+                'status_label': status_label,
+                'office': p.location,
+                'implementing_office': p.location,
+                'category_label': category_name,
+                'contractor': p.location,
+                'procurement_method': p.get_procurement_method_display() or '',
+                'source_of_fund': '',
+                'budget': 0,  # Hidden for infrastructure in public view
+                'budget_amount': 0,
+                'abc_amount': '',
+                'contract_price': '',
+                'progress': 0,  # Hidden for infrastructure in public view
+                'progress_percentage': 0,
+                'overall_progress_percentage': '',
+                'cost_progress_percentage': '',
+                'physical_progress_percentage': '',
+                'description': p.description,
+                'planned_start_date': p.planned_start_date,
+                'planned_end_date': p.planned_end_date,
+                'actual_start_date': None,
+                'created_by_name': (
+                    creator.get_full_name() or creator.username
+                    if creator else ''
+                ),
+                'created_at': p.created_at,
+                'updated_at': p.updated_at,
+                'detail_url': detail_url,
+                'hide_financial': True,  # Flag to hide financial data for infrastructure
+            })
+
+        # Add Non-Infrastructure Projects to rows
         for p in noninfra_qs:
             status_key = 'planned'
             status_label = 'Planned'
@@ -254,6 +315,7 @@ class PublicDashboardView(TemplateView):
                 'created_at': p.created_at,
                 'updated_at': p.updated_at,
                 'detail_url': detail_url,
+                'hide_financial': False,  # Non-infrastructure can show financial data if available
             })
 
         rows.sort(key=lambda x: x['created_at'], reverse=True)
