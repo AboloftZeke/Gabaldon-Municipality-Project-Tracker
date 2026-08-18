@@ -1,5 +1,5 @@
 .project-detail-container {
-        max-width: 900px;
+        max-width: 1200px;
         margin: 2rem auto;
         padding: 0 1.5rem;
     }
@@ -10,6 +10,14 @@
         padding: 2rem;
         margin-bottom: 2rem;
         border: 1px solid #d1d5db;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 2rem;
+    }
+
+    .project-detail-header > div:first-child {
+        flex: 1;
     }
 
     .project-detail-header h2 {
@@ -123,4 +131,82 @@
 
     .btn-back:hover {
         background: #4b5563;
+    }
+
+    /* Detail Sections - Complete Restyle */
+    section.detail-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid #d1d5db;
+    }
+
+    section.detail-section h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0 0 1.5rem 0;
+        color: #111827;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    div.detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.5rem;
+        width: 100%;
+    }
+
+    div.detail-item {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        min-width: 0;
+    }
+
+    div.detail-item.full-width {
+        grid-column: 1 / -1;
+    }
+
+    span.detail-label {
+        font-size: 0.7rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    span.detail-value,
+    div.detail-value {
+        font-size: 0.95rem;
+        color: #111827;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+
+    .project-header-meta {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .project-category {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        background: #e0e7ff;
+        color: #3730a3;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .action-buttons--detail {
+        margin-top: 0;
     }
