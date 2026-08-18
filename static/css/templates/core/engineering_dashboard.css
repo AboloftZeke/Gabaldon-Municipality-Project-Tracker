@@ -475,3 +475,10 @@
             height: 80px;
         }
     }
+
+.welcome_user {
+    margin: 0 0 1rem 0;
+
+    color: white;
+
+}
