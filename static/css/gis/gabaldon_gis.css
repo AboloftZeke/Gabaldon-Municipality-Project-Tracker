@@ -1,0 +1,267 @@
+/* Gabaldon Municipal GIS — scoped under .gabaldon-gis so it never leaks
+   into the rest of your existing dashboard/detail page styles. */
+
+.gabaldon-gis {
+  --gis-navy: #1b3a4b;
+  --gis-teal: #2c7a7b;
+  --gis-slate: #f4f6f7;
+  --gis-border: #d7dee1;
+  --gis-text: #23343a;
+  font-family: inherit;
+  color: var(--gis-text);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Toolbar */
+.gabaldon-gis .gis-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  background: var(--gis-navy);
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.gabaldon-gis .gis-input,
+.gabaldon-gis .gis-select {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  background: #fff;
+}
+
+.gabaldon-gis .gis-input {
+  flex: 1 1 240px;
+  min-width: 160px;
+}
+
+.gabaldon-gis .gis-btn {
+  background: var(--gis-teal);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: none;
+  display: inline-block;
+}
+.gabaldon-gis .gis-btn:hover {
+  filter: brightness(1.08);
+}
+
+/* Stats bar */
+.gabaldon-gis .gis-stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+.gabaldon-gis .gis-stat {
+  background: var(--gis-slate);
+  border: 1px solid var(--gis-border);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+.gabaldon-gis .gis-stat-value {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--gis-navy);
+}
+.gabaldon-gis .gis-stat-label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5b6b70;
+  margin-top: 2px;
+}
+
+/* Map shell */
+.gabaldon-gis .gis-map-shell {
+  position: relative;
+  border: 1px solid var(--gis-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.gabaldon-gis #gabaldon-gis-map {
+  height: 560px;
+  width: 100%;
+  background: #eef2f3;
+}
+.gabaldon-gis #gabaldon-gis-map.gis-no-basemap {
+  background: repeating-linear-gradient(45deg, #eef2f3, #eef2f3 10px, #e6ebec 10px, #e6ebec 20px);
+}
+
+.gabaldon-gis .gis-tile-fallback-banner {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff8e1;
+  border: 1px solid #f0c419;
+  color: #6b5200;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  z-index: 1000;
+  max-width: 90%;
+  text-align: center;
+}
+
+/* Legend */
+.gabaldon-gis .gis-legend {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--gis-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  z-index: 500;
+  max-width: 220px;
+}
+.gabaldon-gis .gis-legend-title {
+  font-weight: 700;
+  color: var(--gis-navy);
+  margin-top: 6px;
+}
+.gabaldon-gis .gis-legend-title:first-child {
+  margin-top: 0;
+}
+.gabaldon-gis .gis-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+/* Project + facility markers */
+.gis-emoji-icon {
+  font-size: 18px;
+  text-align: center;
+  line-height: 24px;
+}
+.gis-project-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  font-size: 13px;
+}
+
+/* Popups */
+.gis-popup h4 {
+  margin: 0 0 6px;
+  color: var(--gis-navy);
+  font-size: 1rem;
+}
+.gis-popup table {
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  width: 100%;
+}
+.gis-popup table td {
+  padding: 2px 6px 2px 0;
+  vertical-align: top;
+}
+.gis-popup table td:first-child {
+  color: #5b6b70;
+  white-space: nowrap;
+}
+.gis-placeholder-note {
+  margin-top: 6px;
+  padding: 4px 6px;
+  background: #fff3cd;
+  border: 1px solid #ffe08a;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  color: #6b5200;
+}
+.gis-popup-link {
+  margin-top: 8px;
+}
+.gis-popup-photos {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+.gis-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--gis-border);
+}
+
+/* Lightbox */
+.gis-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+.gis-lightbox img {
+  max-width: 90vw;
+  max-height: 85vh;
+  border-radius: 6px;
+}
+.gis-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .gabaldon-gis .gis-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .gabaldon-gis #gabaldon-gis-map {
+    height: 420px;
+  }
+  .gabaldon-gis .gis-legend {
+    max-width: 160px;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .gabaldon-gis .gis-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .gabaldon-gis .gis-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .gabaldon-gis .gis-legend {
+    position: static;
+    max-width: none;
+    margin: 8px;
+  }
+  .gabaldon-gis #gabaldon-gis-map {
+    height: 340px;
+  }
+}

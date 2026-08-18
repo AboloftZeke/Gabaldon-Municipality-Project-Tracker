@@ -422,37 +422,35 @@ class Infrastructure_Project(models.Model):
             self.address.longitude = value
             self.address.save(update_fields=['longitude'])
 
+    # NOTE:
+    # Keep these compatibility properties to avoid ORM reads for legacy-missing
+    # contractor/implementing_office columns while still allowing form
+    # assignment in memory.
     @property
     def contractor(self):
-        return self.contractor_id and (self.contractor.contractor_name if self.contractor else None)
+        value = getattr(self, '_contractor_value', None)
+        if hasattr(value, 'contractor_name'):
+            return value.contractor_name
+        return value
 
     @contractor.setter
-    def contractor(self, name):
-        if name:
-            if hasattr(name, 'contractor_id'):
-                self.contractor_id = name.contractor_id
-                return
-            contractor_obj, _ = Contractor.objects.get_or_create(
-                contractor_name=str(name).strip(),
-                defaults={'is_active': True},
-            )
-            self.contractor_id = contractor_obj.contractor_id
+    def contractor(self, value):
+        self._contractor_value = value
+        if hasattr(value, 'contractor_id'):
+            self.contractor_id = value.contractor_id
 
     @property
     def implementing_office(self):
-        return self.implementing_office_id and (self.implementing_office.office_name if self.implementing_office else None)
+        value = getattr(self, '_implementing_office_value', None)
+        if hasattr(value, 'office_name'):
+            return value.office_name
+        return value
 
     @implementing_office.setter
-    def implementing_office(self, name):
-        if name:
-            if hasattr(name, 'office_id'):
-                self.implementing_office_id = name.office_id
-                return
-            office_obj, _ = ImplementingOffice.objects.get_or_create(
-                office_name=str(name).strip(),
-                defaults={'is_active': True},
-            )
-            self.implementing_office_id = office_obj.office_id
+    def implementing_office(self, value):
+        self._implementing_office_value = value
+        if hasattr(value, 'office_id'):
+            self.implementing_office_id = value.office_id
 
     @property
     def source_of_fund(self):

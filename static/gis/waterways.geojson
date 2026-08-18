@@ -1,0 +1,11 @@
+{
+  "type": "FeatureCollection",
+  "_notice": "PLACEHOLDER DATA. Not a real Gabaldon river/creek. Replace before real use.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "SAMPLE WATERWAY (placeholder)", "waterway_type": "river", "barangay": "SAMPLE BARANGAY 2 (placeholder)", "is_placeholder": true },
+      "geometry": { "type": "LineString", "coordinates": [[121.155,15.372],[121.162,15.368],[121.168,15.362]] }
+    }
+  ]
+}

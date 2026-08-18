@@ -157,15 +157,21 @@
     }
 
     document.addEventListener('click', function (event) {
-        const trigger = event.target.closest('[data-project-modal-trigger]');
-        if (trigger) {
+        const closeButton = event.target.closest('[data-project-modal-close]');
+
+        if (closeButton) {
             event.preventDefault();
-            openModal(trigger);
+            event.stopPropagation();
+            closeModal();
             return;
         }
 
-        if (event.target.closest('[data-project-modal-close]')) {
-            closeModal();
+        const trigger = event.target.closest('[data-project-modal-trigger]');
+
+        if (trigger) {
+            event.preventDefault();
+            event.stopPropagation();
+            openModal(trigger);
         }
     });
 

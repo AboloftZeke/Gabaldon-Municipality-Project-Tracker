@@ -1,0 +1,26 @@
+{
+  "type": "FeatureCollection",
+  "_notice": "PLACEHOLDER DATA. None of these facilities are confirmed real Gabaldon locations. Replace before real use.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "facility_id": "sample-001", "name": "SAMPLE SCHOOL (placeholder)", "type": "School", "barangay": "SAMPLE BARANGAY 1 (placeholder)", "description": "Placeholder facility for demo purposes.", "is_placeholder": true },
+      "geometry": { "type": "Point", "coordinates": [121.154, 15.364] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "facility_id": "sample-002", "name": "SAMPLE HEALTH CENTER (placeholder)", "type": "Health Center", "barangay": "SAMPLE BARANGAY 1 (placeholder)", "description": "Placeholder facility for demo purposes.", "is_placeholder": true },
+      "geometry": { "type": "Point", "coordinates": [121.156, 15.366] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "facility_id": "sample-003", "name": "SAMPLE BARANGAY HALL (placeholder)", "type": "Barangay Hall", "barangay": "SAMPLE BARANGAY 2 (placeholder)", "description": "Placeholder facility for demo purposes.", "is_placeholder": true },
+      "geometry": { "type": "Point", "coordinates": [121.164, 15.363] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "facility_id": "sample-004", "name": "SAMPLE EVACUATION CENTER (placeholder)", "type": "Evacuation Center", "barangay": "SAMPLE BARANGAY 2 (placeholder)", "description": "Placeholder facility for demo purposes.", "is_placeholder": true },
+      "geometry": { "type": "Point", "coordinates": [121.166, 15.366] }
+    }
+  ]
+}

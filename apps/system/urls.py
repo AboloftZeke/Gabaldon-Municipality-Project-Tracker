@@ -1,6 +1,7 @@
 from django.urls import path, include
 from django.shortcuts import redirect
 from . import views
+from . import gis_views
 
 urlpatterns = [
     path('', lambda request: redirect('login')),
@@ -16,6 +17,11 @@ urlpatterns = [
     path('engineering/dashboard/infrastructure/', include(('apps.infrastructure.urls', 'infrastructure'), namespace='engineering_projects')),
     path('mayor/dashboard/', views.MayorDashboardView.as_view(), name='mayor_dashboard'),
     path('mayor/dashboard/non-infrastructure/', include(('apps.non_infrastructure.urls', 'non_infrastructure'), namespace='mayor_projects')),
+
+    # GIS data endpoints
+    path('gis/layers/<str:layer_name>.json', gis_views.static_layer_geojson, name='gis_static_layer'),
+    path('gis/layers/projects.json', gis_views.projects_geojson, name='gis_projects_layer'),
+    path('gis/projects/<int:project_id>/photos.json', gis_views.project_photos, name='gis_project_photos'),
     
     # Legacy admin dashboard URL (kept for compatibility)
     # The named `admin_dashboard` route above now points to `/admin-dashboard/` to avoid

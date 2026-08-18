@@ -1,101 +1,90 @@
 {% load static %}
+{# ============================================================
+   Gabaldon GIS — include this into your existing project-detail
+   or dashboard template with:
 
-<div class="project-detail-layout">
-    <section class="project-detail-panel project-detail-panel--gis">
-        <div class="map-card">
-            <div class="map-card__header">
-                <div>
-                    <p class="project-eyebrow">GIS Map</p>
-                    <h3>Project Location</h3>
-                </div>
-                <button type="button" class="map-fullscreen-button" data-map-fullscreen>Fullscreen</button>
-            </div>
+       {% include "projects/project_detail_gis_section.html" %}
 
-            <div class="project-map-shell" data-project-gis-shell data-has-coordinates="{{ project_gis.has_coordinates|yesno:'true,false' }}" data-map-center-lat="{{ project_gis.map_center_lat }}" data-map-center-lng="{{ project_gis.map_center_lng }}">
-                {% if project_gis.has_coordinates %}
-                    <div class="project-map" data-project-map
-                         data-project-name="{{ project.title|escape }}"
-                         data-project-code="{{ project_code|escape }}"
-                         data-project-type="{{ project_type_label|escape }}"
-                         data-project-barangay="{{ project_gis.barangay|escape }}"
-                         data-project-status="{{ project_gis.status_label|escape }}"
-                         data-project-budget="{{ project_gis.budget_label|escape }}"
-                         data-project-progress="{{ project_gis.progress_label|escape }}"
-                         data-project-gis-message="{{ project_gis.coordinate_message|escape }}"
-                         data-google-maps-url="{{ project_gis.google_maps_url|escape }}"
-                         data-detail-url="{{ project_gis.detail_url|escape }}"
-                         data-has-coordinates="{{ project_gis.has_coordinates|yesno:'true,false' }}"
-                         data-map-center-lat="{{ project_gis.map_center_lat }}"
-                         data-map-center-lng="{{ project_gis.map_center_lng }}"
-                         data-map-zoom="16"></div>
-                {% endif %}
-                <div class="project-map-message" data-project-map-message{% if project_gis.has_coordinates %} hidden{% endif %}>
-                    {{ project_gis.coordinate_message }}
-                </div>
-            </div>
+   Do NOT open this file directly as a page — it has no <html>/<head>,
+   it's a fragment meant to sit inside a page that already loads your
+   site's base CSS/JS.
+   ============================================================ #}
 
-            {% if project_gis.has_coordinates %}
-            <div class="gis-info-card">
-                <div class="gis-info-card__header">
-                    <h3>Location Information</h3>
-                    <a href="{{ project_gis.google_maps_url }}" target="_blank" rel="noopener noreferrer" class="gis-google-button">📍 Open in Google Maps</a>
-                </div>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<link rel="stylesheet" href="{% static 'css/gis/gabaldon_gis.css' %}">
 
-                <div class="gis-info-grid">
-                    <div class="gis-info-item">
-                        <span>Latitude</span>
-                        <strong>{{ project_gis.latitude }}</strong>
-                    </div>
-                    <div class="gis-info-item">
-                        <span>Longitude</span>
-                        <strong>{{ project_gis.longitude }}</strong>
-                    </div>
-                    <div class="gis-info-item">
-                        <span>Barangay</span>
-                        <strong>{{ project_gis.barangay }}</strong>
-                    </div>
-                    <div class="gis-info-item">
-                        <span>Municipality</span>
-                        <strong>{{ project_gis.municipality }}</strong>
-                    </div>
-                    <div class="gis-info-item">
-                        <span>Province</span>
-                        <strong>{{ project_gis.province }}</strong>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
+<section class="gabaldon-gis" id="gabaldon-gis-root"
+    {# Config is passed via data-* attributes, never hardcoded in the JS file,
+       so the same JS works across environments without editing source. #}
+    data-api-barangays="{% url 'gis_static_layer' layer_name='barangays' %}"
+    data-api-roads="{% url 'gis_static_layer' layer_name='roads' %}"
+    data-api-bridges="{% url 'gis_static_layer' layer_name='bridges' %}"
+    data-api-waterways="{% url 'gis_static_layer' layer_name='waterways' %}"
+    data-api-facilities="{% url 'gis_static_layer' layer_name='facilities' %}"
+    data-api-projects="{% url 'gis_projects_layer' %}"
+    data-api-photos-template="/gis/projects/__ID__/photos.json"
+>
+    <div class="gis-toolbar">
+        <input type="text" id="gis-search" class="gis-input" placeholder="Search project, barangay, road, bridge, facility…" autocomplete="off">
+        <select id="gis-filter-barangay" class="gis-select">
+            <option value="">All Barangays</option>
+        </select>
+        <select id="gis-filter-type" class="gis-select">
+            <option value="">All Project Types</option>
+            <option value="infrastructure">Infrastructure</option>
+            <option value="non_infrastructure">Non-Infrastructure</option>
+        </select>
+        <select id="gis-filter-status" class="gis-select">
+            <option value="">All Statuses</option>
+            <option value="completed">Completed</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="planned">Planned</option>
+            <option value="delayed">Delayed / Suspended</option>
+        </select>
+        <button type="button" id="gis-fullscreen-btn" class="gis-btn" title="Fullscreen">⛶</button>
+    </div>
 
-            <div class="images-card">
-                <div class="gis-info-card__header">
-                    <h3>Project Images</h3>
-                </div>
+    <div class="gis-stats" id="gis-stats">
+        <div class="gis-stat"><span class="gis-stat-value" id="stat-total">0</span><span class="gis-stat-label">Total Projects</span></div>
+        <div class="gis-stat"><span class="gis-stat-value" id="stat-infra">0</span><span class="gis-stat-label">Infrastructure</span></div>
+        <div class="gis-stat"><span class="gis-stat-value" id="stat-noninfra">0</span><span class="gis-stat-label">Non-Infrastructure</span></div>
+        <div class="gis-stat"><span class="gis-stat-value" id="stat-ongoing">0</span><span class="gis-stat-label">Ongoing</span></div>
+        <div class="gis-stat"><span class="gis-stat-value" id="stat-completed">0</span><span class="gis-stat-label">Completed</span></div>
+        <div class="gis-stat"><span class="gis-stat-value" id="stat-planned">0</span><span class="gis-stat-label">Planned</span></div>
+    </div>
 
-                {% if project_images %}
-                    <div class="image-grid">
-                        {% for image in project_images %}
-                            <a href="{{ image.image_url }}" class="image-card" target="_blank" rel="noopener noreferrer" data-image-src="{{ image.image_url }}" data-image-caption="{{ project.title|escape }}">
-                                <img src="{{ image.image_url }}" alt="{{ project.title|escape }}">
-                                <span>{{ project.title }}</span>
-                            </a>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <a href="{{ project_placeholder_image }}" class="image-card image-card--placeholder" target="_blank" rel="noopener noreferrer">
-                        <img src="{{ project_placeholder_image }}" alt="No project image uploaded.">
-                        <span>No project image uploaded.</span>
-                    </a>
-                {% endif %}
-            </div>
+    <div class="gis-map-shell">
+        <div id="gabaldon-gis-map"></div>
+
+        <div class="gis-legend" id="gis-legend">
+            <div class="gis-legend-title">Project Status</div>
+            <div><span class="gis-dot" style="background:#2ecc71"></span> Completed</div>
+            <div><span class="gis-dot" style="background:#3498db"></span> Ongoing</div>
+            <div><span class="gis-dot" style="background:#f1c40f"></span> Planned</div>
+            <div><span class="gis-dot" style="background:#e74c3c"></span> Delayed / Suspended</div>
+            <div class="gis-legend-title">Facilities</div>
+            <div>🏫 School &nbsp; 🏥 Health &nbsp; 🏛 Gov't</div>
+            <div>🚒 Fire &nbsp; 🚓 Police &nbsp; ⛪ Church</div>
+            <div>🏠 Evacuation &nbsp; 🌳 Park &nbsp; 🌉 Bridge</div>
         </div>
-    </section>
+
+        <div class="gis-tile-fallback-banner" id="gis-tile-fallback-banner" hidden>
+            ⚠ Basemap tiles unavailable — showing vector layers on a plain
+            background. Boundaries, roads, facilities, and projects below are
+            still fully interactive.
+        </div>
+    </div>
+</section>
+
+<div id="gis-photo-lightbox" class="gis-lightbox" hidden>
+    <button class="gis-lightbox-close" id="gis-lightbox-close">✕</button>
+    <img id="gis-lightbox-img" src="" alt="Project photo">
 </div>
 
-<div class="lightbox" data-lightbox hidden>
-    <button type="button" class="lightbox__close" data-lightbox-close aria-label="Close image">&times;</button>
-    <div class="lightbox__backdrop" data-lightbox-close></div>
-    <figure class="lightbox__figure">
-        <img data-lightbox-image alt="Project image preview">
-        <figcaption data-lightbox-caption></figcaption>
-    </figure>
-</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="{% static 'js/gis/gabaldon_gis.js' %}"></script>
