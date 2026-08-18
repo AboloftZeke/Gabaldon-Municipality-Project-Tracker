@@ -429,7 +429,7 @@ class UserListView(AdminRequiredMixin, ListView):
 
         # Filter by department if provided
         if department:
-            queryset = queryset.filter(profile__department=department)
+            queryset = queryset.filter(flags__department=department)
 
         return queryset
 
