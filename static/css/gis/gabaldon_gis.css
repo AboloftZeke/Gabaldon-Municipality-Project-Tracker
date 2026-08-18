@@ -210,30 +210,36 @@
 
 /* Lightbox */
 .gis-lightbox {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3000;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
 }
-.gis-lightbox img {
-  max-width: 90vw;
-  max-height: 85vh;
-  border-radius: 6px;
-}
-.gis-lightbox-close {
-  position: absolute;
-  top: 16px;
-  right: 20px;
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 1.6rem;
-  cursor: pointer;
+.gis-lightbox[hidden] {
+    display: none !important;
 }
 
+.gis-lightbox img {
+    max-width: 90vw;
+    max-height: 85vh;
+    border-radius: 6px;
+    object-fit: contain;
+}
+
+.gis-lightbox-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.6rem;
+    cursor: pointer;
+    z-index: 3001;
+}
 /* Responsive */
 @media (max-width: 900px) {
   .gabaldon-gis .gis-stats {

@@ -51,10 +51,13 @@
   const GABALDON_CENTER = [15.365, 121.16]; // approx municipality center; adjust once real boundary data is loaded
   const map = L.map("gabaldon-gis-map", { zoomControl: true }).setView(GABALDON_CENTER, 13);
 
-  const osmTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors",
-  });
+  const osmTiles = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors",
+    }
+  );
   osmTiles.addTo(map);
 
   // Fallback: if OSM tiles fail to load (offline, blocked, rate-limited),
@@ -469,14 +472,57 @@
 
   function openLightbox(src) {
     const lb = document.getElementById("gis-photo-lightbox");
-    document.getElementById("gis-lightbox-img").src = src;
+    const img = document.getElementById("gis-lightbox-img");
+
+    if (!lb || !img) return;
+
+    img.src = src;
     lb.hidden = false;
-  }
-  function bindLightbox() {
-    document.getElementById("gis-lightbox-close").addEventListener("click", () => {
-      document.getElementById("gis-photo-lightbox").hidden = true;
+    document.body.style.overflow = "hidden";
+}
+
+function closeLightbox() {
+    const lb = document.getElementById("gis-photo-lightbox");
+    const img = document.getElementById("gis-lightbox-img");
+
+    if (!lb) return;
+
+    lb.hidden = true;
+
+    if (img) {
+        img.src = "";
+    }
+
+    document.body.style.overflow = "";
+}
+
+function bindLightbox() {
+    const lb = document.getElementById("gis-photo-lightbox");
+    const closeButton = document.getElementById("gis-lightbox-close");
+
+    if (!lb || !closeButton) return;
+
+    // Close button
+    closeButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        closeLightbox();
     });
-  }
+
+    // Click outside the image to close
+    lb.addEventListener("click", function (event) {
+        if (event.target === lb) {
+            closeLightbox();
+        }
+    });
+
+    // ESC key to close
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !lb.hidden) {
+            closeLightbox();
+        }
+    });
+}
 
   function escapeHtml(str) {
     if (str == null) return "";

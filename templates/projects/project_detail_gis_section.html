@@ -69,9 +69,23 @@
     </div>
 </section>
 
-<div id="gis-photo-lightbox" class="gis-lightbox" hidden>
-    <button class="gis-lightbox-close" id="gis-lightbox-close">✕</button>
-    <img id="gis-lightbox-img" src="" alt="Project photo">
+<div id="gis-photo-lightbox"
+     class="gis-lightbox"
+     hidden
+     aria-hidden="true">
+
+    <button
+        type="button"
+        class="gis-lightbox-close"
+        id="gis-lightbox-close"
+        aria-label="Close project photo">
+        ✕
+    </button>
+
+    <img
+        id="gis-lightbox-img"
+        src=""
+        alt="Project photo">
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
