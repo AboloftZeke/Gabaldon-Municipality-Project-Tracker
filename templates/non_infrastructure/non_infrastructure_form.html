@@ -156,22 +156,210 @@
             </div>
 
             <div class="fieldset">
-                <legend>Project Images</legend>
-                <div class="form-group full-span">
-                    <label for="{{ form.project_images.id_for_label }}">Project Images</label>
-                    {{ form.project_images }}
-                    <small class="helper-text">Select one or more images to upload for this project.</small>
-                    {% if form.project_images.errors %}
-                        <div class="error-message">{{ form.project_images.errors.0 }}</div>
-                    {% endif %}
+        <legend>Project Images</legend>
+
+        <div class="form-group full-span">
+
+            <label for="{{ form.project_images.id_for_label }}">
+                Project Images
+            </label>
+
+            <div class="image-upload-area" id="image-upload-area">
+
+                <div class="image-upload-content">
+                    <div class="image-upload-icon">📷</div>
+
+                    <p class="image-upload-title">
+                        Upload project images
+                    </p>
+
+                    <p class="image-upload-description">
+                        Select multiple photos of the project.
+                    </p>
+
+                    <label
+                        for="{{ form.project_images.id_for_label }}"
+                        class="image-upload-button"
+                    >
+                        Choose Images
+                </label>
+
+                {{ form.project_images }}
+
+                <p class="image-upload-hint">
+                    You can select multiple images at once.
+                </p>
                 </div>
+
             </div>
+
+            {% if form.project_images.errors %}
+                <div class="error-message">
+                    {{ form.project_images.errors.0 }}
+             </div>
+            {% endif %}
+
+            <!-- Image previews -->
+            <div
+                class="image-preview-container"
+                id="image-preview-container"
+                hidden
+            >
+                <div class="image-preview-header">
+                    <span>Selected Images</span>
+                    <span
+                        class="image-preview-count"
+                        id="image-preview-count"
+                    >
+                        0 images
+                    </span>
+                </div>
+
+                <div
+                    class="image-preview-grid"
+                    id="image-preview-grid"
+                ></div>
+            </div>
+
+        </div>
+    </div>
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-submit">{{ action }} Project</button>
                 <a href="{% url 'mayor_projects:non_infrastructure_project_list' %}" class="btn btn-cancel">Cancel</a>
             </div>
         </form>
-    </div>
 </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const input = document.getElementById(
+        '{{ form.project_images.id_for_label }}'
+    );
+
+    const uploadArea = document.getElementById(
+        'image-upload-area'
+    );
+
+    const previewContainer = document.getElementById(
+        'image-preview-container'
+    );
+
+    const previewGrid = document.getElementById(
+        'image-preview-grid'
+    );
+
+    const previewCount = document.getElementById(
+        'image-preview-count'
+    );
+
+    if (!input) {
+        return;
+    }
+
+    input.addEventListener('change', function () {
+
+        previewGrid.innerHTML = '';
+
+        const files = Array.from(input.files);
+
+        if (files.length === 0) {
+            previewContainer.hidden = true;
+            return;
+        }
+
+        previewContainer.hidden = false;
+
+        previewCount.textContent =
+            `${files.length} ${files.length === 1 ? 'image' : 'images'}`;
+
+        files.forEach(function (file, index) {
+
+            if (!file.type.startsWith('image/')) {
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function (event) {
+
+                const preview = document.createElement('div');
+
+                preview.className = 'image-preview';
+
+                preview.innerHTML = `
+                    <img
+                        src="${event.target.result}"
+                        alt="Selected image ${index + 1}"
+                    >
+
+                    <div class="image-preview-overlay">
+                        <span>${index + 1}</span>
+                    </div>
+                `;
+
+                previewGrid.appendChild(preview);
+            };
+
+            reader.readAsDataURL(file);
+        });
+    });
+
+
+    /*
+     * Drag and drop support
+     */
+    uploadArea.addEventListener('dragover', function (event) {
+
+        event.preventDefault();
+
+        uploadArea.classList.add('is-dragging');
+    });
+
+
+    uploadArea.addEventListener('dragleave', function () {
+
+        uploadArea.classList.remove('is-dragging');
+    });
+
+
+    uploadArea.addEventListener('drop', function (event) {
+
+        event.preventDefault();
+
+        uploadArea.classList.remove('is-dragging');
+
+        const files = event.dataTransfer.files;
+
+        if (!files.length) {
+            return;
+        }
+
+        /*
+         * Transfer the dropped files to the actual file input.
+         */
+        const dataTransfer = new DataTransfer();
+
+        Array.from(files).forEach(function (file) {
+
+            if (file.type.startsWith('image/')) {
+                dataTransfer.items.add(file);
+            }
+
+        });
+
+        input.files = dataTransfer.files;
+
+        input.dispatchEvent(new Event('change'));
+    });
+
+});
+</script>
+
 {% endblock %}
