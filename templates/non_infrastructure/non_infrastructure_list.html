@@ -10,7 +10,7 @@
 {% block content %}
 <div class="breadcrumb-nav">
     {% if request.META.HTTP_REFERER %}
-        <a href="{{ request.META.HTTP_REFERER }}">← Back to Dashboard</a>
+        <a href="{% url 'mayor_dashboard' %}">← Back to Dashboard</a>
     {% else %}
         <a href="{% url 'mayor_dashboard' %}">← Back to Dashboard</a>
     {% endif %}
