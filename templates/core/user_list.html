@@ -141,23 +141,35 @@
     </div>
 
     {% if is_paginated %}
-        <div class="users-table-wrapper">
-            <div class="pagination">
-                {% if page_obj.has_previous %}
-                    <a href="?page=1">First</a>
-                    <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
-                {% endif %}
+    <div class="users-table-wrapper">
+        <div class="pagination">
 
-                <span class="page-info">
-                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                </span>
+            {% if page_obj.has_previous %}
+                <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if current_department %}department={{ current_department }}&{% endif %}page=1">
+                    First
+                </a>
 
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}">Next</a>
-                    <a href="?page={{ page_obj.paginator.num_pages }}">Last</a>
-                {% endif %}
-            </div>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if current_department %}department={{ current_department }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                    Previous
+                </a>
+            {% endif %}
+
+            <span class="page-info">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if current_department %}department={{ current_department }}&{% endif %}page={{ page_obj.next_page_number }}">
+                    Next
+                </a>
+
+                <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if current_department %}department={{ current_department }}&{% endif %}page={{ page_obj.paginator.num_pages }}">
+                    Last
+                </a>
+            {% endif %}
+
         </div>
+    </div>
     {% endif %}
 </div>
 {% endblock %}
