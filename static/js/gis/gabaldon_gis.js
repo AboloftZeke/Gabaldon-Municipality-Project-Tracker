@@ -469,40 +469,12 @@
 
   function openLightbox(src) {
     const lb = document.getElementById("gis-photo-lightbox");
-    if (!lb) return;
     document.getElementById("gis-lightbox-img").src = src;
     lb.hidden = false;
-    document.body.style.overflow = "hidden";
   }
-
-  function closeLightbox() {
-    const lb = document.getElementById("gis-photo-lightbox");
-    if (!lb) return;
-    lb.hidden = true;
-    const img = document.getElementById("gis-lightbox-img");
-    if (img) img.src = "";
-    document.body.style.overflow = "";
-  }
-
   function bindLightbox() {
-    const closeBtn = document.getElementById("gis-lightbox-close");
-    const lb = document.getElementById("gis-photo-lightbox");
-    if (!closeBtn || !lb) return;
-
-    closeBtn.addEventListener("click", closeLightbox);
-
-    // Clicking the backdrop closes the lightbox.
-    lb.addEventListener("click", (event) => {
-      if (event.target === lb) {
-        closeLightbox();
-      }
-    });
-
-    // ESC is a universal close affordance for modals.
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && !lb.hidden) {
-        closeLightbox();
-      }
+    document.getElementById("gis-lightbox-close").addEventListener("click", () => {
+      document.getElementById("gis-photo-lightbox").hidden = true;
     });
   }
 
