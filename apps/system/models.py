@@ -509,6 +509,15 @@ class Non_Infrastructure_Project(models.Model):
 
     def __str__(self):
         return self.non_infra_name
+    
+    STATUS_CHOICES = [
+        ('planned', 'Planned'),
+        ('ongoing', 'Ongoing'),
+        ('completed', 'Completed')
+    ]
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
+
 
 
 class Infrastructure_Schedule(models.Model):
