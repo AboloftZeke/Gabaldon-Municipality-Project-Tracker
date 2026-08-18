@@ -476,9 +476,7 @@
         }
     }
 
-.welcome_user {
-    margin: 0 0 1rem 0;
-
-    color: white;
-
+.welcome_user { display: flex;
+    align-items: center;
+    gap: 1rem;  
 }
