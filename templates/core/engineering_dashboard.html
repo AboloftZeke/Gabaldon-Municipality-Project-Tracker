@@ -21,9 +21,7 @@
             <ul>
                 <li><a href="{% url 'engineering_dashboard' %}">Dashboard</a></li>
                 <li><a href="{% url 'logout' %}">Logout</a></li>
-                <li class="welcome_user">
-                    <h4>{{ request.user.username }}</h4>
-                </li>
+                <li class="welcome_user">Welcome, {{ request.user.username }}</li>
             </ul>
         {% endif %}
     </nav>
