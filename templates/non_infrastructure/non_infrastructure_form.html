@@ -155,74 +155,108 @@
                 </div>
             </div>
 
-            <div class="fieldset">
-        <legend>Project Images</legend>
+    <div class="fieldset">
+    <legend>Project Images</legend>
 
-        <div class="form-group full-span">
+    <div class="form-group full-span">
 
-            <label for="{{ form.project_images.id_for_label }}">
-                Project Images
-            </label>
+        <div class="image-upload-header">
+            <div>
+                <label for="{{ form.project_images.id_for_label }}">
+                    Project Photos
+                </label>
 
-            <div class="image-upload-area" id="image-upload-area">
+                <p class="image-upload-description">
+                    Add photos that document or showcase this project.
+                    You can select multiple images at once.
+                </p>
+            </div>
 
-                <div class="image-upload-content">
-                    <div class="image-upload-icon">📷</div>
+            <span class="image-upload-format">
+                JPG, JPEG, PNG
+            </span>
+        </div>
 
-                    <p class="image-upload-title">
-                        Upload project images
-                    </p>
+        <div class="image-upload-area" id="image-upload-area">
 
-                    <p class="image-upload-description">
-                        Select multiple photos of the project.
-                    </p>
+            <div class="image-upload-content">
 
-                    <label
-                        for="{{ form.project_images.id_for_label }}"
-                        class="image-upload-button"
+                <div class="image-upload-icon">
+                    <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
                     >
-                        Choose Images
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <path d="M21 15l-5-5L5 21"/>
+                    </svg>
+                </div>
+
+                <div class="image-upload-text">
+                    <span class="image-upload-title">
+                        Add project photos
+                    </span>
+
+                    <span class="image-upload-subtitle">
+                        Drag and drop images here or
+                    </span>
+                </div>
+
+                <label
+                    for="{{ form.project_images.id_for_label }}"
+                    class="image-upload-button"
+                >
+                    Browse Files
                 </label>
 
                 {{ form.project_images }}
 
-                <p class="image-upload-hint">
-                    You can select multiple images at once.
-                </p>
-                </div>
-
             </div>
 
-            {% if form.project_images.errors %}
-                <div class="error-message">
-                    {{ form.project_images.errors.0 }}
-             </div>
-            {% endif %}
+        </div>
 
-            <!-- Image previews -->
-            <div
-                class="image-preview-container"
-                id="image-preview-container"
-                hidden
-            >
-                <div class="image-preview-header">
-                    <span>Selected Images</span>
-                    <span
-                        class="image-preview-count"
-                        id="image-preview-count"
-                    >
+        {% if form.project_images.errors %}
+            <div class="error-message">
+                {{ form.project_images.errors.0 }}
+            </div>
+        {% endif %}
+
+
+        <!-- Selected Images -->
+
+        <div
+            class="image-preview-container"
+            id="image-preview-container"
+            hidden
+        >
+
+            <div class="image-preview-header">
+
+                <div>
+                    <h4>Selected Photos</h4>
+                    <span class="image-preview-count" id="image-preview-count">
                         0 images
                     </span>
                 </div>
 
-                <div
-                    class="image-preview-grid"
-                    id="image-preview-grid"
-                ></div>
             </div>
 
+            <div
+                class="image-preview-grid"
+                id="image-preview-grid"
+            ></div>
+
         </div>
+
     </div>
+</div>        
+    
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-submit">{{ action }} Project</button>
