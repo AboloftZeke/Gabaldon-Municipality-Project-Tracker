@@ -157,68 +157,106 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         compat_project = self.object
 
-        normalized = Non_Infrastructure_Project.objects.filter(
-            non_infra_id=compat_project.non_infra_id
-        ).select_related(
-            'project',
-            'project__created_by_user',
-            'address',
-            'non_infra_category',
-        ).first()
+        normalized = (
+            Non_Infrastructure_Project.objects
+            .filter(non_infra_id=compat_project.non_infra_id)
+            .select_related(
+                'project',
+                'project__created_by_user',
+                'address',
+                'non_infra_category',
+            )
+            .first()
+        )
 
         project = normalized if normalized is not None else compat_project
-        project_name = getattr(project, 'non_infra_name', '') or 'Non-Infrastructure Project'
-        creator = getattr(project.project, 'created_by_user', None) if getattr(project, 'project', None) else None
-        project_manager = creator.get_full_name() or creator.username if creator else 'N/A'
 
-        event_date = getattr(project, 'event_date', None)
-        category_name = getattr(getattr(project, 'non_infra_category', None), 'type_name', '')
-        address = getattr(project, 'address', None)
-        barangay = getattr(address, 'barangay', '') if address else ''
+        project_name = (
+            getattr(project, 'non_infra_name', '')
+            or 'Non-Infrastructure Project'
+        )
+
+        creator = (
+            getattr(project.project, 'created_by_user', None)
+            if getattr(project, 'project', None)
+            else None
+        )
+
+        project_manager = (
+            creator.get_full_name() or creator.username
+            if creator
+            else 'N/A'
+        )
 
         project_images = []
+
         if getattr(project, 'project', None):
-            project_images = list(project.project.images.order_by('-created_at'))
+            project_images = list(
+                project.project.images.order_by('-created_at')
+            )
 
         context['project_code'] = f'NINF-{compat_project.pk:05d}'
         context['project_type_label'] = 'Non-Infrastructure'
+        context['project_name'] = project_name
         context['project_manager'] = project_manager
-        context['project_progress_value'] = None
-        context['project_budget_value'] = None
-        context['project_target_completion_date'] = event_date
-        context['project_google_maps_url'] = ''
+
+        context['project_status'] = project.get_status_display()
+        context['project_category'] = (
+            getattr(
+                getattr(project, 'non_infra_category', None),
+                'type_name',
+                ''
+            )
+        )
+
+        context['project_description'] = (
+            getattr(project, 'description', '') or ''
+        )
+
+        context['project_proponent'] = (
+            getattr(project, 'proponent', '') or ''
+        )
+
+        context['project_beneficiaries'] = getattr(
+            project,
+            'beneficiaries',
+            None
+        )
+
+        context['project_event_date'] = getattr(
+            project,
+            'event_date',
+            None
+        )
+
+        context['project_start_time'] = getattr(
+            project,
+            'start_time',
+            None
+        )
+
+        context['project_end_time'] = getattr(
+            project,
+            'end_time',
+            None
+        )
+
+        context['project_venue'] = (
+            getattr(project, 'venue_name', '') or ''
+        )
+
+        context['project_address'] = getattr(
+            project,
+            'address',
+            None
+        )
+
         context['project_images'] = project_images
-        context['project_placeholder_image'] = static('images/project-placeholder.svg')
-        context['project_gis'] = {
-            'has_coordinates': False,
-            'latitude': '',
-            'longitude': '',
-            'map_center_lat': 15.2915,
-            'map_center_lng': 121.3386,
-            'google_maps_url': '',
-            'barangay': barangay,
-            'municipality': 'Gabaldon',
-            'province': 'Nueva Ecija',
-            'status_label': 'Planned',
-            'progress_label': 'Not available',
-            'budget_label': 'N/A',
-            'project_name': project_name,
-            'project_code': context['project_code'],
-            'project_type': 'Non-Infrastructure',
-            'description': getattr(project, 'description', '') or '',
-            'project_manager': project_manager,
-            'contractor': '',
-            'funding_source': '',
-            'implementing_office': '',
-            'start_date': event_date,
-            'target_completion_date': event_date,
-            'coordinate_message': 'Location has not yet been assigned.',
-            'detail_url': reverse('mayor_projects:non_infrastructure_project_detail', args=[compat_project.pk]),
-            'category_name': category_name,
-            'proponent': getattr(project, 'proponent', '') or '',
-            'beneficiaries': getattr(project, 'beneficiaries', None),
-            'address': address,
-        }
+
+        context['project_placeholder_image'] = static(
+            'images/project-placeholder.svg'
+        )
+
         return context
 
 
