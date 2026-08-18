@@ -63,6 +63,7 @@ class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['user'] = self.request.user
 
         # All engineering office users see the same project pool. Use normalized compatibility model.
         user_projects = SystemInfrastructureProject.objects.all()
@@ -182,7 +183,8 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
 
         context['project_code'] = f'INF-{project.pk:05d}'
         context['project_type_label'] = 'Infrastructure'
-        context['project_manager'] = project.created_by.get_full_name() or project.created_by.username
+        creator = project.created_by
+        context['project_manager'] = creator.get_full_name() or creator.username if creator else 'N/A'
         context['project_progress_value'] = project.physical_progress_percentage if project.physical_progress_percentage is not None else project.cost_progress_percentage
         context['project_budget_value'] = project.abc_amount if project.abc_amount is not None else project.contract_price
         context['project_target_completion_date'] = project.planned_end_date

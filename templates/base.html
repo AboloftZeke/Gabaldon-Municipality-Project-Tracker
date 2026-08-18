@@ -42,7 +42,7 @@
                 {% endif %}
 
                 <li><a href="{% url 'logout' %}">Logout</a></li>
-                <li><span>Welcome, {{ user.username }}</span></li>
+                <li><span>Welcome, {{ request.user.username }}</span></li>
 
             </ul>
         {% else %}

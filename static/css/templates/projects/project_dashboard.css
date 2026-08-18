@@ -2,13 +2,20 @@
    SIDEBAR
    ========================================= */
 
+.project-dashboard-layout {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    min-height: calc(100vh - 80px);
+    width: 100%;
+}
+
 .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
+    position: static;
+    top: auto;
+    left: auto;
 
     width: 250px;
-    height: 100vh;
+    height: auto;
 
     box-sizing: border-box;
 
@@ -17,9 +24,9 @@
 
     padding: 2rem 1rem;
 
-    overflow-y: auto;
+    overflow-y: visible;
 
-    z-index: 1000;
+    z-index: auto;
 }
 
 
@@ -142,9 +149,9 @@
    ========================================= */
 
 .dashboard-content {
-    margin-left: 250px;
+    margin-left: 0;
 
-    min-height: 100vh;
+    min-height: auto;
 
     box-sizing: border-box;
 }

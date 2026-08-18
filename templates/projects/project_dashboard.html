@@ -9,52 +9,53 @@
 {% endblock %}
 
 {% block content %}
+<div class="project-dashboard-layout">
 
-<!-- =========================================
-     SIDEBAR
-     ========================================= -->
-<div class="sidebar">
+    <!-- =========================================
+         SIDEBAR
+         ========================================= -->
+    <div class="sidebar">
 
-    <div class="sidebar-section">
-        <p class="sidebar-title">Navigation</p>
+        <div class="sidebar-section">
+            <p class="sidebar-title">Navigation</p>
 
-        <ul class="sidebar-menu">
-            <li>
-                <a href="{% url 'engineering_dashboard' %}">
-                    Dashboard
-                </a>
-            </li>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{% url 'engineering_dashboard' %}">
+                        Dashboard
+                    </a>
+                </li>
 
-            <li>
-                <a href="{% url 'engineering_projects:project_dashboard' %}"
-                   class="active">
-                    Projects
-                </a>
-            </li>
-        </ul>
-    </div>
-
-
-    <div class="sidebar-section">
-        <p class="sidebar-title">Account</p>
-
-        <div class="quick-actions">
-            <h4>{{ user.username }}</h4>
-
-            <a href="{% url 'logout' %}"
-               class="action-button secondary">
-                Sign Out
-            </a>
+                <li>
+                    <a href="{% url 'engineering_projects:project_dashboard' %}"
+                       class="active">
+                        Projects
+                    </a>
+                </li>
+            </ul>
         </div>
+
+
+        <div class="sidebar-section">
+            <p class="sidebar-title">Account</p>
+
+            <div class="quick-actions">
+                <h4>{{ request.user.username }}</h4>
+
+                <a href="{% url 'logout' %}"
+                   class="action-button secondary">
+                    Sign Out
+                </a>
+            </div>
+        </div>
+
     </div>
 
-</div>
 
-
-<!-- =========================================
-     MAIN CONTENT
-     ========================================= -->
-<div class="dashboard-content">
+    <!-- =========================================
+         MAIN CONTENT
+         ========================================= -->
+    <div class="dashboard-content">
 
     <div class="dashboard-container">
 
@@ -231,7 +232,7 @@
 
                             data-project-physical-progress-percentage="{% if project.physical_progress_percentage is not None %}{{ project.physical_progress_percentage|floatformat:2 }}{% endif %}"
 
-                            data-project-created-by="{{ project.created_by.get_full_name|default:project.created_by.username|escape }}"
+                            data-project-created-by="{% if project.created_by %}{{ project.created_by.get_full_name|default:project.created_by.username|escape }}{% else %}Unknown{% endif %}"
 
                             data-project-created-at="{{ project.created_at|date:'M d, Y \a\t H:i' }}"
 

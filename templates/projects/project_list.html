@@ -69,7 +69,7 @@
                            data-project-actual-start-date="{% if project.actual_start_date %}{{ project.actual_start_date|date:'M d, Y' }}{% endif %}"
                            data-project-cost-progress-percentage="{% if project.cost_progress_percentage is not None %}{{ project.cost_progress_percentage|floatformat:2 }}{% endif %}"
                            data-project-physical-progress-percentage="{% if project.physical_progress_percentage is not None %}{{ project.physical_progress_percentage|floatformat:2 }}{% endif %}"
-                           data-project-created-by="{{ project.created_by.get_full_name|default:project.created_by.username|escape }}"
+                           data-project-created-by="{% if project.created_by %}{{ project.created_by.get_full_name|default:project.created_by.username|escape }}{% else %}Unknown{% endif %}"
                            data-project-created-at="{{ project.created_at|date:'M d, Y \a\t H:i' }}"
                            data-project-updated-at="{{ project.updated_at|date:'M d, Y \a\t H:i' }}"
                            data-project-description="{{ project.description|default_if_none:''|escape }}"
