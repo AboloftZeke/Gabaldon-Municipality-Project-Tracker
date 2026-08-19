@@ -132,6 +132,30 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
                 args=[self.infrastructure.pk],
             ),
         )
+        self.assertContains(
+            response,
+            'data-project-modal-trigger',
+        )
+        self.assertContains(
+            response,
+            f'data-project-detail-url="{row["detail_url"]}"',
+        )
+        self.assertContains(
+            response,
+            'data-project-office="Municipal Engineering Office"',
+        )
+        self.assertContains(
+            response,
+            'data-project-contractor="Public Works Contractor"',
+        )
+        self.assertContains(
+            response,
+            'data-project-source-of-fund="Local Development Fund"',
+        )
+        self.assertContains(
+            response,
+            'data-project-physical-progress-percentage="55.0%"',
+        )
 
     def test_public_infrastructure_detail_is_available_without_login(self):
         detail_url = reverse(

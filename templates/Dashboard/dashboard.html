@@ -183,7 +183,33 @@
                    data-project-detail-url="{{ row.detail_url }}"
                    data-project-description="{{ row.description }}">View</a>
                 {% else %}
-                <a href="{{ row.detail_url }}" class="row-link">View</a>
+                <a href="#"
+                   class="row-link"
+                   data-project-modal-trigger
+                   data-project-title="{{ row.title }}"
+                   data-project-type-label="{{ row.type_label }}"
+                   data-project-status-label="{{ row.status_label }}"
+                   data-project-status-class="status-{{ row.status_key }}"
+                   data-project-office="{{ row.office }}"
+                   data-project-location="{{ row.location }}"
+                   data-project-category="{{ row.category_label }}"
+                   data-project-contractor="{{ row.contractor }}"
+                   data-project-procurement-method="{{ row.procurement_method }}"
+                   data-project-source-of-fund="{{ row.source_of_fund }}"
+                   data-project-budget-amount="{% if row.budget_amount %}P{{ row.budget_amount|floatformat:2 }}{% endif %}"
+                   data-project-abc-amount="{% if row.abc_amount %}P{{ row.abc_amount|floatformat:2 }}{% endif %}"
+                   data-project-contract-price="{% if row.contract_price %}P{{ row.contract_price|floatformat:2 }}{% endif %}"
+                   data-project-progress-percentage="{% if row.progress_percentage is not None %}{{ row.progress_percentage|floatformat:1 }}%{% endif %}"
+                   data-project-cost-progress-percentage="{% if row.cost_progress_percentage != '' %}{{ row.cost_progress_percentage|floatformat:1 }}%{% endif %}"
+                   data-project-physical-progress-percentage="{% if row.physical_progress_percentage != '' %}{{ row.physical_progress_percentage|floatformat:1 }}%{% endif %}"
+                   data-project-planned-start-date="{{ row.planned_start_date|date:'F j, Y' }}"
+                   data-project-planned-end-date="{{ row.planned_end_date|date:'F j, Y' }}"
+                   data-project-actual-start-date="{{ row.actual_start_date|date:'F j, Y' }}"
+                   data-project-created-by="{{ row.created_by_name }}"
+                   data-project-created-at="{{ row.created_at|date:'F j, Y' }}"
+                   data-project-updated-at="{{ row.updated_at|date:'F j, Y' }}"
+                   data-project-detail-url="{{ row.detail_url }}"
+                   data-project-description="{{ row.description }}">View</a>
                 {% endif %}
               </td>
             </tr>
@@ -227,3 +253,4 @@
   <script src="{% static 'js/templates/projects/project_modal.js' %}"></script>
 </body>
 </html>
+
