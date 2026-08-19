@@ -1,6 +1,24 @@
 /* =========================================
    SIDEBAR
    ========================================= */
+.infrastructure-project {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.infrastructure-project:hover {
+    transform: translateY(-3px);
+}
+
+.infrastructure-project.is-hidden {
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+}
 
 .project-dashboard-layout {
     display: grid;
