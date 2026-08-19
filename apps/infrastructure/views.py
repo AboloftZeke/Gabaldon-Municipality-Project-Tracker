@@ -599,7 +599,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
                 'remarks',
                 '',
             ),
-            'created_by': context['project_manager'],
+            'created_by': creator,
             'created_at': getattr(infra, 'created_at', None),
             'updated_at': getattr(infra, 'updated_at', None),
         }
