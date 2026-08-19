@@ -101,21 +101,17 @@ class InfrastructureProjectForm(forms.Form):
             'placeholder': 'Enter category'
         })
     )
-    implementing_office = forms.CharField(
+    implementing_office = forms.ModelChoiceField(
         required=False,
-        max_length=255,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Enter implementing office'
-        })
+        queryset=ImplementingOffice.objects.none(),
+        empty_label='Select Implementing Office',
+        widget=forms.Select(attrs={'class': 'form-select'}),
     )
-    contractor = forms.CharField(
+    contractor = forms.ModelChoiceField(
         required=False,
-        max_length=255,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Enter contractor'
-        })
+        queryset=Contractor.objects.none(),
+        empty_label='Select Contractor',
+        widget=forms.Select(attrs={'class': 'form-select'}),
     )
     procurement_method = forms.ChoiceField(
         required=True,
@@ -141,13 +137,11 @@ class InfrastructureProjectForm(forms.Form):
     notice_award_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     notice_to_proceed_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     duration_days = forms.IntegerField(required=False)
-    fund_source = forms.CharField(
+    fund_source = forms.ModelChoiceField(
         required=False,
-        max_length=255,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Enter fund source'
-        })
+        queryset=FundSource.objects.none(),
+        empty_label='Select Fund Source',
+        widget=forms.Select(attrs={'class': 'form-select'}),
     )
     actual_expenditure = forms.DecimalField(required=False, max_digits=15, decimal_places=2)
 
@@ -169,6 +163,15 @@ class InfrastructureProjectForm(forms.Form):
         self.fields['category'].queryset = InfrastructureCategory.objects.filter(
             is_active=True
         ).order_by('category_name')
+        self.fields['implementing_office'].queryset = ImplementingOffice.objects.filter(
+            is_active=True
+        ).order_by('office_name')
+        self.fields['contractor'].queryset = Contractor.objects.filter(
+            is_active=True
+        ).order_by('contractor_name')
+        self.fields['fund_source'].queryset = FundSource.objects.filter(
+            is_active=True
+        ).order_by('fund_source_name')
         self.fields['municipality'].initial = 'Gabaldon'
         self.fields['province'].initial = 'Nueva Ecija'
         self.fields['municipality'].widget.attrs['readonly'] = 'readonly'
@@ -215,9 +218,11 @@ class InfrastructureProjectForm(forms.Form):
         self.initial.setdefault('description', infra.infrastructure_description)
         self.initial.setdefault('category', infra.category_id)
 
-        # Note: contractor and implementing_office cannot be safely preloaded due to property shadowing of ForeignKey fields.
-        # The form will still save them correctly when submitted; they just won't show as selected in edit mode.
-        # This is a known limitation of the compatibility layer and does not affect saving or functionality.
+        self.initial.setdefault('contractor', infra.contractor_id)
+        self.initial.setdefault(
+            'implementing_office',
+            infra.implementing_office_id,
+        )
 
         self.initial.setdefault('procurement_method', infra.procurement_method)
         self.initial.setdefault('award_status', infra.award_status)
@@ -468,31 +473,8 @@ class InfrastructureProjectForm(forms.Form):
             addr.save()
             infra.address = addr
 
-        contractor_value = self.cleaned_data.get('contractor')
-
-        if contractor_value:
-            if isinstance(contractor_value, Contractor):
-                infra.contractor = contractor_value
-            else:
-                contractor_name = str(contractor_value).strip()
-
-                contractor_obj = Contractor.objects.filter(
-                    contractor_name__iexact=contractor_name
-                ).first()
-
-                if contractor_obj is None:
-                    contractor_obj = Contractor.objects.create(
-                        contractor_name=contractor_name
-                    )
-
-                infra.contractor = contractor_obj
-        else:
-            infra.contractor = None
-        implementing_office = self._get_or_create_implementing_office(
-            data.get('implementing_office')
-        )
-
-        infra.implementing_office = implementing_office
+        infra.contractor = data.get('contractor')
+        infra.implementing_office = data.get('implementing_office')
         infra.procurement_method = data.get('procurement_method')
         infra.procurement_method = data.get('procurement_method')
         infra.award_status = data.get('award_status')
@@ -526,15 +508,18 @@ class InfrastructureProjectForm(forms.Form):
 
         abc = data.get('abc_amount')
         bid = data.get('contract_price')
-        fund_source_name = data.get('fund_source')
-        fund_source = self._get_or_create_fund_source(
-            fund_source_name
-        )
-
+        fund_source = data.get('fund_source')
         actual_exp = data.get('actual_expenditure')
+        existing_fin = infra.financial_records.order_by('-financial_id').first()
 
-        if abc is not None or bid is not None or fund_source is not None or actual_exp is not None:
-            fin = infra.financial_records.order_by('-financial_id').first() or Financial(infrastructure=infra)
+        if (
+            abc is not None
+            or bid is not None
+            or fund_source is not None
+            or actual_exp is not None
+            or existing_fin is not None
+        ):
+            fin = existing_fin or Financial(infrastructure=infra)
             fin.approved_budget = abc if abc is not None else fin.approved_budget
             fin.bid_amount = bid if bid is not None else fin.bid_amount
             fin.fund_source = fund_source
