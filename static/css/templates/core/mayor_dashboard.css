@@ -28,7 +28,7 @@
     }
 
     header {
-        background: var(--panel-purple);
+        background: var(--panel-green);
         color: var(--white);
         padding: 0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -217,7 +217,7 @@
     .welcome-text h3 {
         font-size: 1.5rem;
         font-weight: 700;
-        color: var(--panel-purple);
+        color: var(--panel-green);
         margin-bottom: 0.5rem;
     }
 
