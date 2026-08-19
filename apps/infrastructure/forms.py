@@ -1,4 +1,5 @@
 from unicodedata import category
+from django.db import IntegrityError
 
 from django import forms
 from django.core.files.storage import default_storage
@@ -307,7 +308,7 @@ class InfrastructureProjectForm(forms.Form):
             return office
 
         return ImplementingOffice.objects.create(
-            office_name=os.name
+            office_name=name
         )
 
 
@@ -392,22 +393,63 @@ class InfrastructureProjectForm(forms.Form):
         infra.infrastructure_title = data.get('title') or infra.infrastructure_title
         infra.infrastructure_description = data.get('description') or ''
 
-        category_name = data.get('category')
+        category_name = (data.get('category') or '').strip()
 
-        if category_name == 'Other':
-            category_name = (data.get('other_category') or '').strip()
+        # If "Other" was selected, use the value entered in the
+        # Other Category field instead.
+        if category_name.lower() == 'other':
+            category_name = (
+                data.get('other_category') or ''
+            ).strip()
 
         if category_name:
+            # First try an exact match
             category_obj = InfrastructureCategory.objects.filter(
-                category_name__iexact=category_name
+                category_name=category_name
             ).first()
 
+            # Then try a case-insensitive match
             if category_obj is None:
-                category_obj = InfrastructureCategory.objects.create(
-                    category_name=category_name
+                category_obj = InfrastructureCategory.objects.filter(
+                    category_name__iexact=category_name
+                ).first()
+
+            # Create only if the category truly does not exist
+            if category_obj is None:
+                category_code = (
+                    category_name.upper()
+                    .strip()
+                    .replace(' ', '_')
+                    .replace('-', '_')
+                    .replace('/', '_')
                 )
 
+                base_code = category_code
+                counter = 1
+
+                while InfrastructureCategory.objects.filter(
+                    category_code=category_code
+                ).exists():
+                    counter += 1
+                    category_code = f'{base_code}_{counter}'
+
+                try:
+                    category_obj = InfrastructureCategory.objects.create(
+                        category_name=category_name,
+                        category_code=category_code
+                    )
+                except IntegrityError:
+                    # Another existing record may have matched while
+                    # this request was running.
+                    category_obj = InfrastructureCategory.objects.filter(
+                        category_name__iexact=category_name
+                    ).first()
+
+                    if category_obj is None:
+                        raise
+
             infra.category = category_obj
+
         else:
             infra.category = None
 
@@ -437,7 +479,26 @@ class InfrastructureProjectForm(forms.Form):
             addr.save()
             infra.address = addr
 
-        infra.contractor = data.get('contractor')
+        contractor_value = self.cleaned_data.get('contractor')
+
+        if contractor_value:
+            if isinstance(contractor_value, Contractor):
+                infra.contractor = contractor_value
+            else:
+                contractor_name = str(contractor_value).strip()
+
+                contractor_obj = Contractor.objects.filter(
+                    contractor_name__iexact=contractor_name
+                ).first()
+
+                if contractor_obj is None:
+                    contractor_obj = Contractor.objects.create(
+                        contractor_name=contractor_name
+                    )
+
+                infra.contractor = contractor_obj
+        else:
+            infra.contractor = None
         implementing_office = self._get_or_create_implementing_office(
             data.get('implementing_office')
         )

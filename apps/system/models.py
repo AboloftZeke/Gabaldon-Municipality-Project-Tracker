@@ -426,31 +426,7 @@ class Infrastructure_Project(models.Model):
     # Keep these compatibility properties to avoid ORM reads for legacy-missing
     # contractor/implementing_office columns while still allowing form
     # assignment in memory.
-    @property
-    def contractor(self):
-        value = getattr(self, '_contractor_value', None)
-        if hasattr(value, 'contractor_name'):
-            return value.contractor_name
-        return value
-
-    @contractor.setter
-    def contractor(self, value):
-        self._contractor_value = value
-        if hasattr(value, 'contractor_id'):
-            self.contractor_id = value.contractor_id
-
-    @property
-    def implementing_office(self):
-        value = getattr(self, '_implementing_office_value', None)
-        if hasattr(value, 'office_name'):
-            return value.office_name
-        return value
-
-    @implementing_office.setter
-    def implementing_office(self, value):
-        self._implementing_office_value = value
-        if hasattr(value, 'office_id'):
-            self.implementing_office_id = value.office_id
+    
 
     @property
     def source_of_fund(self):

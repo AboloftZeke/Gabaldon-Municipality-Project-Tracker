@@ -175,53 +175,330 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         project = self.object
-        has_coordinates = project.latitude is not None and project.longitude is not None
-        fallback_lat = 15.2915
-        fallback_lng = 121.3386
-        map_lat = float(project.latitude) if has_coordinates else fallback_lat
-        map_lng = float(project.longitude) if has_coordinates else fallback_lng
+
+        # ---------------------------------------------------------
+        # FIND THE NORMALIZED INFRASTRUCTURE PROJECT
+        # ---------------------------------------------------------
+        infra = (
+            Infrastructure_Project.objects
+            .filter(infrastructure_id=project.pk)
+            .select_related(
+                'project',
+                'address',
+                'category',
+            )
+            .prefetch_related('financial_records__fund_source')
+            .first()
+        )
+
+        # ---------------------------------------------------------
+        # BASIC PROJECT INFORMATION
+        # ---------------------------------------------------------
+        if infra and infra.project:
+            base_project = infra.project
+        else:
+            base_project = project
 
         context['project_code'] = f'INF-{project.pk:05d}'
         context['project_type_label'] = 'Infrastructure'
-        creator = project.created_by
-        context['project_manager'] = creator.get_full_name() or creator.username if creator else 'N/A'
-        context['project_progress_value'] = project.physical_progress_percentage if project.physical_progress_percentage is not None else project.cost_progress_percentage
-        context['project_budget_value'] = project.abc_amount if project.abc_amount is not None else project.contract_price
-        context['project_target_completion_date'] = project.planned_end_date
-        context['project_google_maps_url'] = f'https://www.google.com/maps?q={map_lat},{map_lng}'
-        # Populate project images (latest first)
+
+        creator = getattr(base_project, 'created_by_user', None)
+
+        if creator:
+            context['project_manager'] = (
+                creator.get_full_name() or creator.username
+            )
+        else:
+            context['project_manager'] = 'N/A'
+
+        # ---------------------------------------------------------
+        # ADDRESS / GIS
+        # ---------------------------------------------------------
+        address = getattr(infra, 'address', None) if infra else None
+
+        # -----------------------------------------
+        # LOCATION
+        # -----------------------------------------
+
+        street = ''
+        barangay = ''
+        municipality = 'Gabaldon'
+        province = 'Nueva Ecija'
+
+        latitude = None
+        longitude = None
+
+        if address:
+            street = address.street or ''
+            barangay = address.barangay or ''
+            municipality = address.municipality or 'Gabaldon'
+            province = address.province or 'Nueva Ecija'
+
+            latitude = address.latitude
+            longitude = address.longitude
+
+
+        # -----------------------------------------
+        # GIS COORDINATES
+        # -----------------------------------------
+
+        has_coordinates = (
+            latitude is not None and
+            longitude is not None
+        )
+
+        fallback_lat = 15.2915
+        fallback_lng = 121.3386
+
+        if has_coordinates:
+            map_lat = float(latitude)
+            map_lng = float(longitude)
+        else:
+            map_lat = fallback_lat
+            map_lng = fallback_lng
+
+        # ---------------------------------------------------------
+        # CATEGORY
+        # ---------------------------------------------------------
+        category_name = 'Not specified'
+
+        if infra and infra.category:
+            category_name = (
+                infra.category.category_name or 'Not specified'
+            )
+
+        # ---------------------------------------------------------
+        # IMPLEMENTING OFFICE
+        # ---------------------------------------------------------
+        implementing_office_name = 'Not specified'
+
+        if infra and infra.implementing_office:
+            implementing_office_name = (
+                infra.implementing_office.office_name
+                or 'Not specified'
+            )
+
+        # ---------------------------------------------------------
+        # CONTRACTOR
+        # ---------------------------------------------------------
+        contractor_name = 'Not specified'
+
+        if infra and infra.contractor:
+            contractor_name = (
+                infra.contractor.contractor_name
+                or 'Not specified'
+            )
+
+        # ---------------------------------------------------------
+        # FINANCIAL RECORD
+        # ---------------------------------------------------------
+        financial = None
+
+        if infra:
+            financial = (
+                infra.financial_records
+                .order_by('-financial_id')
+                .first()
+            )
+
+        if financial:
+            budget_value = financial.approved_budget
+            contract_value = financial.bid_amount
+            actual_expenditure = financial.actual_expenditure
+
+            if financial.fund_source:
+                funding_source_name = (
+                    financial.fund_source.fund_source_name
+                    or 'Not specified'
+                )
+            else:
+                funding_source_name = 'Not specified'
+        else:
+            budget_value = None
+            contract_value = None
+            actual_expenditure = None
+            funding_source_name = 'Not specified'
+
+        # ---------------------------------------------------------
+        # PROGRESS
+        # ---------------------------------------------------------
+        physical_progress = None
+        cost_progress = None
+
+        if infra:
+            physical_progress = infra.physical_progress_percentage
+            cost_progress = infra.cost_progress_percentage
+
+        if physical_progress is not None:
+            progress_value = physical_progress
+        else:
+            progress_value = cost_progress
+
+        # ---------------------------------------------------------
+        # DATES
+        # ---------------------------------------------------------
+        planned_start_date = None
+        planned_end_date = None
+
+        if infra:
+            planned_start_date = infra.planned_start_date
+            planned_end_date = infra.planned_end_date
+
+        # ---------------------------------------------------------
+        # CONTEXT VALUES
+        # ---------------------------------------------------------
+        context['project_progress_value'] = progress_value
+        context['project_budget_value'] = budget_value
+        context['project_target_completion_date'] = planned_end_date
+
+        context['project_google_maps_url'] = (
+            f'https://www.google.com/maps?q={map_lat},{map_lng}'
+        )
+
+        # ---------------------------------------------------------
+        # PROJECT IMAGES
+        # ---------------------------------------------------------
         imgs = []
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=project.id).select_related('project').first()
+
         if infra and getattr(infra, 'project', None):
-            imgs = list(infra.project.images.order_by('-created_at'))
+            imgs = list(
+                infra.project.images.order_by('-created_at')
+            )
+
         context['project_images'] = imgs
-        context['project_placeholder_image'] = static('images/project-placeholder.svg')
+
+        context['project_placeholder_image'] = static(
+            'images/project-placeholder.svg'
+        )
+
+        # ---------------------------------------------------------
+        # BARANGAY
+        # ---------------------------------------------------------
+        barangay = 'Not specified'
+
+        if address and address.barangay:
+            barangay = address.barangay
+
+        # ---------------------------------------------------------
+        # MUNICIPALITY
+        # ---------------------------------------------------------
+        municipality = 'Gabaldon'
+
+        if address and address.municipality:
+            municipality = address.municipality
+
+        # ---------------------------------------------------------
+        # PROVINCE
+        # ---------------------------------------------------------
+        province = 'Nueva Ecija'
+
+        if address and address.province:
+            province = address.province
+
+        # ---------------------------------------------------------
+        # STATUS
+        # ---------------------------------------------------------
+        status_label = 'Not specified'
+
+        if hasattr(project, 'get_award_status_display'):
+            status_label = (
+                project.get_award_status_display()
+                or 'Not specified'
+            )
+
+        # ---------------------------------------------------------
+        # PROJECT NAME / DESCRIPTION
+        # ---------------------------------------------------------
+        project_name = getattr(
+            base_project,
+            'title',
+            ''
+        ) or 'Not specified'
+
+        description = getattr(
+            base_project,
+            'description',
+            ''
+        ) or ''
+
+        # ---------------------------------------------------------
+        # GIS DATA
+        # ---------------------------------------------------------
         context['project_gis'] = {
             'has_coordinates': has_coordinates,
-            'latitude': float(project.latitude) if has_coordinates else '',
-            'longitude': float(project.longitude) if has_coordinates else '',
+
+            'latitude': (
+                float(latitude)
+                if has_coordinates
+                else ''
+            ),
+
+            'longitude': (
+                float(longitude)
+                if has_coordinates
+                else ''
+            ),
+
             'map_center_lat': map_lat,
             'map_center_lng': map_lng,
-            'google_maps_url': f'https://www.google.com/maps?q={map_lat},{map_lng}',
-            'barangay': project.get_location_display(),
-            'municipality': 'Gabaldon',
-            'province': 'Nueva Ecija',
-            'status_label': project.get_award_status_display(),
-            'progress_label': f'{context["project_progress_value"]:.2f}%' if context['project_progress_value'] is not None else '0%',
-            'budget_label': f'₱ {context["project_budget_value"]:,.2f}' if context['project_budget_value'] is not None else 'N/A',
-            'project_name': project.title,
+
+            'google_maps_url': (
+                f'https://www.google.com/maps'
+                f'?q={map_lat},{map_lng}'
+            ),
+            'street': street,
+            'barangay': barangay,
+            'municipality': municipality,
+            'province': province,
+
+            'status_label': status_label,
+
+            'progress_label': (
+                f'{progress_value:.2f}%'
+                if progress_value is not None
+                else '0%'
+            ),
+
+            'budget_label': (
+                f'₱ {budget_value:,.2f}'
+                if budget_value is not None
+                else 'N/A'
+            ),
+
+            'project_name': project_name,
+
             'project_code': context['project_code'],
+
             'project_type': 'Infrastructure',
-            'description': project.description or '',
+
+            'description': description,
+
             'project_manager': context['project_manager'],
-            'contractor': project.contractor or '',
-            'funding_source': project.source_of_fund or '',
-            'implementing_office': project.implementing_office or '',
-            'start_date': project.planned_start_date,
-            'target_completion_date': project.planned_end_date,
-            'coordinate_message': 'Location has not yet been assigned.' if not has_coordinates else '',
-            'detail_url': reverse('engineering_projects:project_detail', args=[project.pk]),
+
+            'category': category_name,
+
+            'contractor': contractor_name,
+
+            'funding_source': funding_source_name,
+
+            'implementing_office': implementing_office_name,
+
+            'start_date': planned_start_date,
+
+            'target_completion_date': planned_end_date,
+
+            'coordinate_message': (
+                'Location has not yet been assigned.'
+                if not has_coordinates
+                else ''
+            ),
+
+            'detail_url': reverse(
+                'engineering_projects:project_detail',
+                args=[project.pk]
+            ),
         }
+
         return context
 
 
