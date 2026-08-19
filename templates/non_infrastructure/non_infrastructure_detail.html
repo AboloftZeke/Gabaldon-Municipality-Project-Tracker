@@ -26,34 +26,45 @@
     <!-- Project Header -->
     <div class="project-detail-header">
 
-        <h2>{{ project_name }}</h2>
+        <div class="project-detail-header-media" aria-hidden="true">
+            {% if project_images %}
+                <img src="{{ project_images.0.image_url }}" alt="">
+            {% else %}
+                <img src="{% static 'images/project-placeholder.svg' %}" alt="">
+            {% endif %}
+        </div>
+        <div class="project-detail-header-overlay"></div>
 
-        <div class="project-meta">
+        <div class="project-detail-header-content">
+            <h2>{{ project_name }}</h2>
 
-            <!-- Project Code -->
-            <div class="meta-item">
-                <div class="meta-label">Project Code</div>
-                <div class="meta-value">
-                    {{ project_code }}
+            <div class="project-meta">
+
+                <!-- Project Code -->
+                <div class="meta-item">
+                    <div class="meta-label">Project Code</div>
+                    <div class="meta-value">
+                        {{ project_code }}
+                    </div>
                 </div>
-            </div>
 
-            <!-- Status -->
-            <div class="meta-item">
-                <div class="meta-label">Status</div>
-                <div class="meta-value">
-                    {{ project_status }}
+                <!-- Status -->
+                <div class="meta-item">
+                    <div class="meta-label">Status</div>
+                    <div class="meta-value">
+                        {{ project_status }}
+                    </div>
                 </div>
-            </div>
 
-            <!-- Category -->
-            <div class="meta-item">
-                <div class="meta-label">Category</div>
-                <div class="meta-value">
-                    {{ project_category|default:"N/A" }}
+                <!-- Category -->
+                <div class="meta-item">
+                    <div class="meta-label">Category</div>
+                    <div class="meta-value">
+                        {{ project_category|default:"N/A" }}
+                    </div>
                 </div>
-            </div>
 
+            </div>
         </div>
 
     </div>
