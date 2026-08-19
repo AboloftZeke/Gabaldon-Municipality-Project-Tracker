@@ -91,12 +91,19 @@ class CustomUserChangeForm(forms.ModelForm):
 
     role = forms.ChoiceField(label='Department', choices=ROLE_CHOICES)
 
+    # Preserve the user's current activation state through the edit/confirm
+    # workflow without exposing activation as an editable field. Activation and
+    # deactivation are handled by their dedicated views.
+    is_active = forms.BooleanField(required=False, widget=forms.HiddenInput)
+
     class Meta:
         model = User
         fields = ('username', 'email', 'first_name', 'last_name')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['is_active'].initial = self.instance.is_active
+
         # Set initial role based on the compatibility profile or superuser status.
         profile = getattr(self.instance, 'profile', None)
         if profile:
