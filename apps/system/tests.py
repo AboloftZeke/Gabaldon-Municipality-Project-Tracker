@@ -116,9 +116,11 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             '/media/projects/infrastructure-cover.jpg',
         )
         self.assertEqual(row['budget'], 2500000)
+        self.assertTrue(row['has_financial'])
         self.assertEqual(row['abc_amount'], 2500000)
         self.assertEqual(row['contract_price'], 2400000)
         self.assertEqual(row['progress'], 55)
+        self.assertTrue(row['has_progress'])
         self.assertEqual(row['cost_progress_percentage'], 42)
         self.assertEqual(row['physical_progress_percentage'], 55)
         self.assertEqual(
@@ -156,6 +158,15 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             response,
             'data-project-physical-progress-percentage="55.0%"',
         )
+        self.assertContains(
+            response,
+            '/media/projects/infrastructure-cover.jpg',
+        )
+        self.assertNotContains(response, 'images/infra-icon.png')
+        self.assertContains(response, 'P2500000.00')
+        self.assertContains(response, '>55%<', html=False)
+        self.assertContains(response, 'Municipal Engineering Office')
+        self.assertContains(response, 'Public Works Contractor')
 
     def test_public_infrastructure_detail_is_available_without_login(self):
         detail_url = reverse(

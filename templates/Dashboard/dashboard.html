@@ -140,14 +140,10 @@
                 data-hide-financial="{{ row.hide_financial|lower }}">
               <td>
                 <div class="project-cell">
-                  {% if row.category == 'infra' %}
-                  <img src="{% static 'images/infra-icon.png' %}" alt="Infrastructure" class="project-thumb">
+                  {% if row.cover_image_url %}
+                  <img src="{{ row.cover_image_url }}" alt="{{ row.title }} cover" class="project-thumb">
                   {% else %}
-                    {% if row.cover_image_url %}
-                    <img src="{{ row.cover_image_url }}" alt="{{ row.title }} cover" class="project-thumb">
-                    {% else %}
-                    <img src="{% static 'images/project-placeholder.svg' %}" alt="No project cover available" class="project-thumb">
-                    {% endif %}
+                  <img src="{% static 'images/project-placeholder.svg' %}" alt="No project cover available" class="project-thumb">
                   {% endif %}
                   <div>
                     <div class="project-title">{{ row.title }}</div>
@@ -159,9 +155,12 @@
               </td>
               <td>{{ row.type_label }}</td>
               <td><span class="status-chip status-{{ row.status_key }}">{{ row.status_label }}</span></td>
-              <td class="financial-cell">{% if not row.hide_financial %}P{{ row.budget|floatformat:2 }}{% else %}—{% endif %}</td>
-              <td class="financial-cell">{% if not row.hide_financial %}{{ row.progress|floatformat:0 }}%{% else %}—{% endif %}</td>
-              <td>{{ row.office }}</td>
+              <td class="financial-cell">{% if row.has_financial %}P{{ row.budget|floatformat:2 }}{% else %}—{% endif %}</td>
+              <td class="financial-cell">{% if row.has_progress %}{{ row.progress|floatformat:0 }}%{% else %}—{% endif %}</td>
+              <td>
+                {% if row.office %}{{ row.office }}{% else %}—{% endif %}
+                {% if row.contractor %}<div class="project-subtext">{{ row.contractor }}</div>{% endif %}
+              </td>
               <td>
                 {% if row.category == 'noninfra' %}
                 <a href="#"
@@ -232,7 +231,11 @@
         <li>
           <div>
             <p class="recent-title">{{ row.title }}</p>
-            <p class="recent-subtext">{{ row.type_label }} - {{ row.location }} - {{ row.status_label }}</p>
+            <p class="recent-subtext">
+              {{ row.type_label }}
+              {% if row.location %} - {{ row.location }}{% endif %}
+              {% if row.status_label %} - {{ row.status_label }}{% endif %}
+            </p>
           </div>
           <span class="recent-date">{{ row.created_at|date:"M d, Y" }}</span>
         </li>

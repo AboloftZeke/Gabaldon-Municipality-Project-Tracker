@@ -380,6 +380,16 @@ class PublicDashboardView(TemplateView):
             budget_amount = approved_budget or contract_price or 0
             cost_progress = p.cost_progress_percentage
             physical_progress = p.physical_progress_percentage
+            has_financial = bool(
+                financial and (
+                    approved_budget is not None
+                    or contract_price is not None
+                )
+            )
+            has_progress = (
+                physical_progress is not None
+                or cost_progress is not None
+            )
             progress = (
                 physical_progress
                 if physical_progress is not None
@@ -423,10 +433,12 @@ class PublicDashboardView(TemplateView):
                     if financial and financial.fund_source else ''
                 ),
                 'budget': budget_amount,
+                'has_financial': has_financial,
                 'budget_amount': budget_amount,
                 'abc_amount': approved_budget or '',
                 'contract_price': contract_price or '',
                 'progress': progress,
+                'has_progress': has_progress,
                 'progress_percentage': progress,
                 'overall_progress_percentage': progress,
                 'cost_progress_percentage': (
@@ -449,7 +461,7 @@ class PublicDashboardView(TemplateView):
                 'created_at': p.created_at,
                 'updated_at': p.updated_at,
                 'detail_url': detail_url,
-                'hide_financial': True,  # Flag to hide financial data for infrastructure
+                'hide_financial': False,
             })
 
         # Add Non-Infrastructure Projects to rows
@@ -508,11 +520,13 @@ class PublicDashboardView(TemplateView):
                 'source_of_fund': '',
 
                 'budget': 0,
+                'has_financial': False,
                 'budget_amount': 0,
                 'abc_amount': '',
                 'contract_price': '',
 
                 'progress': 0,
+                'has_progress': False,
                 'progress_percentage': 0,
                 'overall_progress_percentage': '',
                 'cost_progress_percentage': '',
