@@ -84,9 +84,15 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
         self.assertTrue(
             all(row['location'] == '' for row in noninfra_rows)
         )
-        self.assertTrue(
-            all(row['detail_url'] == '' for row in noninfra_rows)
-        )
+        for row in noninfra_rows:
+            project_pk = int(row['record_id'].removeprefix('noninfra-'))
+            self.assertEqual(
+                row['detail_url'],
+                reverse(
+                    'public_non_infrastructure_project_detail',
+                    args=[project_pk],
+                ),
+            )
 
         mayor_detail_url = reverse(
             'mayor_projects:non_infrastructure_project_detail',
@@ -94,6 +100,26 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
         )
         self.assertNotContains(response, mayor_detail_url)
         self.assertContains(response, 'data-project-modal-trigger', count=3)
+
+    def test_public_non_infrastructure_detail_is_available_without_login(self):
+        project = Non_Infrastructure_Project.objects.get(status='ongoing')
+        detail_url = reverse(
+            'public_non_infrastructure_project_detail',
+            args=[project.pk],
+        )
+
+        response = self.client.get(detail_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'Dashboard/non_infrastructure_detail.html',
+        )
+        self.assertContains(response, project.non_infra_name)
+        self.assertContains(response, '/media/projects/ongoing-cover.jpg')
+        self.assertNotContains(response, '<h3>Location</h3>', html=True)
+        self.assertNotContains(response, 'Edit Project')
+        self.assertNotContains(response, 'Delete Project')
 
 
 class UserDeactivateViewTests(TestCase):

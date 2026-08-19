@@ -103,6 +103,53 @@ class LogoutView(View):
         return render(request, 'core/logout.html')
 
 
+class PublicNonInfrastructureProjectDetailView(TemplateView):
+    """Public, read-only details for a non-infrastructure program."""
+    template_name = 'Dashboard/non_infrastructure_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        from apps.system.models import Non_Infrastructure_Project, Project_Image
+
+        project = get_object_or_404(
+            Non_Infrastructure_Project.objects.select_related(
+                'project',
+                'project__created_by_user',
+                'non_infra_category',
+            ).prefetch_related(
+                Prefetch(
+                    'project__images',
+                    queryset=Project_Image.objects.order_by(
+                        '-is_cover',
+                        '-created_at',
+                    ),
+                    to_attr='public_images',
+                )
+            ),
+            pk=self.kwargs['pk'],
+        )
+
+        creator = project.project.created_by_user if project.project else None
+
+        context.update({
+            'public_project': project,
+            'project_code': f'NINF-{project.pk:05d}',
+            'project_category': (
+                project.non_infra_category.type_name
+                if project.non_infra_category else ''
+            ),
+            'project_images': (
+                project.project.public_images if project.project else []
+            ),
+            'created_by_name': (
+                creator.get_full_name() or creator.username
+                if creator else ''
+            ),
+        })
+        return context
+
+
 class PublicDashboardView(TemplateView):
     template_name = 'Dashboard/dashboard.html'
 
@@ -318,9 +365,10 @@ class PublicDashboardView(TemplateView):
 
                 'created_at': p.created_at,
                 'updated_at': p.updated_at,
-                # Non-infrastructure details open in the public dashboard modal.
-                # Do not expose the protected Mayor's Office detail route here.
-                'detail_url': '',
+                'detail_url': reverse(
+                    'public_non_infrastructure_project_detail',
+                    args=[p.pk],
+                ),
                 'hide_financial': False,  # Non-infrastructure can show financial data if available
             })
 

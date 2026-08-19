@@ -1,0 +1,116 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ public_project.non_infra_name }} - Gabaldon Transparency Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_detail.css' %}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="site-brand">
+        <img src="{% static 'images/gabaldon-seal.png' %}" alt="Gabaldon Municipality Seal" class="site-seal">
+        <div class="site-brand-text">
+          <p>Republic of the Philippines</p>
+          <h2>Municipality of Gabaldon</h2>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="project-detail-container">
+    <a href="{% url 'public_dashboard' %}" class="btn btn-back">&larr; Back to Public Dashboard</a>
+
+    <section class="project-detail-header">
+      <p class="meta-label">Public Program Details</p>
+      <h2>{{ public_project.non_infra_name }}</h2>
+      <div class="project-meta">
+        <div class="meta-item">
+          <div class="meta-label">Program Code</div>
+          <div class="meta-value">{{ project_code }}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Status</div>
+          <div class="meta-value">{{ public_project.get_status_display }}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Category</div>
+          <div class="meta-value">{{ project_category|default:"N/A" }}</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="project-section">
+      <h3>Program Information</h3>
+      <div class="section-content">
+        <div class="content-item">
+          <div class="content-label">Proponent</div>
+          <div class="content-value">{{ public_project.proponent|default:"N/A" }}</div>
+        </div>
+        <div class="content-item">
+          <div class="content-label">Beneficiaries</div>
+          <div class="content-value">{{ public_project.beneficiaries|default_if_none:"N/A" }}</div>
+        </div>
+        <div class="content-item">
+          <div class="content-label">Published By</div>
+          <div class="content-value">{{ created_by_name|default:"N/A" }}</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="project-section">
+      <h3>Schedule</h3>
+      <div class="section-content">
+        <div class="content-item">
+          <div class="content-label">Event Date</div>
+          <div class="content-value">{{ public_project.event_date|date:"F j, Y"|default:"N/A" }}</div>
+        </div>
+        <div class="content-item">
+          <div class="content-label">Start Time</div>
+          <div class="content-value">{{ public_project.start_time|time:"g:i A"|default:"N/A" }}</div>
+        </div>
+        <div class="content-item">
+          <div class="content-label">End Time</div>
+          <div class="content-value">{{ public_project.end_time|time:"g:i A"|default:"N/A" }}</div>
+        </div>
+        <div class="content-item">
+          <div class="content-label">Venue</div>
+          <div class="content-value">{{ public_project.venue_name|default:"N/A" }}</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="project-section">
+      <h3>Description</h3>
+      <div class="section-content">
+        <div class="content-item">
+          <div class="content-value">{{ public_project.description|default:"No description provided." }}</div>
+        </div>
+      </div>
+    </section>
+
+    {% if project_images %}
+    <section class="project-section">
+      <h3>Program Images</h3>
+      <div class="section-content">
+        {% for image in project_images %}
+        <div class="project-image">
+          <img src="{{ image.image_url }}" alt="{{ public_project.non_infra_name }} photo {{ forloop.counter }}" style="width: 100%; height: auto; border-radius: 8px;">
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </main>
+
+  <footer class="site-footer">
+    <p>(c) 2026 Municipality of Gabaldon - Transparent Governance for the Community.</p>
+  </footer>
+</body>
+</html>

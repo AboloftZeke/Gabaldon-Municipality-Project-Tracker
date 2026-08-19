@@ -6,6 +6,11 @@ from . import gis_views
 urlpatterns = [
     path('', lambda request: redirect('login')),
     path('dashboard/', views.PublicDashboardView.as_view(), name='public_dashboard'),
+    path(
+        'dashboard/non-infrastructure/<int:pk>/',
+        views.PublicNonInfrastructureProjectDetailView.as_view(),
+        name='public_non_infrastructure_project_detail',
+    ),
 
     path('login/', views.LoginView.as_view(), name='login'),
     path('logout/', views.LogoutView.as_view(), name='logout'),

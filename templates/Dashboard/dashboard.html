@@ -180,6 +180,7 @@
                    data-project-created-by="{{ row.created_by_name }}"
                    data-project-created-at="{{ row.created_at|date:'F j, Y' }}"
                    data-project-updated-at="{{ row.updated_at|date:'F j, Y' }}"
+                   data-project-detail-url="{{ row.detail_url }}"
                    data-project-description="{{ row.description }}">View</a>
                 {% else %}
                 <a href="{{ row.detail_url }}" class="row-link">View</a>
