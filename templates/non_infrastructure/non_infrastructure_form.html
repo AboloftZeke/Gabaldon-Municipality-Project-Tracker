@@ -216,6 +216,8 @@
     <legend>Project Images</legend>
 
     <div class="form-group full-span">
+    
+        {{ form.images_to_delete }}
 
 
         <!-- =================================================
@@ -279,7 +281,7 @@
                             aria-label="Remove project photo {{forloop.counter}}"
                             title="Remove photo"
                             >
-                            x
+                            ×
                         </button>
                         </div>
 
@@ -471,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const imagesToDelete = new Set();
 
-    deleteButtons.foEach(function (button) {
+    deleteButtons.forEach(function (button) {
 
         button.addEventListener('click', function () {
 
