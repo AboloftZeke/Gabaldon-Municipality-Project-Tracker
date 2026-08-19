@@ -282,9 +282,52 @@ class InfrastructureProjectForm(forms.Form):
             self.initial.setdefault('actual_completion_date', sched.actual_completion_date)
 
         if infra.project:
-            latest_inspection = infra.project.inspections.order_by('-inspection_date', '-created_at').first()
+            latest_inspection = infra.project.inspections.order_by(
+                '-inspection_date',
+                '-created_at',
+            ).first()
             if latest_inspection:
-                self.initi    def _save_images(self, project):
+                self.initial.setdefault(
+                    'inspection_date',
+                    latest_inspection.inspection_date,
+                )
+                self.initial.setdefault(
+                    'inspection_completion_percentage',
+                    latest_inspection.completion_percentage,
+                )
+                self.initial.setdefault(
+                    'inspection_findings',
+                    latest_inspection.findings,
+                )
+                self.initial.setdefault(
+                    'inspection_remarks',
+                    latest_inspection.remarks,
+                )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        category_obj = cleaned_data.get('category')
+        other_category = (cleaned_data.get('other_category') or '').strip()
+
+        if (
+            category_obj is not None
+            and category_obj.category_code.lower() == 'other'
+            and not other_category
+        ):
+            self.add_error(
+                'other_category',
+                'Enter a category name when Other is selected.',
+            )
+
+        return cleaned_data
+
+    def clean_municipality(self):
+        return 'Gabaldon'
+
+    def clean_province(self):
+        return 'Nueva Ecija'
+
+    def _save_images(self, project):
         cover_selection = self.cleaned_data.get(
             'cover_image_selection',
             '',
@@ -352,32 +395,6 @@ class InfrastructureProjectForm(forms.Form):
         if selected_cover:
             project.images.filter(pk=selected_cover.pk).update(is_cover=True)
 
-
-        return 'Gabaldon'
-
-    def clean_province(self):
-        return 'Nueva Ecija'
-
-    def _save_images(self, project):
-        uploaded_files = []
-        if hasattr(self, 'files') and self.files:
-            raw_files = self.files.getlist('project_images') if hasattr(self.files, 'getlist') else self.files.get('project_images', [])
-            if isinstance(raw_files, (list, tuple)):
-                uploaded_files = raw_files
-            else:
-                uploaded_files = [raw_files]
-
-        if not uploaded_files:
-            return
-
-        project.images.all().delete()
-        for upload in uploaded_files:
-            if not upload or not getattr(upload, 'name', None):
-                continue
-            folder = os.path.join('projects', str(project.project_id))
-            filename = default_storage.save(os.path.join(folder, upload.name), upload)
-            file_url = default_storage.url(filename)
-            Project_Image.objects.create(project=project, image_url=file_url)
     def _get_or_create_implementing_office(self, name):
         name = (name or '').strip()
 
