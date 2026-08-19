@@ -1,131 +1,187 @@
 .project-detail-container {
-        max-width: 900px;
-        margin: 2rem auto;
-        padding: 0 1.5rem;
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+.project-detail-header {
+    position: relative;
+    overflow: hidden;
+    min-height: 300px;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    border: 1px solid #cbd5d1;
+    background: #174f35;
+    box-shadow: 0 16px 36px rgba(18, 61, 42, 0.16);
+}
+
+.project-detail-header-media,
+.project-detail-header-overlay {
+    position: absolute;
+    inset: 0;
+}
+
+.project-detail-header-media img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.project-detail-header-overlay {
+    background: linear-gradient(
+        100deg,
+        rgba(13, 55, 37, 0.94) 0%,
+        rgba(18, 79, 53, 0.82) 56%,
+        rgba(18, 79, 53, 0.58) 100%
+    );
+}
+
+.project-detail-header-content {
+    position: relative;
+    z-index: 1;
+    padding: 2rem;
+}
+
+.project-detail-header h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    margin: 0 0 1.5rem;
+    color: #ffffff;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+}
+
+.project-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.meta-item {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.68);
+    border-radius: 8px;
+    backdrop-filter: blur(3px);
+}
+
+.meta-label {
+    font-size: 0.85rem;
+    color: #587064;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.meta-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #17352a;
+}
+
+.project-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid #d1d5db;
+}
+
+.project-section h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 1rem 0;
+    color: #111827;
+}
+
+.section-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.content-item {
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.content-label {
+    font-size: 0.85rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.content-value {
+    font-size: 0.95rem;
+    color: #111827;
+    line-height: 1.5;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 180ms ease;
+}
+
+.btn-edit {
+    background: #7c3aed;
+    color: white;
+}
+
+.btn-edit:hover {
+    background: #6d28d9;
+}
+
+.btn-delete {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #b91c1c;
+}
+
+.btn-back {
+    background: #6b7280;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.btn-back:hover {
+    background: #4b5563;
+}
+
+@media (max-width: 680px) {
+    .project-detail-container {
+        margin: 1.25rem auto;
+        padding: 0 1rem;
     }
 
     .project-detail-header {
-        background: white;
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        border: 1px solid #d1d5db;
+        min-height: 260px;
     }
 
-    .project-detail-header h2 {
-        font-size: 2rem;
-        font-weight: 700;
-        margin: 0 0 1rem 0;
-        color: #111827;
-    }
-
-    .project-meta {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
-    }
-
-    .meta-item {
-        padding: 1rem;
-        background: #f9fafb;
-        border-radius: 8px;
-    }
-
-    .meta-label {
-        font-size: 0.85rem;
-        color: #6b7280;
-        text-transform: uppercase;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-
-    .meta-value {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #111827;
-    }
-
+    .project-detail-header-content,
     .project-section {
-        background: white;
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        border: 1px solid #d1d5db;
+        padding: 1.25rem;
     }
 
-    .project-section h3 {
-        font-size: 1.25rem;
-        font-weight: 700;
-        margin: 0 0 1rem 0;
-        color: #111827;
-    }
-
+    .project-meta,
     .section-content {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
+        grid-template-columns: 1fr;
     }
-
-    .content-item {
-        padding: 1rem;
-        background: #f9fafb;
-        border-radius: 8px;
-    }
-
-    .content-label {
-        font-size: 0.85rem;
-        color: #6b7280;
-        text-transform: uppercase;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-
-    .content-value {
-        font-size: 0.95rem;
-        color: #111827;
-        line-height: 1.5;
-    }
-
-    .action-buttons {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1.5rem;
-    }
-
-    .btn {
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-block;
-        transition: background 180ms ease;
-    }
-
-    .btn-edit {
-        background: #7c3aed;
-        color: white;
-    }
-
-    .btn-edit:hover {
-        background: #6d28d9;
-    }
-
-    .btn-delete {
-        background: #dc2626;
-        color: white;
-    }
-
-    .btn-delete:hover {
-        background: #b91c1c;
-    }
-
-    .btn-back {
-        background: #6b7280;
-        color: white;
-    }
-
-    .btn-back:hover {
-        background: #4b5563;
-    }
+}
