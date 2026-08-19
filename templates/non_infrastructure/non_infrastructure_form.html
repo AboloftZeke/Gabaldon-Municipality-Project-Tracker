@@ -39,7 +39,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="{{ form.non_infra_category.id_for_label }}">Category</label>
+                        <label for="{{ form.non_infra_category.id_for_label }}">Category*</label>
                         {{ form.non_infra_category }}
                         {% if form.non_infra_category.errors %}
                             <div class="error-message">{{ form.non_infra_category.errors.0 }}</div>
@@ -47,7 +47,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="{{ form.status.id_for_label }}">Status</label>
+                        <label for="{{ form.status.id_for_label }}">Status*</label>
                         {{ form.status }}
                         {% if form.status.errors %}
                             <div class="error-message">{{ form.status.errors.0 }}</div>
@@ -55,7 +55,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="{{ form.proponent.id_for_label }}">Proponent</label>
+                        <label for="{{ form.proponent.id_for_label }}">Proponent*</label>
                         {{ form.proponent }}
                         {% if form.proponent.errors %}
                             <div class="error-message">{{ form.proponent.errors.0 }}</div>
@@ -63,7 +63,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="{{ form.beneficiaries.id_for_label }}">Beneficiaries</label>
+                        <label for="{{ form.beneficiaries.id_for_label }}">Beneficiaries*</label>
                         {{ form.beneficiaries }}
                         {% if form.beneficiaries.errors %}
                             <div class="error-message">{{ form.beneficiaries.errors.0 }}</div>
@@ -71,7 +71,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="{{ form.event_date.id_for_label }}">Event Date</label>
+                        <label for="{{ form.event_date.id_for_label }}">Event Date*</label>
                         {{ form.event_date }}
                         {% if form.event_date.errors %}
                             <div class="error-message">{{ form.event_date.errors.0 }}</div>
@@ -79,7 +79,7 @@
                     </div>
 
                     <div class="form-group full-span">
-                        <label for="{{ form.description.id_for_label }}">Description</label>
+                        <label for="{{ form.description.id_for_label }}">Description*</label>
                         {{ form.description }}
                         {% if form.description.errors %}
                             <div class="error-message">{{ form.description.errors.0 }}</div>
@@ -92,7 +92,7 @@
                 <legend>Event/Activity Details</legend>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="{{ form.start_time.id_for_label }}">Start Time</label>
+                        <label for="{{ form.start_time.id_for_label }}">Start Time*</label>
                         {{ form.start_time }}
                         {% if form.start_time.errors %}
                             <div class="error-message">{{ form.start_time.errors.0 }}</div>
@@ -100,7 +100,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="{{ form.end_time.id_for_label }}">End Time</label>
+                        <label for="{{ form.end_time.id_for_label }}">End Time*</label>
                         {{ form.end_time }}
                         {% if form.end_time.errors %}
                             <div class="error-message">{{ form.end_time.errors.0 }}</div>
@@ -108,7 +108,7 @@
                     </div>
 
                     <div class="form-group full-span">
-                        <label for="{{ form.venue_name.id_for_label }}">Venue Name</label>
+                        <label for="{{ form.venue_name.id_for_label }}">Venue Name*</label>
                         {{ form.venue_name }}
                         {% if form.venue_name.errors %}
                             <div class="error-message">{{ form.venue_name.errors.0 }}</div>
@@ -151,7 +151,7 @@
         <div class="form-group">
 
             <label for="{{ form.barangay.id_for_label }}">
-                Barangay
+                Barangay*
             </label>
 
             {{ form.barangay }}
