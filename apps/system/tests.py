@@ -151,6 +151,20 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             response,
             f'INF-{self.infrastructure.pk:05d}',
         )
+        self.assertContains(response, 'Municipal Engineering Office')
+        self.assertContains(response, 'Public Works Contractor')
+        self.assertContains(response, 'Local Development Fund')
+        self.assertContains(response, '2500000.00')
+        self.assertContains(response, '55.0%')
+        self.assertContains(response, 'Bagting')
+        self.assertContains(
+            response,
+            '/media/projects/infrastructure-cover.jpg',
+        )
+        self.assertContains(
+            response,
+            'css/templates/Dashboard/infrastructure_detail.css',
+        )
         self.assertNotContains(response, 'Edit Project')
         self.assertNotContains(response, 'Delete Project')
 
