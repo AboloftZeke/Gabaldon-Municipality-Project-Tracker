@@ -498,7 +498,8 @@
     font-weight: 700;
 }
 
-.existing-image-delete {
+.existing-image-delete,
+.image-preview-delete {
     position: absolute;
 
     top: 0.5rem;
@@ -531,13 +532,15 @@
         transform 150ms ease;
 }
 
-.existing-image-delete:hover {
+.existing-image-delete:hover,
+.image-preview-delete:hover {
     background: #b91c1c;
 
     transform: scale(1.05);
 }
 
-.existing-image-delete:active {
+.existing-image-delete:active,
+.image-preview-delete:active {
     transform: scale(0.95);
 }
 

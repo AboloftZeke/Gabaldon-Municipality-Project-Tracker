@@ -46,10 +46,10 @@ NON_INFRA_CATEGORY_DEFAULTS = [
 
 class NonInfrastructureProjectForm(forms.Form):
     non_infra_name = forms.CharField(required=True, max_length=255)
-    description = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 4}), max_length=2000)
+    description = forms.CharField(required=True, widget=forms.Textarea(attrs={'rows': 4}), max_length=2000)
     non_infra_category = forms.ModelChoiceField(
         queryset=NonInfrastructureCategory.objects.none(),
-        required=False,
+        required=True,
         empty_label='Select Category',
     )
 
@@ -59,15 +59,15 @@ class NonInfrastructureProjectForm(forms.Form):
         widget=forms.Select,
     )
 
-    proponent = forms.CharField(required=False, max_length=255)
-    beneficiaries = forms.IntegerField(required=False, min_value=0)
-    event_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    start_time = forms.TimeField(required=False, widget=forms.TimeInput(attrs={'type': 'time'}))
-    end_time = forms.TimeField(required=False, widget=forms.TimeInput(attrs={'type': 'time'}))
-    venue_name = forms.CharField(required=False, max_length=255)
+    proponent = forms.CharField(required=True, max_length=255)
+    beneficiaries = forms.IntegerField(required=True, min_value=0)
+    event_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
+    start_time = forms.TimeField(required=True, widget=forms.TimeInput(attrs={'type': 'time'}))
+    end_time = forms.TimeField(required=True, widget=forms.TimeInput(attrs={'type': 'time'}))
+    venue_name = forms.CharField(required=True, max_length=255)
     street = forms.CharField(required=False, max_length=500)
     barangay = forms.ChoiceField(
-        required=False,
+        required=True,
         choices=[('', 'Select Barangay')] + list(LegacyNonInfrastructureProject.LOCATION_CHOICES),
         widget=forms.Select,
     )
@@ -140,6 +140,19 @@ class NonInfrastructureProjectForm(forms.Form):
 
     def clean_province(self):
         return 'Nueva Ecija'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
+
+        if start_time and end_time and end_time <= start_time:
+            self.add_error(
+                'end_time',
+                'End time must be later than the start time.',
+            )
+
+        return cleaned_data
 
     @staticmethod
     def _resolve_instance(instance):
@@ -297,4 +310,3 @@ class NonInfrastructureProjectForm(forms.Form):
         non.save()
         self._save_images(project)
         return non
-

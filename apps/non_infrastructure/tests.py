@@ -30,6 +30,7 @@ class NonInfrastructureProjectFormTests(TestCase):
         form = NonInfrastructureProjectForm(
             data={
                 'non_infra_name': 'Community Health Fair',
+                'status': 'planned',
                 'description': 'Free medical and health education event.',
                 'non_infra_category': str(self.category.non_infrastructure_category_id),
                 'proponent': 'Municipal Health Office',
@@ -65,6 +66,48 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.assertEqual(len(saved_urls), 2)
         self.assertTrue(all(url.startswith('/media/') for url in saved_urls))
 
+    def test_form_rejects_end_time_before_start_time(self):
+        form = NonInfrastructureProjectForm(data={
+            'non_infra_name': 'Community Program',
+            'status': 'planned',
+            'description': 'Program description.',
+            'non_infra_category': str(self.category.non_infrastructure_category_id),
+            'proponent': 'Mayor Office',
+            'beneficiaries': '100',
+            'event_date': '2026-08-20',
+            'start_time': '13:00',
+            'end_time': '12:00',
+            'venue_name': 'Municipal Hall',
+            'barangay': 'bagting',
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+            form.errors['end_time'],
+            ['End time must be later than the start time.'],
+        )
+
+    def test_form_rejects_end_time_equal_to_start_time(self):
+        form = NonInfrastructureProjectForm(data={
+            'non_infra_name': 'Community Program',
+            'status': 'planned',
+            'description': 'Program description.',
+            'non_infra_category': str(self.category.non_infrastructure_category_id),
+            'proponent': 'Mayor Office',
+            'beneficiaries': '100',
+            'event_date': '2026-08-20',
+            'start_time': '13:00',
+            'end_time': '13:00',
+            'venue_name': 'Municipal Hall',
+            'barangay': 'bagting',
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+            form.errors['end_time'],
+            ['End time must be later than the start time.'],
+        )
+
     def test_form_updates_existing_project_and_images(self):
         proj = Project.objects.create(project_type='non_infrastructure', created_by_user=self.user, updated_by_user=self.user)
         existing = Non_Infrastructure_Project.objects.create(
@@ -81,6 +124,7 @@ class NonInfrastructureProjectFormTests(TestCase):
             instance=existing,
             data={
                 'non_infra_name': 'Updated Community Fair',
+                'status': 'planned',
                 'description': 'Updated description.',
                 'non_infra_category': str(self.category.non_infrastructure_category_id),
                 'proponent': 'Barangay Nutrition Council',
