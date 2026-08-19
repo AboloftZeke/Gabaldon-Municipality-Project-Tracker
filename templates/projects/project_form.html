@@ -508,8 +508,15 @@ document.addEventListener('DOMContentLoaded', function () {
             card.querySelector('.new-image-delete').addEventListener(
                 'click',
                 function () {
-                    if (coverInput.value === 'new:' + index) {
-                        coverInput.value = '';
+                    if (coverInput.value.startsWith('new:')) {
+                        const coverIndex = Number(
+                            coverInput.value.replace('new:', '')
+                        );
+                        if (coverIndex === index) {
+                            coverInput.value = '';
+                        } else if (coverIndex > index) {
+                            coverInput.value = 'new:' + (coverIndex - 1);
+                        }
                     }
                     selectedFiles.splice(index, 1);
                     syncFiles();
