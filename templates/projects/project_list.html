@@ -25,26 +25,37 @@
         <div class="projects-grid">
             {% for project in projects %}
                 <div class="project-card">
-                    <div class="project-title">{{ project.title }}</div>
-                    <div class="project-location">📍 {{ project.location }}</div>
-                    <div class="project-status status-{{ project.status }}">
-                        {{ project.get_status_display }}
+                    <div class="project-title">
+                        {{ project.infrastructure_title }}
+                    </div>
+                    <div class="project-location">
+                        📍
+                        {% if project.address and project.address.barangay %}
+                            {{ project.address.barangay }}
+                        {% else %}
+                            Location not specified
+                        {% endif %}
+                    </div>
+                    <div class="project-status status-{{ project.award_status }}">
+                        {{ project.get_award_status_display|default:"Status not specified" }}
                     </div>
 
-                    {% if project.start_date or project.end_date %}
+                    {% if project.planned_start_date or project.planned_end_date %}
                         <div class="project-dates">
-                            {% if project.start_date %}
-                                <strong>Start:</strong> {{ project.start_date|date:"M d, Y" }}<br>
+                            {% if project.planned_start_date %}
+                                <strong>Start:</strong>
+                                {{ project.planned_start_date|date:"M d, Y" }}<br>
                             {% endif %}
-                            {% if project.end_date %}
-                                <strong>End:</strong> {{ project.end_date|date:"M d, Y" }}
+                            {% if project.planned_end_date %}
+                                <strong>End:</strong>
+                                {{ project.planned_end_date|date:"M d, Y" }}
                             {% endif %}
                         </div>
                     {% endif %}
 
-                    {% if project.budget %}
+                    {% if project.abc_amount is not None %}
                         <div style="font-weight: 600; color: #1d4ed8; margin-bottom: 1rem;">
-                            ₱{{ project.budget|floatformat:2 }}
+                            ₱{{ project.abc_amount|floatformat:2 }}
                         </div>
                     {% endif %}
 
