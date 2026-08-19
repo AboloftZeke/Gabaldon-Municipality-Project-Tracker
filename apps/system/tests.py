@@ -85,6 +85,16 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['infra_total'], 1)
         self.assertEqual(response.context['total_budget'], 2500000)
+        self.assertEqual(response.context['ongoing_projects'], 1)
+        self.assertEqual(response.context['completed_projects'], 0)
+        self.assertIn(
+            ('infra:road-test', 'Infrastructure - Road Test'),
+            response.context['project_categories'],
+        )
+        self.assertIn(
+            ('Bagting', 'Bagting'),
+            response.context['location_options'],
+        )
 
         row = next(
             row for row in response.context['project_rows']
@@ -92,6 +102,10 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         )
         self.assertEqual(row['record_id'], f'infra-{self.infrastructure.pk}')
         self.assertEqual(row['title'], 'Normalized Road Project')
+        self.assertEqual(row['status_key'], 'ongoing')
+        self.assertEqual(row['status_label'], 'Awarded')
+        self.assertEqual(row['project_category_key'], 'infra:road-test')
+        self.assertEqual(row['location_key'], 'Bagting')
         self.assertEqual(row['category_label'], 'Road Test')
         self.assertEqual(row['location'], 'Bagting')
         self.assertEqual(row['office'], 'Municipal Engineering Office')

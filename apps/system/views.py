@@ -158,15 +158,12 @@ class PublicDashboardView(TemplateView):
 
         from apps.system.models import (
             Financial,
+            InfrastructureCategory,
             Infrastructure_Schedule,
             Infrastructure_Project,
             Non_Infrastructure_Project,
             Project_Image,
         )
-        # Static choice lists still only live on the legacy model classes.
-        # We use them here purely as UI lookup data (barangay/category labels),
-        # not for storage or querying — the normalized models are source of truth for data.
-        from apps.infrastructure.models import InfrastructureProject as LegacyInfrastructureProject
         from apps.system.models import NonInfrastructureCategory
 
         infra_qs = Infrastructure_Project.objects.select_related(
@@ -246,18 +243,31 @@ class PublicDashboardView(TemplateView):
 
         rows = []
 
-        infra_location_map = dict(LegacyInfrastructureProject.LOCATION_CHOICES)
-        location_options_map = infra_location_map
+        location_options = sorted({
+            p.address.barangay
+            for p in infra_qs
+            if p.address and p.address.barangay
+        })
 
-        category_options = []
-        for value, label in LegacyInfrastructureProject.PROJECT_CATEGORY_CHOICES:
-            category_options.append((f'infra:{value}', f'Infrastructure - {label}'))
+        category_options = [
+            (
+                f'infra:{category.category_code}',
+                f'Infrastructure - {category.category_name}',
+            )
+            for category in InfrastructureCategory.objects.filter(
+                is_active=True,
+            ).order_by('category_name')
+        ]
         for cat in NonInfrastructureCategory.objects.all().order_by('type_name'):
             category_options.append((f'noninfra:{cat.type_code}', f'Non-Infrastructure - {cat.type_name}'))
 
         # Add Infrastructure Projects to rows
         for p in infra_qs:
-            status_key = p.award_status or 'planned'
+            status_key = {
+                'ongoing_bidding': 'ongoing',
+                'awarded': 'ongoing',
+                'completed': 'completed',
+            }.get(p.award_status, p.award_status or 'planned')
             status_label = p.get_award_status_display() or 'Planned'
 
             category_name = (
@@ -312,7 +322,10 @@ class PublicDashboardView(TemplateView):
             rows.append({
                 'record_id': f'infra-{p.pk}',
                 'category': 'infra',
-                'project_category_key': f'infra:' + category_name.lower().replace(' ', '_'),
+                'project_category_key': (
+                    f'infra:{p.category.category_code}'
+                    if p.category else ''
+                ),
                 'project_category_label': f'Infrastructure - {category_name}',
                 'type_label': 'Infrastructure',
                 'title': p.infrastructure_title,
@@ -474,7 +487,9 @@ class PublicDashboardView(TemplateView):
             'project_rows': rows,
             'recent_rows': rows[:8],
             'project_categories': category_options,
-            'location_options': sorted(location_options_map.items(), key=lambda x: x[1]),
+            'location_options': [
+                (location, location) for location in location_options
+            ],
         })
 
         return context
