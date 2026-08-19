@@ -354,7 +354,12 @@
                 const otherInput = document.getElementById('id_other_category');
 
                 function toggleOtherCategory() {
-                    if (categorySelect.value === 'Other') {
+                    const selectedOption =
+                        categorySelect.options[categorySelect.selectedIndex];
+                    const isOther = selectedOption
+                        && selectedOption.text.trim().toLowerCase() === 'other';
+
+                    if (isOther) {
                         otherContainer.style.display = 'block';
                         otherInput.required = true;
                     } else {
