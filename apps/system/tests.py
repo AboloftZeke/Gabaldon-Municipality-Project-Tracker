@@ -360,6 +360,21 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
         )
         self.assertContains(response, project.non_infra_name)
         self.assertContains(response, '/media/projects/ongoing-cover.jpg')
+        self.assertContains(
+            response,
+            '/static/css/templates/Dashboard/infrastructure_detail.css',
+        )
+        self.assertContains(response, '<main class="public-detail">')
+        self.assertContains(response, 'class="public-detail__hero"')
+        self.assertContains(response, 'class="public-detail__summary"')
+        self.assertContains(response, 'class="public-image-grid"')
+        self.assertContains(response, 'class="public-image-card"', count=2)
+        self.assertContains(response, 'Cover photo')
+        self.assertContains(response, '<h2>Schedule and Venue</h2>', html=True)
+        self.assertNotContains(
+            response,
+            '/static/css/templates/non_infrastructure/non_infrastructure_detail.css',
+        )
         self.assertNotContains(response, '<h3>Location</h3>', html=True)
         self.assertNotContains(response, 'Edit Project')
         self.assertNotContains(response, 'Delete Project')

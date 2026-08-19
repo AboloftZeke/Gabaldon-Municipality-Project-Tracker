@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}">
-  <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_detail.css' %}">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/infrastructure_detail.css' %}">
 </head>
 <body>
   <header class="site-header">
@@ -24,85 +24,57 @@
     </div>
   </header>
 
-  <main class="project-detail-container">
-    <a href="{% url 'public_dashboard' %}" class="btn btn-back">&larr; Back to Public Dashboard</a>
+  <main class="public-detail">
+    <a href="{% url 'public_dashboard' %}" class="public-detail__back">&larr; Back to Public Dashboard</a>
 
-    <section class="project-detail-header">
-      <p class="meta-label">Public Program Details</p>
-      <h2>{{ public_project.non_infra_name }}</h2>
-      <div class="project-meta">
-        <div class="meta-item">
-          <div class="meta-label">Program Code</div>
-          <div class="meta-value">{{ project_code }}</div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">Status</div>
-          <div class="meta-value">{{ public_project.get_status_display }}</div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">Category</div>
-          <div class="meta-value">{{ project_category|default:"N/A" }}</div>
-        </div>
+    <section class="public-detail__hero">
+      <div class="public-detail__heading">
+        <p class="public-detail__eyebrow">Public Non-Infrastructure Program · {{ project_code }}</p>
+        <h1>{{ public_project.non_infra_name }}</h1>
+        <p>{{ project_category|default:"Uncategorized" }}</p>
+      </div>
+      <div class="public-detail__summary" aria-label="Program summary">
+        <div class="summary-item"><span>Status</span><strong>{{ public_project.get_status_display|default:"N/A" }}</strong></div>
+        <div class="summary-item"><span>Beneficiaries</span><strong>{{ public_project.beneficiaries|default_if_none:"N/A" }}</strong></div>
+        <div class="summary-item"><span>Event Date</span><strong>{{ public_project.event_date|date:"F j, Y"|default:"N/A" }}</strong></div>
+        <div class="summary-item"><span>Venue</span><strong>{{ public_project.venue_name|default:"N/A" }}</strong></div>
       </div>
     </section>
 
-    <section class="project-section">
-      <h3>Program Information</h3>
-      <div class="section-content">
-        <div class="content-item">
-          <div class="content-label">Proponent</div>
-          <div class="content-value">{{ public_project.proponent|default:"N/A" }}</div>
-        </div>
-        <div class="content-item">
-          <div class="content-label">Beneficiaries</div>
-          <div class="content-value">{{ public_project.beneficiaries|default_if_none:"N/A" }}</div>
-        </div>
-        <div class="content-item">
-          <div class="content-label">Published By</div>
-          <div class="content-value">{{ created_by_name|default:"N/A" }}</div>
-        </div>
+    <section class="public-detail__section">
+      <h2>Program Information</h2>
+      <div class="detail-grid">
+        <div class="detail-item"><span>Proponent</span><strong>{{ public_project.proponent|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Category</span><strong>{{ project_category|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Published By</span><strong>{{ created_by_name|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Last Updated</span><strong>{{ public_project.updated_at|date:"F j, Y"|default:"N/A" }}</strong></div>
       </div>
     </section>
 
-    <section class="project-section">
-      <h3>Schedule</h3>
-      <div class="section-content">
-        <div class="content-item">
-          <div class="content-label">Event Date</div>
-          <div class="content-value">{{ public_project.event_date|date:"F j, Y"|default:"N/A" }}</div>
-        </div>
-        <div class="content-item">
-          <div class="content-label">Start Time</div>
-          <div class="content-value">{{ public_project.start_time|time:"g:i A"|default:"N/A" }}</div>
-        </div>
-        <div class="content-item">
-          <div class="content-label">End Time</div>
-          <div class="content-value">{{ public_project.end_time|time:"g:i A"|default:"N/A" }}</div>
-        </div>
-        <div class="content-item">
-          <div class="content-label">Venue</div>
-          <div class="content-value">{{ public_project.venue_name|default:"N/A" }}</div>
-        </div>
+    <section class="public-detail__section">
+      <h2>Schedule and Venue</h2>
+      <div class="detail-grid">
+        <div class="detail-item"><span>Event Date</span><strong>{{ public_project.event_date|date:"F j, Y"|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Start Time</span><strong>{{ public_project.start_time|time:"g:i A"|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>End Time</span><strong>{{ public_project.end_time|time:"g:i A"|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Venue</span><strong>{{ public_project.venue_name|default:"N/A" }}</strong></div>
       </div>
     </section>
 
-    <section class="project-section">
-      <h3>Description</h3>
-      <div class="section-content">
-        <div class="content-item">
-          <div class="content-value">{{ public_project.description|default:"No description provided." }}</div>
-        </div>
-      </div>
+    <section class="public-detail__section">
+      <h2>Description</h2>
+      <p class="public-detail__description">{{ public_project.description|default:"No description provided." }}</p>
     </section>
 
     {% if project_images %}
-    <section class="project-section">
-      <h3>Program Images</h3>
-      <div class="section-content">
+    <section class="public-detail__section">
+      <h2>Program Images</h2>
+      <div class="public-image-grid">
         {% for image in project_images %}
-        <div class="project-image">
-          <img src="{{ image.image_url }}" alt="{{ public_project.non_infra_name }} photo {{ forloop.counter }}" style="width: 100%; height: auto; border-radius: 8px;">
-        </div>
+        <figure class="public-image-card">
+          <img src="{{ image.image_url }}" alt="{{ public_project.non_infra_name }} photo {{ forloop.counter }}" loading="lazy">
+          {% if image.is_cover %}<figcaption>Cover photo</figcaption>{% endif %}
+        </figure>
         {% endfor %}
       </div>
     </section>
@@ -114,3 +86,4 @@
   </footer>
 </body>
 </html>
+
