@@ -2,7 +2,61 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm
-from .models import UserProfile
+from .models import Non_Infrastructure_Project, Project, UserProfile
+
+
+class PublicDashboardNonInfrastructureStatusTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='dashboard-author',
+            password='password123',
+        )
+
+        for name, status in (
+            ('Planned Program', 'planned'),
+            ('Ongoing Program', 'ongoing'),
+            ('Completed Program', 'completed'),
+        ):
+            project = Project.objects.create(
+                project_type='non_infrastructure',
+                created_by_user=self.user,
+                updated_by_user=self.user,
+            )
+            Non_Infrastructure_Project.objects.create(
+                project=project,
+                non_infra_name=name,
+                status=status,
+            )
+
+    def test_public_dashboard_uses_saved_non_infrastructure_statuses(self):
+        response = self.client.get(reverse('public_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['noninfra_total'], 3)
+        self.assertEqual(response.context['planned_projects'], 1)
+        self.assertEqual(response.context['ongoing_projects'], 1)
+        self.assertEqual(response.context['completed_projects'], 1)
+
+        statuses = {
+            row['title']: (row['status_key'], row['status_label'])
+            for row in response.context['project_rows']
+            if row['category'] == 'noninfra'
+        }
+        self.assertEqual(statuses['Planned Program'], ('planned', 'Planned'))
+        self.assertEqual(statuses['Ongoing Program'], ('ongoing', 'Ongoing'))
+        self.assertEqual(statuses['Completed Program'], ('completed', 'Completed'))
+
+        noninfra_rows = [
+            row
+            for row in response.context['project_rows']
+            if row['category'] == 'noninfra'
+        ]
+        self.assertTrue(
+            all(row['location_key'] == '' for row in noninfra_rows)
+        )
+        self.assertTrue(
+            all(row['location'] == '' for row in noninfra_rows)
+        )
 
 
 class UserDeactivateViewTests(TestCase):

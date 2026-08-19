@@ -109,18 +109,16 @@ class PublicDashboardView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        from django.utils import timezone
         from apps.system.models import InfrastructureProject, Non_Infrastructure_Project
         # Static choice lists still only live on the legacy model classes.
         # We use them here purely as UI lookup data (barangay/category labels),
         # not for storage or querying — the normalized models are source of truth for data.
         from apps.infrastructure.models import InfrastructureProject as LegacyInfrastructureProject
-        from apps.non_infrastructure.models import NonInfrastructureProject as LegacyNonInfrastructureProject
-        from apps.system.models import InfrastructureCategory, NonInfrastructureCategory
+        from apps.system.models import NonInfrastructureCategory
 
         infra_qs = InfrastructureProject.objects.all().order_by('-created_at')
         noninfra_qs = Non_Infrastructure_Project.objects.select_related(
-            'project', 'project__created_by_user', 'address', 'non_infra_category'
+            'project', 'project__created_by_user', 'non_infra_category'
         ).order_by('-created_at')
 
         infra_total = infra_qs.count()
@@ -130,13 +128,9 @@ class PublicDashboardView(TemplateView):
         infra_completed = infra_qs.filter(award_status='completed').count()
         infra_ongoing = infra_qs.filter(award_status__in=['ongoing_bidding', 'awarded']).count()
 
-        # Non-infra has no progress/status field in the normalized schema yet.
-        # Deriving a rough status from event_date so rows aren't all "Planned" forever;
-        # revisit if/when a real status field is added (see MIGRATION_PLAN item 6).
-        today = timezone.now().date()
-        noninfra_completed = noninfra_qs.filter(event_date__lt=today).count()
-        noninfra_ongoing = noninfra_qs.filter(event_date=today).count()
-        noninfra_planned = noninfra_total - noninfra_completed - noninfra_ongoing
+        noninfra_completed = noninfra_qs.filter(status='completed').count()
+        noninfra_ongoing = noninfra_qs.filter(status='ongoing').count()
+        noninfra_planned = noninfra_qs.filter(status='planned').count()
 
         completed_projects = infra_completed + noninfra_completed
         ongoing_projects = infra_ongoing + noninfra_ongoing
@@ -156,8 +150,7 @@ class PublicDashboardView(TemplateView):
         rows = []
 
         infra_location_map = dict(LegacyInfrastructureProject.LOCATION_CHOICES)
-        noninfra_location_map = dict(LegacyNonInfrastructureProject.LOCATION_CHOICES)
-        location_options_map = {**infra_location_map, **noninfra_location_map}
+        location_options_map = infra_location_map
 
         category_options = []
         for value, label in LegacyInfrastructureProject.PROJECT_CATEGORY_CHOICES:
@@ -227,8 +220,8 @@ class PublicDashboardView(TemplateView):
 
         # Add Non-Infrastructure Projects to rows
         for p in noninfra_qs:
-            status_key = 'planned'
-            status_label = 'Planned'
+            status_key = p.status
+            status_label = p.get_status_display()
 
             category_code = (
                 p.non_infra_category.type_code
@@ -238,8 +231,6 @@ class PublicDashboardView(TemplateView):
                 p.non_infra_category.type_name
                 if p.non_infra_category else ''
             )
-
-            location = str(p.address) if p.address else ''
 
             creator = p.project.created_by_user if p.project else None
 
@@ -265,8 +256,8 @@ class PublicDashboardView(TemplateView):
 
                 'title': p.non_infra_name,
 
-                'location_key': p.address_id,
-                'location': location,
+                'location_key': '',
+                'location': '',
 
                 'status_key': status_key,
                 'status_label': status_label,

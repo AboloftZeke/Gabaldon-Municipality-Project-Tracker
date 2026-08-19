@@ -147,7 +147,9 @@
                   {% endif %}
                   <div>
                     <div class="project-title">{{ row.title }}</div>
+                    {% if row.location %}
                     <div class="project-subtext">{{ row.location }}</div>
+                    {% endif %}
                   </div>
                 </div>
               </td>
