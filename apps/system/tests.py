@@ -90,11 +90,15 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertEqual(response.context['ongoing_projects'], 1)
         self.assertEqual(response.context['completed_projects'], 0)
         self.assertIn(
-            ('infra:road-test', 'Infrastructure - Road Test'),
+            ('infra:road-test', 'Road Test'),
             response.context['project_categories'],
         )
         self.assertIn(
-            ('Bagting', 'Bagting'),
+            ('bagting', 'Bagting'),
+            response.context['location_options'],
+        )
+        self.assertIn(
+            ('bagong_sikat', 'Bagong Sikat'),
             response.context['location_options'],
         )
 
@@ -107,7 +111,7 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertEqual(row['status_key'], 'ongoing')
         self.assertEqual(row['status_label'], 'Awarded')
         self.assertEqual(row['project_category_key'], 'infra:road-test')
-        self.assertEqual(row['location_key'], 'Bagting')
+        self.assertEqual(row['location_key'], 'bagting')
         self.assertEqual(row['category_label'], 'Road Test')
         self.assertEqual(row['location'], 'Bagting')
         self.assertEqual(row['office'], 'Municipal Engineering Office')
@@ -169,6 +173,18 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertContains(response, '>55%<', html=False)
         self.assertContains(response, 'Municipal Engineering Office')
         self.assertContains(response, 'Public Works Contractor')
+        self.assertContains(
+            response,
+            'label="Infrastructure Categories"',
+        )
+        self.assertContains(
+            response,
+            'label="Non-Infrastructure Categories"',
+        )
+        self.assertContains(
+            response,
+            'data-project-category-type="infra"',
+        )
 
     def test_public_infrastructure_detail_is_available_without_login(self):
         detail_url = reverse(

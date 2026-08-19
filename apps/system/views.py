@@ -267,6 +267,9 @@ class PublicDashboardView(TemplateView):
             Project_Image,
         )
         from apps.system.models import NonInfrastructureCategory
+        from apps.infrastructure.models import (
+            InfrastructureProject as LegacyInfrastructureProject,
+        )
 
         infra_qs = Infrastructure_Project.objects.select_related(
             'project',
@@ -345,23 +348,41 @@ class PublicDashboardView(TemplateView):
 
         rows = []
 
-        location_options = sorted({
-            p.address.barangay
-            for p in infra_qs
-            if p.address and p.address.barangay
-        })
+        # Barangays are a municipal lookup list rather than project data.
+        # Keep all official choices visible, then include any distinct saved
+        # values so migrated/custom records remain filterable.
+        location_options_map = {
+            code: label
+            for code, label in LegacyInfrastructureProject.LOCATION_CHOICES
+        }
+        for project in infra_qs:
+            if not project.address or not project.address.barangay:
+                continue
+            saved_barangay = project.address.barangay.strip()
+            saved_key = saved_barangay.lower().replace(' ', '_')
+            if saved_key.startswith('bitulok'):
+                saved_key = 'bitulok'
+            location_options_map.setdefault(saved_key, saved_barangay)
 
-        category_options = [
+        infrastructure_category_options = [
             (
                 f'infra:{category.category_code}',
-                f'Infrastructure - {category.category_name}',
+                category.category_name,
             )
             for category in InfrastructureCategory.objects.filter(
                 is_active=True,
             ).order_by('category_name')
         ]
-        for cat in NonInfrastructureCategory.objects.all().order_by('type_name'):
-            category_options.append((f'noninfra:{cat.type_code}', f'Non-Infrastructure - {cat.type_name}'))
+        noninfrastructure_category_options = [
+            (f'noninfra:{category.type_code}', category.type_name)
+            for category in NonInfrastructureCategory.objects.all().order_by(
+                'type_name',
+            )
+        ]
+        category_options = [
+            *infrastructure_category_options,
+            *noninfrastructure_category_options,
+        ]
 
         # Add Infrastructure Projects to rows
         for p in infra_qs:
@@ -376,6 +397,9 @@ class PublicDashboardView(TemplateView):
                 p.category.category_name if p.category else ''
             )
             location = p.address.barangay if p.address else ''
+            location_key = location.lower().replace(' ', '_')
+            if location_key.startswith('bitulok'):
+                location_key = 'bitulok'
             creator = (
                 p.project.created_by_user if p.project else None
             )
@@ -445,7 +469,7 @@ class PublicDashboardView(TemplateView):
                     cover_image.image_url
                     if cover_image and cover_image.image_url else ''
                 ),
-                'location_key': location,
+                'location_key': location_key,
                 'location': location,
                 'status_key': status_key,
                 'status_label': status_label,
@@ -603,9 +627,14 @@ class PublicDashboardView(TemplateView):
             'project_rows': rows,
             'recent_rows': rows[:8],
             'project_categories': category_options,
-            'location_options': [
-                (location, location) for location in location_options
-            ],
+            'infrastructure_categories': infrastructure_category_options,
+            'noninfrastructure_categories': (
+                noninfrastructure_category_options
+            ),
+            'location_options': sorted(
+                location_options_map.items(),
+                key=lambda item: item[1],
+            ),
         })
 
         return context

@@ -97,9 +97,16 @@
         <div class="filter-group">
           <select id="category-filter" aria-label="Filter by project category">
             <option value="all">All Categories</option>
-            {% for code, label in project_categories %}
-            <option value="{{ code }}">{{ label }}</option>
-            {% endfor %}
+            <optgroup label="Infrastructure Categories" data-project-category-type="infra">
+              {% for code, label in infrastructure_categories %}
+              <option value="{{ code }}">{{ label }}</option>
+              {% endfor %}
+            </optgroup>
+            <optgroup label="Non-Infrastructure Categories" data-project-category-type="noninfra">
+              {% for code, label in noninfrastructure_categories %}
+              <option value="{{ code }}">{{ label }}</option>
+              {% endfor %}
+            </optgroup>
           </select>
 
           <select id="location-filter" aria-label="Filter by location">
