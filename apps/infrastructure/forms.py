@@ -99,11 +99,13 @@ class InfrastructureProjectForm(forms.Form):
             'placeholder': 'Enter category'
         })
     )
-    implementing_office = forms.ModelChoiceField(
+    implementing_office = forms.CharField(
         required=False,
-        queryset=ImplementingOffice.objects.none(),
-        empty_label='Select Implementing Office',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter implementing office',
+        }),
     )
     contractor = forms.CharField(
         required=False,
@@ -235,9 +237,6 @@ class InfrastructureProjectForm(forms.Form):
         self.fields['category'].queryset = InfrastructureCategory.objects.filter(
             is_active=True
         ).order_by('category_name')
-        self.fields['implementing_office'].queryset = ImplementingOffice.objects.filter(
-            is_active=True
-        ).order_by('office_name')
         self.fields['fund_source'].queryset = FundSource.objects.filter(
             is_active=True
         ).order_by('fund_source_name')
@@ -310,7 +309,7 @@ class InfrastructureProjectForm(forms.Form):
         )
         self.initial.setdefault(
             'implementing_office',
-            infra.implementing_office_id,
+            infra.implementing_office.office_name if infra.implementing_office else '',
         )
 
         self.initial.setdefault('procurement_method', infra.procurement_method)
@@ -632,8 +631,26 @@ class InfrastructureProjectForm(forms.Form):
                     if contractor_obj is None:
                         raise
 
+        implementing_office_name = (data.get('implementing_office') or '').strip()
+        implementing_office_obj = None
+        if implementing_office_name:
+            implementing_office_obj = ImplementingOffice.objects.filter(
+                office_name__iexact=implementing_office_name
+            ).first()
+            if implementing_office_obj is None:
+                try:
+                    implementing_office_obj = ImplementingOffice.objects.create(
+                        office_name=implementing_office_name,
+                    )
+                except IntegrityError:
+                    implementing_office_obj = ImplementingOffice.objects.filter(
+                        office_name__iexact=implementing_office_name
+                    ).first()
+                    if implementing_office_obj is None:
+                        raise
+
         infra.contractor = contractor_obj
-        infra.implementing_office = data.get('implementing_office')
+        infra.implementing_office = implementing_office_obj
         infra.procurement_method = data.get('procurement_method')
         infra.award_status = data.get('award_status')
         infra.planned_start_date = data.get('planned_start_date')
