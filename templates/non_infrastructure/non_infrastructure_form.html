@@ -155,27 +155,53 @@
                 </div>
             </div>
 
-    <div class="fieldset">
-    <legend>Project Images</legend>
+    {% if form.existing_images %}
 
-    <div class="form-group full-span">
+    <div class="existing-images-section">
 
-        <div class="image-upload-header">
+        <div class="existing-images-header">
             <div>
-                <label for="{{ form.project_images.id_for_label }}">
-                    Project Photos
-                </label>
+                <h4>Existing Photos</h4>
 
-                <p class="image-upload-description">
-                    Add photos that document or showcase this project.
-                    You can select multiple images at once.
+                <p>
+                    Photos currently attached to this project.
                 </p>
             </div>
 
-            <span class="image-upload-format">
-                JPG, JPEG, PNG
+            <span class="existing-images-count">
+                {{ form.existing_images|length }}
+                {% if form.existing_images|length == 1 %}
+                    photo
+                {% else %}
+                    photos
+                {% endif %}
             </span>
         </div>
+
+        <div class="existing-images-grid">
+
+            {% for image in form.existing_images %}
+
+                <div class="existing-image">
+
+                    <img
+                        src="{{ image.image_url }}"
+                        alt="Project photo {{ forloop.counter }}"
+                    >
+
+                    <div class="existing-image-number">
+                        {{ forloop.counter }}
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+{% endif %}
 
         <div class="image-upload-area" id="image-upload-area">
 
