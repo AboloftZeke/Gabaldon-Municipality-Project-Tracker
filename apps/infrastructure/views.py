@@ -647,3 +647,20 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
 
         context['cancel_url'] = reverse('engineering_projects:project_detail', args=[obj.pk])
         return context
+
+    def form_valid(self, form):
+        compat_project = self.get_object()
+        normalized = (
+            Infrastructure_Project.objects
+            .filter(infrastructure_id=compat_project.pk)
+            .select_related('project')
+            .first()
+        )
+        success_url = self.get_success_url()
+
+        if normalized is not None and normalized.project is not None:
+            normalized.project.delete()
+        else:
+            compat_project.delete()
+
+        return redirect(success_url)
