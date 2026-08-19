@@ -498,6 +498,48 @@
     font-weight: 700;
 }
 
+.existing-image-delete {
+    position: absolute;
+
+    top: 0.5rem;
+    right: 0.5rem;
+
+    width: 26px;
+    height: 26px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: none;
+    border-radius: 50%;
+
+    background: rgba(17, 24, 39, 0.8);
+    color: #ffffff;
+
+    cursor: pointer;
+
+    font-size: 1.1rem;
+    line-height: 1;
+
+    z-index: 2;
+
+    transition:
+        background-color 180ms ease,
+        transform 150ms ease;
+}
+
+.existing-image-delete:hover {
+    background: #b91c1c;
+
+    transform: scale(1.05);
+}
+
+.existing-image-delete:active {
+    transform: scale(0.95);
+}
 
 /* =========================================================
    Newly Selected Photos

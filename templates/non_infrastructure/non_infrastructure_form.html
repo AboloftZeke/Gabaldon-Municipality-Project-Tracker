@@ -259,7 +259,9 @@
 
                     {% for image in form.existing_images %}
 
-                        <div class="existing-image">
+                        <div class="existing-image"
+                        data-image-id="{{ image.pk }}"
+                        >
 
                             <img
                                 src="{{ image.image_url }}"
@@ -269,8 +271,18 @@
                             <div class="existing-image-number">
                                 {{ forloop.counter }}
                             </div>
-
+                        
+                        <button
+                            type="button"
+                            class="existing-image-delete"
+                            data-image-id="{{ image.pk }}"
+                            aria-label="Remove project photo {{forloop.counter}}"
+                            title="Remove photo"
+                            >
+                            x
+                        </button>
                         </div>
+
 
                     {% endfor %}
 
@@ -448,6 +460,51 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    const deleteInput = document.getElementById(
+        '{{ form.images_to_delete.id_for_label }}'
+    );
+
+    const deleteButtons = document.querySelectorAll(
+        '.existing-image-delete'
+    );
+
+    const imagesToDelete = new Set();
+
+    deleteButtons.foEach(function (button) {
+
+        button.addEventListener('click', function () {
+
+            const imageId = button.dataset.imageId;
+
+            if (!imageId) {
+                return;
+            }
+
+            const imageCard = button.closest('.existing-image');
+
+            if (!imageCard) {
+                return;
+            }
+
+            const confirmed = window.confirm(
+                'Are you sure you want to remove this photo?'
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            imagesToDelete.add(imageId);
+
+            if (deleteInput) {
+                deleteInput.value = Array.from(imagesToDelete).join(',');
+            }
+
+            imageCard.remove();
+        });
+
+    });
 
     const input = document.getElementById(
         '{{ form.project_images.id_for_label }}'

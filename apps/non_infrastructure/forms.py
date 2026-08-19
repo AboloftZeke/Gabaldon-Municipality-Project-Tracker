@@ -88,6 +88,11 @@ class NonInfrastructureProjectForm(forms.Form):
         widget=MultipleFileInput(attrs={'accept': 'image/*'}),
     )
 
+    images_to_delete = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         super().__init__(*args, **kwargs)
@@ -151,13 +156,35 @@ class NonInfrastructureProjectForm(forms.Form):
         )
 
     def _save_images(self, project):
+
+        images_to_delete = self.cleaned_data.get('images_to_delete', '')
+
+        if images_to_delete:
+            image_ids = []
+
+            for image_id in images_to_delete.split(','):
+                
+                image_id = image_id.strip()
+
+                if image_id.isdigit():
+                    image_ids.append(int(image_id))
+            
+            if image_ids:
+                project.images.filter(
+                    pk__in=image_ids
+                ).delete()
+            
         uploaded_files = []
 
         if hasattr(self, 'files') and self.files:
+
             raw_files = (
                 self.files.getlist('project_images')
                 if hasattr(self.files, 'getlist')
-                else self.files.get('project_images', [])
+                else self.files.get(
+                    'project_images',
+                    []
+                )
             )
 
             if isinstance(raw_files, (list, tuple)):
@@ -165,13 +192,24 @@ class NonInfrastructureProjectForm(forms.Form):
             else:
                 uploaded_files = [raw_files]
 
+
         # Nothing new was uploaded.
-        # Keep all existing project images.
+        # Existing images have already been processed above.
         if not uploaded_files:
             return
 
+
+        # =====================================================
+        # Save new images
+        # =====================================================
+
         for upload in uploaded_files:
-            if not upload or not getattr(upload, 'name', None):
+
+            if not upload or not getattr(
+                upload,
+                'name',
+                None
+            ):
                 continue
 
             folder = os.path.join(
@@ -180,11 +218,16 @@ class NonInfrastructureProjectForm(forms.Form):
             )
 
             filename = default_storage.save(
-                os.path.join(folder, upload.name),
+                os.path.join(
+                    folder,
+                    upload.name
+                ),
                 upload
             )
 
-            file_url = default_storage.url(filename)
+            file_url = default_storage.url(
+                filename
+            )
 
             Project_Image.objects.create(
                 project=project,
