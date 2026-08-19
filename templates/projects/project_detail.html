@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ project.title }} - Infrastructure Projects{% endblock %}
+{% block title %}{{ project_details.title }} - Infrastructure Projects{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/projects/project_detail.css' %}">
@@ -11,21 +11,21 @@
 <div class="breadcrumb-nav">
     <a href="{% url 'engineering_projects:project_list' %}">← Back to Projects</a>
     <span>/</span>
-    <strong>{{ project.title }}</strong>
+    <strong>{{ project_details.title }}</strong>
 </div>
 
 <div class="project-detail-container">
     <div class="project-detail-header">
         <div>
-            <h2>{{ project.title }}</h2>
+            <h2>{{ project_details.title }}</h2>
             <div class="project-header-meta">
-                <span class="status-badge status-{{ project.get_status_display|lower }}">{{ project.get_status_display }}</span>
-                <span class="project-category">{{ project.get_category_display }}</span>
+                <span class="status-badge status-{{ project_details.get_status_display|lower }}">{{ project_details.get_status_display }}</span>
+                <span class="project-category">{{ project_details.get_category_display }}</span>
             </div>
         </div>
         <div class="action-buttons action-buttons--detail">
-            <a href="{% url 'engineering_projects:project_update' project.pk %}" class="btn btn-edit">Edit Project</a>
-            <a href="{% url 'engineering_projects:project_delete' project.pk %}" class="btn btn-delete">Delete Project</a>
+            <a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit">Edit Project</a>
+            <a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete">Delete Project</a>
         </div>
     </div>
 
@@ -35,23 +35,23 @@
         <div class="detail-grid">
             <div class="detail-item">
                 <span class="detail-label">Title</span>
-                <span class="detail-value">{{ project.title }}</span>
+                <span class="detail-value">{{ project_details.title }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Category</span>
-                <span class="detail-value">{{ project.get_category_display }}</span>
+                <span class="detail-value">{{ project_details.get_category_display }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Implementing Office</span>
-                <span class="detail-value">{{ project.implementing_office }}</span>
+                <span class="detail-value">{{ project_details.implementing_office }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Status</span>
-                <span class="detail-value">{{ project.get_status_display }}</span>
+                <span class="detail-value">{{ project_details.get_status_display }}</span>
             </div>
             <div class="detail-item full-width">
                 <span class="detail-label">Description</span>
-                <div class="detail-value">{{ project.description|default:"No description provided." }}</div>
+                <div class="detail-value">{{ project_details.description|default:"No description provided." }}</div>
             </div>
         </div>
     </section>
@@ -62,27 +62,27 @@
         <div class="detail-grid">
             <div class="detail-item">
                 <span class="detail-label">Street</span>
-                <span class="detail-value">{{ project.street|default:"Not specified" }}</span>
+                <span class="detail-value">{{ project_details.street|default:"Not specified" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Barangay</span>
-                <span class="detail-value">{{ project.get_barangay_display|default:"Not specified" }}</span>
+                <span class="detail-value">{{ project_details.get_barangay_display|default:"Not specified" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Municipality</span>
-                <span class="detail-value">{{ project.municipality|default:"Not specified" }}</span>
+                <span class="detail-value">{{ project_details.municipality|default:"Not specified" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Province</span>
-                <span class="detail-value">{{ project.province|default:"Not specified" }}</span>
+                <span class="detail-value">{{ project_details.province|default:"Not specified" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Latitude</span>
-                <span class="detail-value">{{ project.latitude|default:"Not assigned" }}</span>
+                <span class="detail-value">{{ project_details.latitude|default:"Not assigned" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Longitude</span>
-                <span class="detail-value">{{ project.longitude|default:"Not assigned" }}</span>
+                <span class="detail-value">{{ project_details.longitude|default:"Not assigned" }}</span>
             </div>
         </div>
     </section>
@@ -93,35 +93,35 @@
         <div class="detail-grid">
             <div class="detail-item full-width">
                 <span class="detail-label">Contractor</span>
-                <span class="detail-value">{{ project.contractor|default:"Not assigned" }}</span>
+                <span class="detail-value">{{ project_details.contractor|default:"Not assigned" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Procurement Method</span>
-                <span class="detail-value">{{ project.get_procurement_method_display|default:"Not specified" }}</span>
+                <span class="detail-value">{{ project_details.get_procurement_method_display|default:"Not specified" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Award Status</span>
-                <span class="detail-value">{{ project.get_award_status_display|default:"Not assigned" }}</span>
+                <span class="detail-value">{{ project_details.get_award_status_display|default:"Not assigned" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Posting Date</span>
-                <span class="detail-value">{{ project.posting_date|date:"M d, Y"|default:"Not assigned" }}</span>
+                <span class="detail-value">{{ project_details.posting_date|date:"M d, Y"|default:"Not assigned" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Pre-Bid Date</span>
-                <span class="detail-value">{{ project.pre_bid_date|date:"M d, Y"|default:"Not assigned" }}</span>
+                <span class="detail-value">{{ project_details.pre_bid_date|date:"M d, Y"|default:"Not assigned" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Bidding Date</span>
-                <span class="detail-value">{{ project.bidding_date|date:"M d, Y"|default:"Not assigned" }}</span>
+                <span class="detail-value">{{ project_details.bidding_date|date:"M d, Y"|default:"Not assigned" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Notice of Award</span>
-                <span class="detail-value">{{ project.notice_award_date|date:"M d, Y"|default:"Not assigned" }}</span>
+                <span class="detail-value">{{ project_details.notice_award_date|date:"M d, Y"|default:"Not assigned" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Notice to Proceed</span>
-                <span class="detail-value">{{ project.notice_to_proceed_date|date:"M d, Y"|default:"Not assigned" }}</span>
+                <span class="detail-value">{{ project_details.notice_to_proceed_date|date:"M d, Y"|default:"Not assigned" }}</span>
             </div>
         </div>
     </section>
@@ -132,19 +132,19 @@
         <div class="detail-grid">
             <div class="detail-item">
                 <span class="detail-label">Approved Budget (ABC)</span>
-                <span class="detail-value">{% if project.abc_amount %}₱{{ project.abc_amount|floatformat:2 }}{% else %}Not assigned{% endif %}</span>
+                <span class="detail-value">{% if project_details.abc_amount %}₱{{ project_details.abc_amount|floatformat:2 }}{% else %}Not assigned{% endif %}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Contract Price</span>
-                <span class="detail-value">{% if project.contract_price %}₱{{ project.contract_price|floatformat:2 }}{% else %}Not assigned{% endif %}</span>
+                <span class="detail-value">{% if project_details.contract_price %}₱{{ project_details.contract_price|floatformat:2 }}{% else %}Not assigned{% endif %}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Actual Expenditure</span>
-                <span class="detail-value">{% if project.actual_expenditure %}₱{{ project.actual_expenditure|floatformat:2 }}{% else %}Not recorded{% endif %}</span>
+                <span class="detail-value">{% if project_details.actual_expenditure %}₱{{ project_details.actual_expenditure|floatformat:2 }}{% else %}Not recorded{% endif %}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Source of Fund</span>
-                <span class="detail-value">{{ project.source_of_fund|default:"Not specified" }}</span>
+                <span class="detail-value">{{ project_details.source_of_fund|default:"Not specified" }}</span>
             </div>
         </div>
     </section>
@@ -155,55 +155,55 @@
         <div class="detail-grid">
             <div class="detail-item">
                 <span class="detail-label">Planned Start Date</span>
-                <span class="detail-value">{{ project.planned_start_date|date:"M d, Y"|default:"Not assigned" }}</span>
+                <span class="detail-value">{{ project_details.planned_start_date|date:"M d, Y"|default:"Not assigned" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Planned End Date</span>
-                <span class="detail-value">{{ project.planned_end_date|date:"M d, Y"|default:"Not assigned" }}</span>
+                <span class="detail-value">{{ project_details.planned_end_date|date:"M d, Y"|default:"Not assigned" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Actual Start Date</span>
-                <span class="detail-value">{{ project.actual_start_date|date:"M d, Y"|default:"Not assigned" }}</span>
+                <span class="detail-value">{{ project_details.actual_start_date|date:"M d, Y"|default:"Not assigned" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Actual Completion Date</span>
-                <span class="detail-value">{{ project.actual_completion_date|date:"M d, Y"|default:"Not assigned" }}</span>
+                <span class="detail-value">{{ project_details.actual_completion_date|date:"M d, Y"|default:"Not assigned" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Duration (days)</span>
-                <span class="detail-value">{{ project.duration_days|default:"Not calculated" }}</span>
+                <span class="detail-value">{{ project_details.duration_days|default:"Not calculated" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Cost Progress</span>
-                <span class="detail-value">{% if project.cost_progress_percentage is not None %}{{ project.cost_progress_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
+                <span class="detail-value">{% if project_details.cost_progress_percentage is not None %}{{ project_details.cost_progress_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Physical Progress</span>
-                <span class="detail-value">{% if project.physical_progress_percentage is not None %}{{ project.physical_progress_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
+                <span class="detail-value">{% if project_details.physical_progress_percentage is not None %}{{ project_details.physical_progress_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
             </div>
         </div>
     </section>
 
     <!-- Inspection Records Section -->
-    {% if project.inspection_date or project.inspection_findings or project.inspection_remarks %}
+    {% if project_details.inspection_date or project_details.inspection_findings or project_details.inspection_remarks %}
     <section class="detail-section">
         <h3>Inspection Records</h3>
         <div class="detail-grid">
             <div class="detail-item">
                 <span class="detail-label">Inspection Date</span>
-                <span class="detail-value">{{ project.inspection_date|date:"M d, Y"|default:"Not recorded" }}</span>
+                <span class="detail-value">{{ project_details.inspection_date|date:"M d, Y"|default:"Not recorded" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Completion %</span>
-                <span class="detail-value">{% if project.inspection_completion_percentage is not None %}{{ project.inspection_completion_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
+                <span class="detail-value">{% if project_details.inspection_completion_percentage is not None %}{{ project_details.inspection_completion_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
             </div>
             <div class="detail-item full-width">
                 <span class="detail-label">Inspection Findings</span>
-                <div class="detail-value">{{ project.inspection_findings|default:"No findings recorded." }}</div>
+                <div class="detail-value">{{ project_details.inspection_findings|default:"No findings recorded." }}</div>
             </div>
             <div class="detail-item full-width">
                 <span class="detail-label">Remarks</span>
-                <div class="detail-value">{{ project.inspection_remarks|default:"No remarks recorded." }}</div>
+                <div class="detail-value">{{ project_details.inspection_remarks|default:"No remarks recorded." }}</div>
             </div>
         </div>
     </section>
@@ -219,8 +219,8 @@
             <div class="detail-item">
                 <span class="detail-label">Created By</span>
                 <span class="detail-value">
-                    {% if project.created_by %}
-                        {{ project.created_by.get_full_name|default:project.created_by.username }}
+                    {% if project_details.created_by %}
+                        {{ project_details.created_by.get_full_name|default:project_details.created_by.username }}
                     {% else %}
                         Unknown
                     {% endif %}
@@ -228,11 +228,11 @@
             </div>
             <div class="detail-item">
                 <span class="detail-label">Created At</span>
-                <span class="detail-value">{{ project.created_at|date:"M d, Y \a\t H:i" }}</span>
+                <span class="detail-value">{{ project_details.created_at|date:"M d, Y \a\t H:i" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Last Updated</span>
-                <span class="detail-value">{{ project.updated_at|date:"M d, Y \a\t H:i" }}</span>
+                <span class="detail-value">{{ project_details.updated_at|date:"M d, Y \a\t H:i" }}</span>
             </div>
         </div>
     </section>
