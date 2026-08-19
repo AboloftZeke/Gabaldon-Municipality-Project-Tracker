@@ -409,12 +409,29 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
         # STATUS
         # ---------------------------------------------------------
         status_label = 'Not specified'
+        status_value = ''
 
         if hasattr(project, 'get_award_status_display'):
             status_label = (
                 project.get_award_status_display()
                 or 'Not specified'
             )
+
+        if infra:
+            status_value = infra.award_status or ''
+        else:
+            status_value = getattr(project, 'award_status', '') or ''
+
+        status_class_map = {
+            'ongoing_bidding': 'ongoing',
+            'awarded': 'awarded',
+            'completed': 'completed',
+            'cancelled': 'cancelled',
+        }
+        context['project_status_class'] = status_class_map.get(
+            status_value,
+            'neutral',
+        )
 
         # ---------------------------------------------------------
         # PROJECT NAME / DESCRIPTION
@@ -661,3 +678,4 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
             compat_project.delete()
 
         return redirect(success_url)
+
