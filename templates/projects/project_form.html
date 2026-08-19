@@ -41,7 +41,7 @@
 
                     <div class="form-group">
                         <label for="{{ form.category.id_for_label }}">
-                            Category
+                            Category*
                         </label>
 
                         {{ form.category }}
@@ -56,7 +56,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="{{ form.implementing_office.id_for_label }}">Implementing Office*</label>
+                        <label for="{{ form.implementing_office.id_for_label }}">Implementing Office</label>
                         {{ form.implementing_office }}
                         {% if form.implementing_office.errors %}
                             <div class="error-message">{{ form.implementing_office.errors.0 }}</div>
@@ -130,7 +130,7 @@
                 <legend>Contractor & Procurement</legend>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="{{ form.contractor.id_for_label }}">Contractor*</label>
+                        <label for="{{ form.contractor.id_for_label }}">Contractor</label>
                         {{ form.contractor }}
                         {% if form.contractor.errors %}
                             <div class="error-message">{{ form.contractor.errors.0 }}</div>
