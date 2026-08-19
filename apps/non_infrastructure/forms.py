@@ -88,6 +88,11 @@ class NonInfrastructureProjectForm(forms.Form):
         widget=MultipleFileInput(attrs={'accept': 'image/*'}),
     )
 
+    images_to_delete = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         super().__init__(*args, **kwargs)
@@ -103,6 +108,7 @@ class NonInfrastructureProjectForm(forms.Form):
         if self.instance is not None:
             normalized = self._resolve_instance(self.instance)
             if normalized is not None:
+                self.existing_images = list(normalized.project.images.order_by('-created_at'))
                 self.fields['non_infra_name'].initial = normalized.non_infra_name
                 self.fields['description'].initial = normalized.description
                 self.fields['non_infra_category'].initial = normalized.non_infra_category_id
@@ -118,6 +124,8 @@ class NonInfrastructureProjectForm(forms.Form):
                     self.fields['barangay'].initial = normalized.address.barangay
                     self.fields['municipality'].initial = normalized.address.municipality or 'Gabaldon'
                     self.fields['province'].initial = normalized.address.province or 'Nueva Ecija'
+                else:
+                    self.existing_images = []
 
     @staticmethod
     def _ensure_categories_exist():
@@ -148,22 +156,83 @@ class NonInfrastructureProjectForm(forms.Form):
         )
 
     def _save_images(self, project):
+
+        images_to_delete = self.cleaned_data.get('images_to_delete', '')
+
+        if images_to_delete:
+            image_ids = []
+
+            for image_id in images_to_delete.split(','):
+                
+                image_id = image_id.strip()
+
+                if image_id.isdigit():
+                    image_ids.append(int(image_id))
+            
+            if image_ids:
+                project.images.filter(
+                    pk__in=image_ids
+                ).delete()
+            
         uploaded_files = []
+
         if hasattr(self, 'files') and self.files:
-            raw_files = self.files.getlist('project_images') if hasattr(self.files, 'getlist') else self.files.get('project_images', [])
+
+            raw_files = (
+                self.files.getlist('project_images')
+                if hasattr(self.files, 'getlist')
+                else self.files.get(
+                    'project_images',
+                    []
+                )
+            )
+
             if isinstance(raw_files, (list, tuple)):
                 uploaded_files = raw_files
             else:
                 uploaded_files = [raw_files]
 
-        project.images.all().delete()
+
+        # Nothing new was uploaded.
+        # Existing images have already been processed above.
+        if not uploaded_files:
+            return
+
+
+        # =====================================================
+        # Save new images
+        # =====================================================
+
         for upload in uploaded_files:
-            if not upload or not getattr(upload, 'name', None):
+
+            if not upload or not getattr(
+                upload,
+                'name',
+                None
+            ):
                 continue
-            folder = os.path.join('projects', str(project.project_id))
-            filename = default_storage.save(os.path.join(folder, upload.name), upload)
-            file_url = default_storage.url(filename)
-            Project_Image.objects.create(project=project, image_url=file_url)
+
+            folder = os.path.join(
+                'projects',
+                str(project.project_id)
+            )
+
+            filename = default_storage.save(
+                os.path.join(
+                    folder,
+                    upload.name
+                ),
+                upload
+            )
+
+            file_url = default_storage.url(
+                filename
+            )
+
+            Project_Image.objects.create(
+                project=project,
+                image_url=file_url
+            )
 
     def save(self, user=None, instance=None):
         data = self.cleaned_data

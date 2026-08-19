@@ -117,71 +117,200 @@
                 </div>
             </div>
 
-            <div class="fieldset">
-                <legend>Location</legend>
-                <div class="form-grid">
-                    <div class="form-group full-span">
-                        <label for="{{ form.street.id_for_label }}">Street</label>
-                        {{ form.street }}
-                        {% if form.street.errors %}
-                            <div class="error-message">{{ form.street.errors.0 }}</div>
-                        {% endif %}
-                    </div>
+            <!-- =========================================================
+     LOCATION
+     ========================================================= -->
 
-                    <div class="form-group">
-                        <label for="{{ form.barangay.id_for_label }}">Barangay</label>
-                        {{ form.barangay }}
-                        {% if form.barangay.errors %}
-                            <div class="error-message">{{ form.barangay.errors.0 }}</div>
-                        {% endif %}
-                    </div>
+<div class="fieldset">
 
-                    <div class="form-group">
-                        <label for="{{ form.municipality.id_for_label }}">Municipality</label>
-                        {{ form.municipality }}
-                        {% if form.municipality.errors %}
-                            <div class="error-message">{{ form.municipality.errors.0 }}</div>
-                        {% endif %}
-                    </div>
+    <legend>Location</legend>
 
-                    <div class="form-group">
-                        <label for="{{ form.province.id_for_label }}">Province</label>
-                        {{ form.province }}
-                        {% if form.province.errors %}
-                            <div class="error-message">{{ form.province.errors.0 }}</div>
-                        {% endif %}
-                    </div>
+    <div class="form-grid">
 
+        <!-- Street -->
+
+        <div class="form-group full-span">
+
+            <label for="{{ form.street.id_for_label }}">
+                Street
+            </label>
+
+            {{ form.street }}
+
+            {% if form.street.errors %}
+                <div class="error-message">
+                    {{ form.street.errors.0 }}
                 </div>
-            </div>
+            {% endif %}
 
-    <div class="fieldset">
+        </div>
+
+
+        <!-- Barangay -->
+
+        <div class="form-group">
+
+            <label for="{{ form.barangay.id_for_label }}">
+                Barangay
+            </label>
+
+            {{ form.barangay }}
+
+            {% if form.barangay.errors %}
+                <div class="error-message">
+                    {{ form.barangay.errors.0 }}
+                </div>
+            {% endif %}
+
+        </div>
+
+
+        <!-- Municipality -->
+
+        <div class="form-group">
+
+            <label for="{{ form.municipality.id_for_label }}">
+                Municipality
+            </label>
+
+            {{ form.municipality }}
+
+            {% if form.municipality.errors %}
+                <div class="error-message">
+                    {{ form.municipality.errors.0 }}
+                </div>
+            {% endif %}
+
+        </div>
+
+
+        <!-- Province -->
+
+        <div class="form-group">
+
+            <label for="{{ form.province.id_for_label }}">
+                Province
+            </label>
+
+            {{ form.province }}
+
+            {% if form.province.errors %}
+                <div class="error-message">
+                    {{ form.province.errors.0 }}
+                </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     PROJECT IMAGES
+     ========================================================= -->
+
+<div class="fieldset">
+
     <legend>Project Images</legend>
 
     <div class="form-group full-span">
+    
+        {{ form.images_to_delete }}
 
-        <div class="image-upload-header">
-            <div>
-                <label for="{{ form.project_images.id_for_label }}">
-                    Project Photos
-                </label>
 
-                <p class="image-upload-description">
-                    Add photos that document or showcase this project.
-                    You can select multiple images at once.
-                </p>
+        <!-- =================================================
+             EXISTING PHOTOS
+             ================================================= -->
+
+        {% if form.existing_images %}
+
+            <div class="existing-images-section">
+
+                <div class="existing-images-header">
+
+                    <div>
+
+                        <h4>
+                            Existing Photos
+                        </h4>
+
+                        <p>
+                            Photos currently attached to this project.
+                        </p>
+
+                    </div>
+
+                    <span class="existing-images-count">
+
+                        {{ form.existing_images|length }}
+
+                        {% if form.existing_images|length == 1 %}
+                            photo
+                        {% else %}
+                            photos
+                        {% endif %}
+
+                    </span>
+
+                </div>
+
+
+                <div class="existing-images-grid">
+
+                    {% for image in form.existing_images %}
+
+                        <div class="existing-image"
+                        data-image-id="{{ image.pk }}"
+                        >
+
+                            <img
+                                src="{{ image.image_url }}"
+                                alt="Project photo {{ forloop.counter }}"
+                            >
+
+                            <div class="existing-image-number">
+                                {{ forloop.counter }}
+                            </div>
+                        
+                        <button
+                            type="button"
+                            class="existing-image-delete"
+                            data-image-id="{{ image.pk }}"
+                            aria-label="Remove project photo {{forloop.counter}}"
+                            title="Remove photo"
+                            >
+                            ×
+                        </button>
+                        </div>
+
+
+                    {% endfor %}
+
+                </div>
+
             </div>
 
-            <span class="image-upload-format">
-                JPG, JPEG, PNG
-            </span>
-        </div>
+        {% endif %}
 
-        <div class="image-upload-area" id="image-upload-area">
+
+        <!-- =================================================
+             ADD NEW PHOTOS
+             ================================================= -->
+
+        <div
+            class="image-upload-area"
+            id="image-upload-area"
+        >
 
             <div class="image-upload-content">
 
+
+                <!-- Upload Icon -->
+
                 <div class="image-upload-icon">
+
                     <svg
                         width="28"
                         height="28"
@@ -192,13 +321,32 @@
                         stroke-linecap="round"
                         stroke-linejoin="round"
                     >
-                        <rect x="3" y="3" width="18" height="18" rx="2"/>
-                        <circle cx="8.5" cy="8.5" r="1.5"/>
+
+                        <rect
+                            x="3"
+                            y="3"
+                            width="18"
+                            height="18"
+                            rx="2"
+                        />
+
+                        <circle
+                            cx="8.5"
+                            cy="8.5"
+                            r="1.5"
+                        />
+
                         <path d="M21 15l-5-5L5 21"/>
+
                     </svg>
+
                 </div>
 
+
+                <!-- Upload Text -->
+
                 <div class="image-upload-text">
+
                     <span class="image-upload-title">
                         Add project photos
                     </span>
@@ -206,7 +354,11 @@
                     <span class="image-upload-subtitle">
                         Drag and drop images here or
                     </span>
+
                 </div>
+
+
+                <!-- Browse Button -->
 
                 <label
                     for="{{ form.project_images.id_for_label }}"
@@ -215,20 +367,32 @@
                     Browse Files
                 </label>
 
+
+                <!-- Actual File Input -->
+
                 {{ form.project_images }}
 
             </div>
 
         </div>
 
+
+        <!-- Upload Errors -->
+
         {% if form.project_images.errors %}
+
             <div class="error-message">
+
                 {{ form.project_images.errors.0 }}
+
             </div>
+
         {% endif %}
 
 
-        <!-- Selected Images -->
+        <!-- =================================================
+             NEWLY SELECTED PHOTOS
+             ================================================= -->
 
         <div
             class="image-preview-container"
@@ -239,13 +403,22 @@
             <div class="image-preview-header">
 
                 <div>
-                    <h4>Selected Photos</h4>
-                    <span class="image-preview-count" id="image-preview-count">
+
+                    <h4>
+                        Selected Photos
+                    </h4>
+
+                    <span
+                        class="image-preview-count"
+                        id="image-preview-count"
+                    >
                         0 images
                     </span>
+
                 </div>
 
             </div>
+
 
             <div
                 class="image-preview-grid"
@@ -254,16 +427,33 @@
 
         </div>
 
-    </div>
-</div>        
-    
 
-            <div class="form-actions">
-                <button type="submit" class="btn btn-submit">{{ action }} Project</button>
-                <a href="{% url 'mayor_projects:non_infrastructure_project_list' %}" class="btn btn-cancel">Cancel</a>
-            </div>
-        </form>
+    </div>
+
 </div>
+
+
+<!-- =========================================================
+     FORM ACTIONS
+     ========================================================= -->
+
+<div class="form-actions">
+
+    <button
+        type="submit"
+        class="btn btn-submit"
+    >
+        {{ action }} Project
+    </button>
+
+
+    <a
+        href="{% url 'mayor_projects:non_infrastructure_project_list' %}"
+        class="btn btn-cancel"
+    >
+        Cancel
+    </a>
+
 </div>
 
 {% endblock %}
@@ -272,6 +462,51 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    const deleteInput = document.getElementById(
+        '{{ form.images_to_delete.id_for_label }}'
+    );
+
+    const deleteButtons = document.querySelectorAll(
+        '.existing-image-delete'
+    );
+
+    const imagesToDelete = new Set();
+
+    deleteButtons.forEach(function (button) {
+
+        button.addEventListener('click', function () {
+
+            const imageId = button.dataset.imageId;
+
+            if (!imageId) {
+                return;
+            }
+
+            const imageCard = button.closest('.existing-image');
+
+            if (!imageCard) {
+                return;
+            }
+
+            const confirmed = window.confirm(
+                'Are you sure you want to remove this photo?'
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            imagesToDelete.add(imageId);
+
+            if (deleteInput) {
+                deleteInput.value = Array.from(imagesToDelete).join(',');
+            }
+
+            imageCard.remove();
+        });
+
+    });
 
     const input = document.getElementById(
         '{{ form.project_images.id_for_label }}'
