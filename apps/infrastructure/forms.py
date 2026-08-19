@@ -123,30 +123,93 @@ class InfrastructureProjectForm(forms.Form):
         choices=[('', 'Select Award Status')] + list(Infrastructure_Project.AWARD_STATUS_CHOICES),
         widget=forms.Select,
     )
-    abc_amount = forms.DecimalField(required=False, max_digits=15, decimal_places=2)
-    contract_price = forms.DecimalField(required=False, max_digits=15, decimal_places=2)
-    planned_start_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    planned_end_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    actual_start_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    actual_completion_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    cost_progress_percentage = forms.DecimalField(required=False, max_digits=5, decimal_places=2)
-    physical_progress_percentage = forms.DecimalField(required=False, max_digits=5, decimal_places=2)
-    posting_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    pre_bid_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    bidding_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    notice_award_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    notice_to_proceed_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    duration_days = forms.IntegerField(required=False)
+    abc_amount = forms.DecimalField(
+        required=False,
+        max_digits=15,
+        decimal_places=2,
+        min_value=0,
+    )
+    contract_price = forms.DecimalField(
+        required=False,
+        max_digits=15,
+        decimal_places=2,
+        min_value=0,
+    )
+    planned_start_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    planned_end_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    actual_start_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    actual_completion_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    cost_progress_percentage = forms.DecimalField(
+        required=False,
+        max_digits=5,
+        decimal_places=2,
+        min_value=0,
+        max_value=100,
+    )
+    physical_progress_percentage = forms.DecimalField(
+        required=False,
+        max_digits=5,
+        decimal_places=2,
+        min_value=0,
+        max_value=100,
+    )
+    posting_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    pre_bid_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    bidding_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    notice_award_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    notice_to_proceed_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    duration_days = forms.IntegerField(required=False, min_value=1)
     fund_source = forms.ModelChoiceField(
         required=False,
         queryset=FundSource.objects.none(),
         empty_label='Select Fund Source',
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
-    actual_expenditure = forms.DecimalField(required=False, max_digits=15, decimal_places=2)
+    actual_expenditure = forms.DecimalField(
+        required=False,
+        max_digits=15,
+        decimal_places=2,
+        min_value=0,
+    )
 
-    inspection_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    inspection_completion_percentage = forms.DecimalField(required=False, max_digits=5, decimal_places=2)
+    inspection_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    inspection_completion_percentage = forms.DecimalField(
+        required=False,
+        max_digits=5,
+        decimal_places=2,
+        min_value=0,
+        max_value=100,
+    )
     inspection_findings = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={'rows': 3}))
     inspection_remarks = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={'rows': 3}))
 
@@ -330,6 +393,50 @@ class InfrastructureProjectForm(forms.Form):
                 'inspection_date',
                 'Enter an inspection date when recording inspection details.',
             )
+
+        planned_start = cleaned_data.get('planned_start_date')
+        planned_end = cleaned_data.get('planned_end_date')
+        if planned_start and planned_end and planned_end < planned_start:
+            self.add_error(
+                'planned_end_date',
+                'Planned end date cannot be earlier than the planned start date.',
+            )
+
+        actual_start = cleaned_data.get('actual_start_date')
+        actual_completion = cleaned_data.get('actual_completion_date')
+        if (
+            actual_start
+            and actual_completion
+            and actual_completion < actual_start
+        ):
+            self.add_error(
+                'actual_completion_date',
+                'Actual completion date cannot be earlier than the actual start date.',
+            )
+
+        procurement_dates = [
+            ('posting_date', 'Posting date'),
+            ('pre_bid_date', 'Pre-bid date'),
+            ('bidding_date', 'Bidding date'),
+            ('notice_award_date', 'Notice of award date'),
+            ('notice_to_proceed_date', 'Notice to proceed date'),
+        ]
+        populated_dates = [
+            (field_name, label, cleaned_data.get(field_name))
+            for field_name, label in procurement_dates
+            if cleaned_data.get(field_name)
+        ]
+        for previous, current in zip(
+            populated_dates,
+            populated_dates[1:],
+        ):
+            _, previous_label, previous_date = previous
+            current_field, current_label, current_date = current
+            if current_date < previous_date:
+                self.add_error(
+                    current_field,
+                    f'{current_label} cannot be earlier than {previous_label.lower()}.',
+                )
 
         return cleaned_data
 
