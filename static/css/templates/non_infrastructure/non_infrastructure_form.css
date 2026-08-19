@@ -1,6 +1,15 @@
+/* =========================================================
+   Non-Infrastructure Project Form
+   ========================================================= */
+
+
+/* =========================================================
+   Breadcrumb
+   ========================================================= */
+
 .breadcrumb-nav {
     background: #1a5a3a;
-    color: white;
+    color: #ffffff;
     padding: 1rem 1.5rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -13,7 +22,7 @@
 }
 
 .breadcrumb-nav a:hover {
-    color: white;
+    color: #ffffff;
 }
 
 .breadcrumb-nav span {
@@ -21,110 +30,193 @@
     margin: 0 0.5rem;
 }
 
+
+/* =========================================================
+   Form Layout
+   ========================================================= */
+
 .form-container {
+    width: 100%;
     max-width: 1100px;
+
     margin: 2rem auto;
     padding: 0 1.5rem 2rem;
+
+    box-sizing: border-box;
 }
 
 .form-card {
-    background: white;
-    border: 1px solid #d1d5db;
-    border-radius: 14px;
-    padding: 2rem;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
     width: 100%;
     max-width: 100%;
-    box-sizing: border-box;
     min-width: 0;
+
+    padding: 2rem;
+
+    box-sizing: border-box;
+
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 14px;
+
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
 }
 
 .form-card h2 {
+    margin: 0 0 1.5rem;
+
+    color: #111827;
+
     font-size: 1.75rem;
     font-weight: 700;
-    margin: 0 0 1.5rem 0;
-    color: #111827;
 }
 
-.fieldset {
-     border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 1.25rem;
-    margin-bottom: 1.5rem;
-    background: #f9fafb;
 
+/* =========================================================
+   Fieldsets
+   ========================================================= */
+
+.fieldset {
     width: 100%;
     max-width: 100%;
     min-width: 0;
+
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+
     box-sizing: border-box;
+
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
 }
 
 .fieldset legend {
-    font-weight: 700;
     padding: 0 0.5rem;
+
     color: #111827;
+
+    font-weight: 700;
 }
+
+
+/* =========================================================
+   Form Grid
+   ========================================================= */
 
 .form-grid {
     display: grid;
+
     grid-template-columns: repeat(2, minmax(0, 1fr));
+
     gap: 1.25rem;
+
+    width: 100%;
+    min-width: 0;
 }
 
 .form-group {
+    min-width: 0;
     margin-bottom: 0.5rem;
 }
 
 .form-group.full-span {
+    grid-column: 1 / -1;
+
+    width: 100%;
     min-width: 0;
     max-width: 100%;
+
     box-sizing: border-box;
 }
 
+
+/* =========================================================
+   Form Fields
+   ========================================================= */
+
 .form-group label {
     display: block;
-    font-weight: 600;
+
     margin-bottom: 0.5rem;
+
     color: #111827;
+
+    font-weight: 600;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
     width: 100%;
+    max-width: 100%;
+
+    padding: 0.75rem 0.875rem;
+
     box-sizing: border-box;
+
     border: 1px solid #d1d5db;
     border-radius: 8px;
-    padding: 0.75rem 0.875rem;
-    font-size: 0.95rem;
-    font-family: inherit;
-    background: #fff;
+
+    background: #ffffff;
     color: #111827;
+
+    font-family: inherit;
+    font-size: 0.95rem;
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
+
     border-color: #1a5a3a;
+
     box-shadow: 0 0 0 3px rgba(26, 90, 58, 0.12);
 }
 
 .form-group textarea {
-    resize: vertical;
     min-height: 120px;
+
+    resize: vertical;
 }
 
 .helper-text {
     display: block;
+
     margin-top: 0.5rem;
-    font-size: 0.8rem;
+
     color: #6b7280;
+
+    font-size: 0.8rem;
 }
+
+
+/* =========================================================
+   Error Messages
+   ========================================================= */
+
+.error-message {
+    margin-top: 0.5rem;
+    padding: 0.7rem 0.9rem;
+
+    background: #fef2f2;
+
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+
+    color: #b91c1c;
+}
+
+
+/* =========================================================
+   Form Actions
+   ========================================================= */
 
 .form-actions {
     display: flex;
+
     gap: 1rem;
+
     margin-top: 2rem;
 }
 
@@ -132,19 +224,28 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
+    flex: 1;
+
     padding: 0.8rem 1.5rem;
+
     border: none;
     border-radius: 8px;
-    font-weight: 600;
+
     cursor: pointer;
+
+    font-weight: 600;
+
     text-decoration: none;
-    transition: background 180ms ease;
-    flex: 1;
+
+    transition:
+        background-color 180ms ease,
+        transform 150ms ease;
 }
 
 .btn-submit {
     background: #1a5a3a;
-    color: white;
+    color: #ffffff;
 }
 
 .btn-submit:hover {
@@ -160,160 +261,51 @@
     background: #d1d5db;
 }
 
-.error-message {
-    background: #fef2f2;
-    border: 1px solid #fca5a5;
-    color: #b91c1c;
-    padding: 0.7rem 0.9rem;
-    border-radius: 8px;
-    margin-top: 0.5rem;
-}
 
-@media (max-width: 768px) {
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .form-card {
-        padding: 1.25rem;
-    }
-
-    .form-actions {
-        flex-direction: column;
-    }
-}
-
-/* =========================================
+/* =========================================================
    Project Image Upload
-   ========================================= */
+   ========================================================= */
 
 .image-upload-area {
-    border: 2px dashed #d1d5db;
-    border-radius: 12px;
-    background: #ffffff;
-    transition:
-        border-color 180ms ease,
-        background 180ms ease;
-}
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 
-.image-upload-area:hover,
-.image-upload-area.is-dragging {
-    border-color: #1a5a3a;
-    background: #f0fdf4;
-}
+    box-sizing: border-box;
 
-.image-upload-content {
-    padding: 2rem;
-    text-align: center;
-}
-
-.image-upload-icon {
-    font-size: 2.5rem;
-    margin-bottom: 0.75rem;
-}
-
-.image-upload-title {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #111827;
-}
-
-.image-upload-description {
-    margin: 0.4rem 0 1rem;
-    color: #6b7280;
-    font-size: 0.9rem;
-}
-
-.image-upload-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.7rem 1.2rem;
-    border-radius: 8px;
-    background: #1a5a3a;
-    color: #ffffff;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 180ms ease;
-}
-
-.image-upload-button:hover {
-    background: #144a30;
-}
-
-.image-upload-area input[type="file"] {
-    display: none;
-}
-
-.image-upload-hint {
-    margin: 0.75rem 0 0;
-    font-size: 0.8rem;
-    color: #6b7280;
-}
-
-/* =========================================
-   Project Images
-   ========================================= */
-
-.image-upload-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 0.75rem;
-}
-
-.image-upload-header label {
-    display: block;
-    margin-bottom: 0.25rem;
-}
-
-.image-upload-description {
-    margin: 0;
-    color: #6b7280;
-    font-size: 0.82rem;
-    line-height: 1.5;
-}
-
-.image-upload-format {
-    flex-shrink: 0;
-    padding: 0.3rem 0.55rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    color: #6b7280;
-    background: #f9fafb;
-    font-size: 0.7rem;
-    font-weight: 600;
-}
-
-
-/* Upload Area */
-
-.image-upload-area {
     border: 1.5px dashed #cfd5d1;
     border-radius: 10px;
+
     background: #fafcfb;
+
     transition:
-        border-color 0.2s ease,
-        background-color 0.2s ease,
-        box-shadow 0.2s ease;
+        border-color 180ms ease,
+        background-color 180ms ease,
+        box-shadow 180ms ease;
 }
 
 .image-upload-area:hover,
 .image-upload-area.is-dragging {
     border-color: #1a5a3a;
+
     background: #f4faf6;
+
     box-shadow: 0 0 0 3px rgba(26, 90, 58, 0.06);
 }
 
 .image-upload-content {
-    min-height: 150px;
-    padding: 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
+
     gap: 1rem;
+
+    min-height: 150px;
+
+    padding: 1.5rem;
+
+    box-sizing: border-box;
+
     text-align: left;
 }
 
@@ -336,17 +328,22 @@
 .image-upload-text {
     display: flex;
     flex-direction: column;
+
     gap: 0.2rem;
+
+    min-width: 0;
 }
 
 .image-upload-title {
     color: #1f2937;
+
     font-size: 0.9rem;
     font-weight: 700;
 }
 
 .image-upload-subtitle {
     color: #6b7280;
+
     font-size: 0.78rem;
 }
 
@@ -364,14 +361,14 @@
     background: #1a5a3a;
     color: #ffffff;
 
+    cursor: pointer;
+
     font-size: 0.8rem;
     font-weight: 600;
 
-    cursor: pointer;
-
     transition:
-        background-color 0.2s ease,
-        transform 0.15s ease;
+        background-color 180ms ease,
+        transform 150ms ease;
 }
 
 .image-upload-button:hover {
@@ -387,159 +384,87 @@
 }
 
 
-/* =========================================
-   Selected Photos
-   ========================================= */
-
-.image-preview-container {
-    margin-top: 1.25rem;
-}
-
-.image-preview-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
-}
-
-.image-preview-header h4 {
-    margin: 0;
-    color: #1f2937;
-    font-size: 0.9rem;
-    font-weight: 700;
-}
-
-.image-preview-count {
-    display: block;
-    margin-top: 0.15rem;
-    color: #6b7280;
-    font-size: 0.75rem;
-}
-
-.image-preview-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.75rem;
-}
-
-.image-preview {
-    position: relative;
-
-    aspect-ratio: 4 / 3;
-
-    overflow: hidden;
-
-    border: 1px solid #e5e7eb;
-    border-radius: 9px;
-
-    background: #f3f4f6;
-}
-
-.image-preview img {
-    display: block;
-
-    width: 100%;
-    height: 100%;
-
-    object-fit: cover;
-
-    transition: transform 0.25s ease;
-}
-
-.image-preview:hover img {
-    transform: scale(1.03);
-}
-
-.image-preview-overlay {
-    position: absolute;
-    left: 0.5rem;
-    bottom: 0.5rem;
-
-    width: 24px;
-    height: 24px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 6px;
-
-    background: rgba(17, 24, 39, 0.78);
-    color: #ffffff;
-
-    font-size: 0.7rem;
-    font-weight: 700;
-}
-
-/* =========================================
+/* =========================================================
    Existing Project Photos
-   ========================================= */
+   ========================================================= */
 
 .existing-images-section {
     width: 100%;
-    margin-bottom: 1.5rem;
+    max-width: 100%;
+    min-width: 0;
+
+    margin-bottom: 1.25rem;
+
+    box-sizing: border-box;
 }
 
 .existing-images-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 1rem;
+
     margin-bottom: 0.75rem;
 }
 
 .existing-images-header h4 {
     margin: 0 0 0.2rem;
+
     color: #1f2937;
+
     font-size: 0.9rem;
     font-weight: 700;
 }
 
 .existing-images-header p {
     margin: 0;
+
     color: #6b7280;
+
     font-size: 0.78rem;
 }
 
 .existing-images-count {
     flex-shrink: 0;
+
     padding: 0.3rem 0.55rem;
+
     border: 1px solid #e5e7eb;
     border-radius: 6px;
+
     background: #f9fafb;
     color: #6b7280;
+
     font-size: 0.7rem;
     font-weight: 600;
 }
 
 
-/* Photo grid */
+/* Existing photo grid */
 
 .existing-images-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.75rem;
+
+    width: 100%;
+    box-sizing: border-box;
 }
-
-
-/* Photo card */
 
 .existing-image {
     position: relative;
 
     width: 100%;
-    height: 150px;
+    height: 110px;
 
     overflow: hidden;
 
     border: 1px solid #e5e7eb;
     border-radius: 8px;
 
-    background: #f9fafb;
+    background: #f3f4f6;
 }
-
-
-/* Photo */
 
 .existing-image img {
     display: block;
@@ -550,11 +475,9 @@
     object-fit: cover;
 }
 
-
-/* Number */
-
 .existing-image-number {
     position: absolute;
+
     left: 0.5rem;
     bottom: 0.5rem;
 
@@ -568,75 +491,188 @@
     border-radius: 6px;
 
     background: rgba(17, 24, 39, 0.78);
-    color: white;
+
+    color: #ffffff;
 
     font-size: 0.7rem;
     font-weight: 700;
 }
 
 
-/* Responsive */
+/* =========================================================
+   Newly Selected Photos
+   ========================================================= */
 
-@media (max-width: 768px) {
+.image-preview-container {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 
-    .existing-images-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
+    margin-top: 1.25rem;
 
-    .existing-image {
-        height: 130px;
-    }
-
+    box-sizing: border-box;
 }
 
-@media (max-width: 480px) {
+.image-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-    .existing-images-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .existing-image {
-        height: 120px;
-    }
-
+    margin-bottom: 0.75rem;
 }
 
-/* =========================================
+.image-preview-header h4 {
+    margin: 0;
+
+    color: #1f2937;
+
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.image-preview-count {
+    display: block;
+
+    margin-top: 0.15rem;
+
+    color: #6b7280;
+
+    font-size: 0.75rem;
+}
+
+.image-preview-grid {
+    display: grid;
+
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    gap: 0.75rem;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.image-preview {
+    position: relative;
+
+    width: 100%;
+    height: 110px;
+    min-width: 0;
+
+    overflow: hidden;
+
+    box-sizing: border-box;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+
+    background: #f3f4f6;
+}
+
+.image-preview img {
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    max-width: 100%;
+    max-height: 100%;
+
+    object-fit: cover;
+
+    transition: transform 250ms ease;
+}
+
+.image-preview:hover img {
+    transform: scale(1.03);
+}
+
+.image-preview-overlay {
+    position: absolute;
+
+    left: 0.5rem;
+    bottom: 0.5rem;
+
+    width: 24px;
+    height: 24px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 6px;
+
+    background: rgba(17, 24, 39, 0.78);
+
+    color: #ffffff;
+
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+
+/* =========================================================
    Responsive
-   ========================================= */
+   ========================================================= */
 
 @media (max-width: 768px) {
 
-    .image-upload-header {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-card {
+        padding: 1.25rem;
+    }
+
+    .form-actions {
         flex-direction: column;
     }
 
-    .image-upload-format {
-        align-self: flex-start;
-    }
-
     .image-upload-content {
-        min-height: 140px;
-        padding: 1.25rem;
         flex-wrap: wrap;
+
         justify-content: flex-start;
+
+        padding: 1.25rem;
     }
 
+    .existing-images-grid,
     .image-preview-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
+    .existing-image,
+    .image-preview {
+        height: 100px;
+    }
 }
+
 
 @media (max-width: 480px) {
 
+    .form-container {
+        padding-right: 1rem;
+        padding-left: 1rem;
+    }
+
+    .form-card {
+        padding: 1rem;
+    }
+
     .image-upload-content {
         flex-direction: column;
+
         align-items: flex-start;
     }
 
+    .existing-images-grid,
     .image-preview-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .existing-image,
+    .image-preview {
+        height: 100px;
+    }
 }
