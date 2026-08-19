@@ -14,43 +14,53 @@
     </a>
 
     <header class="project-detail-header">
-        <div class="project-detail-heading">
-            <div class="project-title-block">
-                <p class="project-eyebrow">{{ project_type_label }} · {{ project_code }}</p>
-                <h2>{{ project_details.title }}</h2>
-                <p class="project-subtitle">
-                    {{ project_details.get_category_display|default:"Uncategorized" }}
-                    {% if project_details.get_barangay_display and project_details.get_barangay_display != "Not specified" %}
-                        <span aria-hidden="true">·</span> Barangay {{ project_details.get_barangay_display }}
-                    {% endif %}
-                </p>
-            </div>
-            <div class="action-buttons action-buttons--detail">
-                <a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit">Edit Project</a>
-                <a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete">Delete Project</a>
-            </div>
+        <div class="project-detail-hero-image" aria-hidden="true">
+            <img
+                src="{% if project_images %}{{ project_images.0.image_url }}{% else %}{{ project_placeholder_image }}{% endif %}"
+                alt=""
+            >
         </div>
+        <div class="project-detail-hero-overlay"></div>
 
-        <div class="project-meta" aria-label="Project summary">
-            <div class="meta-item">
-                <span class="meta-label">Status</span>
-                <span class="status-badge status-{{ project_status_class }}">{{ project_details.get_status_display }}</span>
+        <div class="project-detail-header-content">
+            <div class="project-detail-heading">
+                <div class="project-title-block">
+                    <p class="project-eyebrow">{{ project_type_label }} · {{ project_code }}</p>
+                    <h2>{{ project_details.title }}</h2>
+                    <p class="project-subtitle">
+                        {{ project_details.get_category_display|default:"Uncategorized" }}
+                        {% if project_details.get_barangay_display and project_details.get_barangay_display != "Not specified" %}
+                            <span aria-hidden="true">·</span> Barangay {{ project_details.get_barangay_display }}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="action-buttons action-buttons--detail">
+                    <a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit">Edit Project</a>
+                    <a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete">Delete Project</a>
+                </div>
             </div>
-            <div class="meta-item">
-                <span class="meta-label">Approved Budget</span>
-                <span class="meta-value">
-                    {% if project_budget_value is not None %}₱{{ project_budget_value|floatformat:2 }}{% else %}Not recorded{% endif %}
-                </span>
-            </div>
-            <div class="meta-item">
-                <span class="meta-label">Progress</span>
-                <span class="meta-value">
-                    {% if project_progress_value is not None %}{{ project_progress_value|floatformat:1 }}%{% else %}Not recorded{% endif %}
-                </span>
-            </div>
-            <div class="meta-item">
-                <span class="meta-label">Target Completion</span>
-                <span class="meta-value">{{ project_target_completion_date|date:"M d, Y"|default:"Not assigned" }}</span>
+
+            <div class="project-meta" aria-label="Project summary">
+                <div class="meta-item">
+                    <span class="meta-label">Status</span>
+                    <span class="status-badge status-{{ project_status_class }}">{{ project_details.get_status_display }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Approved Budget</span>
+                    <span class="meta-value">
+                        {% if project_budget_value is not None %}₱{{ project_budget_value|floatformat:2 }}{% else %}Not recorded{% endif %}
+                    </span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Progress</span>
+                    <span class="meta-value">
+                        {% if project_progress_value is not None %}{{ project_progress_value|floatformat:1 }}%{% else %}Not recorded{% endif %}
+                    </span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Target Completion</span>
+                    <span class="meta-value">{{ project_target_completion_date|date:"M d, Y"|default:"Not assigned" }}</span>
+                </div>
             </div>
         </div>
     </header>
@@ -281,4 +291,3 @@
 
 {% block extra_scripts %}
 {% endblock %}
-
