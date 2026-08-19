@@ -258,6 +258,23 @@ class InfrastructureProjectForm(forms.Form):
                 self.initial.setdefault('inspection_findings', latest_inspection.findings)
                 self.initial.setdefault('inspection_remarks', latest_inspection.remarks)
 
+    def clean(self):
+        cleaned_data = super().clean()
+        category_obj = cleaned_data.get('category')
+        other_category = (cleaned_data.get('other_category') or '').strip()
+
+        if (
+            category_obj is not None
+            and category_obj.category_code.lower() == 'other'
+            and not other_category
+        ):
+            self.add_error(
+                'other_category',
+                'Enter a category name when Other is selected.',
+            )
+
+        return cleaned_data
+
     def clean_municipality(self):
         return 'Gabaldon'
 
