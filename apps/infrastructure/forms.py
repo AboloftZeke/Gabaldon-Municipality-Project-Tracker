@@ -154,11 +154,20 @@ class InfrastructureProjectForm(forms.Form):
         required=False,
         widget=MultipleFileInput(attrs={'accept': 'image/*'}),
     )
+    images_to_delete = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+    cover_image_selection = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
 
     def __init__(self, *args, **kwargs):
         instance = kwargs.pop('instance', None)
         super().__init__(*args, **kwargs)
         self._instance = instance
+        self.existing_images = []
 
         self.fields['category'].queryset = InfrastructureCategory.objects.filter(
             is_active=True
@@ -179,6 +188,23 @@ class InfrastructureProjectForm(forms.Form):
 
         if instance is not None:
             self._populate_from_instance(instance)
+            infra = self._resolve_infrastructure_instance(instance)
+            if infra is not None and infra.project:
+                self.existing_images = list(
+                    infra.project.images.order_by('-is_cover', '-created_at')
+                )
+                existing_cover = next(
+                    (
+                        image
+                        for image in self.existing_images
+                        if image.is_cover
+                    ),
+                    self.existing_images[0] if self.existing_images else None,
+                )
+                if existing_cover:
+                    self.fields['cover_image_selection'].initial = (
+                        f'existing:{existing_cover.pk}'
+                    )
 
     def _resolve_infrastructure_instance(self, instance):
         if instance is None:
@@ -258,29 +284,75 @@ class InfrastructureProjectForm(forms.Form):
         if infra.project:
             latest_inspection = infra.project.inspections.order_by('-inspection_date', '-created_at').first()
             if latest_inspection:
-                self.initial.setdefault('inspection_date', latest_inspection.inspection_date)
-                self.initial.setdefault('inspection_completion_percentage', latest_inspection.completion_percentage)
-                self.initial.setdefault('inspection_findings', latest_inspection.findings)
-                self.initial.setdefault('inspection_remarks', latest_inspection.remarks)
+                self.initi    def _save_images(self, project):
+        cover_selection = self.cleaned_data.get(
+            'cover_image_selection',
+            '',
+        )
+        images_to_delete = self.cleaned_data.get('images_to_delete', '')
 
-    def clean(self):
-        cleaned_data = super().clean()
-        category_obj = cleaned_data.get('category')
-        other_category = (cleaned_data.get('other_category') or '').strip()
+        image_ids = [
+            int(image_id.strip())
+            for image_id in images_to_delete.split(',')
+            if image_id.strip().isdigit()
+        ]
+        if image_ids:
+            project.images.filter(pk__in=image_ids).delete()
 
-        if (
-            category_obj is not None
-            and category_obj.category_code.lower() == 'other'
-            and not other_category
-        ):
-            self.add_error(
-                'other_category',
-                'Enter a category name when Other is selected.',
+        raw_files = []
+        if hasattr(self, 'files') and self.files:
+            raw_files = (
+                self.files.getlist('project_images')
+                if hasattr(self.files, 'getlist')
+                else self.files.get('project_images', [])
+            )
+        uploaded_files = (
+            raw_files
+            if isinstance(raw_files, (list, tuple))
+            else [raw_files]
+        )
+
+        saved_images = []
+        for upload in uploaded_files:
+            if not upload or not getattr(upload, 'name', None):
+                continue
+            folder = os.path.join('projects', str(project.project_id))
+            filename = default_storage.save(
+                os.path.join(folder, upload.name),
+                upload,
+            )
+            saved_images.append(
+                Project_Image.objects.create(
+                    project=project,
+                    image_url=default_storage.url(filename),
+                )
             )
 
-        return cleaned_data
+        selected_cover = None
+        if cover_selection.startswith('existing:'):
+            image_id = cover_selection.removeprefix('existing:')
+            if image_id.isdigit():
+                selected_cover = project.images.filter(
+                    pk=int(image_id)
+                ).first()
+        elif cover_selection.startswith('new:'):
+            image_index = cover_selection.removeprefix('new:')
+            if image_index.isdigit():
+                index = int(image_index)
+                if 0 <= index < len(saved_images):
+                    selected_cover = saved_images[index]
 
-    def clean_municipality(self):
+        if selected_cover is None:
+            selected_cover = (
+                project.images.filter(is_cover=True).first()
+                or project.images.order_by('-created_at').first()
+            )
+
+        project.images.update(is_cover=False)
+        if selected_cover:
+            project.images.filter(pk=selected_cover.pk).update(is_cover=True)
+
+
         return 'Gabaldon'
 
     def clean_province(self):
