@@ -103,6 +103,82 @@ class LogoutView(View):
         return render(request, 'core/logout.html')
 
 
+class PublicInfrastructureProjectDetailView(TemplateView):
+    """Public, read-only details for an infrastructure project."""
+    template_name = 'Dashboard/infrastructure_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        from apps.system.models import (
+            Financial,
+            Infrastructure_Project,
+            Infrastructure_Schedule,
+            Project_Image,
+        )
+
+        project = get_object_or_404(
+            Infrastructure_Project.objects.select_related(
+                'project',
+                'project__created_by_user',
+                'address',
+                'category',
+                'contractor',
+                'implementing_office',
+            ).prefetch_related(
+                Prefetch(
+                    'project__images',
+                    queryset=Project_Image.objects.order_by(
+                        '-is_cover',
+                        '-created_at',
+                    ),
+                    to_attr='public_images',
+                ),
+                Prefetch(
+                    'financial_records',
+                    queryset=Financial.objects.select_related(
+                        'fund_source',
+                    ).order_by('-financial_id'),
+                    to_attr='public_financial_records',
+                ),
+                Prefetch(
+                    'schedules',
+                    queryset=Infrastructure_Schedule.objects.order_by(
+                        '-schedule_id',
+                    ),
+                    to_attr='public_schedules',
+                ),
+            ),
+            pk=self.kwargs['pk'],
+        )
+
+        creator = project.project.created_by_user if project.project else None
+
+        context.update({
+            'public_project': project,
+            'project_code': (
+                project.infrastructure_code
+                or f'INF-{project.pk:05d}'
+            ),
+            'project_images': (
+                project.project.public_images if project.project else []
+            ),
+            'financial': (
+                project.public_financial_records[0]
+                if project.public_financial_records else None
+            ),
+            'schedule': (
+                project.public_schedules[0]
+                if project.public_schedules else None
+            ),
+            'created_by_name': (
+                creator.get_full_name() or creator.username
+                if creator else ''
+            ),
+        })
+        return context
+
+
 class PublicNonInfrastructureProjectDetailView(TemplateView):
     """Public, read-only details for a non-infrastructure program."""
     template_name = 'Dashboard/non_infrastructure_detail.html'
@@ -313,7 +389,7 @@ class PublicDashboardView(TemplateView):
             detail_url = '#'
             try:
                 detail_url = reverse(
-                    'engineering_projects:project_detail',
+                    'public_infrastructure_project_detail',
                     args=[p.pk]
                 )
             except Exception:

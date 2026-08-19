@@ -1,0 +1,54 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ public_project.infrastructure_title }} - Gabaldon Transparency Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_detail.css' %}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="site-brand">
+        <img src="{% static 'images/gabaldon-seal.png' %}" alt="Gabaldon Municipality Seal" class="site-seal">
+        <div class="site-brand-text">
+          <p>Republic of the Philippines</p>
+          <h2>Municipality of Gabaldon</h2>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="project-detail-container">
+    <a href="{% url 'public_dashboard' %}" class="btn btn-back">&larr; Back to Public Dashboard</a>
+    <section class="project-detail-header">
+      <p class="meta-label">Public Infrastructure Project</p>
+      <h2>{{ public_project.infrastructure_title }}</h2>
+      <div class="project-meta">
+        <div class="meta-item">
+          <div class="meta-label">Project Code</div>
+          <div class="meta-value">{{ project_code }}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Status</div>
+          <div class="meta-value">{{ public_project.get_award_status_display|default:"N/A" }}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Category</div>
+          <div class="meta-value">{{ public_project.category.category_name|default:"N/A" }}</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>(c) 2026 Municipality of Gabaldon - Transparent Governance for the Community.</p>
+  </footer>
+</body>
+</html>
+

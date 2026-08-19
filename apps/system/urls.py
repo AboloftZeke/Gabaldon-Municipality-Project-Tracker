@@ -7,6 +7,11 @@ urlpatterns = [
     path('', lambda request: redirect('login')),
     path('dashboard/', views.PublicDashboardView.as_view(), name='public_dashboard'),
     path(
+        'dashboard/infrastructure/<int:pk>/',
+        views.PublicInfrastructureProjectDetailView.as_view(),
+        name='public_infrastructure_project_detail',
+    ),
+    path(
         'dashboard/non-infrastructure/<int:pk>/',
         views.PublicNonInfrastructureProjectDetailView.as_view(),
         name='public_non_infrastructure_project_detail',
@@ -45,3 +50,4 @@ urlpatterns = [
     path('password-history/', views.PasswordHistoryListView.as_view(), name='password_history_list'),
     path('password-change/', views.PasswordChangeView.as_view(),name='password_change'),
 ]
+

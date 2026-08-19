@@ -125,6 +125,34 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             str(row['actual_start_date']),
             '2026-01-20',
         )
+        self.assertEqual(
+            row['detail_url'],
+            reverse(
+                'public_infrastructure_project_detail',
+                args=[self.infrastructure.pk],
+            ),
+        )
+
+    def test_public_infrastructure_detail_is_available_without_login(self):
+        detail_url = reverse(
+            'public_infrastructure_project_detail',
+            args=[self.infrastructure.pk],
+        )
+
+        response = self.client.get(detail_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'Dashboard/infrastructure_detail.html',
+        )
+        self.assertContains(response, 'Normalized Road Project')
+        self.assertContains(
+            response,
+            f'INF-{self.infrastructure.pk:05d}',
+        )
+        self.assertNotContains(response, 'Edit Project')
+        self.assertNotContains(response, 'Delete Project')
 
 
 class PublicDashboardNonInfrastructureStatusTests(TestCase):
