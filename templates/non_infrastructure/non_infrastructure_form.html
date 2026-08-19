@@ -532,31 +532,46 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    input.addEventListener('change', function () {
+    let selectedFiles = [];
+    let previewRenderVersion = 0;
+
+    function syncSelectedFiles() {
+
+        const dataTransfer = new DataTransfer();
+
+        selectedFiles.forEach(function (file) {
+            dataTransfer.items.add(file);
+        });
+
+        input.files = dataTransfer.files;
+    }
+
+    function renderSelectedFiles() {
+
+        const renderVersion = ++previewRenderVersion;
 
         previewGrid.innerHTML = '';
 
-        const files = Array.from(input.files);
-
-        if (files.length === 0) {
+        if (selectedFiles.length === 0) {
             previewContainer.hidden = true;
+            previewCount.textContent = '0 images';
             return;
         }
 
         previewContainer.hidden = false;
 
         previewCount.textContent =
-            `${files.length} ${files.length === 1 ? 'image' : 'images'}`;
+            `${selectedFiles.length} ${selectedFiles.length === 1 ? 'image' : 'images'}`;
 
-        files.forEach(function (file, index) {
-
-            if (!file.type.startsWith('image/')) {
-                return;
-            }
+        selectedFiles.forEach(function (file, index) {
 
             const reader = new FileReader();
 
             reader.onload = function (event) {
+
+                if (renderVersion !== previewRenderVersion) {
+                    return;
+                }
 
                 const preview = document.createElement('div');
 
@@ -571,13 +586,42 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="image-preview-overlay">
                         <span>${index + 1}</span>
                     </div>
+
+                    <button
+                        type="button"
+                        class="image-preview-delete"
+                        aria-label="Remove selected image ${index + 1}"
+                        title="Remove photo"
+                    >
+                        ×
+                    </button>
                 `;
+
+                const removeButton = preview.querySelector(
+                    '.image-preview-delete'
+                );
+
+                removeButton.addEventListener('click', function () {
+                    selectedFiles.splice(index, 1);
+                    syncSelectedFiles();
+                    renderSelectedFiles();
+                });
 
                 previewGrid.appendChild(preview);
             };
 
             reader.readAsDataURL(file);
         });
+    }
+
+    input.addEventListener('change', function () {
+
+        selectedFiles = Array.from(input.files).filter(function (file) {
+            return file.type.startsWith('image/');
+        });
+
+        syncSelectedFiles();
+        renderSelectedFiles();
     });
 
 
