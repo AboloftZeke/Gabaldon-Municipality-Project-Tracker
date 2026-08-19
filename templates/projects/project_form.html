@@ -39,11 +39,19 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="{{ form.category.id_for_label }}">Category*</label>
+                        <label for="{{ form.category.id_for_label }}">
+                            Category
+                        </label>
+
                         {{ form.category }}
-                        {% if form.category.errors %}
-                            <div class="error-message">{{ form.category.errors.0 }}</div>
-                        {% endif %}
+
+                        <div id="other-category-container" style="display: none; margin-top: 10px;">
+                            <label for="{{ form.other_category.id_for_label }}">
+                                Other Category
+                            </label>
+
+                            {{ form.other_category }}
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -339,6 +347,29 @@
                 <button type="submit" class="btn btn-submit">{{ action }} Project</button>
                 <a href="{% url 'engineering_projects:project_list' %}" class="btn btn-cancel">Cancel</a>
             </div>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const categorySelect = document.getElementById('id_category');
+                const otherContainer = document.getElementById('other-category-container');
+                const otherInput = document.getElementById('id_other_category');
+
+                function toggleOtherCategory() {
+                    if (categorySelect.value === 'Other') {
+                        otherContainer.style.display = 'block';
+                        otherInput.required = true;
+                    } else {
+                        otherContainer.style.display = 'none';
+                        otherInput.required = false;
+                        otherInput.value = '';
+                    }
+                }
+
+                categorySelect.addEventListener('change', toggleOtherCategory);
+
+                // Handles the edit form if "Other" was previously selected.
+                toggleOtherCategory();
+            });
+            </script>
         </form>
     </div>
 </div>

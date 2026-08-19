@@ -1,3 +1,5 @@
+from unicodedata import category
+
 from django import forms
 from django.core.files.storage import default_storage
 import os
@@ -41,7 +43,29 @@ class InfrastructureProjectForm(forms.Form):
     title = forms.CharField(required=True, max_length=255)
     description = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 4}), max_length=2000)
     street = forms.CharField(required=False, max_length=500)
-    barangay = forms.CharField(required=False, max_length=200)
+    barangay = forms.ChoiceField(
+        required=False,
+        choices=[
+            ('', 'Select Barangay'),
+            ('Bagting', 'Bagting'),
+            ('Bantug', 'Bantug'),
+            ('Bitulok', 'Bitulok'),
+            ('Bugnan', 'Bugnan'),
+            ('Calabasa', 'Calabasa'),
+            ('Camachile', 'Camachile'),
+            ('Cuyapa', 'Cuyapa'),
+            ('Gabaldon', 'Gabaldon'),
+            ('Labney', 'Labney'),
+            ('Ligaya', 'Ligaya'),
+            ('Malinao', 'Malinao'),
+            ('Pantoc', 'Pantoc'),
+            ('Sawmill', 'Sawmill'),
+            ('South Poblacion', 'South Poblacion'),
+        ],
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        }),
+    )
     latitude = forms.DecimalField(required=False, max_digits=10, decimal_places=7, min_value=-90, max_value=90)
     longitude = forms.DecimalField(required=False, max_digits=10, decimal_places=7, min_value=-180, max_value=180)
     municipality = forms.CharField(
@@ -57,20 +81,52 @@ class InfrastructureProjectForm(forms.Form):
         disabled=True,
     )
 
-    category = forms.ModelChoiceField(
-        queryset=InfrastructureCategory.objects.none(),
+    category = forms.ChoiceField(
         required=True,
-        empty_label='Select Category',
+        choices=[
+            ('', 'Select Category'),
+            ('road', 'Road & Bridge'),
+            ('water', 'Water Supply'),
+            ('sanitation', 'Sanitation'),
+            ('health', 'Health Facility'),
+            ('education', 'Education Facility'),
+            ('energy', 'Energy'),
+            ('ict', 'ICT/Telecommunications'),
+            ('agriculture', 'Agriculture'),
+            ('environment', 'Environment'),
+            ('sports', 'Sports/Recreation'),
+            ('other', 'Other'),
+        ],
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'id': 'id_category',
+        })
     )
-    implementing_office = forms.ModelChoiceField(
-        queryset=ImplementingOffice.objects.none(),
-        required=True,
-        empty_label='Select Implementing Office',
+
+    other_category = forms.CharField(
+        required=False,
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'id': 'id_other_category',
+            'placeholder': 'Enter category'
+        })
     )
-    contractor = forms.ModelChoiceField(
-        queryset=Contractor.objects.none(),
-        required=True,
-        empty_label='Select Contractor',
+    implementing_office = forms.CharField(
+        required=False,
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter implementing office'
+        })
+    )
+    contractor = forms.CharField(
+        required=False,
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter contractor'
+        })
     )
     procurement_method = forms.ChoiceField(
         required=True,
@@ -96,10 +152,13 @@ class InfrastructureProjectForm(forms.Form):
     notice_award_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     notice_to_proceed_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     duration_days = forms.IntegerField(required=False)
-    fund_source = forms.ModelChoiceField(
-        queryset=FundSource.objects.none(),
+    fund_source = forms.CharField(
         required=False,
-        empty_label='Select Fund Source',
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter fund source'
+        })
     )
     actual_expenditure = forms.DecimalField(required=False, max_digits=15, decimal_places=2)
 
@@ -119,10 +178,6 @@ class InfrastructureProjectForm(forms.Form):
         self._instance = instance
 
         self.fields['category'].queryset = InfrastructureCategory.objects.all().order_by('category_name')
-        self.fields['implementing_office'].queryset = ImplementingOffice.objects.all().order_by('office_name')
-        self.fields['contractor'].queryset = Contractor.objects.all().order_by('contractor_name')
-        self.fields['fund_source'].queryset = FundSource.objects.all().order_by('fund_source_name')
-
         self.fields['municipality'].initial = 'Gabaldon'
         self.fields['province'].initial = 'Nueva Ecija'
         self.fields['municipality'].widget.attrs['readonly'] = 'readonly'
@@ -238,6 +293,71 @@ class InfrastructureProjectForm(forms.Form):
             filename = default_storage.save(os.path.join(folder, upload.name), upload)
             file_url = default_storage.url(filename)
             Project_Image.objects.create(project=project, image_url=file_url)
+    def _get_or_create_implementing_office(self, name):
+        name = (name or '').strip()
+
+        if not name:
+            return None
+
+        office = ImplementingOffice.objects.filter(
+            office_name__iexact=name
+        ).first()
+
+        if office:
+            return office
+
+        return ImplementingOffice.objects.create(
+            office_name=os.name
+        )
+
+
+    def _get_or_create_contractor(self, name):
+        name = (name or '').strip()
+
+        if not name:
+            return None
+
+        contractor = Contractor.objects.filter(
+            contractor_name__iexact=name
+        ).first()
+
+        if contractor:
+            return contractor
+
+        return Contractor.objects.create(
+            contractor_name=name
+        )
+
+
+    def _get_or_create_fund_source(self, name):
+        name = (name or '').strip()
+
+        if not name:
+            return None
+
+        fund_source = FundSource.objects.filter(
+            fund_source_name__iexact=name
+        ).first()
+
+        if fund_source:
+            return fund_source
+
+    # Generate a code for a new fund source
+        base_code = name.upper().replace(' ', '_')
+        code = base_code
+
+        counter = 1
+
+        while FundSource.objects.filter(
+            fund_source_code=code
+        ).exists():
+            counter += 1
+            code = f'{base_code}_{counter}'
+
+        return FundSource.objects.create(
+            fund_source_name=name,
+            fund_source_code=code
+        )
 
     def save(self, user=None, instance=None):
         data = self.cleaned_data
@@ -271,7 +391,25 @@ class InfrastructureProjectForm(forms.Form):
 
         infra.infrastructure_title = data.get('title') or infra.infrastructure_title
         infra.infrastructure_description = data.get('description') or ''
-        infra.category = data.get('category')
+
+        category_name = data.get('category')
+
+        if category_name == 'Other':
+            category_name = (data.get('other_category') or '').strip()
+
+        if category_name:
+            category_obj = InfrastructureCategory.objects.filter(
+                category_name__iexact=category_name
+            ).first()
+
+            if category_obj is None:
+                category_obj = InfrastructureCategory.objects.create(
+                    category_name=category_name
+                )
+
+            infra.category = category_obj
+        else:
+            infra.category = None
 
         street = data.get('street') or ''
         barangay = data.get('barangay') or ''
@@ -300,7 +438,12 @@ class InfrastructureProjectForm(forms.Form):
             infra.address = addr
 
         infra.contractor = data.get('contractor')
-        infra.implementing_office = data.get('implementing_office')
+        implementing_office = self._get_or_create_implementing_office(
+            data.get('implementing_office')
+        )
+
+        infra.implementing_office = implementing_office
+        infra.procurement_method = data.get('procurement_method')
         infra.procurement_method = data.get('procurement_method')
         infra.award_status = data.get('award_status')
         infra.planned_start_date = data.get('planned_start_date')
@@ -333,15 +476,18 @@ class InfrastructureProjectForm(forms.Form):
 
         abc = data.get('abc_amount')
         bid = data.get('contract_price')
-        fund_source = data.get('fund_source')
+        fund_source_name = data.get('fund_source')
+        fund_source = self._get_or_create_fund_source(
+            fund_source_name
+        )
+
         actual_exp = data.get('actual_expenditure')
+
         if abc is not None or bid is not None or fund_source is not None or actual_exp is not None:
             fin = infra.financial_records.order_by('-financial_id').first() or Financial(infrastructure=infra)
             fin.approved_budget = abc if abc is not None else fin.approved_budget
             fin.bid_amount = bid if bid is not None else fin.bid_amount
             fin.fund_source = fund_source
-            fin.actual_expenditure = actual_exp if actual_exp is not None else fin.actual_expenditure or 0
-            fin.save()
 
         insp_date = data.get('inspection_date')
         insp_pct = data.get('inspection_completion_percentage')
