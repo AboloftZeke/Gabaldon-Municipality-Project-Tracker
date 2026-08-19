@@ -218,6 +218,7 @@
     <div class="form-group full-span">
     
         {{ form.images_to_delete }}
+        {{ form.cover_image_selection }}
 
 
         <!-- =================================================
@@ -261,8 +262,9 @@
 
                     {% for image in form.existing_images %}
 
-                        <div class="existing-image"
+                        <div class="existing-image{% if image.is_cover %} is-cover{% endif %}"
                         data-image-id="{{ image.pk }}"
+                        data-cover-value="existing:{{ image.pk }}"
                         >
 
                             <img
@@ -273,6 +275,16 @@
                             <div class="existing-image-number">
                                 {{ forloop.counter }}
                             </div>
+
+                        <span class="cover-photo-badge">Cover</span>
+
+                        <button
+                            type="button"
+                            class="cover-image-select"
+                            data-cover-value="existing:{{ image.pk }}"
+                        >
+                            {% if image.is_cover %}Cover photo{% else %}Set as cover{% endif %}
+                        </button>
                         
                         <button
                             type="button"
@@ -498,6 +510,62 @@ document.addEventListener('DOMContentLoaded', function () {
         '{{ form.images_to_delete.id_for_label }}'
     );
 
+    const coverInput = document.getElementById(
+        '{{ form.cover_image_selection.id_for_label }}'
+    );
+
+    function updateCoverUI() {
+
+        if (!coverInput) {
+            return;
+        }
+
+        document.querySelectorAll('[data-cover-value]').forEach(function (element) {
+            const isCover = element.dataset.coverValue === coverInput.value;
+
+            if (element.classList.contains('existing-image') ||
+                element.classList.contains('image-preview')) {
+                element.classList.toggle('is-cover', isCover);
+            }
+
+            if (element.classList.contains('cover-image-select')) {
+                element.textContent = isCover ? 'Cover photo' : 'Set as cover';
+                element.setAttribute('aria-pressed', isCover ? 'true' : 'false');
+            }
+        });
+    }
+
+    function chooseFallbackCover() {
+
+        if (!coverInput || coverInput.value) {
+            updateCoverUI();
+            return;
+        }
+
+        const firstImage = document.querySelector(
+            '.existing-image[data-cover-value], .image-preview[data-cover-value]'
+        );
+
+        if (firstImage) {
+            coverInput.value = firstImage.dataset.coverValue;
+        }
+
+        updateCoverUI();
+    }
+
+    document.querySelectorAll(
+        '.existing-image .cover-image-select'
+    ).forEach(function (button) {
+        button.addEventListener('click', function () {
+            if (coverInput) {
+                coverInput.value = button.dataset.coverValue;
+                updateCoverUI();
+            }
+        });
+    });
+
+    chooseFallbackCover();
+
     const deleteButtons = document.querySelectorAll(
         '.existing-image-delete'
     );
@@ -535,6 +603,11 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             imageCard.remove();
+
+            if (coverInput && coverInput.value === `existing:${imageId}`) {
+                coverInput.value = '';
+                chooseFallbackCover();
+            }
         });
 
     });
@@ -598,54 +671,93 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const reader = new FileReader();
 
+            const preview = document.createElement('div');
+
+            preview.className = 'image-preview';
+            preview.dataset.coverValue = `new:${index}`;
+
+            preview.innerHTML = `
+                <img alt="Selected image ${index + 1}">
+
+                <div class="image-preview-overlay">
+                    <span>${index + 1}</span>
+                </div>
+
+                <span class="cover-photo-badge">Cover</span>
+
+                <button
+                    type="button"
+                    class="cover-image-select"
+                    data-cover-value="new:${index}"
+                >
+                    Set as cover
+                </button>
+
+                <button
+                    type="button"
+                    class="image-preview-delete"
+                    aria-label="Remove selected image ${index + 1}"
+                    title="Remove photo"
+                >
+                    ×
+                </button>
+            `;
+
+            const removeButton = preview.querySelector(
+                '.image-preview-delete'
+            );
+
+            const coverButton = preview.querySelector(
+                '.cover-image-select'
+            );
+
+            coverButton.addEventListener('click', function () {
+                if (coverInput) {
+                    coverInput.value = `new:${index}`;
+                    updateCoverUI();
+                }
+            });
+
+            removeButton.addEventListener('click', function () {
+                if (coverInput && coverInput.value.startsWith('new:')) {
+                    const coverIndex = Number(
+                        coverInput.value.replace('new:', '')
+                    );
+
+                    if (coverIndex === index) {
+                        coverInput.value = '';
+                    } else if (coverIndex > index) {
+                        coverInput.value = `new:${coverIndex - 1}`;
+                    }
+                }
+
+                selectedFiles.splice(index, 1);
+                syncSelectedFiles();
+                renderSelectedFiles();
+            });
+
+            previewGrid.appendChild(preview);
+
             reader.onload = function (event) {
 
                 if (renderVersion !== previewRenderVersion) {
                     return;
                 }
 
-                const preview = document.createElement('div');
-
-                preview.className = 'image-preview';
-
-                preview.innerHTML = `
-                    <img
-                        src="${event.target.result}"
-                        alt="Selected image ${index + 1}"
-                    >
-
-                    <div class="image-preview-overlay">
-                        <span>${index + 1}</span>
-                    </div>
-
-                    <button
-                        type="button"
-                        class="image-preview-delete"
-                        aria-label="Remove selected image ${index + 1}"
-                        title="Remove photo"
-                    >
-                        ×
-                    </button>
-                `;
-
-                const removeButton = preview.querySelector(
-                    '.image-preview-delete'
-                );
-
-                removeButton.addEventListener('click', function () {
-                    selectedFiles.splice(index, 1);
-                    syncSelectedFiles();
-                    renderSelectedFiles();
-                });
-
-                previewGrid.appendChild(preview);
+                preview.querySelector('img').src = event.target.result;
             };
 
             reader.readAsDataURL(file);
         });
+
+        chooseFallbackCover();
     }
 
     input.addEventListener('change', function () {
+
+        if (coverInput && coverInput.value.startsWith('new:')) {
+            coverInput.value = '';
+        }
 
         selectedFiles = Array.from(input.files).filter(function (file) {
             return file.type.startsWith('image/');

@@ -41,6 +41,7 @@ class NonInfrastructureProjectFormTests(TestCase):
                 'venue_name': 'Municipal Plaza',
                 'street': 'Rizal Street',
                 'barangay': 'bagting',
+                'cover_image_selection': 'new:1',
             },
             files={
                 'project_images': [
@@ -65,6 +66,10 @@ class NonInfrastructureProjectFormTests(TestCase):
         saved_urls = list(project.project.images.order_by('project_image_id').values_list('image_url', flat=True))
         self.assertEqual(len(saved_urls), 2)
         self.assertTrue(all(url.startswith('/media/') for url in saved_urls))
+        self.assertEqual(
+            project.project.images.get(is_cover=True).image_url,
+            saved_urls[1],
+        )
 
     def test_form_rejects_end_time_before_start_time(self):
         form = NonInfrastructureProjectForm(data={
@@ -118,7 +123,11 @@ class NonInfrastructureProjectFormTests(TestCase):
             event_date='2026-01-10',
             venue_name='Old Venue',
         )
-        Project_Image.objects.create(project=proj, image_url='https://example.com/old.jpg')
+        old_image = Project_Image.objects.create(
+            project=proj,
+            image_url='https://example.com/old.jpg',
+            is_cover=True,
+        )
 
         form = NonInfrastructureProjectForm(
             instance=existing,
@@ -135,6 +144,7 @@ class NonInfrastructureProjectFormTests(TestCase):
                 'venue_name': 'New Event Grounds',
                 'street': 'Main Avenue',
                 'barangay': 'bagting',
+                'cover_image_selection': f'existing:{old_image.pk}',
             },
             files={
                 'project_images': [
@@ -153,7 +163,11 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.assertEqual(updated.event_date.isoformat(), '2026-09-15')
         self.assertEqual(updated.venue_name, 'New Event Grounds')
         self.assertEqual(updated.address.barangay, 'bagting')
-        self.assertEqual(updated.project.images.count(), 2)
+        self.assertEqual(updated.project.images.count(), 3)
+        self.assertEqual(
+            updated.project.images.get(is_cover=True),
+            old_image,
+        )
 
     def test_form_seeds_missing_categories_when_database_is_empty(self):
         NonInfrastructureCategory.objects.all().delete()
@@ -173,7 +187,11 @@ class NonInfrastructureProjectFormTests(TestCase):
             description='Health fair description',
             address=address,
         )
-        Project_Image.objects.create(project=project, image_url='https://example.com/one.jpg')
+        Project_Image.objects.create(
+            project=project,
+            image_url='https://example.com/one.jpg',
+            is_cover=True,
+        )
         Project_Image.objects.create(project=project, image_url='https://example.com/two.jpg')
 
         compat = SystemNonInfrastructureProject.objects.filter(non_infra_id=normalized.non_infra_id).first()
@@ -184,4 +202,4 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.assertEqual(compat.category, 'Health Care')
         self.assertEqual(compat.get_category_display(), 'Health Care')
         self.assertEqual(len(compat.images), 2)
-        self.assertEqual(compat.cover_image_url, 'https://example.com/two.jpg')
+        self.assertEqual(compat.cover_image_url, 'https://example.com/one.jpg')

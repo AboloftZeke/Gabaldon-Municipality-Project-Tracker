@@ -192,7 +192,7 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
 
         if getattr(project, 'project', None):
             project_images = list(
-                project.project.images.order_by('-created_at')
+                project.project.images.order_by('-is_cover', '-created_at')
             )
 
         context['project_code'] = f'NINF-{compat_project.pk:05d}'
@@ -300,4 +300,3 @@ class NonInfrastructureProjectDeleteView(MayorsOfficeEditMixin, DeleteView):
 
         context['cancel_url'] = reverse('mayor_projects:non_infrastructure_project_detail', args=[obj.pk])
         return context
-

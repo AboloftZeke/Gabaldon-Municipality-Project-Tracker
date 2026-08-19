@@ -80,8 +80,11 @@ class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
             infra_obj = Infrastructure_Project.objects.filter(infrastructure_id=p.id).select_related('project').first()
             cover = ''
             if infra_obj and getattr(infra_obj, 'project', None):
-                # Use the latest uploaded image as the cover image
-                first_img = infra_obj.project.images.order_by('-created_at').first()
+                # Prefer the selected cover and fall back to the latest image.
+                first_img = infra_obj.project.images.order_by(
+                    '-is_cover',
+                    '-created_at',
+                ).first()
                 if first_img and getattr(first_img, 'image_url', None):
                     cover = first_img.image_url
             setattr(p, 'cover_image_url', cover)
@@ -362,7 +365,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
 
         if infra and getattr(infra, 'project', None):
             imgs = list(
-                infra.project.images.order_by('-created_at')
+                infra.project.images.order_by('-is_cover', '-created_at')
             )
 
         context['project_images'] = imgs
@@ -542,4 +545,3 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
 
         context['cancel_url'] = reverse('engineering_projects:project_detail', args=[obj.pk])
         return context
-

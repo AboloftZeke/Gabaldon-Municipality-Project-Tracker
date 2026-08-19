@@ -212,13 +212,17 @@ def projects_geojson(request):
 
 @require_GET
 def project_photos(request, project_id):
-    photos = Project_Image.objects.filter(project_id=project_id).order_by("-created_at")
+    photos = Project_Image.objects.filter(project_id=project_id).order_by(
+        "-is_cover",
+        "-created_at",
+    )
 
     data = [
         {
             "id": p.project_image_id,
             "url": p.image_url,
             "caption": "",
+            "is_cover": p.is_cover,
         }
         for p in photos
         if p.image_url

@@ -588,6 +588,7 @@ class Project_Image(models.Model):
     project_image_id = models.BigAutoField(primary_key=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='images')
     image_url = models.URLField(max_length=500, blank=True, null=True)
+    is_cover = models.BooleanField(default=False)
     # Removed `image_name` and `caption` fields to simplify image storage.
     # Use `image_url` and `created_at` to identify/label images. Run migrations after this change.
     created_at = models.DateTimeField(auto_now_add=True)
@@ -596,6 +597,13 @@ class Project_Image(models.Model):
     class Meta:
         verbose_name = 'Project Image'
         verbose_name_plural = 'Project Images'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['project'],
+                condition=models.Q(is_cover=True),
+                name='unique_cover_image_per_project',
+            ),
+        ]
 
 
 class Reports(models.Model):
@@ -808,15 +816,26 @@ class NonInfrastructureProject(models.Model):
     def images(self):
         normalized = Non_Infrastructure_Project.objects.filter(non_infra_id=self.non_infra_id).select_related('project').first()
         if normalized and normalized.project:
-            return list(normalized.project.images.order_by('-created_at'))
+            return list(normalized.project.images.order_by('-is_cover', '-created_at'))
         return []
 
     @property
     def cover_image_url(self):
-        images = self.images
-        if images:
-            return images[0].image_url or ''
-        return ''
+        normalized = (
+            Non_Infrastructure_Project.objects
+            .filter(non_infra_id=self.non_infra_id)
+            .select_related('project')
+            .first()
+        )
+        if not normalized or not normalized.project:
+            return ''
+
+        image = (
+            normalized.project.images
+            .order_by('-is_cover', '-created_at')
+            .first()
+        )
+        return (image.image_url or '') if image else ''
 
     @property
     def status_label(self):
