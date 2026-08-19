@@ -8,7 +8,11 @@ from django.db.models import Q, Sum
 from django.templatetags.static import static
 from .forms import InfrastructureProjectForm
 from apps.system.models import InfrastructureProject as SystemInfrastructureProject
-from apps.system.models import Infrastructure_Project, Project
+from apps.system.models import (
+    InfrastructureCategory,
+    Infrastructure_Project,
+    Project,
+)
 
 
 def _department_for_user(user):
@@ -58,74 +62,72 @@ class EngineerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 
 class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
-    """Dashboard for engineering office to manage infrastructure projects"""
+    """Dashboard for engineering office to manage infrastructure projects."""
     template_name = 'projects/project_dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['user'] = self.request.user
+        projects = (
+            Infrastructure_Project.objects
+            .select_related('address', 'category', 'project')
+            .prefetch_related('project__images', 'financial_records')
+        )
 
-        # All engineering office users see the same project pool. Use normalized compatibility model.
-        user_projects = SystemInfrastructureProject.objects.all()
+        context['total_projects'] = projects.count()
+        context['awarded_projects'] = projects.filter(
+            award_status='awarded'
+        ).count()
+        context['ongoing_projects'] = projects.filter(
+            award_status='ongoing_bidding'
+        ).count()
+        context['completed_projects'] = projects.filter(
+            award_status='completed'
+        ).count()
 
-        context['total_projects'] = user_projects.count()
-        context['awarded_projects'] = user_projects.filter(award_status='awarded').count()
-        context['ongoing_projects'] = user_projects.filter(award_status__in=['ongoing_bidding', 'awarded']).count()
-        context['completed_projects'] = user_projects.filter(award_status='completed').count()
-        # Build recent projects list and attach a `cover_image_url` attribute
-        recent_qs = SystemInfrastructureProject.objects.order_by('-created_at')[:5]
-        recent_projects = []
-        for p in recent_qs:
-            # Resolve normalized infra -> project -> first image (if any)
-            infra_obj = Infrastructure_Project.objects.filter(infrastructure_id=p.id).select_related('project').first()
-            cover = ''
-            if infra_obj and getattr(infra_obj, 'project', None):
-                # Prefer the selected cover and fall back to the latest image.
-                first_img = infra_obj.project.images.order_by(
-                    '-is_cover',
-                    '-created_at',
-                ).first()
-                if first_img and getattr(first_img, 'image_url', None):
-                    cover = first_img.image_url
-            setattr(p, 'cover_image_url', cover)
-            recent_projects.append(p)
+        recent_projects = list(projects.order_by('-created_at')[:5])
+        for project in recent_projects:
+            cover = project.project.images.order_by(
+                '-is_cover',
+                '-created_at',
+            ).first()
+            project.cover_image_url = (
+                cover.image_url if cover and cover.image_url else ''
+            )
         context['recent_projects'] = recent_projects
 
-        # `SystemInfrastructureProject` is a compatibility (legacy) model that
-        # does not expose `abc_amount` as a queryable DB field. Use the
-        # normalized `Infrastructure_Project` model's related `Financial`
-        # records to compute the total approved budget instead.
-        infra_ids = list(user_projects.values_list('id', flat=True))
-        total_abc = Infrastructure_Project.objects.filter(
-            infrastructure_id__in=infra_ids,
-            financial_records__approved_budget__isnull=False
-        ).aggregate(total=Sum('financial_records__approved_budget'))['total'] or 0
-        context['total_investment'] = total_abc
-
+        context['total_investment'] = (
+            projects.filter(
+                financial_records__approved_budget__isnull=False
+            ).aggregate(
+                total=Sum('financial_records__approved_budget')
+            )['total']
+            or 0
+        )
         return context
 
 
 class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
-    """Display list of infrastructure projects"""
-    model = SystemInfrastructureProject
+    """Display normalized infrastructure projects."""
+    model = Infrastructure_Project
     template_name = 'projects/project_list.html'
     context_object_name = 'projects'
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = SystemInfrastructureProject.objects.all()
+        queryset = (
+            Infrastructure_Project.objects
+            .select_related('address', 'category')
+            .prefetch_related('financial_records')
+        )
 
-        # Filter by location
         location = self.request.GET.get('location', '').strip()
         if location:
-            queryset = queryset.filter(location=location)
+            queryset = queryset.filter(address__barangay=location)
 
-        # Filter by category
         category = self.request.GET.get('category', '').strip()
         if category:
-            queryset = queryset.filter(category=category)
+            queryset = queryset.filter(category_id=category)
 
-        # Filter by status
         status = self.request.GET.get('status', '').strip()
         if status:
             queryset = queryset.filter(award_status=status)
@@ -134,10 +136,18 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Provide legacy choice constants from normalized/compatibility model if present
-        context['locations'] = getattr(SystemInfrastructureProject, 'LOCATION_CHOICES', [])
-        context['categories'] = getattr(SystemInfrastructureProject, 'PROJECT_CATEGORY_CHOICES', [])
-        context['statuses'] = getattr(SystemInfrastructureProject, 'AWARD_STATUS_CHOICES', [])
+        context['locations'] = (
+            Infrastructure_Project.objects
+            .exclude(address__barangay__isnull=True)
+            .exclude(address__barangay='')
+            .values_list('address__barangay', flat=True)
+            .distinct()
+            .order_by('address__barangay')
+        )
+        context['categories'] = InfrastructureCategory.objects.filter(
+            is_active=True
+        ).order_by('category_name')
+        context['statuses'] = Infrastructure_Project.AWARD_STATUS_CHOICES
         return context
 
 
