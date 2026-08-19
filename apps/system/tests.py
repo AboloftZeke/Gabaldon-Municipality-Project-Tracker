@@ -9,6 +9,7 @@ from .models import (
     FundSource,
     ImplementingOffice,
     InfrastructureCategory,
+    Infrastructure_Schedule,
     Infrastructure_Project,
     Non_Infrastructure_Project,
     Project,
@@ -57,12 +58,25 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             implementing_office=office,
             procurement_method='competitive_bidding',
             award_status='awarded',
+            planned_start_date='2026-01-15',
+            planned_end_date='2026-08-30',
+            cost_progress_percentage=42,
+            physical_progress_percentage=55,
         )
         Financial.objects.create(
             infrastructure=self.infrastructure,
             fund_source=fund_source,
             approved_budget=2500000,
             bid_amount=2400000,
+        )
+        Infrastructure_Schedule.objects.create(
+            infrastructure=self.infrastructure,
+            actual_start_date='2026-01-20',
+        )
+        Project_Image.objects.create(
+            project=base_project,
+            image_url='/media/projects/infrastructure-cover.jpg',
+            is_cover=True,
         )
 
     def test_public_dashboard_reads_normalized_infrastructure_relations(self):
@@ -83,6 +97,20 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertEqual(row['office'], 'Municipal Engineering Office')
         self.assertEqual(row['contractor'], 'Public Works Contractor')
         self.assertEqual(row['source_of_fund'], 'Local Development Fund')
+        self.assertEqual(
+            row['cover_image_url'],
+            '/media/projects/infrastructure-cover.jpg',
+        )
+        self.assertEqual(row['budget'], 2500000)
+        self.assertEqual(row['abc_amount'], 2500000)
+        self.assertEqual(row['contract_price'], 2400000)
+        self.assertEqual(row['progress'], 55)
+        self.assertEqual(row['cost_progress_percentage'], 42)
+        self.assertEqual(row['physical_progress_percentage'], 55)
+        self.assertEqual(
+            str(row['actual_start_date']),
+            '2026-01-20',
+        )
 
 
 class PublicDashboardNonInfrastructureStatusTests(TestCase):

@@ -158,6 +158,7 @@ class PublicDashboardView(TemplateView):
 
         from apps.system.models import (
             Financial,
+            Infrastructure_Schedule,
             Infrastructure_Project,
             Non_Infrastructure_Project,
             Project_Image,
@@ -190,6 +191,13 @@ class PublicDashboardView(TemplateView):
                     'fund_source',
                 ).order_by('-financial_id'),
                 to_attr='public_financial_records',
+            ),
+            Prefetch(
+                'schedules',
+                queryset=Infrastructure_Schedule.objects.order_by(
+                    '-schedule_id',
+                ),
+                to_attr='public_schedules',
             ),
         ).order_by('-created_at')
         noninfra_qs = Non_Infrastructure_Project.objects.select_related(
@@ -263,12 +271,33 @@ class PublicDashboardView(TemplateView):
                 p.public_financial_records[0]
                 if p.public_financial_records else None
             )
+            schedule = (
+                p.public_schedules[0] if p.public_schedules else None
+            )
+            cover_image = (
+                p.project.public_images[0]
+                if p.project and p.project.public_images else None
+            )
             office_name = (
                 p.implementing_office.office_name
                 if p.implementing_office else ''
             )
             contractor_name = (
                 p.contractor.contractor_name if p.contractor else ''
+            )
+            approved_budget = (
+                financial.approved_budget if financial else None
+            )
+            contract_price = (
+                financial.bid_amount if financial else None
+            )
+            budget_amount = approved_budget or contract_price or 0
+            cost_progress = p.cost_progress_percentage
+            physical_progress = p.physical_progress_percentage
+            progress = (
+                physical_progress
+                if physical_progress is not None
+                else cost_progress or 0
             )
 
             detail_url = '#'
@@ -287,6 +316,10 @@ class PublicDashboardView(TemplateView):
                 'project_category_label': f'Infrastructure - {category_name}',
                 'type_label': 'Infrastructure',
                 'title': p.infrastructure_title,
+                'cover_image_url': (
+                    cover_image.image_url
+                    if cover_image and cover_image.image_url else ''
+                ),
                 'location_key': location,
                 'location': location,
                 'status_key': status_key,
@@ -300,19 +333,26 @@ class PublicDashboardView(TemplateView):
                     financial.fund_source.fund_source_name
                     if financial and financial.fund_source else ''
                 ),
-                'budget': 0,  # Hidden for infrastructure in public view
-                'budget_amount': 0,
-                'abc_amount': '',
-                'contract_price': '',
-                'progress': 0,  # Hidden for infrastructure in public view
-                'progress_percentage': 0,
-                'overall_progress_percentage': '',
-                'cost_progress_percentage': '',
-                'physical_progress_percentage': '',
+                'budget': budget_amount,
+                'budget_amount': budget_amount,
+                'abc_amount': approved_budget or '',
+                'contract_price': contract_price or '',
+                'progress': progress,
+                'progress_percentage': progress,
+                'overall_progress_percentage': progress,
+                'cost_progress_percentage': (
+                    cost_progress if cost_progress is not None else ''
+                ),
+                'physical_progress_percentage': (
+                    physical_progress
+                    if physical_progress is not None else ''
+                ),
                 'description': p.infrastructure_description,
                 'planned_start_date': p.planned_start_date,
                 'planned_end_date': p.planned_end_date,
-                'actual_start_date': None,
+                'actual_start_date': (
+                    schedule.actual_start_date if schedule else None
+                ),
                 'created_by_name': (
                     creator.get_full_name() or creator.username
                     if creator else ''
