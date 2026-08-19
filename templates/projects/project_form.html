@@ -329,52 +329,243 @@
                 </div>
             </div>
 
-            <div class="fieldset">
-                <legend>Project Images</legend>
-                <div class="form-group full-span">
-                    {{ form.images_to_delete }}
-                    {{ form.cover_image_selection }}
+<!-- =========================================================
+     PROJECT IMAGES
+     ========================================================= -->
 
-                    {% if form.existing_images %}
-                        <h4>Existing Photos</h4>
-                        <div class="existing-images-grid">
-                            {% for image in form.existing_images %}
-                                <div class="project-image-card{% if image.is_cover %} is-cover{% endif %}"
-                                     data-cover-value="existing:{{ image.pk }}">
-                                    <img src="{{ image.image_url }}"
-                                         alt="Project photo {{ forloop.counter }}">
-                                    <span class="cover-photo-badge">Cover</span>
-                                    <button type="button"
-                                            class="cover-image-select"
-                                            data-cover-value="existing:{{ image.pk }}">
-                                        {% if image.is_cover %}Cover photo{% else %}Set as cover{% endif %}
-                                    </button>
-                                    <button type="button"
-                                            class="existing-image-delete"
-                                            data-image-id="{{ image.pk }}"
-                                            aria-label="Remove project photo {{ forloop.counter }}">×</button>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+<div class="fieldset">
 
-                    <label for="{{ form.project_images.id_for_label }}">
-                        Add Project Images
-                    </label>
-                    {{ form.project_images }}
-                    <small class="helper-text">
-                        Existing photos are retained unless you remove them.
-                    </small>
-                    {% if form.project_images.errors %}
-                        <div class="error-message">{{ form.project_images.errors.0 }}</div>
-                    {% endif %}
+    <legend>Project Images</legend>
 
-                    <div id="image-preview-container" hidden>
-                        <h4>Selected Photos</h4>
-                        <div class="image-preview-grid" id="image-preview-grid"></div>
+    <div class="form-group full-span">
+    
+        {{ form.images_to_delete }}
+        {{ form.cover_image_selection }}
+
+
+        <!-- =================================================
+             EXISTING PHOTOS
+             ================================================= -->
+
+        {% if form.existing_images %}
+
+            <div class="existing-images-section">
+
+                <div class="existing-images-header">
+
+                    <div>
+
+                        <h4>
+                            Existing Photos
+                        </h4>
+
+                        <p>
+                            Photos currently attached to this project.
+                        </p>
+
                     </div>
+
+                    <span class="existing-images-count">
+
+                        {{ form.existing_images|length }}
+
+                        {% if form.existing_images|length == 1 %}
+                            photo
+                        {% else %}
+                            photos
+                        {% endif %}
+
+                    </span>
+
                 </div>
+
+
+                <div class="existing-images-grid">
+
+                    {% for image in form.existing_images %}
+
+                        <div class="existing-image{% if image.is_cover %} is-cover{% endif %}"
+                        data-image-id="{{ image.pk }}"
+                        data-cover-value="existing:{{ image.pk }}"
+                        >
+
+                            <img
+                                src="{{ image.image_url }}"
+                                alt="Project photo {{ forloop.counter }}"
+                            >
+
+                            <div class="existing-image-number">
+                                {{ forloop.counter }}
+                            </div>
+
+                        <span class="cover-photo-badge">Cover</span>
+
+                        <button
+                            type="button"
+                            class="cover-image-select"
+                            data-cover-value="existing:{{ image.pk }}"
+                        >
+                            {% if image.is_cover %}Cover photo{% else %}Set as cover{% endif %}
+                        </button>
+                        
+                        <button
+                            type="button"
+                            class="existing-image-delete"
+                            data-image-id="{{ image.pk }}"
+                            aria-label="Remove project photo {{forloop.counter}}"
+                            title="Remove photo"
+                            >
+                            ×
+                        </button>
+                        </div>
+
+
+                    {% endfor %}
+
+                </div>
+
             </div>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             ADD NEW PHOTOS
+             ================================================= -->
+
+        <div
+            class="image-upload-area"
+            id="image-upload-area"
+        >
+
+            <div class="image-upload-content">
+
+
+                <!-- Upload Icon -->
+
+                <div class="image-upload-icon">
+
+                    <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <rect
+                            x="3"
+                            y="3"
+                            width="18"
+                            height="18"
+                            rx="2"
+                        />
+
+                        <circle
+                            cx="8.5"
+                            cy="8.5"
+                            r="1.5"
+                        />
+
+                        <path d="M21 15l-5-5L5 21"/>
+
+                    </svg>
+
+                </div>
+
+
+                <!-- Upload Text -->
+
+                <div class="image-upload-text">
+
+                    <span class="image-upload-title">
+                        Add project photos
+                    </span>
+
+                    <span class="image-upload-subtitle">
+                        Drag and drop images here or
+                    </span>
+
+                </div>
+
+
+                <!-- Browse Button -->
+
+                <label
+                    for="{{ form.project_images.id_for_label }}"
+                    class="image-upload-button"
+                >
+                    Browse Files
+                </label>
+
+
+                <!-- Actual File Input -->
+
+                {{ form.project_images }}
+
+            </div>
+
+        </div>
+
+
+        <!-- Upload Errors -->
+
+        {% if form.project_images.errors %}
+
+            <div class="error-message">
+
+                {{ form.project_images.errors.0 }}
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             NEWLY SELECTED PHOTOS
+             ================================================= -->
+
+        <div
+            class="image-preview-container"
+            id="image-preview-container"
+            hidden
+        >
+
+            <div class="image-preview-header">
+
+                <div>
+
+                    <h4>
+                        Selected Photos
+                    </h4>
+
+                    <span
+                        class="image-preview-count"
+                        id="image-preview-count"
+                    >
+                        0 images
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="image-preview-grid"
+                id="image-preview-grid"
+            ></div>
+
+        </div>
+
+
+    </div>
+
+</div>
+
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-submit">{{ action }} Project</button>
@@ -416,130 +607,312 @@ document.addEventListener('DOMContentLoaded', function () {
     const deleteInput = document.getElementById(
         '{{ form.images_to_delete.id_for_label }}'
     );
+
     const coverInput = document.getElementById(
         '{{ form.cover_image_selection.id_for_label }}'
     );
-    const fileInput = document.getElementById(
-        '{{ form.project_images.id_for_label }}'
-    );
-    const previewContainer = document.getElementById('image-preview-container');
-    const previewGrid = document.getElementById('image-preview-grid');
-    const imagesToDelete = new Set();
-    let selectedFiles = [];
 
     function updateCoverUI() {
-        if (!coverInput) return;
+
+        if (!coverInput) {
+            return;
+        }
+
         document.querySelectorAll('[data-cover-value]').forEach(function (element) {
             const isCover = element.dataset.coverValue === coverInput.value;
-            if (element.classList.contains('project-image-card')) {
+
+            if (element.classList.contains('existing-image') ||
+                element.classList.contains('image-preview')) {
                 element.classList.toggle('is-cover', isCover);
             }
+
             if (element.classList.contains('cover-image-select')) {
                 element.textContent = isCover ? 'Cover photo' : 'Set as cover';
+                element.setAttribute('aria-pressed', isCover ? 'true' : 'false');
             }
         });
     }
 
     function chooseFallbackCover() {
+
         if (!coverInput || coverInput.value) {
             updateCoverUI();
             return;
         }
+
         const firstImage = document.querySelector(
-            '.project-image-card[data-cover-value]'
+            '.existing-image[data-cover-value], .image-preview[data-cover-value]'
         );
-        if (firstImage) coverInput.value = firstImage.dataset.coverValue;
+
+        if (firstImage) {
+            coverInput.value = firstImage.dataset.coverValue;
+        }
+
         updateCoverUI();
     }
 
-    document.addEventListener('click', function (event) {
-        const coverButton = event.target.closest('.cover-image-select');
-        if (coverButton && coverInput) {
-            coverInput.value = coverButton.dataset.coverValue;
-            updateCoverUI();
+    document.querySelectorAll(
+        '.existing-image .cover-image-select'
+    ).forEach(function (button) {
+        button.addEventListener('click', function () {
+            if (coverInput) {
+                coverInput.value = button.dataset.coverValue;
+                updateCoverUI();
+            }
+        });
+    });
+
+    chooseFallbackCover();
+
+    const deleteButtons = document.querySelectorAll(
+        '.existing-image-delete'
+    );
+
+    const imagesToDelete = new Set();
+
+    deleteButtons.forEach(function (button) {
+
+        button.addEventListener('click', function () {
+
+            const imageId = button.dataset.imageId;
+
+            if (!imageId) {
+                return;
+            }
+
+            const imageCard = button.closest('.existing-image');
+
+            if (!imageCard) {
+                return;
+            }
+
+            const confirmed = window.confirm(
+                'Are you sure you want to remove this photo?'
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            imagesToDelete.add(imageId);
+
+            if (deleteInput) {
+                deleteInput.value = Array.from(imagesToDelete).join(',');
+            }
+
+            imageCard.remove();
+
+            if (coverInput && coverInput.value === `existing:${imageId}`) {
+                coverInput.value = '';
+                chooseFallbackCover();
+            }
+        });
+
+    });
+
+    const input = document.getElementById(
+        '{{ form.project_images.id_for_label }}'
+    );
+
+    const uploadArea = document.getElementById(
+        'image-upload-area'
+    );
+
+    const previewContainer = document.getElementById(
+        'image-preview-container'
+    );
+
+    const previewGrid = document.getElementById(
+        'image-preview-grid'
+    );
+
+    const previewCount = document.getElementById(
+        'image-preview-count'
+    );
+
+    if (!input) {
+        return;
+    }
+
+    let selectedFiles = [];
+    let previewRenderVersion = 0;
+
+    function syncSelectedFiles() {
+
+        const dataTransfer = new DataTransfer();
+
+        selectedFiles.forEach(function (file) {
+            dataTransfer.items.add(file);
+        });
+
+        input.files = dataTransfer.files;
+    }
+
+    function renderSelectedFiles() {
+
+        const renderVersion = ++previewRenderVersion;
+
+        previewGrid.innerHTML = '';
+
+        if (selectedFiles.length === 0) {
+            previewContainer.hidden = true;
+            previewCount.textContent = '0 images';
             return;
         }
 
-        const deleteButton = event.target.closest('.existing-image-delete');
-        if (!deleteButton) return;
-        const imageId = deleteButton.dataset.imageId;
-        if (!imageId || !window.confirm('Remove this photo?')) return;
+        previewContainer.hidden = false;
 
-        imagesToDelete.add(imageId);
-        deleteInput.value = Array.from(imagesToDelete).join(',');
-        deleteButton.closest('.project-image-card').remove();
-
-        if (coverInput.value === 'existing:' + imageId) {
-            coverInput.value = '';
-            chooseFallbackCover();
-        }
-    });
-
-    function syncFiles() {
-        const transfer = new DataTransfer();
-        selectedFiles.forEach(function (file) {
-            transfer.items.add(file);
-        });
-        fileInput.files = transfer.files;
-    }
-
-    function renderPreviews() {
-        previewGrid.innerHTML = '';
-        previewContainer.hidden = selectedFiles.length === 0;
+        previewCount.textContent =
+            `${selectedFiles.length} ${selectedFiles.length === 1 ? 'image' : 'images'}`;
 
         selectedFiles.forEach(function (file, index) {
-            const card = document.createElement('div');
-            card.className = 'project-image-card';
-            card.dataset.coverValue = 'new:' + index;
-            card.innerHTML =
-                '<img alt="Selected project photo">' +
-                '<span class="cover-photo-badge">Cover</span>' +
-                '<button type="button" class="cover-image-select" ' +
-                'data-cover-value="new:' + index + '">Set as cover</button>' +
-                '<button type="button" class="new-image-delete" ' +
-                'aria-label="Remove selected photo">×</button>';
 
             const reader = new FileReader();
-            reader.onload = function (loadEvent) {
-                card.querySelector('img').src = loadEvent.target.result;
-            };
-            reader.readAsDataURL(file);
 
-            card.querySelector('.new-image-delete').addEventListener(
-                'click',
-                function () {
-                    if (coverInput.value.startsWith('new:')) {
-                        const coverIndex = Number(
-                            coverInput.value.replace('new:', '')
-                        );
-                        if (coverIndex === index) {
-                            coverInput.value = '';
-                        } else if (coverIndex > index) {
-                            coverInput.value = 'new:' + (coverIndex - 1);
-                        }
-                    }
-                    selectedFiles.splice(index, 1);
-                    syncFiles();
-                    renderPreviews();
-                }
+            const preview = document.createElement('div');
+
+            preview.className = 'image-preview';
+            preview.dataset.coverValue = `new:${index}`;
+
+            preview.innerHTML = `
+                <img alt="Selected image ${index + 1}">
+
+                <div class="image-preview-overlay">
+                    <span>${index + 1}</span>
+                </div>
+
+                <span class="cover-photo-badge">Cover</span>
+
+                <button
+                    type="button"
+                    class="cover-image-select"
+                    data-cover-value="new:${index}"
+                >
+                    Set as cover
+                </button>
+
+                <button
+                    type="button"
+                    class="image-preview-delete"
+                    aria-label="Remove selected image ${index + 1}"
+                    title="Remove photo"
+                >
+                    ×
+                </button>
+            `;
+
+            const removeButton = preview.querySelector(
+                '.image-preview-delete'
             );
-            previewGrid.appendChild(card);
+
+            const coverButton = preview.querySelector(
+                '.cover-image-select'
+            );
+
+            coverButton.addEventListener('click', function () {
+                if (coverInput) {
+                    coverInput.value = `new:${index}`;
+                    updateCoverUI();
+                }
+            });
+
+            removeButton.addEventListener('click', function () {
+                if (coverInput && coverInput.value.startsWith('new:')) {
+                    const coverIndex = Number(
+                        coverInput.value.replace('new:', '')
+                    );
+
+                    if (coverIndex === index) {
+                        coverInput.value = '';
+                    } else if (coverIndex > index) {
+                        coverInput.value = `new:${coverIndex - 1}`;
+                    }
+                }
+
+                selectedFiles.splice(index, 1);
+                syncSelectedFiles();
+                renderSelectedFiles();
+            });
+
+            previewGrid.appendChild(preview);
+
+            reader.onload = function (event) {
+
+                if (renderVersion !== previewRenderVersion) {
+                    return;
+                }
+
+                preview.querySelector('img').src = event.target.result;
+            };
+
+            reader.readAsDataURL(file);
         });
+
         chooseFallbackCover();
     }
 
-    if (fileInput) {
-        fileInput.addEventListener('change', function () {
-            if (coverInput.value.startsWith('new:')) coverInput.value = '';
-            selectedFiles = Array.from(fileInput.files).filter(function (file) {
-                return file.type.startsWith('image/');
-            });
-            syncFiles();
-            renderPreviews();
-        });
-    }
+    input.addEventListener('change', function () {
 
-    chooseFallbackCover();
+        if (coverInput && coverInput.value.startsWith('new:')) {
+            coverInput.value = '';
+        }
+
+        selectedFiles = Array.from(input.files).filter(function (file) {
+            return file.type.startsWith('image/');
+        });
+
+        syncSelectedFiles();
+        renderSelectedFiles();
+    });
+
+
+    /*
+     * Drag and drop support
+     */
+    uploadArea.addEventListener('dragover', function (event) {
+
+        event.preventDefault();
+
+        uploadArea.classList.add('is-dragging');
+    });
+
+
+    uploadArea.addEventListener('dragleave', function () {
+
+        uploadArea.classList.remove('is-dragging');
+    });
+
+
+    uploadArea.addEventListener('drop', function (event) {
+
+        event.preventDefault();
+
+        uploadArea.classList.remove('is-dragging');
+
+        const files = event.dataTransfer.files;
+
+        if (!files.length) {
+            return;
+        }
+
+        /*
+         * Transfer the dropped files to the actual file input.
+         */
+        const dataTransfer = new DataTransfer();
+
+        Array.from(files).forEach(function (file) {
+
+            if (file.type.startsWith('image/')) {
+                dataTransfer.items.add(file);
+            }
+
+        });
+
+        input.files = dataTransfer.files;
+
+        input.dispatchEvent(new Event('change'));
+    });
+
 });
 </script>
 {% endblock %}
