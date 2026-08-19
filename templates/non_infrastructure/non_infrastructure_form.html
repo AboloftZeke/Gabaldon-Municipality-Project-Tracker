@@ -463,6 +463,37 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
+    const startTimeInput = document.getElementById(
+        '{{ form.start_time.id_for_label }}'
+    );
+
+    const endTimeInput = document.getElementById(
+        '{{ form.end_time.id_for_label }}'
+    );
+
+    function enforceTimeOrder() {
+
+        if (!startTimeInput || !endTimeInput) {
+            return;
+        }
+
+        endTimeInput.min = startTimeInput.value;
+
+        if (
+            startTimeInput.value &&
+            endTimeInput.value &&
+            endTimeInput.value <= startTimeInput.value
+        ) {
+            endTimeInput.value = '';
+        }
+    }
+
+    if (startTimeInput && endTimeInput) {
+        startTimeInput.addEventListener('change', enforceTimeOrder);
+        endTimeInput.addEventListener('change', enforceTimeOrder);
+        enforceTimeOrder();
+    }
+
     const deleteInput = document.getElementById(
         '{{ form.images_to_delete.id_for_label }}'
     );

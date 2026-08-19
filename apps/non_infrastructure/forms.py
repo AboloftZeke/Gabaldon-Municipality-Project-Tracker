@@ -141,6 +141,19 @@ class NonInfrastructureProjectForm(forms.Form):
     def clean_province(self):
         return 'Nueva Ecija'
 
+    def clean(self):
+        cleaned_data = super().clean()
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
+
+        if start_time and end_time and end_time <= start_time:
+            self.add_error(
+                'end_time',
+                'End time must be later than the start time.',
+            )
+
+        return cleaned_data
+
     @staticmethod
     def _resolve_instance(instance):
         if isinstance(instance, Non_Infrastructure_Project):
