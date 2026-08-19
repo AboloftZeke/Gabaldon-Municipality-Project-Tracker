@@ -319,6 +319,18 @@ class InfrastructureProjectForm(forms.Form):
                 'Enter a category name when Other is selected.',
             )
 
+        inspection_date = cleaned_data.get('inspection_date')
+        inspection_details = (
+            cleaned_data.get('inspection_completion_percentage') is not None
+            or bool((cleaned_data.get('inspection_findings') or '').strip())
+            or bool((cleaned_data.get('inspection_remarks') or '').strip())
+        )
+        if inspection_details and not inspection_date:
+            self.add_error(
+                'inspection_date',
+                'Enter an inspection date when recording inspection details.',
+            )
+
         return cleaned_data
 
     def clean_municipality(self):
@@ -631,14 +643,24 @@ class InfrastructureProjectForm(forms.Form):
         insp_findings = data.get('inspection_findings')
         insp_remarks = data.get('inspection_remarks')
         if insp_date or insp_pct is not None or insp_findings or insp_remarks:
-            Project_Inspection.objects.create(
-                project=proj,
-                inspection_date=insp_date,
-                inspected_by_user=user,
-                completion_percentage=insp_pct if insp_pct is not None else 0,
-                findings=insp_findings or '',
-                remarks=insp_remarks or '',
+            inspection = None
+            if instance is not None:
+                inspection = proj.inspections.order_by(
+                    '-inspection_date',
+                    '-created_at',
+                ).first()
+
+            if inspection is None:
+                inspection = Project_Inspection(project=proj)
+
+            inspection.inspection_date = insp_date
+            inspection.inspected_by_user = user
+            inspection.completion_percentage = (
+                insp_pct if insp_pct is not None else 0
             )
+            inspection.findings = insp_findings or ''
+            inspection.remarks = insp_remarks or ''
+            inspection.save()
 
         self._save_images(proj)
         return infra
