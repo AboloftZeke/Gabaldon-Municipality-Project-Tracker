@@ -27,15 +27,45 @@
 .public-detail__hero { overflow: hidden; }
 
 .public-detail__heading {
+  position: relative;
+  min-height: 245px;
   padding: 2rem;
   border-bottom: 1px solid #dbe4dc;
-  background: linear-gradient(135deg, #123d2a, #1f6744);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
   color: #ffffff;
+  background: #123d2a;
+}
+
+.public-detail__hero-media,
+.public-detail__hero-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.public-detail__hero-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.public-detail__hero-overlay {
+  background:
+    linear-gradient(90deg, rgba(10, 48, 31, 0.92) 0%, rgba(18, 79, 53, 0.8) 48%, rgba(18, 79, 53, 0.45) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.28));
+}
+
+.public-detail__heading-content {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
 }
 
 .public-detail__eyebrow {
   margin: 0 0 0.6rem;
-  color: #d9e8d8;
+  color: #e8f2e9;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -48,11 +78,13 @@
   font-size: clamp(1.8rem, 4vw, 2.8rem);
   line-height: 1.18;
   overflow-wrap: anywhere;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.24);
 }
 
-.public-detail__heading > p:last-child {
+.public-detail__heading-content > p:last-child {
   margin: 0.75rem 0 0;
-  color: #e2ece5;
+  color: #f0f6f1;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.22);
 }
 
 .public-detail__summary,
@@ -189,7 +221,11 @@
     margin-top: 1.25rem;
   }
 
-  .public-detail__heading,
+  .public-detail__heading {
+    min-height: 210px;
+    padding: 1.25rem;
+  }
+
   .public-detail__section { padding: 1.25rem; }
 
   .public-detail__summary,
@@ -197,4 +233,3 @@
 
   .public-detail__summary { padding: 1rem; }
 }
-
