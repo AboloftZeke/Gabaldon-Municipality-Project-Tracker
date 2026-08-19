@@ -1,17 +1,14 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
-from django.urls import reverse_lazy, reverse, NoReverseMatch
-from django.db import models
-from django.db.models import Q, Sum
+from django.urls import reverse, NoReverseMatch
+from django.db.models import Sum
 from django.templatetags.static import static
 from .forms import InfrastructureProjectForm
 from apps.system.models import InfrastructureProject as SystemInfrastructureProject
 from apps.system.models import (
     InfrastructureCategory,
     Infrastructure_Project,
-    Project,
 )
 
 
