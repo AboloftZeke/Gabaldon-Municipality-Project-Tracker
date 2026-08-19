@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 """Manual dashboard verification script; excluded from test discovery."""
 
+import os
+
+
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
     import django
