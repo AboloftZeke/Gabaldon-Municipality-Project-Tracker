@@ -93,6 +93,11 @@ class NonInfrastructureProjectForm(forms.Form):
         widget=forms.HiddenInput(),
     )
 
+    cover_image_selection = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         super().__init__(*args, **kwargs)
@@ -108,7 +113,17 @@ class NonInfrastructureProjectForm(forms.Form):
         if self.instance is not None:
             normalized = self._resolve_instance(self.instance)
             if normalized is not None:
-                self.existing_images = list(normalized.project.images.order_by('-created_at'))
+                self.existing_images = list(
+                    normalized.project.images.order_by('-is_cover', '-created_at')
+                )
+                existing_cover = next(
+                    (image for image in self.existing_images if image.is_cover),
+                    self.existing_images[0] if self.existing_images else None,
+                )
+                if existing_cover:
+                    self.fields['cover_image_selection'].initial = (
+                        f'existing:{existing_cover.pk}'
+                    )
                 self.fields['non_infra_name'].initial = normalized.non_infra_name
                 self.fields['description'].initial = normalized.description
                 self.fields['non_infra_category'].initial = normalized.non_infra_category_id
@@ -124,8 +139,6 @@ class NonInfrastructureProjectForm(forms.Form):
                     self.fields['barangay'].initial = normalized.address.barangay
                     self.fields['municipality'].initial = normalized.address.municipality or 'Gabaldon'
                     self.fields['province'].initial = normalized.address.province or 'Nueva Ecija'
-                else:
-                    self.existing_images = []
 
     @staticmethod
     def _ensure_categories_exist():
@@ -170,6 +183,11 @@ class NonInfrastructureProjectForm(forms.Form):
 
     def _save_images(self, project):
 
+        cover_selection = self.cleaned_data.get(
+            'cover_image_selection',
+            '',
+        )
+
         images_to_delete = self.cleaned_data.get('images_to_delete', '')
 
         if images_to_delete:
@@ -206,15 +224,11 @@ class NonInfrastructureProjectForm(forms.Form):
                 uploaded_files = [raw_files]
 
 
-        # Nothing new was uploaded.
-        # Existing images have already been processed above.
-        if not uploaded_files:
-            return
-
-
         # =====================================================
         # Save new images
         # =====================================================
+
+        saved_images = []
 
         for upload in uploaded_files:
 
@@ -242,10 +256,35 @@ class NonInfrastructureProjectForm(forms.Form):
                 filename
             )
 
-            Project_Image.objects.create(
-                project=project,
-                image_url=file_url
+            saved_images.append(
+                Project_Image.objects.create(
+                    project=project,
+                    image_url=file_url,
+                )
             )
+
+        selected_cover = None
+
+        if cover_selection.startswith('existing:'):
+            image_id = cover_selection.removeprefix('existing:')
+            if image_id.isdigit():
+                selected_cover = project.images.filter(pk=int(image_id)).first()
+        elif cover_selection.startswith('new:'):
+            image_index = cover_selection.removeprefix('new:')
+            if image_index.isdigit():
+                index = int(image_index)
+                if 0 <= index < len(saved_images):
+                    selected_cover = saved_images[index]
+
+        if selected_cover is None:
+            selected_cover = (
+                project.images.filter(is_cover=True).first()
+                or project.images.order_by('-created_at').first()
+            )
+
+        project.images.update(is_cover=False)
+        if selected_cover:
+            project.images.filter(pk=selected_cover.pk).update(is_cover=True)
 
     def save(self, user=None, instance=None):
         data = self.cleaned_data
