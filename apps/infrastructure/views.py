@@ -512,6 +512,100 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
             ),
         }
 
+        schedule = (
+            infra.schedules.order_by('-schedule_id').first()
+            if infra else None
+        )
+        inspection = (
+            infra.project.inspections.order_by(
+                '-inspection_date',
+                '-created_at',
+            ).first()
+            if infra and infra.project else None
+        )
+
+        context['project_details'] = {
+            'pk': project.pk,
+            'title': (
+                infra.infrastructure_title
+                if infra else getattr(project, 'title', '')
+            ),
+            'description': (
+                infra.infrastructure_description
+                if infra else getattr(project, 'description', '')
+            ),
+            'get_status_display': status_label,
+            'get_award_status_display': status_label,
+            'get_category_display': category_name,
+            'implementing_office': implementing_office_name,
+            'street': street,
+            'get_barangay_display': barangay,
+            'municipality': municipality,
+            'province': province,
+            'latitude': latitude,
+            'longitude': longitude,
+            'contractor': contractor_name,
+            'get_procurement_method_display': (
+                infra.get_procurement_method_display()
+                if infra else ''
+            ),
+            'posting_date': getattr(schedule, 'posting_date', None),
+            'pre_bid_date': getattr(schedule, 'pre_bid_date', None),
+            'bidding_date': getattr(schedule, 'bidding_date', None),
+            'notice_award_date': getattr(
+                schedule,
+                'notice_award_date',
+                None,
+            ),
+            'notice_to_proceed_date': getattr(
+                schedule,
+                'notice_proceed_date',
+                None,
+            ),
+            'abc_amount': budget_value,
+            'contract_price': contract_value,
+            'actual_expenditure': actual_expenditure,
+            'source_of_fund': funding_source_name,
+            'planned_start_date': planned_start_date,
+            'planned_end_date': planned_end_date,
+            'actual_start_date': getattr(
+                schedule,
+                'actual_start_date',
+                None,
+            ),
+            'actual_completion_date': getattr(
+                schedule,
+                'actual_completion_date',
+                None,
+            ),
+            'duration_days': getattr(schedule, 'duration_days', None),
+            'cost_progress_percentage': cost_progress,
+            'physical_progress_percentage': physical_progress,
+            'inspection_date': getattr(
+                inspection,
+                'inspection_date',
+                None,
+            ),
+            'inspection_completion_percentage': getattr(
+                inspection,
+                'completion_percentage',
+                None,
+            ),
+            'inspection_findings': getattr(
+                inspection,
+                'findings',
+                '',
+            ),
+            'inspection_remarks': getattr(
+                inspection,
+                'remarks',
+                '',
+            ),
+            'created_by': context['project_manager'],
+            'created_at': getattr(infra, 'created_at', None),
+            'updated_at': getattr(infra, 'updated_at', None),
+        }
+
         return context
 
 
