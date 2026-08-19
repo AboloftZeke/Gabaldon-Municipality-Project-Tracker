@@ -163,7 +163,27 @@
               <td class="financial-cell">{% if not row.hide_financial %}{{ row.progress|floatformat:0 }}%{% else %}—{% endif %}</td>
               <td>{{ row.office }}</td>
               <td>
+                {% if row.category == 'noninfra' %}
+                <a href="#"
+                   class="row-link"
+                   data-project-modal-trigger
+                   data-project-title="{{ row.title }}"
+                   data-project-type-label="{{ row.type_label }}"
+                   data-project-status-label="{{ row.status_label }}"
+                   data-project-status-class="status-{{ row.status_key }}"
+                   data-project-category="{{ row.category_label }}"
+                   data-project-proponent="{{ row.proponent }}"
+                   data-project-beneficiaries-description="{{ row.beneficiaries|default_if_none:'' }}"
+                   data-project-venue="{{ row.venue_name }}"
+                   data-project-service-period="{{ row.event_date|date:'F j, Y' }}"
+                   data-project-service-time="{% if row.start_time %}{{ row.start_time }}{% if row.end_time %} – {{ row.end_time }}{% endif %}{% endif %}"
+                   data-project-created-by="{{ row.created_by_name }}"
+                   data-project-created-at="{{ row.created_at|date:'F j, Y' }}"
+                   data-project-updated-at="{{ row.updated_at|date:'F j, Y' }}"
+                   data-project-description="{{ row.description }}">View</a>
+                {% else %}
                 <a href="{{ row.detail_url }}" class="row-link">View</a>
+                {% endif %}
               </td>
             </tr>
             {% empty %}

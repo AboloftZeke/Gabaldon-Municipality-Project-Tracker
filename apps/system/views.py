@@ -249,15 +249,6 @@ class PublicDashboardView(TemplateView):
                 else None
             )
 
-            detail_url = '#'
-            try:
-                detail_url = reverse(
-                    'mayor_projects:non_infrastructure_project_detail',
-                    args=[p.pk]
-                )
-            except Exception:
-                pass
-
             rows.append({
                 'record_id': f'noninfra-{p.pk}',
                 'category': 'noninfra',
@@ -285,6 +276,8 @@ class PublicDashboardView(TemplateView):
                 'office': '',
                 'implementing_office': '',
                 'category_label': category_name,
+                'proponent': p.proponent or '',
+                'beneficiaries': p.beneficiaries,
 
                 'contractor': '',
                 'procurement_method': '',
@@ -325,7 +318,9 @@ class PublicDashboardView(TemplateView):
 
                 'created_at': p.created_at,
                 'updated_at': p.updated_at,
-                'detail_url': detail_url,
+                # Non-infrastructure details open in the public dashboard modal.
+                # Do not expose the protected Mayor's Office detail route here.
+                'detail_url': '',
                 'hide_financial': False,  # Non-infrastructure can show financial data if available
             })
 

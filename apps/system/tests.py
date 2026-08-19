@@ -84,6 +84,16 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
         self.assertTrue(
             all(row['location'] == '' for row in noninfra_rows)
         )
+        self.assertTrue(
+            all(row['detail_url'] == '' for row in noninfra_rows)
+        )
+
+        mayor_detail_url = reverse(
+            'mayor_projects:non_infrastructure_project_detail',
+            args=[Non_Infrastructure_Project.objects.get(status='ongoing').pk],
+        )
+        self.assertNotContains(response, mayor_detail_url)
+        self.assertContains(response, 'data-project-modal-trigger', count=3)
 
 
 class UserDeactivateViewTests(TestCase):
