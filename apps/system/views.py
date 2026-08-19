@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy, reverse
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.conf import settings
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
@@ -109,7 +109,11 @@ class PublicDashboardView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        from apps.system.models import InfrastructureProject, Non_Infrastructure_Project
+        from apps.system.models import (
+            InfrastructureProject,
+            Non_Infrastructure_Project,
+            Project_Image,
+        )
         # Static choice lists still only live on the legacy model classes.
         # We use them here purely as UI lookup data (barangay/category labels),
         # not for storage or querying — the normalized models are source of truth for data.
@@ -119,6 +123,12 @@ class PublicDashboardView(TemplateView):
         infra_qs = InfrastructureProject.objects.all().order_by('-created_at')
         noninfra_qs = Non_Infrastructure_Project.objects.select_related(
             'project', 'project__created_by_user', 'non_infra_category'
+        ).prefetch_related(
+            Prefetch(
+                'project__images',
+                queryset=Project_Image.objects.order_by('-is_cover', '-created_at'),
+                to_attr='public_images',
+            )
         ).order_by('-created_at')
 
         infra_total = infra_qs.count()
@@ -233,6 +243,11 @@ class PublicDashboardView(TemplateView):
             )
 
             creator = p.project.created_by_user if p.project else None
+            cover_image = (
+                p.project.public_images[0]
+                if p.project and p.project.public_images
+                else None
+            )
 
             detail_url = '#'
             try:
@@ -255,6 +270,11 @@ class PublicDashboardView(TemplateView):
                 'type_label': 'Non-Infrastructure',
 
                 'title': p.non_infra_name,
+                'cover_image_url': (
+                    cover_image.image_url
+                    if cover_image and cover_image.image_url
+                    else ''
+                ),
 
                 'location_key': '',
                 'location': '',

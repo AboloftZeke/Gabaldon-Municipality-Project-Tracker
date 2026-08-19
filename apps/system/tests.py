@@ -2,7 +2,12 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm
-from .models import Non_Infrastructure_Project, Project, UserProfile
+from .models import (
+    Non_Infrastructure_Project,
+    Project,
+    Project_Image,
+    UserProfile,
+)
 
 
 class PublicDashboardNonInfrastructureStatusTests(TestCase):
@@ -22,11 +27,22 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
                 created_by_user=self.user,
                 updated_by_user=self.user,
             )
-            Non_Infrastructure_Project.objects.create(
+            noninfra = Non_Infrastructure_Project.objects.create(
                 project=project,
                 non_infra_name=name,
                 status=status,
             )
+
+            if status == 'ongoing':
+                Project_Image.objects.create(
+                    project=noninfra.project,
+                    image_url='/media/projects/ongoing-cover.jpg',
+                    is_cover=True,
+                )
+                Project_Image.objects.create(
+                    project=noninfra.project,
+                    image_url='/media/projects/ongoing-other.jpg',
+                )
 
     def test_public_dashboard_uses_saved_non_infrastructure_statuses(self):
         response = self.client.get(reverse('public_dashboard'))
@@ -45,6 +61,17 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
         self.assertEqual(statuses['Planned Program'], ('planned', 'Planned'))
         self.assertEqual(statuses['Ongoing Program'], ('ongoing', 'Ongoing'))
         self.assertEqual(statuses['Completed Program'], ('completed', 'Completed'))
+
+        ongoing_row = next(
+            row
+            for row in response.context['project_rows']
+            if row['title'] == 'Ongoing Program'
+        )
+        self.assertEqual(
+            ongoing_row['cover_image_url'],
+            '/media/projects/ongoing-cover.jpg',
+        )
+        self.assertContains(response, '/media/projects/ongoing-cover.jpg')
 
         noninfra_rows = [
             row

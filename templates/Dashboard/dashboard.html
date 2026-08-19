@@ -143,7 +143,11 @@
                   {% if row.category == 'infra' %}
                   <img src="{% static 'images/infra-icon.png' %}" alt="Infrastructure" class="project-thumb">
                   {% else %}
-                  <img src="{% static 'images/project-icon.png' %}" alt="Non-Infrastructure" class="project-thumb">
+                    {% if row.cover_image_url %}
+                    <img src="{{ row.cover_image_url }}" alt="{{ row.title }} cover" class="project-thumb">
+                    {% else %}
+                    <img src="{% static 'images/project-placeholder.svg' %}" alt="No project cover available" class="project-thumb">
+                    {% endif %}
                   {% endif %}
                   <div>
                     <div class="project-title">{{ row.title }}</div>
