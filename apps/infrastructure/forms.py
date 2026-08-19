@@ -105,11 +105,13 @@ class InfrastructureProjectForm(forms.Form):
         empty_label='Select Implementing Office',
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
-    contractor = forms.ModelChoiceField(
+    contractor = forms.CharField(
         required=False,
-        queryset=Contractor.objects.none(),
-        empty_label='Select Contractor',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter contractor or company name',
+        }),
     )
     procurement_method = forms.ChoiceField(
         required=True,
@@ -236,9 +238,6 @@ class InfrastructureProjectForm(forms.Form):
         self.fields['implementing_office'].queryset = ImplementingOffice.objects.filter(
             is_active=True
         ).order_by('office_name')
-        self.fields['contractor'].queryset = Contractor.objects.filter(
-            is_active=True
-        ).order_by('contractor_name')
         self.fields['fund_source'].queryset = FundSource.objects.filter(
             is_active=True
         ).order_by('fund_source_name')
@@ -305,7 +304,10 @@ class InfrastructureProjectForm(forms.Form):
         self.initial.setdefault('description', infra.infrastructure_description)
         self.initial.setdefault('category', infra.category_id)
 
-        self.initial.setdefault('contractor', infra.contractor_id)
+        self.initial.setdefault(
+            'contractor',
+            infra.contractor.contractor_name if infra.contractor else '',
+        )
         self.initial.setdefault(
             'implementing_office',
             infra.implementing_office_id,
@@ -612,7 +614,25 @@ class InfrastructureProjectForm(forms.Form):
         addr.save()
         infra.address = addr
 
-        infra.contractor = data.get('contractor')
+        contractor_name = (data.get('contractor') or '').strip()
+        contractor_obj = None
+        if contractor_name:
+            contractor_obj = Contractor.objects.filter(
+                contractor_name__iexact=contractor_name
+            ).first()
+            if contractor_obj is None:
+                try:
+                    contractor_obj = Contractor.objects.create(
+                        contractor_name=contractor_name,
+                    )
+                except IntegrityError:
+                    contractor_obj = Contractor.objects.filter(
+                        contractor_name__iexact=contractor_name
+                    ).first()
+                    if contractor_obj is None:
+                        raise
+
+        infra.contractor = contractor_obj
         infra.implementing_office = data.get('implementing_office')
         infra.procurement_method = data.get('procurement_method')
         infra.award_status = data.get('award_status')
