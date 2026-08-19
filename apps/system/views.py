@@ -114,12 +114,11 @@ class PublicDashboardView(TemplateView):
         # We use them here purely as UI lookup data (barangay/category labels),
         # not for storage or querying — the normalized models are source of truth for data.
         from apps.infrastructure.models import InfrastructureProject as LegacyInfrastructureProject
-        from apps.non_infrastructure.models import NonInfrastructureProject as LegacyNonInfrastructureProject
-        from apps.system.models import InfrastructureCategory, NonInfrastructureCategory
+        from apps.system.models import NonInfrastructureCategory
 
         infra_qs = InfrastructureProject.objects.all().order_by('-created_at')
         noninfra_qs = Non_Infrastructure_Project.objects.select_related(
-            'project', 'project__created_by_user', 'address', 'non_infra_category'
+            'project', 'project__created_by_user', 'non_infra_category'
         ).order_by('-created_at')
 
         infra_total = infra_qs.count()
@@ -151,8 +150,7 @@ class PublicDashboardView(TemplateView):
         rows = []
 
         infra_location_map = dict(LegacyInfrastructureProject.LOCATION_CHOICES)
-        noninfra_location_map = dict(LegacyNonInfrastructureProject.LOCATION_CHOICES)
-        location_options_map = {**infra_location_map, **noninfra_location_map}
+        location_options_map = infra_location_map
 
         category_options = []
         for value, label in LegacyInfrastructureProject.PROJECT_CATEGORY_CHOICES:
@@ -234,8 +232,6 @@ class PublicDashboardView(TemplateView):
                 if p.non_infra_category else ''
             )
 
-            location = str(p.address) if p.address else ''
-
             creator = p.project.created_by_user if p.project else None
 
             detail_url = '#'
@@ -260,8 +256,8 @@ class PublicDashboardView(TemplateView):
 
                 'title': p.non_infra_name,
 
-                'location_key': p.address_id,
-                'location': location,
+                'location_key': '',
+                'location': '',
 
                 'status_key': status_key,
                 'status_label': status_label,

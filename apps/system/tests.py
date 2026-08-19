@@ -46,6 +46,18 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
         self.assertEqual(statuses['Ongoing Program'], ('ongoing', 'Ongoing'))
         self.assertEqual(statuses['Completed Program'], ('completed', 'Completed'))
 
+        noninfra_rows = [
+            row
+            for row in response.context['project_rows']
+            if row['category'] == 'noninfra'
+        ]
+        self.assertTrue(
+            all(row['location_key'] == '' for row in noninfra_rows)
+        )
+        self.assertTrue(
+            all(row['location'] == '' for row in noninfra_rows)
+        )
+
 
 class UserDeactivateViewTests(TestCase):
     def test_current_user_deactivation_shows_warning(self):
