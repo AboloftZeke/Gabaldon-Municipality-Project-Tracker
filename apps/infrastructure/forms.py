@@ -549,6 +549,12 @@ class InfrastructureProjectForm(forms.Form):
             fin.approved_budget = abc if abc is not None else fin.approved_budget
             fin.bid_amount = bid if bid is not None else fin.bid_amount
             fin.fund_source = fund_source
+            fin.actual_expenditure = (
+                actual_exp
+                if actual_exp is not None
+                else fin.actual_expenditure
+            )
+            fin.save()
 
         insp_date = data.get('inspection_date')
         insp_pct = data.get('inspection_completion_percentage')
