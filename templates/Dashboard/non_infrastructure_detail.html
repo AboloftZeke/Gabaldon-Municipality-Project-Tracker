@@ -29,9 +29,19 @@
 
     <section class="public-detail__hero">
       <div class="public-detail__heading">
-        <p class="public-detail__eyebrow">Public Non-Infrastructure Program · {{ project_code }}</p>
-        <h1>{{ public_project.non_infra_name }}</h1>
-        <p>{{ project_category|default:"Uncategorized" }}</p>
+        <div class="public-detail__hero-media" aria-hidden="true">
+          {% if project_images %}
+            <img src="{{ project_images.0.image_url }}" alt="">
+          {% else %}
+            <img src="{% static 'images/project-placeholder.svg' %}" alt="">
+          {% endif %}
+        </div>
+        <div class="public-detail__hero-overlay"></div>
+        <div class="public-detail__heading-content">
+          <p class="public-detail__eyebrow">Public Non-Infrastructure Program · {{ project_code }}</p>
+          <h1>{{ public_project.non_infra_name }}</h1>
+          <p>{{ project_category|default:"Uncategorized" }}</p>
+        </div>
       </div>
       <div class="public-detail__summary" aria-label="Program summary">
         <div class="summary-item"><span>Status</span><strong>{{ public_project.get_status_display|default:"N/A" }}</strong></div>
@@ -86,4 +96,3 @@
   </footer>
 </body>
 </html>
-
