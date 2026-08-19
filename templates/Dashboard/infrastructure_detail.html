@@ -29,12 +29,22 @@
 
     <section class="public-detail__hero">
       <div class="public-detail__heading">
-        <p class="public-detail__eyebrow">Public Infrastructure Project · {{ project_code }}</p>
-        <h1>{{ public_project.infrastructure_title }}</h1>
-        <p>
-          {{ public_project.category.category_name|default:"Uncategorized" }}
-          {% if public_project.address.barangay %}<span aria-hidden="true">·</span> Barangay {{ public_project.address.barangay }}{% endif %}
-        </p>
+        <div class="public-detail__hero-media" aria-hidden="true">
+          {% if project_images %}
+            <img src="{{ project_images.0.image_url }}" alt="">
+          {% else %}
+            <img src="{% static 'images/project-placeholder.svg' %}" alt="">
+          {% endif %}
+        </div>
+        <div class="public-detail__hero-overlay"></div>
+        <div class="public-detail__heading-content">
+          <p class="public-detail__eyebrow">Public Infrastructure Project · {{ project_code }}</p>
+          <h1>{{ public_project.infrastructure_title }}</h1>
+          <p>
+            {{ public_project.category.category_name|default:"Uncategorized" }}
+            {% if public_project.address.barangay %}<span aria-hidden="true">·</span> Barangay {{ public_project.address.barangay }}{% endif %}
+          </p>
+        </div>
       </div>
       <div class="public-detail__summary" aria-label="Project summary">
         <div class="summary-item"><span>Status</span><strong>{{ public_project.get_award_status_display|default:"N/A" }}</strong></div>
@@ -126,4 +136,3 @@
   </footer>
 </body>
 </html>
-
