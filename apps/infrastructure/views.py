@@ -422,16 +422,14 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
         # ---------------------------------------------------------
         # PROJECT NAME / DESCRIPTION
         # ---------------------------------------------------------
-        project_name = getattr(
-            base_project,
-            'title',
-            ''
+        project_name = (
+            infra.infrastructure_title
+            if infra else getattr(project, 'title', '')
         ) or 'Not specified'
 
-        description = getattr(
-            base_project,
-            'description',
-            ''
+        description = (
+            infra.infrastructure_description
+            if infra else getattr(project, 'description', '')
         ) or ''
 
         # ---------------------------------------------------------
