@@ -82,26 +82,14 @@ class InfrastructureProjectForm(forms.Form):
         disabled=True,
     )
 
-    category = forms.ChoiceField(
+    category = forms.ModelChoiceField(
         required=True,
-        choices=[
-            ('', 'Select Category'),
-            ('road', 'Road & Bridge'),
-            ('water', 'Water Supply'),
-            ('sanitation', 'Sanitation'),
-            ('health', 'Health Facility'),
-            ('education', 'Education Facility'),
-            ('energy', 'Energy'),
-            ('ict', 'ICT/Telecommunications'),
-            ('agriculture', 'Agriculture'),
-            ('environment', 'Environment'),
-            ('sports', 'Sports/Recreation'),
-            ('other', 'Other'),
-        ],
+        queryset=InfrastructureCategory.objects.none(),
+        empty_label='Select Category',
         widget=forms.Select(attrs={
             'class': 'form-select',
             'id': 'id_category',
-        })
+        }),
     )
 
     other_category = forms.CharField(
@@ -178,7 +166,9 @@ class InfrastructureProjectForm(forms.Form):
         super().__init__(*args, **kwargs)
         self._instance = instance
 
-        self.fields['category'].queryset = InfrastructureCategory.objects.all().order_by('category_name')
+        self.fields['category'].queryset = InfrastructureCategory.objects.filter(
+            is_active=True
+        ).order_by('category_name')
         self.fields['municipality'].initial = 'Gabaldon'
         self.fields['province'].initial = 'Nueva Ecija'
         self.fields['municipality'].widget.attrs['readonly'] = 'readonly'
@@ -393,37 +383,25 @@ class InfrastructureProjectForm(forms.Form):
         infra.infrastructure_title = data.get('title') or infra.infrastructure_title
         infra.infrastructure_description = data.get('description') or ''
 
-        category_name = (data.get('category') or '').strip()
+        category_obj = data.get('category')
 
-        # If "Other" was selected, use the value entered in the
-        # Other Category field instead.
-        if category_name.lower() == 'other':
-            category_name = (
-                data.get('other_category') or ''
-            ).strip()
-
-        if category_name:
-            # First try an exact match
+        if (
+            category_obj is not None
+            and category_obj.category_code.lower() == 'other'
+        ):
+            category_name = (data.get('other_category') or '').strip()
             category_obj = InfrastructureCategory.objects.filter(
-                category_name=category_name
+                category_name__iexact=category_name
             ).first()
 
-            # Then try a case-insensitive match
-            if category_obj is None:
-                category_obj = InfrastructureCategory.objects.filter(
-                    category_name__iexact=category_name
-                ).first()
-
-            # Create only if the category truly does not exist
             if category_obj is None:
                 category_code = (
-                    category_name.upper()
+                    category_name.lower()
                     .strip()
                     .replace(' ', '_')
                     .replace('-', '_')
                     .replace('/', '_')
                 )
-
                 base_code = category_code
                 counter = 1
 
@@ -436,22 +414,16 @@ class InfrastructureProjectForm(forms.Form):
                 try:
                     category_obj = InfrastructureCategory.objects.create(
                         category_name=category_name,
-                        category_code=category_code
+                        category_code=category_code,
                     )
                 except IntegrityError:
-                    # Another existing record may have matched while
-                    # this request was running.
                     category_obj = InfrastructureCategory.objects.filter(
                         category_name__iexact=category_name
                     ).first()
-
                     if category_obj is None:
                         raise
 
-            infra.category = category_obj
-
-        else:
-            infra.category = None
+        infra.category = category_obj
 
         street = data.get('street') or ''
         barangay = data.get('barangay') or ''
