@@ -1,11 +1,9 @@
-from unicodedata import category
 from django.db import IntegrityError
 
 from django import forms
 from django.core.files.storage import default_storage
 import os
 
-from apps.infrastructure.models import InfrastructureProject as LocalInfrastructureProject
 from apps.system.models import (
     Address,
     Contractor,
@@ -513,72 +511,6 @@ class InfrastructureProjectForm(forms.Form):
         project.images.update(is_cover=False)
         if selected_cover:
             project.images.filter(pk=selected_cover.pk).update(is_cover=True)
-
-    def _get_or_create_implementing_office(self, name):
-        name = (name or '').strip()
-
-        if not name:
-            return None
-
-        office = ImplementingOffice.objects.filter(
-            office_name__iexact=name
-        ).first()
-
-        if office:
-            return office
-
-        return ImplementingOffice.objects.create(
-            office_name=name
-        )
-
-
-    def _get_or_create_contractor(self, name):
-        name = (name or '').strip()
-
-        if not name:
-            return None
-
-        contractor = Contractor.objects.filter(
-            contractor_name__iexact=name
-        ).first()
-
-        if contractor:
-            return contractor
-
-        return Contractor.objects.create(
-            contractor_name=name
-        )
-
-
-    def _get_or_create_fund_source(self, name):
-        name = (name or '').strip()
-
-        if not name:
-            return None
-
-        fund_source = FundSource.objects.filter(
-            fund_source_name__iexact=name
-        ).first()
-
-        if fund_source:
-            return fund_source
-
-    # Generate a code for a new fund source
-        base_code = name.upper().replace(' ', '_')
-        code = base_code
-
-        counter = 1
-
-        while FundSource.objects.filter(
-            fund_source_code=code
-        ).exists():
-            counter += 1
-            code = f'{base_code}_{counter}'
-
-        return FundSource.objects.create(
-            fund_source_name=name,
-            fund_source_code=code
-        )
 
     def save(self, user=None, instance=None):
         data = self.cleaned_data
