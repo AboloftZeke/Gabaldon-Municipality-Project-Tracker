@@ -3,11 +3,86 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm
 from .models import (
+    Address,
+    Contractor,
+    Financial,
+    FundSource,
+    ImplementingOffice,
+    InfrastructureCategory,
+    Infrastructure_Project,
     Non_Infrastructure_Project,
     Project,
     Project_Image,
     UserProfile,
 )
+
+
+class PublicDashboardInfrastructureDataSourceTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='infrastructure-dashboard-author',
+            password='password123',
+        )
+        base_project = Project.objects.create(
+            project_type='infrastructure',
+            created_by_user=self.user,
+            updated_by_user=self.user,
+        )
+        category = InfrastructureCategory.objects.create(
+            category_code='road-test',
+            category_name='Road Test',
+        )
+        address = Address.objects.create(
+            barangay='Bagting',
+            municipality='Gabaldon',
+            province='Nueva Ecija',
+        )
+        contractor = Contractor.objects.create(
+            contractor_name='Public Works Contractor',
+        )
+        office = ImplementingOffice.objects.create(
+            office_name='Municipal Engineering Office',
+        )
+        fund_source = FundSource.objects.create(
+            fund_source_code='local-test',
+            fund_source_name='Local Development Fund',
+        )
+        self.infrastructure = Infrastructure_Project.objects.create(
+            project=base_project,
+            infrastructure_title='Normalized Road Project',
+            infrastructure_description='Connected through normalized data.',
+            category=category,
+            address=address,
+            contractor=contractor,
+            implementing_office=office,
+            procurement_method='competitive_bidding',
+            award_status='awarded',
+        )
+        Financial.objects.create(
+            infrastructure=self.infrastructure,
+            fund_source=fund_source,
+            approved_budget=2500000,
+            bid_amount=2400000,
+        )
+
+    def test_public_dashboard_reads_normalized_infrastructure_relations(self):
+        response = self.client.get(reverse('public_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['infra_total'], 1)
+        self.assertEqual(response.context['total_budget'], 2500000)
+
+        row = next(
+            row for row in response.context['project_rows']
+            if row['category'] == 'infra'
+        )
+        self.assertEqual(row['record_id'], f'infra-{self.infrastructure.pk}')
+        self.assertEqual(row['title'], 'Normalized Road Project')
+        self.assertEqual(row['category_label'], 'Road Test')
+        self.assertEqual(row['location'], 'Bagting')
+        self.assertEqual(row['office'], 'Municipal Engineering Office')
+        self.assertEqual(row['contractor'], 'Public Works Contractor')
+        self.assertEqual(row['source_of_fund'], 'Local Development Fund')
 
 
 class PublicDashboardNonInfrastructureStatusTests(TestCase):
@@ -237,3 +312,4 @@ class UserCreateConfirmViewTests(TestCase):
         created_user = User.objects.get(username='mayoruser')
         self.assertEqual(created_user.profile.department, 'mayor')
         self.assertTrue(created_user.profile.must_change_password)
+

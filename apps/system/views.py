@@ -157,7 +157,8 @@ class PublicDashboardView(TemplateView):
         context = super().get_context_data(**kwargs)
 
         from apps.system.models import (
-            InfrastructureProject,
+            Financial,
+            Infrastructure_Project,
             Non_Infrastructure_Project,
             Project_Image,
         )
@@ -167,7 +168,30 @@ class PublicDashboardView(TemplateView):
         from apps.infrastructure.models import InfrastructureProject as LegacyInfrastructureProject
         from apps.system.models import NonInfrastructureCategory
 
-        infra_qs = InfrastructureProject.objects.all().order_by('-created_at')
+        infra_qs = Infrastructure_Project.objects.select_related(
+            'project',
+            'project__created_by_user',
+            'address',
+            'category',
+            'contractor',
+            'implementing_office',
+        ).prefetch_related(
+            Prefetch(
+                'project__images',
+                queryset=Project_Image.objects.order_by(
+                    '-is_cover',
+                    '-created_at',
+                ),
+                to_attr='public_images',
+            ),
+            Prefetch(
+                'financial_records',
+                queryset=Financial.objects.select_related(
+                    'fund_source',
+                ).order_by('-financial_id'),
+                to_attr='public_financial_records',
+            ),
+        ).order_by('-created_at')
         noninfra_qs = Non_Infrastructure_Project.objects.select_related(
             'project', 'project__created_by_user', 'non_infra_category'
         ).prefetch_related(
@@ -192,7 +216,15 @@ class PublicDashboardView(TemplateView):
         completed_projects = infra_completed + noninfra_completed
         ongoing_projects = infra_ongoing + noninfra_ongoing
 
-        infra_budget_total = sum((p.abc_amount or p.contract_price or 0) for p in infra_qs)
+        infra_budget_total = sum(
+            (
+                p.public_financial_records[0].approved_budget
+                or p.public_financial_records[0].bid_amount
+                or 0
+            )
+            if p.public_financial_records else 0
+            for p in infra_qs
+        )
         # No Financial record exists for non-infra projects in the normalized schema
         # (Financial only FKs to Infrastructure_Project right now). Contributes 0
         # until that's resolved — see MIGRATION_PLAN item 6.
@@ -220,38 +252,54 @@ class PublicDashboardView(TemplateView):
             status_key = p.award_status or 'planned'
             status_label = p.get_award_status_display() or 'Planned'
 
-            category_name = p.get_category_display()
-            
-            location = p.location or ''
-            
-            creator = p.created_by
+            category_name = (
+                p.category.category_name if p.category else ''
+            )
+            location = p.address.barangay if p.address else ''
+            creator = (
+                p.project.created_by_user if p.project else None
+            )
+            financial = (
+                p.public_financial_records[0]
+                if p.public_financial_records else None
+            )
+            office_name = (
+                p.implementing_office.office_name
+                if p.implementing_office else ''
+            )
+            contractor_name = (
+                p.contractor.contractor_name if p.contractor else ''
+            )
 
             detail_url = '#'
             try:
                 detail_url = reverse(
                     'engineering_projects:project_detail',
-                    args=[p.id]
+                    args=[p.pk]
                 )
             except Exception:
                 pass
 
             rows.append({
-                'record_id': f'infra-{p.id}',
+                'record_id': f'infra-{p.pk}',
                 'category': 'infra',
                 'project_category_key': f'infra:' + category_name.lower().replace(' ', '_'),
                 'project_category_label': f'Infrastructure - {category_name}',
                 'type_label': 'Infrastructure',
-                'title': p.title,
-                'location_key': p.location,
+                'title': p.infrastructure_title,
+                'location_key': location,
                 'location': location,
                 'status_key': status_key,
                 'status_label': status_label,
-                'office': p.location,
-                'implementing_office': p.location,
+                'office': office_name,
+                'implementing_office': office_name,
                 'category_label': category_name,
-                'contractor': p.location,
+                'contractor': contractor_name,
                 'procurement_method': p.get_procurement_method_display() or '',
-                'source_of_fund': '',
+                'source_of_fund': (
+                    financial.fund_source.fund_source_name
+                    if financial and financial.fund_source else ''
+                ),
                 'budget': 0,  # Hidden for infrastructure in public view
                 'budget_amount': 0,
                 'abc_amount': '',
@@ -261,7 +309,7 @@ class PublicDashboardView(TemplateView):
                 'overall_progress_percentage': '',
                 'cost_progress_percentage': '',
                 'physical_progress_percentage': '',
-                'description': p.description,
+                'description': p.infrastructure_description,
                 'planned_start_date': p.planned_start_date,
                 'planned_end_date': p.planned_end_date,
                 'actual_start_date': None,
@@ -998,3 +1046,4 @@ class PasswordChangeView(LoginRequiredMixin, View):
             self.template_name,
             {'form': form}
         )
+
