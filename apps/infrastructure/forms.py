@@ -99,14 +99,11 @@ class InfrastructureProjectForm(forms.Form):
             'placeholder': 'Enter category'
         })
     )
-    implementing_office = forms.CharField(
-    required=False,
-    widget=forms.TextInput(
-        attrs={
-            'class': 'form-control',
-            'placeholder': 'Enter Implementing Office',
-        }
-    ),
+    implementing_office = forms.ModelChoiceField(
+        required=False,
+        queryset=ImplementingOffice.objects.none(),
+        empty_label='Select Implementing Office',
+        widget=forms.Select(attrs={'class': 'form-select'}),
     )
     contractor = forms.CharField(
         required=False,
