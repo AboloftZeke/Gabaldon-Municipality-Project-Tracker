@@ -148,10 +148,17 @@
                     Recent Projects
                 </h3>
 
-                <a href="{% url 'engineering_projects:project_create' %}"
-                   class="btn-small btn-primary">
-                    + New Project
-                </a>
+                <div class="btn-group">
+                    <a href="{% url 'engineering_projects:project_list' %}"
+                       class="btn-small btn-primary">
+                        View All Projects
+                    </a>
+
+                    <a href="{% url 'engineering_projects:project_create' %}"
+                       class="btn-small btn-primary">
+                        + New Project
+                    </a>
+                </div>
 
             </div>
 
