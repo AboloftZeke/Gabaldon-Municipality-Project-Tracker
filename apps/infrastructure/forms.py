@@ -452,30 +452,28 @@ class InfrastructureProjectForm(forms.Form):
         municipality = 'Gabaldon'
         province = 'Nueva Ecija'
 
-        if street or barangay or municipality or province:
-            if infra.address:
-                addr = infra.address
-            else:
-                addr = Address.objects.create(
-                    street=street,
-                    barangay=barangay,
-                    municipality=municipality,
-                    province=province,
-                )
-                infra.address = addr
-
-            addr.street = street or addr.street
-            addr.barangay = barangay or addr.barangay
-            addr.latitude = data.get('latitude') if data.get('latitude') is not None else addr.latitude
-            addr.longitude = data.get('longitude') if data.get('longitude') is not None else addr.longitude
-            addr.municipality = municipality or addr.municipality
-            addr.province = province or addr.province
-            addr.save()
+        if infra.address:
+            addr = infra.address
+        else:
+            addr = Address.objects.create(
+                street=street,
+                barangay=barangay,
+                municipality=municipality,
+                province=province,
+            )
             infra.address = addr
+
+        addr.street = street
+        addr.barangay = barangay
+        addr.latitude = data.get('latitude')
+        addr.longitude = data.get('longitude')
+        addr.municipality = municipality
+        addr.province = province
+        addr.save()
+        infra.address = addr
 
         infra.contractor = data.get('contractor')
         infra.implementing_office = data.get('implementing_office')
-        infra.procurement_method = data.get('procurement_method')
         infra.procurement_method = data.get('procurement_method')
         infra.award_status = data.get('award_status')
         infra.planned_start_date = data.get('planned_start_date')
@@ -492,18 +490,31 @@ class InfrastructureProjectForm(forms.Form):
         duration = data.get('duration_days')
         actual_start = data.get('actual_start_date')
         actual_completion = data.get('actual_completion_date')
-        if posting or pre_bid or bidding or notice_award or notice_proceed or duration or actual_start or actual_completion:
-            sched = Infrastructure_Schedule.objects.filter(infrastructure=infra).first()
-            if sched is None:
-                sched = Infrastructure_Schedule(infrastructure=infra)
-            sched.posting_date = posting or sched.posting_date
-            sched.pre_bid_date = pre_bid or sched.pre_bid_date
-            sched.bidding_date = bidding or sched.bidding_date
-            sched.notice_award_date = notice_award or sched.notice_award_date
-            sched.notice_proceed_date = notice_proceed or sched.notice_proceed_date
-            sched.duration_days = duration or sched.duration_days
-            sched.actual_start_date = actual_start or sched.actual_start_date
-            sched.actual_completion_date = actual_completion or sched.actual_completion_date
+        existing_sched = Infrastructure_Schedule.objects.filter(
+            infrastructure=infra
+        ).first()
+        if (
+            posting
+            or pre_bid
+            or bidding
+            or notice_award
+            or notice_proceed
+            or duration is not None
+            or actual_start
+            or actual_completion
+            or existing_sched is not None
+        ):
+            sched = existing_sched or Infrastructure_Schedule(
+                infrastructure=infra
+            )
+            sched.posting_date = posting
+            sched.pre_bid_date = pre_bid
+            sched.bidding_date = bidding
+            sched.notice_award_date = notice_award
+            sched.notice_proceed_date = notice_proceed
+            sched.duration_days = duration
+            sched.actual_start_date = actual_start
+            sched.actual_completion_date = actual_completion
             sched.save()
 
         abc = data.get('abc_amount')
@@ -520,14 +531,10 @@ class InfrastructureProjectForm(forms.Form):
             or existing_fin is not None
         ):
             fin = existing_fin or Financial(infrastructure=infra)
-            fin.approved_budget = abc if abc is not None else fin.approved_budget
-            fin.bid_amount = bid if bid is not None else fin.bid_amount
+            fin.approved_budget = abc
+            fin.bid_amount = bid
             fin.fund_source = fund_source
-            fin.actual_expenditure = (
-                actual_exp
-                if actual_exp is not None
-                else fin.actual_expenditure
-            )
+            fin.actual_expenditure = actual_exp if actual_exp is not None else 0
             fin.save()
 
         insp_date = data.get('inspection_date')
