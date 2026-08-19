@@ -16,6 +16,10 @@
     data-api-facilities="{% url 'gis_static_layer' layer_name='facilities' %}"
     data-api-projects="{% url 'gis_projects_layer' %}"
     data-api-photos-template="/gis/projects/__ID__/photos.json"
+    data-focus-project-id="{{ project_gis.project_id|default:'' }}"
+    data-focus-project-type="{{ project_gis.project_type|default:'' }}"
+    data-focus-lat="{{ project_gis.latitude|default:'' }}"
+    data-focus-lng="{{ project_gis.longitude|default:'' }}"
 >
     <div class="gis-toolbar">
         <input type="text" id="gis-search" class="gis-input" placeholder="Search project, barangay, road, bridge, facility…" autocomplete="off">
@@ -92,3 +96,4 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="{% static 'js/gis/gabaldon_gis.js' %}"></script>
+

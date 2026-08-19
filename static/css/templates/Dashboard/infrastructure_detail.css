@@ -111,6 +111,38 @@
   white-space: pre-wrap;
 }
 
+.public-detail__section--gis .gabaldon-gis {
+  margin: 0;
+}
+
+.public-detail__map-link {
+  margin: 1rem 0 0;
+  text-align: right;
+}
+
+.public-detail__map-link a {
+  color: #184f35;
+  font-weight: 700;
+}
+
+.public-detail__map-empty {
+  padding: 1.4rem;
+  border: 1px dashed #b9c9bd;
+  border-radius: 8px;
+  background: #f7f9f5;
+  color: #3f5d4f;
+  text-align: center;
+}
+
+.public-detail__map-empty strong {
+  display: block;
+  color: #17352a;
+}
+
+.public-detail__map-empty p {
+  margin: 0.35rem 0 0;
+}
+
 .public-image-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

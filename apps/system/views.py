@@ -153,6 +153,12 @@ class PublicInfrastructureProjectDetailView(TemplateView):
         )
 
         creator = project.project.created_by_user if project.project else None
+        address = project.address
+        has_coordinates = bool(
+            address
+            and address.latitude is not None
+            and address.longitude is not None
+        )
 
         context.update({
             'public_project': project,
@@ -175,6 +181,26 @@ class PublicInfrastructureProjectDetailView(TemplateView):
                 creator.get_full_name() or creator.username
                 if creator else ''
             ),
+            'project_gis': {
+                'project_id': project.pk,
+                'project_type': 'infrastructure',
+                'has_coordinates': has_coordinates,
+                'latitude': (
+                    float(address.latitude) if has_coordinates else ''
+                ),
+                'longitude': (
+                    float(address.longitude) if has_coordinates else ''
+                ),
+                'google_maps_url': (
+                    'https://www.google.com/maps'
+                    f'?q={address.latitude},{address.longitude}'
+                    if has_coordinates else ''
+                ),
+                'coordinate_message': (
+                    '' if has_coordinates
+                    else 'Location has not yet been assigned.'
+                ),
+            },
         })
         return context
 

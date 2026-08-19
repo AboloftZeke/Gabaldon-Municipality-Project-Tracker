@@ -49,7 +49,15 @@
   // Map init
   // ---------------------------------------------------------------
   const GABALDON_CENTER = [15.365, 121.16]; // approx municipality center; adjust once real boundary data is loaded
-  const map = L.map("gabaldon-gis-map", { zoomControl: true }).setView(GABALDON_CENTER, 13);
+  const focusProjectId = (root.dataset.focusProjectId || "").trim();
+  const focusProjectType = (root.dataset.focusProjectType || "").trim();
+  const focusLat = Number.parseFloat(root.dataset.focusLat);
+  const focusLng = Number.parseFloat(root.dataset.focusLng);
+  const hasFocusCoordinates = Number.isFinite(focusLat) && Number.isFinite(focusLng);
+  const map = L.map("gabaldon-gis-map", { zoomControl: true }).setView(
+    hasFocusCoordinates ? [focusLat, focusLng] : GABALDON_CENTER,
+    hasFocusCoordinates ? 16 : 13
+  );
 
   const osmTiles = L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -110,6 +118,7 @@
   let barangayLayer = null;
   let allBarangayNames = [];
   let projectFeaturesCache = []; // last-fetched project GeoJSON features
+  const projectMarkersByKey = new Map();
 
   // ---------------------------------------------------------------
   // Fetch helper
@@ -356,6 +365,7 @@
 
     layers.projectsInfra.clearLayers();
     layers.projectsNonInfra.clearLayers();
+    projectMarkersByKey.clear();
 
     projectFeaturesCache.forEach((feature) => {
       const [lng, lat] = feature.geometry.coordinates;
@@ -369,9 +379,32 @@
       } else {
         layers.projectsNonInfra.addLayer(marker);
       }
+      projectMarkersByKey.set(`${props.type}:${props.project_id}`, marker);
     });
 
     updateStats(projectFeaturesCache);
+  }
+
+  function focusConfiguredProject() {
+    if (!focusProjectId || !focusProjectType) return;
+
+    const marker = projectMarkersByKey.get(
+      `${focusProjectType}:${focusProjectId}`
+    );
+
+    if (!marker) {
+      if (hasFocusCoordinates) map.setView([focusLat, focusLng], 16);
+      return;
+    }
+
+    const cluster = focusProjectType === "infrastructure"
+      ? layers.projectsInfra
+      : layers.projectsNonInfra;
+
+    cluster.zoomToShowLayer(marker, () => {
+      map.setView(marker.getLatLng(), Math.max(map.getZoom(), 16));
+      marker.openPopup();
+    });
   }
 
   function updateStats(features) {
@@ -544,7 +577,9 @@ function bindLightbox() {
 
     await Promise.all([loadBarangays(), loadRoads(), loadBridges(), loadWaterways(), loadFacilities()]);
     await loadProjects({});
+    focusConfiguredProject();
 
     window.addEventListener("resize", () => map.invalidateSize());
   })();
 })();
+

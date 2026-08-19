@@ -37,6 +37,8 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             barangay='Bagting',
             municipality='Gabaldon',
             province='Nueva Ecija',
+            latitude='15.2915000',
+            longitude='121.3386000',
         )
         contractor = Contractor.objects.create(
             contractor_name='Public Works Contractor',
@@ -200,8 +202,39 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             response,
             'css/templates/Dashboard/infrastructure_detail.css',
         )
+        self.assertContains(response, 'GIS Location')
+        self.assertContains(response, 'id="gabaldon-gis-root"')
+        self.assertContains(
+            response,
+            f'data-focus-project-id="{self.infrastructure.pk}"',
+        )
+        self.assertContains(
+            response,
+            'data-focus-project-type="infrastructure"',
+        )
+        self.assertContains(response, 'data-focus-lat="15.2915"')
+        self.assertContains(response, 'data-focus-lng="121.3386"')
+        self.assertContains(response, 'Open exact location in Google Maps')
         self.assertNotContains(response, 'Edit Project')
         self.assertNotContains(response, 'Delete Project')
+
+    def test_public_infrastructure_detail_handles_missing_coordinates(self):
+        address = self.infrastructure.address
+        address.latitude = None
+        address.longitude = None
+        address.save(update_fields=['latitude', 'longitude'])
+
+        response = self.client.get(
+            reverse(
+                'public_infrastructure_project_detail',
+                args=[self.infrastructure.pk],
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Map location unavailable')
+        self.assertContains(response, 'Location has not yet been assigned.')
+        self.assertNotContains(response, 'id="gabaldon-gis-root"')
 
 
 class PublicDashboardNonInfrastructureStatusTests(TestCase):

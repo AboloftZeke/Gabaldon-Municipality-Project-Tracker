@@ -91,6 +91,21 @@
       <p class="public-detail__description">{{ public_project.infrastructure_description|default:"No description provided." }}</p>
     </section>
 
+    <section class="public-detail__section public-detail__section--gis">
+      <h2>GIS Location</h2>
+      {% if project_gis.has_coordinates %}
+        {% include "projects/project_detail_gis_section.html" %}
+        <p class="public-detail__map-link">
+          <a href="{{ project_gis.google_maps_url }}" target="_blank" rel="noopener noreferrer">Open exact location in Google Maps</a>
+        </p>
+      {% else %}
+        <div class="public-detail__map-empty">
+          <strong>Map location unavailable</strong>
+          <p>{{ project_gis.coordinate_message }}</p>
+        </div>
+      {% endif %}
+    </section>
+
     {% if project_images %}
     <section class="public-detail__section">
       <h2>Project Images</h2>
