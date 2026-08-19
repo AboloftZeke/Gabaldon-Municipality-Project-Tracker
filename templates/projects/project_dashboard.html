@@ -181,9 +181,17 @@
                         </div>
 
                         <div class="project-meta">
-                            {{ project.location|title }}
+                            {% if project.address and project.address.barangay %}
+                                {{ project.address.barangay }}
+                            {% else %}
+                                Location not specified
+                            {% endif %}
                             •
-                            {{ project.get_category_display }}
+                            {% if project.category %}
+                                {{ project.category.category_name }}
+                            {% else %}
+                                Category not specified
+                            {% endif %}
                         </div>
 
                     </div>
