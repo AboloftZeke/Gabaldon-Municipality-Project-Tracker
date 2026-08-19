@@ -331,14 +331,47 @@
 
             <div class="fieldset">
                 <legend>Project Images</legend>
-                <div class="form-grid">
-                    <div class="form-group full-span">
-                        <label for="{{ form.project_images.id_for_label }}">Upload Project Images</label>
-                        {{ form.project_images }}
-                        <small class="helper-text">Select one or more local image files for this project.</small>
-                        {% if form.project_images.errors %}
-                            <div class="error-message">{{ form.project_images.errors.0 }}</div>
-                        {% endif %}
+                <div class="form-group full-span">
+                    {{ form.images_to_delete }}
+                    {{ form.cover_image_selection }}
+
+                    {% if form.existing_images %}
+                        <h4>Existing Photos</h4>
+                        <div class="existing-images-grid">
+                            {% for image in form.existing_images %}
+                                <div class="project-image-card{% if image.is_cover %} is-cover{% endif %}"
+                                     data-cover-value="existing:{{ image.pk }}">
+                                    <img src="{{ image.image_url }}"
+                                         alt="Project photo {{ forloop.counter }}">
+                                    <span class="cover-photo-badge">Cover</span>
+                                    <button type="button"
+                                            class="cover-image-select"
+                                            data-cover-value="existing:{{ image.pk }}">
+                                        {% if image.is_cover %}Cover photo{% else %}Set as cover{% endif %}
+                                    </button>
+                                    <button type="button"
+                                            class="existing-image-delete"
+                                            data-image-id="{{ image.pk }}"
+                                            aria-label="Remove project photo {{ forloop.counter }}">×</button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <label for="{{ form.project_images.id_for_label }}">
+                        Add Project Images
+                    </label>
+                    {{ form.project_images }}
+                    <small class="helper-text">
+                        Existing photos are retained unless you remove them.
+                    </small>
+                    {% if form.project_images.errors %}
+                        <div class="error-message">{{ form.project_images.errors.0 }}</div>
+                    {% endif %}
+
+                    <div id="image-preview-container" hidden>
+                        <h4>Selected Photos</h4>
+                        <div class="image-preview-grid" id="image-preview-grid"></div>
                     </div>
                 </div>
             </div>
@@ -378,4 +411,128 @@
         </form>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const deleteInput = document.getElementById(
+        '{{ form.images_to_delete.id_for_label }}'
+    );
+    const coverInput = document.getElementById(
+        '{{ form.cover_image_selection.id_for_label }}'
+    );
+    const fileInput = document.getElementById(
+        '{{ form.project_images.id_for_label }}'
+    );
+    const previewContainer = document.getElementById('image-preview-container');
+    const previewGrid = document.getElementById('image-preview-grid');
+    const imagesToDelete = new Set();
+    let selectedFiles = [];
+
+    function updateCoverUI() {
+        if (!coverInput) return;
+        document.querySelectorAll('[data-cover-value]').forEach(function (element) {
+            const isCover = element.dataset.coverValue === coverInput.value;
+            if (element.classList.contains('project-image-card')) {
+                element.classList.toggle('is-cover', isCover);
+            }
+            if (element.classList.contains('cover-image-select')) {
+                element.textContent = isCover ? 'Cover photo' : 'Set as cover';
+            }
+        });
+    }
+
+    function chooseFallbackCover() {
+        if (!coverInput || coverInput.value) {
+            updateCoverUI();
+            return;
+        }
+        const firstImage = document.querySelector(
+            '.project-image-card[data-cover-value]'
+        );
+        if (firstImage) coverInput.value = firstImage.dataset.coverValue;
+        updateCoverUI();
+    }
+
+    document.addEventListener('click', function (event) {
+        const coverButton = event.target.closest('.cover-image-select');
+        if (coverButton && coverInput) {
+            coverInput.value = coverButton.dataset.coverValue;
+            updateCoverUI();
+            return;
+        }
+
+        const deleteButton = event.target.closest('.existing-image-delete');
+        if (!deleteButton) return;
+        const imageId = deleteButton.dataset.imageId;
+        if (!imageId || !window.confirm('Remove this photo?')) return;
+
+        imagesToDelete.add(imageId);
+        deleteInput.value = Array.from(imagesToDelete).join(',');
+        deleteButton.closest('.project-image-card').remove();
+
+        if (coverInput.value === 'existing:' + imageId) {
+            coverInput.value = '';
+            chooseFallbackCover();
+        }
+    });
+
+    function syncFiles() {
+        const transfer = new DataTransfer();
+        selectedFiles.forEach(function (file) {
+            transfer.items.add(file);
+        });
+        fileInput.files = transfer.files;
+    }
+
+    function renderPreviews() {
+        previewGrid.innerHTML = '';
+        previewContainer.hidden = selectedFiles.length === 0;
+
+        selectedFiles.forEach(function (file, index) {
+            const card = document.createElement('div');
+            card.className = 'project-image-card';
+            card.dataset.coverValue = 'new:' + index;
+            card.innerHTML =
+                '<img alt="Selected project photo">' +
+                '<span class="cover-photo-badge">Cover</span>' +
+                '<button type="button" class="cover-image-select" ' +
+                'data-cover-value="new:' + index + '">Set as cover</button>' +
+                '<button type="button" class="new-image-delete" ' +
+                'aria-label="Remove selected photo">×</button>';
+
+            const reader = new FileReader();
+            reader.onload = function (loadEvent) {
+                card.querySelector('img').src = loadEvent.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            card.querySelector('.new-image-delete').addEventListener(
+                'click',
+                function () {
+                    if (coverInput.value === 'new:' + index) {
+                        coverInput.value = '';
+                    }
+                    selectedFiles.splice(index, 1);
+                    syncFiles();
+                    renderPreviews();
+                }
+            );
+            previewGrid.appendChild(card);
+        });
+        chooseFallbackCover();
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function () {
+            if (coverInput.value.startsWith('new:')) coverInput.value = '';
+            selectedFiles = Array.from(fileInput.files).filter(function (file) {
+                return file.type.startsWith('image/');
+            });
+            syncFiles();
+            renderPreviews();
+        });
+    }
+
+    chooseFallbackCover();
+});
+</script>
 {% endblock %}
