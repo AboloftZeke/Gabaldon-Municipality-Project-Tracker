@@ -687,4 +687,3 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
 
         return redirect(success_url)
 
-
