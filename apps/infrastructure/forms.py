@@ -40,10 +40,10 @@ class InfrastructureProjectForm(forms.Form):
     """Compatibility form writing to the normalized project tables."""
 
     title = forms.CharField(required=True, max_length=255)
-    description = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 4}), max_length=2000)
-    street = forms.CharField(required=False, max_length=500)
+    description = forms.CharField(required=True, widget=forms.Textarea(attrs={'rows': 4}), max_length=2000)
+    street = forms.CharField(required=True, max_length=500)
     barangay = forms.ChoiceField(
-        required=False,
+        required=True,
         choices=[
             ('', 'Select Barangay'),
             ('Bagting', 'Bagting'),
@@ -65,8 +65,8 @@ class InfrastructureProjectForm(forms.Form):
             'class': 'form-select'
         }),
     )
-    latitude = forms.DecimalField(required=False, max_digits=10, decimal_places=7, min_value=-90, max_value=90)
-    longitude = forms.DecimalField(required=False, max_digits=10, decimal_places=7, min_value=-180, max_value=180)
+    latitude = forms.DecimalField(required=True, max_digits=10, decimal_places=7, min_value=-90, max_value=90)
+    longitude = forms.DecimalField(required=True, max_digits=10, decimal_places=7, min_value=-180, max_value=180)
     municipality = forms.CharField(
         required=False,
         max_length=200,
@@ -100,7 +100,7 @@ class InfrastructureProjectForm(forms.Form):
         })
     )
     implementing_office = forms.CharField(
-        required=False,
+        required=True,
         max_length=255,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
@@ -108,7 +108,7 @@ class InfrastructureProjectForm(forms.Form):
         }),
     )
     contractor = forms.CharField(
-        required=False,
+        required=True,
         max_length=255,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
@@ -126,23 +126,23 @@ class InfrastructureProjectForm(forms.Form):
         widget=forms.Select,
     )
     abc_amount = forms.DecimalField(
-        required=False,
+        required=True,
         max_digits=15,
         decimal_places=2,
         min_value=0,
     )
     contract_price = forms.DecimalField(
-        required=False,
+        required=True,
         max_digits=15,
         decimal_places=2,
         min_value=0,
     )
     planned_start_date = forms.DateField(
-        required=False,
+        required=True,
         widget=forms.DateInput(attrs={'type': 'date'}),
     )
     planned_end_date = forms.DateField(
-        required=False,
+        required=True,
         widget=forms.DateInput(attrs={'type': 'date'}),
     )
     actual_start_date = forms.DateField(
@@ -168,28 +168,28 @@ class InfrastructureProjectForm(forms.Form):
         max_value=100,
     )
     posting_date = forms.DateField(
-        required=False,
+        required=True,
         widget=forms.DateInput(attrs={'type': 'date'}),
     )
     pre_bid_date = forms.DateField(
-        required=False,
+        required=True,
         widget=forms.DateInput(attrs={'type': 'date'}),
     )
     bidding_date = forms.DateField(
-        required=False,
+        required=True,
         widget=forms.DateInput(attrs={'type': 'date'}),
     )
     notice_award_date = forms.DateField(
-        required=False,
+        required=True,
         widget=forms.DateInput(attrs={'type': 'date'}),
     )
     notice_to_proceed_date = forms.DateField(
-        required=False,
+        required=True,
         widget=forms.DateInput(attrs={'type': 'date'}),
     )
-    duration_days = forms.IntegerField(required=False, min_value=1)
+    duration_days = forms.IntegerField(required=True, min_value=1)
     fund_source = forms.CharField(
-        required=False,
+        required=True,
         max_length=255,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
