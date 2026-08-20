@@ -113,8 +113,8 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
     def get_queryset(self):
         queryset = (
             Infrastructure_Project.objects
-            .select_related('address', 'category')
-            .prefetch_related('financial_records')
+            .select_related('address', 'category', 'project')
+            .prefetch_related('project__images', 'financial_records')
         )
 
         location = self.request.GET.get('location', '').strip()
@@ -133,6 +133,14 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        for project in context['projects']:
+            cover = project.project.images.order_by(
+                '-is_cover',
+                '-created_at',
+            ).first()
+            project.cover_image_url = (
+                cover.image_url if cover and cover.image_url else ''
+            )
         context['locations'] = (
             Infrastructure_Project.objects
             .exclude(address__barangay__isnull=True)
@@ -678,4 +686,5 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
             compat_project.delete()
 
         return redirect(success_url)
+
 
