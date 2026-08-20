@@ -4,63 +4,222 @@
 {% block title %}Project Dashboard - Non-Infrastructure Projects{% endblock %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_sidebar.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_dashboard.css' %}">
 {% endblock %}
 
+
 {% block content %}
-<div class="dashboard-container">
-    <h1 class="dashboard-title">Non-Infrastructure Project Dashboard</h1>
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-label">Total Projects</div>
-            <div class="stat-value">{{ total_projects }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Planned</div>
-            <div class="stat-value">{{ planned_projects }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">In Progress</div>
-            <div class="stat-value">{{ in_progress_projects }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Completed</div>
-            <div class="stat-value">{{ completed_projects }}</div>
-        </div>
-    </div>
+<div class="non-infrastructure-layout">
 
-    <div class="recent-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 0.75rem;">
-            <h3 class="section-title" style="margin: 0;">Recent Programs</h3>
-            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <a href="{% url 'mayor_projects:non_infrastructure_project_list' %}" class="btn-small btn-primary">View All Programs</a>
-                <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-small btn-primary">+ New Program</a>
+    <!-- ==============================
+         SIDEBAR
+    =============================== -->
+    <aside class="sidebar">
+
+        <div class="sidebar-section">
+
+            <p class="sidebar-title">Navigation</p>
+
+            <ul class="sidebar-menu">
+
+                <li>
+                    <a href="{% url 'mayor_dashboard' %}">
+                        Dashboard
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'mayor_projects:non_infrastructure_project_dashboard' %}"
+                       class="active">
+                        Projects
+                    </a>
+               </li>
+            </ul>
+
+        </div>
+
+
+        <!-- ACCOUNT -->
+
+        <div class="sidebar-section">
+
+            <p class="sidebar-title">Account</p>
+
+            <div class="quick-actions">
+
+                <h4>{{ user.username }}</h4>
+
+                <a href="{% url 'logout' %}"
+                   class="action-button secondary">
+                    Sign Out
+                </a>
+
             </div>
+
         </div>
 
-        {% if recent_projects %}
-            {% for project in recent_projects %}
-                <div class="project-item">
-                    <div class="project-info">
-                        <div class="project-name">{{ project.title }}</div>
-                        <div class="project-meta">{{ project.location|title }} • {{ project.get_category_display }}</div>
+    </aside>
+
+
+    <!-- ==============================
+         MAIN DASHBOARD
+    =============================== -->
+
+    <main class="dashboard-content">
+
+        <div class="dashboard-container">
+
+            <h1 class="dashboard-title">
+                Non-Infrastructure Project Dashboard
+            </h1>
+
+
+            <!-- ==============================
+                 STATISTICS
+            =============================== -->
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        Total Projects
                     </div>
-                    <div class="btn-group">
-                        <a href="{% url 'mayor_projects:non_infrastructure_project_detail' project.pk %}" class="btn-small btn-primary">View</a>
-                        <a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}" class="btn-small" style="background: #6b7280; color: white;">Edit</a>
+
+                    <div class="stat-value">
+                        {{ total_projects }}
                     </div>
                 </div>
-            {% endfor %}
-        {% else %}
-            <div class="empty-state">
-                <p>No programs yet. Create your first non-infrastructure program.</p>
-                <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
-                    <a href="{% url 'mayor_projects:non_infrastructure_project_list' %}" class="btn-small btn-primary">View All Programs</a>
-                    <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-small btn-primary">Create Program</a>
+
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        Planned
+                    </div>
+
+                    <div class="stat-value">
+                        {{ planned_projects }}
+                    </div>
                 </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        In Progress
+                    </div>
+
+                    <div class="stat-value">
+                        {{ in_progress_projects }}
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        Completed
+                    </div>
+
+                    <div class="stat-value">
+                        {{ completed_projects }}
+                    </div>
+                </div>
+
             </div>
-        {% endif %}
-    </div>
+
+
+            <!-- ==============================
+                 RECENT PROGRAMS
+            =============================== -->
+
+            <div class="recent-section">
+
+                <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1.5rem;
+                    gap: 0.75rem;
+                ">
+
+                    <h3 class="section-title" style="margin: 0;">
+                        Recent Programs
+                    </h3>
+
+                    <div style="
+                        display: flex;
+                        gap: 0.5rem;
+                        flex-wrap: wrap;
+                    ">
+
+                        <a href="{% url 'mayor_projects:non_infrastructure_project_list' %}"
+                           class="btn-small btn-primary">
+                            View All Programs
+                        </a>
+
+                        <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}"
+                           class="btn-small btn-primary">
+                            + New Program
+                        </a>
+
+                    </div>
+
+                </div>
+
+
+                {% if recent_projects %}
+
+                    {% for project in recent_projects %}
+
+                        <div class="project-item">
+
+                            <div class="project-info">
+
+                                <div class="project-name">
+                                    {{ project.title }}
+                                </div>
+
+                                <div class="project-meta">
+                                    {{ project.location|title }}
+                                    •
+                                    {{ project.get_category_display }}
+                                </div>
+
+                            </div>
+
+
+                            <div class="btn-group">
+
+                                <a href="{% url 'mayor_projects:non_infrastructure_project_detail' project.pk %}"
+                                   class="btn-small btn-primary">
+                                    View
+                                </a>
+
+                                <a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}"
+                                   class="btn-small"
+                                   style="background: #6b7280; color: white;">
+                                    Edit
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+
+             
+
+                    
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </main>
+
 </div>
+
 {% endblock %}
