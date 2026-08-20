@@ -188,11 +188,13 @@ class InfrastructureProjectForm(forms.Form):
         widget=forms.DateInput(attrs={'type': 'date'}),
     )
     duration_days = forms.IntegerField(required=False, min_value=1)
-    fund_source = forms.ModelChoiceField(
+    fund_source = forms.CharField(
         required=False,
-        queryset=FundSource.objects.none(),
-        empty_label='Select Fund Source',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter fund source',
+        }),
     )
     actual_expenditure = forms.DecimalField(
         required=False,
@@ -237,9 +239,6 @@ class InfrastructureProjectForm(forms.Form):
         self.fields['category'].queryset = InfrastructureCategory.objects.filter(
             is_active=True
         ).order_by('category_name')
-        self.fields['fund_source'].queryset = FundSource.objects.filter(
-            is_active=True
-        ).order_by('fund_source_name')
         self.fields['municipality'].initial = 'Gabaldon'
         self.fields['province'].initial = 'Nueva Ecija'
         self.fields['municipality'].widget.attrs['readonly'] = 'readonly'
@@ -329,7 +328,10 @@ class InfrastructureProjectForm(forms.Form):
         if fin:
             self.initial.setdefault('abc_amount', fin.approved_budget)
             self.initial.setdefault('contract_price', fin.bid_amount)
-            self.initial.setdefault('fund_source', fin.fund_source_id)
+            self.initial.setdefault(
+                'fund_source',
+                fin.fund_source.fund_source_name if fin.fund_source else '',
+            )
             self.initial.setdefault('actual_expenditure', fin.actual_expenditure)
 
         sched = infra.schedules.first()
@@ -696,21 +698,38 @@ class InfrastructureProjectForm(forms.Form):
 
         abc = data.get('abc_amount')
         bid = data.get('contract_price')
-        fund_source = data.get('fund_source')
+        fund_source_name = (data.get('fund_source') or '').strip()
+        fund_source_obj = None
+        if fund_source_name:
+            fund_source_obj = FundSource.objects.filter(
+                fund_source_name__iexact=fund_source_name
+            ).first()
+            if fund_source_obj is None:
+                try:
+                    fund_source_obj = FundSource.objects.create(
+                        fund_source_name=fund_source_name,
+                    )
+                except IntegrityError:
+                    fund_source_obj = FundSource.objects.filter(
+                        fund_source_name__iexact=fund_source_name
+                    ).first()
+                    if fund_source_obj is None:
+                        raise
+
         actual_exp = data.get('actual_expenditure')
         existing_fin = infra.financial_records.order_by('-financial_id').first()
 
         if (
             abc is not None
             or bid is not None
-            or fund_source is not None
+            or fund_source_obj is not None
             or actual_exp is not None
             or existing_fin is not None
         ):
             fin = existing_fin or Financial(infrastructure=infra)
             fin.approved_budget = abc
             fin.bid_amount = bid
-            fin.fund_source = fund_source
+            fin.fund_source = fund_source_obj
             fin.actual_expenditure = actual_exp if actual_exp is not None else 0
             fin.save()
 
