@@ -55,7 +55,7 @@ class NonInfrastructureProjectForm(forms.Form):
 
     status = forms.ChoiceField(
         required=True,
-        choices=Non_Infrastructure_Project.STATUS_CHOICES,
+        choices=[('', 'Select Status')] + list(Non_Infrastructure_Project.STATUS_CHOICES),
         widget=forms.Select,
     )
 
@@ -194,28 +194,20 @@ class NonInfrastructureProjectForm(forms.Form):
             image_ids = []
 
             for image_id in images_to_delete.split(','):
-                
                 image_id = image_id.strip()
-
                 if image_id.isdigit():
                     image_ids.append(int(image_id))
-            
+
             if image_ids:
-                project.images.filter(
-                    pk__in=image_ids
-                ).delete()
-            
+                project.images.filter(pk__in=image_ids).delete()
+
         uploaded_files = []
 
         if hasattr(self, 'files') and self.files:
-
             raw_files = (
                 self.files.getlist('project_images')
                 if hasattr(self.files, 'getlist')
-                else self.files.get(
-                    'project_images',
-                    []
-                )
+                else self.files.get('project_images', [])
             )
 
             if isinstance(raw_files, (list, tuple)):
@@ -223,38 +215,18 @@ class NonInfrastructureProjectForm(forms.Form):
             else:
                 uploaded_files = [raw_files]
 
-
-        # =====================================================
-        # Save new images
-        # =====================================================
-
         saved_images = []
 
         for upload in uploaded_files:
-
-            if not upload or not getattr(
-                upload,
-                'name',
-                None
-            ):
+            if not upload or not getattr(upload, 'name', None):
                 continue
 
-            folder = os.path.join(
-                'projects',
-                str(project.project_id)
-            )
-
+            folder = os.path.join('projects', str(project.project_id))
             filename = default_storage.save(
-                os.path.join(
-                    folder,
-                    upload.name
-                ),
-                upload
+                os.path.join(folder, upload.name),
+                upload,
             )
-
-            file_url = default_storage.url(
-                filename
-            )
+            file_url = default_storage.url(filename)
 
             saved_images.append(
                 Project_Image.objects.create(
