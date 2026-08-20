@@ -55,19 +55,77 @@
     box-sizing: border-box;
 
     background: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 14px;
+    border: 1px solid #d9e2dc;
+    border-radius: 16px;
 
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 14px 38px rgba(15, 23, 42, 0.07);
 }
 
 .form-card h2 {
     margin: 0 0 1.5rem;
 
-    color: #111827;
+    color: #102a1d;
 
-    font-size: 1.75rem;
-    font-weight: 700;
+    font-size: 1.85rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+}
+
+.field-requirements-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    margin-bottom: 1.75rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid #b7d7c3;
+    border-left: 4px solid #1a5a3a;
+    border-radius: 10px;
+    background: #f1f8f4;
+    color: #244536;
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+.field-requirements-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: 0 0 1.5rem;
+    margin-top: 0.05rem;
+    border-radius: 50%;
+    background: #1a5a3a;
+    color: #fff;
+    font-family: Georgia, serif;
+    font-weight: 800;
+}
+
+.required-marker {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.22rem;
+    color: #c62828;
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.optional-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.45rem;
+    padding: 0.16rem 0.48rem;
+    border: 1px solid #cad8d0;
+    border-radius: 999px;
+    background: #edf3ef;
+    color: #5f7167;
+    font-size: 0.67rem;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    vertical-align: middle;
 }
 
 
@@ -81,21 +139,34 @@
     min-width: 0;
 
     margin-bottom: 1.5rem;
-    padding: 1.25rem;
+    padding: 1.4rem;
 
     box-sizing: border-box;
 
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
+    background: #fbfcfb;
+    border: 1px solid #dde6e0;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.025);
+}
+
+.fieldset:hover {
+    border-color: #cbdacf;
 }
 
 .fieldset legend {
     padding: 0 0.5rem;
 
-    color: #111827;
+    color: #173d2a;
 
-    font-weight: 700;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.section-description {
+    margin: 0.25rem 0 1.25rem;
+    color: #66766d;
+    font-size: 0.87rem;
+    line-height: 1.5;
 }
 
 
@@ -139,9 +210,11 @@
 
     margin-bottom: 0.5rem;
 
-    color: #111827;
+    color: #17251d;
 
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.35;
 }
 
 .form-group input,
@@ -154,14 +227,87 @@
 
     box-sizing: border-box;
 
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
+    border: 1px solid #cfd9d2;
+    border-radius: 9px;
 
     background: #ffffff;
     color: #111827;
 
     font-family: inherit;
     font-size: 0.95rem;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.form-group input:hover:not(:disabled),
+.form-group select:hover:not(:disabled),
+.form-group textarea:hover:not(:disabled) {
+    border-color: #9eb9a9;
+}
+
+.form-group:has(input:disabled) label,
+.form-group:has(input[readonly]) label {
+    color: #59645e;
+}
+
+.form-group:has(input:disabled) label .optional-badge,
+.form-group:has(input[readonly]) label .optional-badge {
+    display: none;
+}
+
+.form-group:has(input:disabled) label::after,
+.form-group:has(input[readonly]) label::after {
+    content: "Fixed";
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.45rem;
+    padding: 0.15rem 0.48rem;
+    border: 1px solid #cbd0cd;
+    border-radius: 999px;
+    background: #e5e7e6;
+    color: #5c6460;
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.form-group input:disabled,
+.form-group input[readonly] {
+    border-color: #cfd3d1;
+    background: #ecefed;
+    color: #6b746f;
+    cursor: not-allowed;
+    opacity: 1;
+}
+
+.form-group:has(input:disabled)::after,
+.form-group:has(input[readonly])::after {
+    content: "Set by the system and cannot be edited.";
+    display: block;
+    margin-top: 0.45rem;
+    color: #7a837e;
+    font-size: 0.77rem;
+    line-height: 1.35;
+}
+
+.form-group.has-error input,
+.form-group.has-error select,
+.form-group.has-error textarea {
+    border-color: #dc2626;
+    background: #fffafa;
+}
+
+.form-group.has-error label {
+    color: #991b1b;
+}
+
+.form-group.has-error input:focus,
+.form-group.has-error select:focus,
+.form-group.has-error textarea:focus {
+    border-color: #b91c1c;
+    box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.12);
 }
 
 .form-group input:focus,
@@ -199,12 +345,16 @@
     margin-top: 0.5rem;
     padding: 0.7rem 0.9rem;
 
-    background: #fef2f2;
+    background: #fff1f1;
 
-    border: 1px solid #fca5a5;
+    border: 1px solid #f3a5a5;
+    border-left: 3px solid #c62828;
     border-radius: 8px;
 
-    color: #b91c1c;
+    color: #a61b1b;
+    font-size: 0.84rem;
+    font-weight: 650;
+    line-height: 1.4;
 }
 
 
