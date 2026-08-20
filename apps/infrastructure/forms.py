@@ -313,6 +313,8 @@ class InfrastructureProjectForm(forms.Form):
 
         self.initial.setdefault('procurement_method', infra.procurement_method)
         self.initial.setdefault('award_status', infra.award_status)
+        self.initial.setdefault('planned_start_date', infra.planned_start_date)
+        self.initial.setdefault('planned_end_date', infra.planned_end_date)
         self.initial.setdefault('cost_progress_percentage', infra.cost_progress_percentage)
         self.initial.setdefault('physical_progress_percentage', infra.physical_progress_percentage)
 
