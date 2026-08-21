@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm
@@ -16,6 +17,60 @@ from .models import (
     Project_Image,
     UserProfile,
 )
+from .publication_workflow import (
+    PublicationStatus,
+    available_publication_transitions,
+    can_transition_publication,
+    validate_publication_transition,
+)
+
+
+class PublicationWorkflowTests(TestCase):
+    def test_workflow_exposes_expected_review_path(self):
+        self.assertEqual(
+            available_publication_transitions(PublicationStatus.DRAFT),
+            frozenset({PublicationStatus.PENDING_REVIEW}),
+        )
+        self.assertEqual(
+            available_publication_transitions(
+                PublicationStatus.PENDING_REVIEW,
+            ),
+            frozenset({
+                PublicationStatus.APPROVED,
+                PublicationStatus.NEEDS_REVISION,
+                PublicationStatus.REJECTED,
+            }),
+        )
+        self.assertTrue(can_transition_publication('approved', 'published'))
+        self.assertTrue(can_transition_publication('published', 'archived'))
+
+    def test_workflow_rejects_skipping_review(self):
+        self.assertFalse(can_transition_publication('draft', 'published'))
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            'Publication status cannot change from Draft to Published.',
+        ):
+            validate_publication_transition('draft', 'published')
+
+    def test_terminal_states_have_no_transitions(self):
+        self.assertEqual(
+            available_publication_transitions(PublicationStatus.REJECTED),
+            frozenset(),
+        )
+        self.assertEqual(
+            available_publication_transitions(PublicationStatus.ARCHIVED),
+            frozenset(),
+        )
+
+    def test_unknown_states_are_rejected(self):
+        self.assertFalse(can_transition_publication('unknown', 'published'))
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            'Unknown publication workflow status.',
+        ):
+            validate_publication_transition('draft', 'unknown')
 
 
 class PublicDashboardInfrastructureDataSourceTests(TestCase):
