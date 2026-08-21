@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+from .publication_workflow import PublicationStatus
+
 
 class UserProfile(models.Model):
     """
@@ -186,6 +188,87 @@ class Project(models.Model):
 
     def __str__(self):
         return f'Project {self.project_id} ({self.project_type})'
+
+
+class ProjectPublicationRevision(models.Model):
+    """Public-facing snapshot submitted through the review flow."""
+
+    revision_id = models.BigAutoField(primary_key=True)
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='publication_revisions',
+    )
+    revision_number = models.PositiveIntegerField()
+    status = models.CharField(
+        max_length=30,
+        choices=PublicationStatus.choices,
+        default=PublicationStatus.DRAFT,
+    )
+    snapshot_data = models.JSONField(default=dict)
+    source_updated_at = models.DateTimeField(null=True, blank=True)
+    supersedes_revision = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='superseded_by_revisions',
+    )
+    submitted_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='submitted_project_publication_revisions',
+    )
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_project_publication_revisions',
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_notes = models.TextField(blank=True, default='')
+    published_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='published_project_publication_revisions',
+    )
+    published_at = models.DateTimeField(null=True, blank=True)
+    is_current_public_revision = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-revision_number']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['project', 'revision_number'],
+                name='unique_project_publication_revision_number',
+            ),
+            models.UniqueConstraint(
+                fields=['project'],
+                condition=models.Q(is_current_public_revision=True),
+                name='one_current_public_revision_per_project',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(is_current_public_revision=False)
+                    | models.Q(status=PublicationStatus.PUBLISHED)
+                ),
+                name='current_public_revision_must_be_published',
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f'Project {self.project_id} publication revision '
+            f'{self.revision_number}'
+        )
 
 
 class UserFlag(models.Model):

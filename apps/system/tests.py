@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.urls import reverse
 from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm
@@ -15,6 +16,7 @@ from .models import (
     Non_Infrastructure_Project,
     Project,
     Project_Image,
+    ProjectPublicationRevision,
     UserProfile,
 )
 from .publication_workflow import (
@@ -71,6 +73,92 @@ class PublicationWorkflowTests(TestCase):
             'Unknown publication workflow status.',
         ):
             validate_publication_transition('draft', 'unknown')
+
+
+class ProjectPublicationRevisionModelTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='publication-reviewer',
+            password='password123',
+        )
+        self.project = Project.objects.create(
+            project_type='infrastructure',
+            created_by_user=self.user,
+            updated_by_user=self.user,
+        )
+
+    def test_revision_stores_snapshot_and_defaults_to_draft(self):
+        revision = ProjectPublicationRevision.objects.create(
+            project=self.project,
+            revision_number=1,
+            snapshot_data={'title': 'Barangay Road Project'},
+        )
+
+        self.assertEqual(revision.status, PublicationStatus.DRAFT)
+        self.assertEqual(
+            revision.snapshot_data,
+            {'title': 'Barangay Road Project'},
+        )
+        self.assertFalse(revision.is_current_public_revision)
+        self.assertEqual(
+            str(revision),
+            f'Project {self.project.pk} publication revision 1',
+        )
+
+    def test_revision_number_is_unique_within_project(self):
+        ProjectPublicationRevision.objects.create(
+            project=self.project,
+            revision_number=1,
+        )
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ProjectPublicationRevision.objects.create(
+                project=self.project,
+                revision_number=1,
+            )
+
+    def test_project_can_have_only_one_current_public_revision(self):
+        first_revision = ProjectPublicationRevision.objects.create(
+            project=self.project,
+            revision_number=1,
+            status=PublicationStatus.PUBLISHED,
+            is_current_public_revision=True,
+        )
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ProjectPublicationRevision.objects.create(
+                project=self.project,
+                revision_number=2,
+                status=PublicationStatus.PUBLISHED,
+                is_current_public_revision=True,
+                supersedes_revision=first_revision,
+            )
+
+    def test_current_public_revision_must_be_published(self):
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ProjectPublicationRevision.objects.create(
+                project=self.project,
+                revision_number=1,
+                status=PublicationStatus.DRAFT,
+                is_current_public_revision=True,
+            )
+
+    def test_revision_can_reference_the_version_it_supersedes(self):
+        first_revision = ProjectPublicationRevision.objects.create(
+            project=self.project,
+            revision_number=1,
+        )
+        second_revision = ProjectPublicationRevision.objects.create(
+            project=self.project,
+            revision_number=2,
+            supersedes_revision=first_revision,
+        )
+
+        self.assertEqual(second_revision.supersedes_revision, first_revision)
+        self.assertIn(
+            second_revision,
+            first_revision.superseded_by_revisions.all(),
+        )
 
 
 class PublicDashboardInfrastructureDataSourceTests(TestCase):
