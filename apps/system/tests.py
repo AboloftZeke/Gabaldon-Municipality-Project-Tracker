@@ -604,6 +604,61 @@ class AdminPublicationReviewViewTests(TestCase):
         public = self.client.get(reverse('public_dashboard'))
         self.assertNotContains(public, 'Submitted Admin Preview Project')
 
+
+class RoleDashboardAccessTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username='dashboard-access-admin',
+            email='dashboard-access-admin@example.com',
+            password='password123',
+        )
+        self.engineer = User.objects.create_user(
+            username='dashboard-access-engineer',
+            password='password123',
+            is_staff=True,
+        )
+        UserFlag.objects.create(user=self.engineer, department='engineer')
+        self.mayor = User.objects.create_user(
+            username='dashboard-access-mayor',
+            password='password123',
+            is_staff=True,
+        )
+        UserFlag.objects.create(user=self.mayor, department='mayor')
+
+    def test_superuser_can_follow_working_project_navigation(self):
+        self.client.force_login(self.admin)
+
+        self.assertEqual(
+            self.client.get(reverse('engineering_dashboard')).status_code,
+            200,
+        )
+        self.assertEqual(
+            self.client.get(reverse('mayor_dashboard')).status_code,
+            200,
+        )
+
+    def test_role_dashboards_still_reject_other_departments(self):
+        self.client.force_login(self.engineer)
+        self.assertEqual(
+            self.client.get(reverse('engineering_dashboard')).status_code,
+            200,
+        )
+        self.assertEqual(
+            self.client.get(reverse('mayor_dashboard')).status_code,
+            403,
+        )
+
+        self.client.force_login(self.mayor)
+        self.assertEqual(
+            self.client.get(reverse('mayor_dashboard')).status_code,
+            200,
+        )
+        self.assertEqual(
+            self.client.get(reverse('engineering_dashboard')).status_code,
+            403,
+        )
+
+
 class ProjectPublicationSnapshotTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
@@ -1557,4 +1612,5 @@ class UserCreateConfirmViewTests(TestCase):
         created_user = User.objects.get(username='mayoruser')
         self.assertEqual(created_user.profile.department, 'mayor')
         self.assertTrue(created_user.profile.must_change_password)
+
 
