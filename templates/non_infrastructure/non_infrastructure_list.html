@@ -5,6 +5,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_list.css' %}">
+<link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -49,6 +50,13 @@
                         <div class="project-status {% if project.status_label == 'Completed' %}status-completed{% elif project.status_label == 'Planned' %}status-planning{% else %}status-ongoing{% endif %}">
                             {{ project.status_label }}
                         </div>
+                        {% if project.publication_state %}
+                            <div class="publication-card-state">
+                                <span class="publication-badge publication-status-{{ project.publication_state.status_key }}">
+                                    Public: {{ project.publication_state.status_label }}
+                                </span>
+                            </div>
+                        {% endif %}
 
                         <div class="project-actions">
                             <a href="{% url 'mayor_projects:non_infrastructure_project_detail' project.pk %}" class="btn-small btn-view">View</a>

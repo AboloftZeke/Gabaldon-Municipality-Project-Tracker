@@ -6,6 +6,7 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/projects/project_list.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/projects/project_modal.css' %}">
+<link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -49,6 +50,11 @@
                         </div>
                         <div class="project-status status-{{ project.award_status }}">
                             {{ project.get_award_status_display|default:"Status not specified" }}
+                        </div>
+                        <div class="publication-card-state">
+                            <span class="publication-badge publication-status-{{ project.publication_state.status_key }}">
+                                Public: {{ project.publication_state.status_label }}
+                            </span>
                         </div>
 
                         {% if project.planned_start_date or project.planned_end_date %}

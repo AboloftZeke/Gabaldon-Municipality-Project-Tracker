@@ -236,3 +236,76 @@ def archive_publication_revision(revision, actor):
         is_visible_to_public=False,
     )
     return locked_revision
+
+
+def publication_state(project):
+    """Return presentation-ready workflow state for an employee project page."""
+    project_id = getattr(project, 'pk', project)
+    revisions = ProjectPublicationRevision.objects.filter(
+        project_id=project_id,
+    ).order_by('-revision_number')
+    active = revisions.filter(status__in=OPEN_REVISION_STATUSES).first()
+    current_public = revisions.filter(
+        status=PublicationStatus.PUBLISHED,
+        is_current_public_revision=True,
+    ).first()
+    latest = revisions.first()
+    displayed = active or latest
+
+    if displayed is None:
+        status_key = 'not_submitted'
+        status_label = 'Not Submitted'
+        review_notes = ''
+        revision_number = None
+    else:
+        status_key = displayed.status
+        status_label = displayed.get_status_display()
+        review_notes = displayed.review_notes
+        revision_number = displayed.revision_number
+
+    can_submit = active is None or active.status in {
+        PublicationStatus.DRAFT,
+        PublicationStatus.NEEDS_REVISION,
+    }
+    if active and active.status == PublicationStatus.NEEDS_REVISION:
+        action_label = 'Resubmit for Review'
+    elif current_public:
+        action_label = 'Submit Updated Version'
+    else:
+        action_label = 'Submit for Public Review'
+
+    return {
+        'status_key': status_key,
+        'status_label': status_label,
+        'revision_number': revision_number,
+        'review_notes': review_notes,
+        'can_submit': can_submit,
+        'action_label': action_label,
+        'has_current_public_revision': current_public is not None,
+        'current_public_revision_number': (
+            current_public.revision_number if current_public else None
+        ),
+    }
+
+
+@transaction.atomic
+def submit_project_for_review(project, actor):
+    """Create or reuse an editable revision and submit it in one employee action."""
+    _require_authenticated(actor)
+    project_id = getattr(project, 'pk', project)
+    locked_project = Project.objects.select_for_update().get(pk=project_id)
+    active = (
+        locked_project.publication_revisions.select_for_update()
+        .filter(status__in=OPEN_REVISION_STATUSES)
+        .order_by('-revision_number')
+        .first()
+    )
+    if active and active.status not in {
+        PublicationStatus.DRAFT,
+        PublicationStatus.NEEDS_REVISION,
+    }:
+        raise ValidationError(
+            'This project already has a revision awaiting administrator action.',
+        )
+    revision = active or create_publication_draft(locked_project, actor)
+    return submit_publication_revision(revision, actor)

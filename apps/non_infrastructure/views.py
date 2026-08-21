@@ -1,6 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy, reverse, NoReverseMatch
 from django.db import models
@@ -10,6 +13,10 @@ from django.utils import timezone
 from .forms import NonInfrastructureProjectForm
 from apps.system.models import NonInfrastructureProject as SystemNonInfrastructureProject
 from apps.system.models import Non_Infrastructure_Project, Project, Project_Image
+from apps.system.publication_service import (
+    publication_state,
+    submit_project_for_review,
+)
 
 
 def _department_for_user(user):
@@ -119,6 +126,18 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        normalized_projects = {
+            project.pk: project
+            for project in Non_Infrastructure_Project.objects.filter(
+                pk__in=[item.pk for item in context['projects']],
+            ).select_related('project')
+        }
+        for project in context['projects']:
+            normalized = normalized_projects.get(project.pk)
+            project.publication_state = (
+                publication_state(normalized.project)
+                if normalized and normalized.project else None
+            )
         context['locations'] = getattr(SystemNonInfrastructureProject, 'LOCATION_CHOICES', [])
         context['categories'] = getattr(SystemNonInfrastructureProject, 'PROJECT_CATEGORY_CHOICES', [])
         return context
@@ -257,7 +276,45 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
             'images/project-placeholder.svg'
         )
 
+        if normalized and normalized.project:
+            context['publication'] = publication_state(normalized.project)
+            context['publication_submit_url'] = reverse(
+                'mayor_projects:non_infrastructure_project_submit_for_review',
+                args=[compat_project.pk],
+            )
+            context['can_manage_publication'] = not self.request.user.is_superuser
+
         return context
+
+
+class NonInfrastructureProjectSubmitForReviewView(
+    MayorsOfficeOnlyMixin,
+    View,
+):
+    """Submit a non-infrastructure working copy to the administrator."""
+
+    def post(self, request, pk):
+        non_infrastructure = get_object_or_404(
+            Non_Infrastructure_Project.objects.select_related('project'),
+            pk=pk,
+        )
+        try:
+            revision = submit_project_for_review(
+                non_infrastructure.project,
+                request.user,
+            )
+        except ValidationError as exc:
+            messages.error(request, '; '.join(exc.messages))
+        else:
+            messages.success(
+                request,
+                f'Revision {revision.revision_number} was submitted for '
+                'administrator review.',
+            )
+        return redirect(
+            'mayor_projects:non_infrastructure_project_detail',
+            pk=pk,
+        )
 
 
 class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
@@ -300,3 +357,27 @@ class NonInfrastructureProjectDeleteView(MayorsOfficeEditMixin, DeleteView):
 
         context['cancel_url'] = reverse('mayor_projects:non_infrastructure_project_detail', args=[obj.pk])
         return context
+
+    def form_valid(self, form):
+        compat_project = self.get_object()
+        normalized = (
+            Non_Infrastructure_Project.objects
+            .filter(pk=compat_project.pk)
+            .select_related('project')
+            .first()
+        )
+        if normalized and normalized.project:
+            if normalized.project.publication_revisions.exists():
+                messages.error(
+                    self.request,
+                    'A project with publication history cannot be deleted. '
+                    'Contact an administrator to archive it instead.',
+                )
+                return redirect(
+                    'mayor_projects:non_infrastructure_project_detail',
+                    pk=compat_project.pk,
+                )
+            normalized.project.delete()
+        else:
+            compat_project.delete()
+        return redirect(self.get_success_url())

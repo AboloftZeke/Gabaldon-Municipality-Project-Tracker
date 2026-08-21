@@ -5,6 +5,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_detail.css' %}">
+<link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -21,6 +22,8 @@
             ← Back to Dashboard
         </a>
     {% endif %}
+
+    {% include "includes/publication_workflow_panel.html" %}
 
 
     <!-- Project Header -->

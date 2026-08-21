@@ -23,6 +23,7 @@ from .models import (
     Project_Image,
     Project_Inspection,
     ProjectPublicationRevision,
+    UserFlag,
     UserProfile,
 )
 from .publication_workflow import (
@@ -324,6 +325,145 @@ class PublicationServiceTests(TestCase):
         self.project.refresh_from_db()
         self.assertFalse(self.project.is_published)
         self.assertFalse(self.project.is_visible_to_public)
+
+
+class EmployeePublicationWorkflowViewTests(TestCase):
+    def setUp(self):
+        self.engineer = User.objects.create_user(
+            username='workflow-engineer',
+            password='password123',
+            is_staff=True,
+        )
+        UserFlag.objects.create(user=self.engineer, department='engineer')
+        self.mayor_user = User.objects.create_user(
+            username='workflow-mayor',
+            password='password123',
+            is_staff=True,
+        )
+        UserFlag.objects.create(user=self.mayor_user, department='mayor')
+        self.admin = User.objects.create_superuser(
+            username='workflow-admin',
+            email='workflow-admin@example.com',
+            password='password123',
+        )
+
+        infra_base = Project.objects.create(
+            project_type='infrastructure',
+            created_by_user=self.engineer,
+        )
+        self.infrastructure = Infrastructure_Project.objects.create(
+            project=infra_base,
+            infrastructure_title='Employee Submission Road',
+            award_status='awarded',
+        )
+        noninfra_base = Project.objects.create(
+            project_type='non_infrastructure',
+            created_by_user=self.mayor_user,
+        )
+        self.non_infrastructure = Non_Infrastructure_Project.objects.create(
+            project=noninfra_base,
+            non_infra_name='Employee Submission Program',
+            status='planned',
+        )
+
+    def test_engineer_submits_and_sees_return_notes(self):
+        self.client.force_login(self.engineer)
+        detail_url = reverse(
+            'engineering_projects:project_detail',
+            args=[self.infrastructure.pk],
+        )
+        submit_url = reverse(
+            'engineering_projects:project_submit_for_review',
+            args=[self.infrastructure.pk],
+        )
+
+        initial = self.client.get(detail_url)
+        self.assertContains(initial, 'Not Submitted')
+        self.assertContains(initial, 'Submit for Public Review')
+        self.assertEqual(self.client.get(submit_url).status_code, 405)
+
+        response = self.client.post(submit_url)
+        self.assertRedirects(response, detail_url)
+        revision = ProjectPublicationRevision.objects.get(
+            project=self.infrastructure.project,
+        )
+        self.assertEqual(revision.status, PublicationStatus.PENDING_REVIEW)
+
+        pending = self.client.get(detail_url)
+        self.assertContains(pending, 'Pending Review')
+        self.assertNotContains(pending, 'Submit for Public Review')
+
+        delete_response = self.client.post(reverse(
+            'engineering_projects:project_delete',
+            args=[self.infrastructure.pk],
+        ))
+        self.assertRedirects(delete_response, detail_url)
+        self.assertTrue(
+            Project.objects.filter(pk=self.infrastructure.project_id).exists(),
+        )
+
+        returned = review_publication_revision(
+            revision,
+            self.admin,
+            PublicationStatus.NEEDS_REVISION,
+            notes='Please clarify the project description.',
+        )
+        self.assertEqual(returned.status, PublicationStatus.NEEDS_REVISION)
+        needs_revision = self.client.get(detail_url)
+        self.assertContains(needs_revision, 'Needs Revision')
+        self.assertContains(
+            needs_revision,
+            'Please clarify the project description.',
+        )
+        self.assertContains(needs_revision, 'Resubmit for Review')
+
+    def test_mayor_user_can_submit_non_infrastructure_project(self):
+        self.client.force_login(self.mayor_user)
+        detail_url = reverse(
+            'mayor_projects:non_infrastructure_project_detail',
+            args=[self.non_infrastructure.pk],
+        )
+        submit_url = reverse(
+            'mayor_projects:non_infrastructure_project_submit_for_review',
+            args=[self.non_infrastructure.pk],
+        )
+
+        initial = self.client.get(detail_url)
+        self.assertContains(initial, 'Not Submitted')
+        response = self.client.post(submit_url)
+
+        self.assertRedirects(response, detail_url)
+        revision = ProjectPublicationRevision.objects.get(
+            project=self.non_infrastructure.project,
+        )
+        self.assertEqual(revision.status, PublicationStatus.PENDING_REVIEW)
+        self.assertEqual(
+            revision.snapshot_data['non_infrastructure']['title'],
+            'Employee Submission Program',
+        )
+        delete_response = self.client.post(reverse(
+            'mayor_projects:non_infrastructure_project_delete',
+            args=[self.non_infrastructure.pk],
+        ))
+        self.assertRedirects(delete_response, detail_url)
+        self.assertTrue(Project.objects.filter(
+            pk=self.non_infrastructure.project_id,
+        ).exists())
+
+    def test_department_submission_endpoints_are_role_protected(self):
+        self.client.force_login(self.engineer)
+        response = self.client.post(reverse(
+            'mayor_projects:non_infrastructure_project_submit_for_review',
+            args=[self.non_infrastructure.pk],
+        ))
+        self.assertEqual(response.status_code, 403)
+
+        self.client.force_login(self.mayor_user)
+        response = self.client.post(reverse(
+            'engineering_projects:project_submit_for_review',
+            args=[self.infrastructure.pk],
+        ))
+        self.assertEqual(response.status_code, 403)
 
 
 class ProjectPublicationSnapshotTests(TestCase):

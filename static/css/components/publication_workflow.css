@@ -1,0 +1,120 @@
+.publication-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    background: #e5e7eb;
+    color: #374151;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.publication-status-pending_review,
+.publication-status-approved {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.publication-status-needs_revision {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.publication-status-published {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.publication-status-rejected,
+.publication-status-archived {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.publication-card-state {
+    margin: 0.25rem 0 0.9rem;
+}
+
+.publication-panel {
+    margin: 1rem 0 1.5rem;
+    padding: 1.15rem 1.25rem;
+    border: 1px solid #bbd5c4;
+    border-left: 5px solid #217346;
+    border-radius: 10px;
+    background: #f7fbf8;
+    color: #26372d;
+}
+
+.publication-panel__heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.65rem;
+}
+
+.publication-panel__heading h3,
+.publication-panel__notes p,
+.publication-panel p {
+    margin: 0;
+}
+
+.publication-panel__eyebrow {
+    color: #4b6956;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.publication-panel__public-note {
+    margin-top: 0.75rem !important;
+    font-weight: 600;
+}
+
+.publication-panel__notes {
+    margin-top: 0.9rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 8px;
+    background: #fff7db;
+    color: #674d0b;
+}
+
+.publication-panel__notes p {
+    margin-top: 0.25rem;
+}
+
+.publication-panel__action {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin-top: 1rem;
+}
+
+.publication-submit-button {
+    border: 0;
+    border-radius: 7px;
+    padding: 0.7rem 1rem;
+    background: #217346;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+}
+
+.publication-submit-button:hover {
+    background: #185c37;
+}
+
+.publication-panel__action small {
+    color: #52645a;
+}
+
+@media (max-width: 600px) {
+    .publication-panel__heading {
+        flex-direction: column;
+    }
+}

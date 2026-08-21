@@ -1,5 +1,8 @@
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.core.exceptions import ValidationError
+from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse, NoReverseMatch
 from django.db.models import Sum
@@ -9,6 +12,10 @@ from apps.system.models import InfrastructureProject as SystemInfrastructureProj
 from apps.system.models import (
     InfrastructureCategory,
     Infrastructure_Project,
+)
+from apps.system.publication_service import (
+    publication_state,
+    submit_project_for_review,
 )
 
 
@@ -141,6 +148,7 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
             project.cover_image_url = (
                 cover.image_url if cover and cover.image_url else ''
             )
+            project.publication_state = publication_state(project.project)
         context['locations'] = (
             Infrastructure_Project.objects
             .exclude(address__barangay__isnull=True)
@@ -626,7 +634,42 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
             'updated_at': getattr(infra, 'updated_at', None),
         }
 
+        if infra and infra.project:
+            context['publication'] = publication_state(infra.project)
+            context['publication_submit_url'] = reverse(
+                'engineering_projects:project_submit_for_review',
+                args=[project.pk],
+            )
+            context['can_manage_publication'] = not self.request.user.is_superuser
+
         return context
+
+
+class ProjectSubmitForReviewView(EngineerOnlyMixin, View):
+    """Submit an infrastructure working copy to the administrator."""
+
+    def post(self, request, pk):
+        infrastructure = get_object_or_404(
+            Infrastructure_Project.objects.select_related('project'),
+            pk=pk,
+        )
+        try:
+            revision = submit_project_for_review(
+                infrastructure.project,
+                request.user,
+            )
+        except ValidationError as exc:
+            messages.error(request, '; '.join(exc.messages))
+        else:
+            messages.success(
+                request,
+                f'Revision {revision.revision_number} was submitted for '
+                'administrator review.',
+            )
+        return redirect(
+            'engineering_projects:project_detail',
+            pk=pk,
+        )
 
 
 class ProjectEditView(EngineerOnlyMixin, UpdateView):
@@ -681,6 +724,16 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
         success_url = self.get_success_url()
 
         if normalized is not None and normalized.project is not None:
+            if normalized.project.publication_revisions.exists():
+                messages.error(
+                    self.request,
+                    'A project with publication history cannot be deleted. '
+                    'Contact an administrator to archive it instead.',
+                )
+                return redirect(
+                    'engineering_projects:project_detail',
+                    pk=compat_project.pk,
+                )
             normalized.project.delete()
         else:
             compat_project.delete()
