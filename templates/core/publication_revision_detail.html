@@ -31,7 +31,7 @@
     <section class="revision-notice">
         <strong>You are reviewing the submitted version.</strong>
         <p>Later employee edits are not included here. Publishing will expose this exact snapshot and preserve the previous public revision in history.</p>
-        {% if preview.working_detail_url %}<a href="{{ preview.working_detail_url }}">View current working project</a>{% endif %}
+        {% if preview.working_detail_url %}<a href="{{ preview.working_detail_url }}?from_review={{ revision.pk }}">View current working project</a>{% endif %}
     </section>
 
     <div class="revision-layout">
