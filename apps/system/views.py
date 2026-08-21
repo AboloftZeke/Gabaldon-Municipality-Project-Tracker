@@ -885,4 +885,3 @@ class PasswordChangeView(LoginRequiredMixin, View):
             {'form': form}
         )
 
-
