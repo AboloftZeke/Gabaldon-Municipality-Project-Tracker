@@ -22,23 +22,20 @@
             color: var(--ink-900);
         }
 
-        /* Header Styles */
-        header {
+        /* Shared site header styles. Scope these to the direct body header so
+           semantic <header> elements inside page content keep their own styles. */
+        body > header {
             background: var(--panel-green);
             color: var(--white);
             padding: 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* Keep the shared site navigation visible while scrolling. */
-        body > header {
             position: sticky;
             top: 0;
             z-index: 1000;
             box-shadow: 0 4px 14px rgba(17, 24, 39, 0.12);
         }
 
-        header nav {
+        body > header nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -61,14 +58,14 @@
             flex-shrink: 0;
         }
 
-        header nav h1 {
+        body > header nav h1 {
             font-size: 1.25rem;
             font-weight: 700;
             margin: 0;
             flex-shrink: 0;
         }
 
-        header nav ul {
+        body > header nav ul {
             display: flex;
             list-style: none;
             gap: 2rem;
@@ -77,11 +74,11 @@
             justify-content: flex-end;
         }
 
-        header nav li {
+        body > header nav li {
             white-space: nowrap;
         }
 
-        header nav a {
+        body > header nav a {
             color: rgba(255, 255, 255, 0.9);
             text-decoration: none;
             font-size: 0.94rem;
@@ -92,12 +89,12 @@
             display: inline-block;
         }
 
-        header nav a:hover {
+        body > header nav a:hover {
             color: var(--white);
             border-bottom-color: var(--white);
         }
 
-        header nav a:focus {
+        body > header nav a:focus {
             outline: 2px solid rgba(255, 255, 255, 0.5);
             outline-offset: 2px;
             border-radius: 4px;
@@ -199,7 +196,7 @@
 
         /* Tablet Responsive */
         @media (max-width: 768px) {
-            header nav {
+            body > header nav {
                 flex-direction: column;
                 gap: 1rem;
                 padding: 1rem;
@@ -211,7 +208,7 @@
                 width: 100%;
             }
 
-            header nav h1 {
+            body > header nav h1 {
                 font-size: 1.1rem;
                 text-align: center;
             }
@@ -221,14 +218,14 @@
                 height: 40px;
             }
 
-            header nav ul {
+            body > header nav ul {
                 gap: 1rem;
                 font-size: 0.9rem;
                 justify-content: center;
                 width: 100%;
             }
 
-            header nav li {
+            body > header nav li {
                 white-space: normal;
             }
 
@@ -277,11 +274,11 @@
 
         /* Mobile Responsive */
         @media (max-width: 480px) {
-            header nav {
+            body > header nav {
                 padding: 0.75rem;
             }
 
-            header nav h1 {
+            body > header nav h1 {
                 font-size: 1rem;
             }
 
@@ -290,12 +287,12 @@
                 height: 35px;
             }
 
-            header nav ul {
+            body > header nav ul {
                 gap: 0.5rem;
                 font-size: 0.85rem;
             }
 
-            header nav a {
+            body > header nav a {
                 padding: 0.5rem 0.5rem;
             }
 
@@ -311,7 +308,7 @@
             }
 
             .footer-bottom {
-                padding: 1.5rem clamp(1rem, 5vw, 2rem);
+                padding: 1.5rem clamp(1rem, 5vw, 4rem);
             }
 
             .footer-middle {
