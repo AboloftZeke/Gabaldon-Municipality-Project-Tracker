@@ -522,6 +522,18 @@ class AdminPublicationReviewViewTests(TestCase):
         self.assertNotContains(detail, 'Later Working Copy Edit')
         self.assertContains(detail, '/media/projects/admin-review-cover.jpg')
         self.assertContains(detail, 'Record Decision')
+        self.assertContains(
+            detail,
+            '/static/css/templates/base.css?v=20260821-1',
+        )
+        self.assertContains(
+            detail,
+            '/static/css/templates/core/publication_review.css?v=20260821-1',
+        )
+        self.assertContains(
+            detail,
+            '/static/css/components/publication_workflow.css?v=20260821-1',
+        )
 
     def test_admin_can_return_from_working_project_without_role_403(self):
         self.client.force_login(self.admin)
