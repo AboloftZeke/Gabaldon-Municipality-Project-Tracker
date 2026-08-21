@@ -13,7 +13,11 @@
 <div class="project-detail-container">
 
     <!-- Back Button -->
-    {% if request.META.HTTP_REFERER %}
+    {% if request.user.is_superuser and request.GET.from_review %}
+        <a href="{% url 'publication_revision_detail' request.GET.from_review %}" class="btn btn-back">
+            ← Back to Publication Review
+        </a>
+    {% elif request.META.HTTP_REFERER %}
         <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-back">
             ← Back to Dashboard
         </a>
@@ -23,7 +27,9 @@
         </a>
     {% endif %}
 
-    {% include "includes/publication_workflow_panel.html" %}
+    {% if not request.user.is_superuser or not request.GET.from_review %}
+        {% include "includes/publication_workflow_panel.html" %}
+    {% endif %}
 
 
     <!-- Project Header -->
