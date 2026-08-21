@@ -141,7 +141,7 @@
             {% for row in project_rows %}
             <tr class="project-row"
                 data-category="{{ row.category }}"
-              data-project-category="{{ row.project_category_key }}"
+                data-project-category="{{ row.project_category_key }}"
                 data-status="{{ row.status_key }}"
                 data-location="{{ row.location_key }}"
                 data-hide-financial="{{ row.hide_financial|lower }}">
@@ -228,29 +228,6 @@
         </table>
       </div>
     </section>
-
-    <section class="panel" aria-labelledby="recent-heading">
-      <div class="panel-head">
-        <h2 id="recent-heading">Recently Created Projects</h2>
-      </div>
-      <ul class="recent-list">
-        {% for row in recent_rows %}
-        <li>
-          <div>
-            <p class="recent-title">{{ row.title }}</p>
-            <p class="recent-subtext">
-              {{ row.type_label }}
-              {% if row.location %} - {{ row.location }}{% endif %}
-              {% if row.status_label %} - {{ row.status_label }}{% endif %}
-            </p>
-          </div>
-          <span class="recent-date">{{ row.created_at|date:"M d, Y" }}</span>
-        </li>
-        {% empty %}
-        <li class="empty-row">No recent projects yet.</li>
-        {% endfor %}
-      </ul>
-    </section>
   </main>
 
   <footer class="site-footer">
@@ -263,4 +240,3 @@
   <script src="{% static 'js/templates/projects/project_modal.js' %}"></script>
 </body>
 </html>
-
