@@ -10,11 +10,19 @@
 
 {% block content %}
 <div class="project-detail-container">
-    <a href="{% url 'engineering_projects:project_list' %}" class="btn btn-back">
-        <span aria-hidden="true">←</span> Back to Projects
-    </a>
+    {% if request.user.is_superuser and request.GET.from_review %}
+        <a href="{% url 'publication_revision_detail' request.GET.from_review %}" class="btn btn-back">
+            <span aria-hidden="true">←</span> Back to Publication Review
+        </a>
+    {% else %}
+        <a href="{% url 'engineering_projects:project_list' %}" class="btn btn-back">
+            <span aria-hidden="true">←</span> Back to Projects
+        </a>
+    {% endif %}
 
-    {% include "includes/publication_workflow_panel.html" %}
+    {% if not request.user.is_superuser or not request.GET.from_review %}
+        {% include "includes/publication_workflow_panel.html" %}
+    {% endif %}
 
     <header class="project-detail-header">
         <div class="project-detail-hero-image" aria-hidden="true">
@@ -37,10 +45,12 @@
                         {% endif %}
                     </p>
                 </div>
-                <div class="action-buttons action-buttons--detail">
-                    <a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit">Edit Project</a>
-                    <a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete">Delete Project</a>
-                </div>
+                {% if not request.user.is_superuser or not request.GET.from_review %}
+                    <div class="action-buttons action-buttons--detail">
+                        <a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit">Edit Project</a>
+                        <a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete">Delete Project</a>
+                    </div>
+                {% endif %}
             </div>
 
             <div class="project-meta" aria-label="Project summary">
