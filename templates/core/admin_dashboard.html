@@ -22,6 +22,7 @@
                 <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
                 {% if user.is_superuser %}
                     <li><a href="{% url 'user_list' %}">User Management</a></li>
+                    <li><a href="{% url 'publication_review_queue' %}">Publication Review</a></li>
                 {% endif %}
                 <li><a href="{% url 'logout' %}">Logout</a></li>
             </ul>
@@ -39,6 +40,7 @@
             {% if user.is_superuser %}
                 <li><a href="{% url 'user_list' %}">User Management</a></li>
                 <li><a href="{% url 'user_create' %}">Create User</a></li>
+                <li><a href="{% url 'publication_review_queue' %}">Publication Review</a></li>
             {% endif %}
             {% if user.profile.department == 'engineer' and not user.is_superuser %}
                 <li><a href="{% url 'engineering_projects:project_dashboard' %}">Projects</a></li>
@@ -99,6 +101,11 @@
             <p class="stat-value">{{ total_staff }}</p>
             <div class="stat-subtitle">Active staff accounts</div>
         </div>
+        <div class="stat-card">
+            <h3>Pending Reviews</h3>
+            <p class="stat-value">{{ pending_publication_reviews }}</p>
+            <div class="stat-subtitle">Projects awaiting confirmation</div>
+        </div>
     </div>
     {% endif %}
 
@@ -116,6 +123,11 @@
                 <div class="action-card-icon">✓</div>
                 <div class="action-card-title">Create New User</div>
                 <div class="action-card-desc">Add a new user account to Engineering Office, Mayor's Office, or Admin</div>
+            </a>
+            <a href="{% url 'publication_review_queue' %}" class="action-card">
+                <div class="action-card-icon">✓</div>
+                <div class="action-card-title">Review Public Projects</div>
+                <div class="action-card-desc">Review, approve, publish, or return submitted project revisions</div>
             </a>
         </div>
     </div>

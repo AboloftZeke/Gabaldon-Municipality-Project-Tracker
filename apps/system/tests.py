@@ -39,6 +39,7 @@ from .publication_service import (
     create_publication_draft,
     publish_publication_revision,
     review_publication_revision,
+    submit_project_for_review,
     submit_publication_revision,
 )
 
@@ -465,6 +466,141 @@ class EmployeePublicationWorkflowViewTests(TestCase):
         ))
         self.assertEqual(response.status_code, 403)
 
+
+class AdminPublicationReviewViewTests(TestCase):
+    def setUp(self):
+        self.employee = User.objects.create_user(
+            username='review-queue-employee',
+            password='password123',
+            is_staff=True,
+        )
+        UserFlag.objects.create(user=self.employee, department='engineer')
+        self.admin = User.objects.create_superuser(
+            username='review-queue-admin',
+            email='review-queue-admin@example.com',
+            password='password123',
+        )
+        project = Project.objects.create(
+            project_type='infrastructure',
+            created_by_user=self.employee,
+        )
+        self.infrastructure = Infrastructure_Project.objects.create(
+            project=project,
+            infrastructure_title='Submitted Admin Preview Project',
+            infrastructure_description='Snapshot reviewed by the administrator.',
+            award_status='awarded',
+        )
+        Project_Image.objects.create(
+            project=project,
+            image_url='/media/projects/admin-review-cover.jpg',
+            is_cover=True,
+        )
+        self.revision = submit_project_for_review(project, self.employee)
+
+    def test_admin_queue_and_detail_show_submitted_snapshot(self):
+        self.infrastructure.infrastructure_title = 'Later Working Copy Edit'
+        self.infrastructure.save(update_fields=['infrastructure_title'])
+        self.client.force_login(self.admin)
+
+        queue = self.client.get(reverse('publication_review_queue'))
+        dashboard = self.client.get(reverse('admin_dashboard'))
+        detail = self.client.get(reverse(
+            'publication_revision_detail',
+            args=[self.revision.pk],
+        ))
+
+        self.assertContains(queue, 'Submitted Admin Preview Project')
+        self.assertContains(queue, 'Pending Review')
+        self.assertContains(dashboard, 'Review Public Projects')
+        self.assertEqual(
+            dashboard.context['pending_publication_reviews'],
+            1,
+        )
+        self.assertContains(detail, 'Submitted Admin Preview Project')
+        self.assertNotContains(detail, 'Later Working Copy Edit')
+        self.assertContains(detail, '/media/projects/admin-review-cover.jpg')
+        self.assertContains(detail, 'Record Decision')
+
+    def test_review_workspace_and_actions_are_admin_only(self):
+        self.client.force_login(self.employee)
+
+        self.assertEqual(
+            self.client.get(reverse('publication_review_queue')).status_code,
+            403,
+        )
+        response = self.client.post(
+            reverse('publication_revision_review', args=[self.revision.pk]),
+            {'decision': PublicationStatus.APPROVED, 'notes': ''},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.revision.refresh_from_db()
+        self.assertEqual(
+            self.revision.status,
+            PublicationStatus.PENDING_REVIEW,
+        )
+
+    def test_return_and_reject_decisions_require_notes(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(
+            reverse('publication_revision_review', args=[self.revision.pk]),
+            {
+                'decision': PublicationStatus.NEEDS_REVISION,
+                'notes': '',
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(
+            response,
+            'Review notes are required for this decision.',
+            status_code=400,
+        )
+        self.revision.refresh_from_db()
+        self.assertEqual(
+            self.revision.status,
+            PublicationStatus.PENDING_REVIEW,
+        )
+
+    def test_admin_approves_publishes_and_archives_separately(self):
+        self.client.force_login(self.admin)
+        review_url = reverse(
+            'publication_revision_review',
+            args=[self.revision.pk],
+        )
+        publish_url = reverse(
+            'publication_revision_publish',
+            args=[self.revision.pk],
+        )
+        archive_url = reverse(
+            'publication_revision_archive',
+            args=[self.revision.pk],
+        )
+
+        approved_response = self.client.post(review_url, {
+            'decision': PublicationStatus.APPROVED,
+            'notes': 'Verified for publication.',
+        })
+        self.assertRedirects(
+            approved_response,
+            reverse('publication_revision_detail', args=[self.revision.pk]),
+        )
+        self.revision.refresh_from_db()
+        self.assertEqual(self.revision.status, PublicationStatus.APPROVED)
+        self.assertEqual(self.client.get(publish_url).status_code, 405)
+
+        self.client.post(publish_url)
+        self.revision.refresh_from_db()
+        self.assertEqual(self.revision.status, PublicationStatus.PUBLISHED)
+        self.assertTrue(self.revision.is_current_public_revision)
+        public = self.client.get(reverse('public_dashboard'))
+        self.assertContains(public, 'Submitted Admin Preview Project')
+
+        self.client.post(archive_url)
+        self.revision.refresh_from_db()
+        self.assertEqual(self.revision.status, PublicationStatus.ARCHIVED)
+        self.assertFalse(self.revision.is_current_public_revision)
+        public = self.client.get(reverse('public_dashboard'))
+        self.assertNotContains(public, 'Submitted Admin Preview Project')
 
 class ProjectPublicationSnapshotTests(TestCase):
     def setUp(self):

@@ -2,6 +2,7 @@ from django.urls import path, include
 from django.shortcuts import redirect
 from . import views
 from . import gis_views
+from . import publication_views
 
 urlpatterns = [
     path('', lambda request: redirect('login')),
@@ -19,6 +20,13 @@ urlpatterns = [
 
     path('login/', views.LoginView.as_view(), name='login'),
     path('logout/', views.LogoutView.as_view(), name='logout'),
+
+    # Administrator publication review
+    path('admin-dashboard/publications/', publication_views.PublicationReviewQueueView.as_view(), name='publication_review_queue'),
+    path('admin-dashboard/publications/<int:revision_id>/', publication_views.PublicationRevisionDetailView.as_view(), name='publication_revision_detail'),
+    path('admin-dashboard/publications/<int:revision_id>/review/', publication_views.PublicationRevisionReviewView.as_view(), name='publication_revision_review'),
+    path('admin-dashboard/publications/<int:revision_id>/publish/', publication_views.PublicationRevisionPublishView.as_view(), name='publication_revision_publish'),
+    path('admin-dashboard/publications/<int:revision_id>/archive/', publication_views.PublicationRevisionArchiveView.as_view(), name='publication_revision_archive'),
 
     # Role-specific dashboards
     # Use a non-conflicting path so Django's admin site (mounted at /admin/) isn't intercepted.

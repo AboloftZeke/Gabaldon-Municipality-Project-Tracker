@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Review Revision {{ revision.revision_number }} - Municipality Project Tracker{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}">
+<link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="review-workspace">
+    <nav class="review-breadcrumb" aria-label="Breadcrumb">
+        <a href="{% url 'publication_review_queue' %}?status={{ revision.status }}">Publication Review</a>
+        <span>/</span>
+        <strong>Revision {{ revision.revision_number }}</strong>
+    </nav>
+
+    <header class="revision-header">
+        <div>
+            <p class="review-eyebrow">Immutable Submitted Snapshot</p>
+            <h1>{{ preview.title|default:"Project revision" }}</h1>
+            <p>
+                {% if project_type == 'infrastructure' %}Infrastructure Project{% else %}Non-Infrastructure Program{% endif %}
+                · Revision {{ revision.revision_number }}
+            </p>
+        </div>
+        <span class="publication-badge publication-status-{{ revision.status }}">{{ revision.get_status_display }}</span>
+    </header>
+
+    <section class="revision-notice">
+        <strong>You are reviewing the submitted version.</strong>
+        <p>Later employee edits are not included here. Publishing will expose this exact snapshot and preserve the previous public revision in history.</p>
+        {% if preview.working_detail_url %}<a href="{{ preview.working_detail_url }}">View current working project</a>{% endif %}
+    </section>
+
+    <div class="revision-layout">
+        <div class="revision-preview">
+            <section class="revision-section revision-hero">
+                {% if preview.cover_image_url %}
+                    <img src="{{ preview.cover_image_url }}" alt="{{ preview.title }} cover">
+                {% else %}
+                    <img src="{% static 'images/project-placeholder.svg' %}" alt="">
+                {% endif %}
+                <div><span>{{ preview.code }}</span><h2>{{ preview.title }}</h2><p>{{ preview.description|default:"No description provided." }}</p></div>
+            </section>
+
+            {% if project_type == 'infrastructure' %}
+                <section class="revision-section">
+                    <h2>Project Information</h2>
+                    <dl class="snapshot-grid">
+                        <div><dt>Category</dt><dd>{{ preview.category.name|default:"N/A" }}</dd></div>
+                        <div><dt>Status</dt><dd>{{ preview.award_status_label|default:"N/A" }}</dd></div>
+                        <div><dt>Implementing Office</dt><dd>{{ preview.implementing_office.name|default:"N/A" }}</dd></div>
+                        <div><dt>Contractor</dt><dd>{{ preview.contractor.name|default:"N/A" }}</dd></div>
+                        <div><dt>Procurement Method</dt><dd>{{ preview.procurement_method_label|default:"N/A" }}</dd></div>
+                        <div><dt>Published By Attribution</dt><dd>{{ preview.created_by_name|default:"N/A" }}</dd></div>
+                    </dl>
+                </section>
+                <section class="revision-section">
+                    <h2>Location</h2>
+                    <dl class="snapshot-grid">
+                        <div><dt>Street</dt><dd>{{ preview.address.street|default:"N/A" }}</dd></div>
+                        <div><dt>Barangay</dt><dd>{{ preview.address.barangay|default:"N/A" }}</dd></div>
+                        <div><dt>Municipality</dt><dd>{{ preview.address.municipality|default:"Gabaldon" }}</dd></div>
+                        <div><dt>Province</dt><dd>{{ preview.address.province|default:"Nueva Ecija" }}</dd></div>
+                        <div><dt>Latitude</dt><dd>{{ preview.address.latitude|default:"N/A" }}</dd></div>
+                        <div><dt>Longitude</dt><dd>{{ preview.address.longitude|default:"N/A" }}</dd></div>
+                    </dl>
+                </section>
+                <section class="revision-section">
+                    <h2>Funding and Progress</h2>
+                    <dl class="snapshot-grid">
+                        <div><dt>Approved Budget</dt><dd>{% if preview.financial.approved_budget is not None %}₱{{ preview.financial.approved_budget|floatformat:2 }}{% else %}N/A{% endif %}</dd></div>
+                        <div><dt>Contract Price</dt><dd>{% if preview.financial.contract_price is not None %}₱{{ preview.financial.contract_price|floatformat:2 }}{% else %}N/A{% endif %}</dd></div>
+                        <div><dt>Fund Source</dt><dd>{{ preview.financial.fund_source.name|default:"N/A" }}</dd></div>
+                        <div><dt>Physical Progress</dt><dd>{% if preview.physical_progress_percentage is not None %}{{ preview.physical_progress_percentage|floatformat:1 }}%{% else %}N/A{% endif %}</dd></div>
+                        <div><dt>Planned Start</dt><dd>{{ preview.planned_start_date|date:"M d, Y"|default:"N/A" }}</dd></div>
+                        <div><dt>Planned End</dt><dd>{{ preview.planned_end_date|date:"M d, Y"|default:"N/A" }}</dd></div>
+                    </dl>
+                </section>
+            {% else %}
+                <section class="revision-section">
+                    <h2>Program Information</h2>
+                    <dl class="snapshot-grid">
+                        <div><dt>Category</dt><dd>{{ preview.category.name|default:"N/A" }}</dd></div>
+                        <div><dt>Status</dt><dd>{{ preview.status_label|default:"N/A" }}</dd></div>
+                        <div><dt>Proponent</dt><dd>{{ preview.proponent|default:"N/A" }}</dd></div>
+                        <div><dt>Beneficiaries</dt><dd>{{ preview.beneficiaries|default_if_none:"N/A" }}</dd></div>
+                        <div><dt>Event Date</dt><dd>{{ preview.event_date|date:"M d, Y"|default:"N/A" }}</dd></div>
+                        <div><dt>Venue</dt><dd>{{ preview.venue_name|default:"N/A" }}</dd></div>
+                        <div><dt>Start Time</dt><dd>{{ preview.start_time|time:"g:i A"|default:"N/A" }}</dd></div>
+                        <div><dt>End Time</dt><dd>{{ preview.end_time|time:"g:i A"|default:"N/A" }}</dd></div>
+                    </dl>
+                </section>
+            {% endif %}
+
+            {% if preview.images %}
+                <section class="revision-section">
+                    <h2>Submitted Images</h2>
+                    <div class="snapshot-images">
+                        {% for image in preview.images %}
+                            <figure><img src="{{ image.image_url }}" alt="Submitted project image {{ forloop.counter }}">{% if image.is_cover %}<figcaption>Cover image</figcaption>{% endif %}</figure>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+        </div>
+
+        <aside class="revision-actions">
+            <section>
+                <h2>Submission Record</h2>
+                <dl>
+                    <div><dt>Submitted by</dt><dd>{{ revision.submitted_by.get_full_name|default:revision.submitted_by.username|default:"Unknown" }}</dd></div>
+                    <div><dt>Submitted</dt><dd>{{ revision.submitted_at|date:"M d, Y g:i A"|default:"N/A" }}</dd></div>
+                    {% if revision.reviewed_at %}<div><dt>Reviewed</dt><dd>{{ revision.reviewed_at|date:"M d, Y g:i A" }}</dd></div>{% endif %}
+                    {% if revision.published_at %}<div><dt>Published</dt><dd>{{ revision.published_at|date:"M d, Y g:i A" }}</dd></div>{% endif %}
+                </dl>
+                {% if revision.review_notes %}<div class="revision-existing-notes"><strong>Review notes</strong><p>{{ revision.review_notes }}</p></div>{% endif %}
+            </section>
+
+            {% if can_review %}
+                <section>
+                    <h2>Review Decision</h2>
+                    <form method="post" action="{% url 'publication_revision_review' revision.pk %}" class="review-decision-form">
+                        {% csrf_token %}
+                        {{ review_form.decision }}
+                        {% for error in review_form.decision.errors %}<p class="review-form-error">{{ error }}</p>{% endfor %}
+                        <label for="{{ review_form.notes.id_for_label }}">{{ review_form.notes.label }}</label>
+                        {{ review_form.notes }}
+                        {% for error in review_form.notes.errors %}<p class="review-form-error">{{ error }}</p>{% endfor %}
+                        <button type="submit" class="review-button review-button--primary">Record Decision</button>
+                    </form>
+                </section>
+            {% elif can_publish %}
+                <section class="publish-confirmation">
+                    <h2>Ready to Publish</h2>
+                    <p>Publishing replaces the current public version immediately. This submitted snapshot cannot be changed afterward.</p>
+                    <form method="post" action="{% url 'publication_revision_publish' revision.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="review-button review-button--primary">Publish to Public Dashboard</button>
+                    </form>
+                </section>
+            {% elif can_archive %}
+                <section>
+                    <h2>Public Revision</h2>
+                    <p>This is the version residents currently see.</p>
+                    <form method="post" action="{% url 'publication_revision_archive' revision.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="review-button review-button--danger">Archive and Remove from Public</button>
+                    </form>
+                </section>
+            {% endif %}
+        </aside>
+    </div>
+</main>
+{% endblock %}

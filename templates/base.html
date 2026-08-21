@@ -39,6 +39,7 @@
 
                 {% if user.is_superuser %}
                     <li><a href="{% url 'user_list' %}">Users</a></li>
+                    <li><a href="{% url 'publication_review_queue' %}">Publication Review</a></li>
                 {% endif %}
 
                 <li><a href="{% url 'logout' %}">Logout</a></li>
