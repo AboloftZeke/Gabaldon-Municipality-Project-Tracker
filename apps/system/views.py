@@ -298,6 +298,8 @@ class EngineeringDashboardView(StaffRequiredMixin, TemplateView):
     template_name = 'core/engineering_dashboard.html'
 
     def test_func(self):
+        if self.request.user.is_superuser:
+            return True
         department = _department_for_user(self.request.user)
         return department == 'engineer'
 
@@ -321,6 +323,8 @@ class MayorDashboardView(StaffRequiredMixin, TemplateView):
     template_name = 'core/mayor_dashboard.html'
 
     def test_func(self):
+        if self.request.user.is_superuser:
+            return True
         department = _department_for_user(self.request.user)
         return department == 'mayor'
 
@@ -880,4 +884,5 @@ class PasswordChangeView(LoginRequiredMixin, View):
             self.template_name,
             {'form': form}
         )
+
 
