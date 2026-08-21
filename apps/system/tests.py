@@ -3,7 +3,7 @@ from datetime import date, time
 from decimal import Decimal
 
 from django.test import TestCase
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -33,6 +33,13 @@ from .publication_workflow import (
 )
 from .publication_snapshots import build_project_publication_snapshot
 from .publication_images import retire_project_images
+from .publication_service import (
+    archive_publication_revision,
+    create_publication_draft,
+    publish_publication_revision,
+    review_publication_revision,
+    submit_publication_revision,
+)
 
 
 def publish_current_snapshot(project):
@@ -180,6 +187,143 @@ class ProjectPublicationRevisionModelTests(TestCase):
             second_revision,
             first_revision.superseded_by_revisions.all(),
         )
+
+
+class PublicationServiceTests(TestCase):
+    def setUp(self):
+        self.employee = User.objects.create_user(
+            username='publication-employee',
+            password='password123',
+        )
+        self.admin = User.objects.create_superuser(
+            username='publication-admin',
+            email='admin@example.com',
+            password='password123',
+        )
+        self.project = Project.objects.create(
+            project_type='infrastructure',
+            created_by_user=self.employee,
+            updated_by_user=self.employee,
+        )
+        self.infrastructure = Infrastructure_Project.objects.create(
+            project=self.project,
+            infrastructure_title='Working Project Title',
+            award_status='awarded',
+        )
+
+    def _approve_and_publish(self, revision):
+        submitted = submit_publication_revision(revision, self.employee)
+        approved = review_publication_revision(
+            submitted,
+            self.admin,
+            PublicationStatus.APPROVED,
+        )
+        return publish_publication_revision(approved, self.admin)
+
+    def test_full_workflow_publishes_submitted_snapshot(self):
+        draft = create_publication_draft(self.project, self.employee)
+        self.infrastructure.infrastructure_title = 'Submitted Project Title'
+        self.infrastructure.save(update_fields=['infrastructure_title'])
+
+        submitted = submit_publication_revision(draft, self.employee)
+        approved = review_publication_revision(
+            submitted,
+            self.admin,
+            PublicationStatus.APPROVED,
+        )
+        published = publish_publication_revision(approved, self.admin)
+
+        self.assertEqual(published.status, PublicationStatus.PUBLISHED)
+        self.assertTrue(published.is_current_public_revision)
+        self.assertEqual(published.published_by, self.admin)
+        self.assertEqual(
+            published.snapshot_data['infrastructure']['title'],
+            'Submitted Project Title',
+        )
+        self.project.refresh_from_db()
+        self.assertTrue(self.project.is_published)
+        self.assertTrue(self.project.is_visible_to_public)
+
+    def test_new_publication_atomically_archives_previous_revision(self):
+        first = self._approve_and_publish(
+            create_publication_draft(self.project, self.employee),
+        )
+        self.infrastructure.infrastructure_title = 'Approved Revision Two'
+        self.infrastructure.save(update_fields=['infrastructure_title'])
+        second_draft = create_publication_draft(self.project, self.employee)
+
+        self.assertEqual(second_draft.revision_number, 2)
+        self.assertEqual(second_draft.supersedes_revision, first)
+        second = self._approve_and_publish(second_draft)
+
+        first.refresh_from_db()
+        self.assertEqual(first.status, PublicationStatus.ARCHIVED)
+        self.assertFalse(first.is_current_public_revision)
+        self.assertTrue(second.is_current_public_revision)
+        self.assertEqual(
+            ProjectPublicationRevision.objects.filter(
+                project=self.project,
+                is_current_public_revision=True,
+            ).count(),
+            1,
+        )
+
+    def test_returned_revision_requires_notes_and_can_be_resubmitted(self):
+        submitted = submit_publication_revision(
+            create_publication_draft(self.project, self.employee),
+            self.employee,
+        )
+        with self.assertRaises(PermissionDenied):
+            review_publication_revision(
+                submitted,
+                self.employee,
+                PublicationStatus.APPROVED,
+            )
+        with self.assertRaisesMessage(ValidationError, 'Review notes'):
+            review_publication_revision(
+                submitted,
+                self.admin,
+                PublicationStatus.NEEDS_REVISION,
+            )
+
+        returned = review_publication_revision(
+            submitted,
+            self.admin,
+            PublicationStatus.NEEDS_REVISION,
+            notes='Clarify the public project title.',
+        )
+        self.infrastructure.infrastructure_title = 'Corrected Public Title'
+        self.infrastructure.save(update_fields=['infrastructure_title'])
+        resubmitted = submit_publication_revision(returned, self.employee)
+
+        self.assertEqual(resubmitted.status, PublicationStatus.PENDING_REVIEW)
+        self.assertEqual(resubmitted.review_notes, '')
+        self.assertEqual(
+            resubmitted.snapshot_data['infrastructure']['title'],
+            'Corrected Public Title',
+        )
+
+    def test_active_revision_prevents_duplicate_drafts(self):
+        create_publication_draft(self.project, self.employee)
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            'already has an active publication revision',
+        ):
+            create_publication_draft(self.project, self.employee)
+
+    def test_archiving_current_revision_removes_project_from_publication(self):
+        published = self._approve_and_publish(
+            create_publication_draft(self.project, self.employee),
+        )
+
+        archived = archive_publication_revision(published, self.admin)
+
+        self.assertEqual(archived.status, PublicationStatus.ARCHIVED)
+        self.assertFalse(archived.is_current_public_revision)
+        self.project.refresh_from_db()
+        self.assertFalse(self.project.is_published)
+        self.assertFalse(self.project.is_visible_to_public)
 
 
 class ProjectPublicationSnapshotTests(TestCase):
