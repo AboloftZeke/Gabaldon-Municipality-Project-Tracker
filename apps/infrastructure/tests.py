@@ -41,8 +41,8 @@ class InfrastructureProjectFormTests(TestCase):
             'title': 'Road Improvement Project',
             'description': 'Paving and drainage works along the main road.',
             'category': str(self.category.infrastructure_category_id),
-            'implementing_office': str(self.office.office_id),
-            'contractor': str(self.contractor.contractor_id),
+            'implementing_office': self.office.office_name,
+            'contractor': self.contractor.contractor_name,
             'procurement_method': 'competitive_bidding',
             'award_status': 'awarded',
             'street': 'Main Street',
@@ -55,8 +55,13 @@ class InfrastructureProjectFormTests(TestCase):
             'physical_progress_percentage': '40.00',
             'abc_amount': '1500000.00',
             'contract_price': '1400000.00',
-            'fund_source': str(self.fund_source.fund_source_id),
+            'fund_source': self.fund_source.fund_source_name,
             'actual_expenditure': '500000.00',
+            'posting_date': '2025-10-01',
+            'pre_bid_date': '2025-10-15',
+            'bidding_date': '2025-11-01',
+            'notice_award_date': '2025-11-15',
+            'notice_to_proceed_date': '2025-12-01',
             'duration_days': '365',
         }
         data.update(overrides)
@@ -67,22 +72,13 @@ class InfrastructureProjectFormTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         return form.save(user=self.user)
 
-    def test_form_uses_normalized_dropdowns_and_fixed_location(self):
+    def test_form_uses_text_inputs_for_normalized_lookups_and_fixed_location(self):
         form = InfrastructureProjectForm()
 
         self.assertIsInstance(form.fields['category'], forms.ModelChoiceField)
-        self.assertIsInstance(
-            form.fields['contractor'],
-            forms.ModelChoiceField,
-        )
-        self.assertIsInstance(
-            form.fields['implementing_office'],
-            forms.ModelChoiceField,
-        )
-        self.assertIsInstance(
-            form.fields['fund_source'],
-            forms.ModelChoiceField,
-        )
+        self.assertIsInstance(form.fields['contractor'], forms.CharField)
+        self.assertIsInstance(form.fields['implementing_office'], forms.CharField)
+        self.assertIsInstance(form.fields['fund_source'], forms.CharField)
         self.assertEqual(form.fields['municipality'].initial, 'Gabaldon')
         self.assertEqual(form.fields['province'].initial, 'Nueva Ecija')
 
@@ -123,34 +119,134 @@ class InfrastructureProjectFormTests(TestCase):
         form = InfrastructureProjectForm(instance=infra)
 
         self.assertEqual(form.initial['category'], infra.category_id)
-        self.assertEqual(form.initial['contractor'], infra.contractor_id)
+        self.assertEqual(form.initial['contractor'], self.contractor.contractor_name)
         self.assertEqual(
             form.initial['implementing_office'],
-            infra.implementing_office_id,
+            self.office.office_name,
         )
         self.assertEqual(
             form.initial['fund_source'],
-            self.fund_source.fund_source_id,
+            self.fund_source.fund_source_name,
         )
 
-    def test_edit_can_clear_optional_address_schedule_and_financial_values(self):
+    def test_create_trims_and_creates_normalized_text_lookups(self):
+        infra = self.create_project(
+            contractor='  New Builder Inc.  ',
+            implementing_office='  Municipal Engineering Office  ',
+            fund_source='  General Fund  ',
+        )
+
+        self.assertEqual(infra.contractor.contractor_name, 'New Builder Inc.')
+        self.assertEqual(
+            infra.implementing_office.office_name,
+            'Municipal Engineering Office',
+        )
+        fund_source = infra.financial_records.get().fund_source
+        self.assertEqual(fund_source.fund_source_name, 'General Fund')
+        self.assertEqual(fund_source.fund_source_code, 'general-fund')
+
+    def test_repeated_case_insensitive_values_reuse_lookup_rows(self):
+        first = self.create_project(
+            title='First Project',
+            contractor='Reusable Builder',
+            implementing_office='Reusable Office',
+            fund_source='Reusable Fund',
+        )
+        second = self.create_project(
+            title='Second Project',
+            contractor='  reusable builder  ',
+            implementing_office='REUSABLE OFFICE',
+            fund_source='reusable fund',
+        )
+
+        self.assertEqual(first.contractor_id, second.contractor_id)
+        self.assertEqual(
+            first.implementing_office_id,
+            second.implementing_office_id,
+        )
+        self.assertEqual(
+            first.financial_records.get().fund_source_id,
+            second.financial_records.get().fund_source_id,
+        )
+        self.assertEqual(
+            Contractor.objects.filter(contractor_name__iexact='Reusable Builder').count(),
+            1,
+        )
+
+    def test_edit_with_same_values_does_not_create_lookup_duplicates(self):
+        infra = self.create_project(
+            contractor='Edit Builder',
+            implementing_office='Edit Office',
+            fund_source='Edit Fund',
+        )
+        original_ids = (
+            infra.contractor_id,
+            infra.implementing_office_id,
+            infra.financial_records.get().fund_source_id,
+        )
+
+        form = InfrastructureProjectForm(
+            data=self.valid_data(
+                contractor=' edit builder ',
+                implementing_office='EDIT OFFICE',
+                fund_source='edit fund',
+            ),
+            instance=infra,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save(user=self.user, instance=infra)
+        infra.refresh_from_db()
+
+        self.assertEqual(
+            (
+                infra.contractor_id,
+                infra.implementing_office_id,
+                infra.financial_records.get().fund_source_id,
+            ),
+            original_ids,
+        )
+
+    def test_fund_source_code_is_unique_when_slug_is_already_used(self):
+        FundSource.objects.create(
+            fund_source_code='general-fund',
+            fund_source_name='Different Source',
+        )
+
+        infra = self.create_project(fund_source='General Fund')
+
+        self.assertEqual(
+            infra.financial_records.get().fund_source.fund_source_code,
+            'general-fund-2',
+        )
+
+    def test_existing_blank_code_fund_source_is_reused_and_repaired(self):
+        blank_source = FundSource.objects.create(
+            fund_source_code='',
+            fund_source_name='Legacy Test Fund',
+        )
+
+        infra = self.create_project(fund_source='  legacy test fund  ')
+
+        blank_source.refresh_from_db()
+        self.assertEqual(
+            infra.financial_records.get().fund_source_id,
+            blank_source.fund_source_id,
+        )
+        self.assertEqual(blank_source.fund_source_code, 'legacy-test-fund')
+
+    def test_edit_can_clear_optional_schedule_and_financial_values(self):
         infra = self.create_project(
             posting_date='2026-01-02',
+            pre_bid_date='2026-01-03',
+            bidding_date='2026-01-04',
+            notice_award_date='2026-01-05',
+            notice_to_proceed_date='2026-01-06',
             actual_start_date='2026-01-10',
         )
 
         edit_form = InfrastructureProjectForm(
             data=self.valid_data(
-                street='',
-                barangay='',
-                latitude='',
-                longitude='',
-                posting_date='',
                 actual_start_date='',
-                duration_days='',
-                abc_amount='',
-                contract_price='',
-                fund_source='',
                 actual_expenditure='',
             ),
             instance=infra,
@@ -159,20 +255,10 @@ class InfrastructureProjectFormTests(TestCase):
         edit_form.save(user=self.user, instance=infra)
 
         infra.refresh_from_db()
-        infra.address.refresh_from_db()
         financial = infra.financial_records.get()
         schedule = infra.schedules.get()
 
-        self.assertEqual(infra.address.street, '')
-        self.assertEqual(infra.address.barangay, '')
-        self.assertIsNone(infra.address.latitude)
-        self.assertIsNone(infra.address.longitude)
-        self.assertIsNone(schedule.posting_date)
         self.assertIsNone(schedule.actual_start_date)
-        self.assertIsNone(schedule.duration_days)
-        self.assertIsNone(financial.approved_budget)
-        self.assertIsNone(financial.bid_amount)
-        self.assertIsNone(financial.fund_source)
         self.assertEqual(financial.actual_expenditure, Decimal('0'))
 
     def test_validation_rejects_invalid_ranges_and_date_order(self):
@@ -195,7 +281,7 @@ class InfrastructureProjectFormTests(TestCase):
         self.assertIn('cost_progress_percentage', form.errors)
         self.assertIn('inspection_completion_percentage', form.errors)
         self.assertIn('planned_end_date', form.errors)
-        self.assertIn('bidding_date', form.errors)
+        self.assertIn('pre_bid_date', form.errors)
         self.assertIn('actual_completion_date', form.errors)
 
     def test_inspection_details_require_a_date(self):

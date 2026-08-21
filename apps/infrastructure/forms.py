@@ -1,4 +1,5 @@
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
+from django.utils.text import slugify
 
 from django import forms
 from django.core.files.storage import default_storage
@@ -18,6 +19,84 @@ from apps.system.models import (
     Project_Inspection,
 )
 from apps.system.publication_images import retire_project_images
+
+
+def _get_or_create_named_lookup(model, name_field, raw_name):
+    """Return one normalized lookup row for a user-entered display name."""
+    name = (raw_name or '').strip()
+    if not name:
+        return None
+
+    lookup = {f'{name_field}__iexact': name}
+    existing = model.objects.filter(**lookup).order_by(model._meta.pk.name).first()
+    if existing is not None:
+        return existing
+
+    try:
+        # Keep an IntegrityError inside a savepoint so the fallback query can run.
+        with transaction.atomic():
+            return model.objects.create(**{name_field: name})
+    except IntegrityError:
+        existing = model.objects.filter(**lookup).order_by(model._meta.pk.name).first()
+        if existing is not None:
+            return existing
+        raise
+
+
+def _fund_source_code_candidates(name):
+    base = slugify(name)[:100] or 'fund-source'
+    yield base
+    index = 2
+    while True:
+        suffix = f'-{index}'
+        yield f'{base[:100 - len(suffix)]}{suffix}'
+        index += 1
+
+
+def _ensure_fund_source_code(fund_source):
+    """Repair legacy/test rows whose unique code was saved as blank."""
+    if (fund_source.fund_source_code or '').strip():
+        return fund_source
+
+    for code in _fund_source_code_candidates(fund_source.fund_source_name):
+        if FundSource.objects.exclude(pk=fund_source.pk).filter(
+            fund_source_code=code
+        ).exists():
+            continue
+        try:
+            with transaction.atomic():
+                fund_source.fund_source_code = code
+                fund_source.save(update_fields=['fund_source_code'])
+            return fund_source
+        except IntegrityError:
+            continue
+
+
+def _get_or_create_fund_source(raw_name):
+    name = (raw_name or '').strip()
+    if not name:
+        return None
+
+    lookup = {'fund_source_name__iexact': name}
+    existing = FundSource.objects.filter(**lookup).order_by('fund_source_id').first()
+    if existing is not None:
+        return _ensure_fund_source_code(existing)
+
+    for code in _fund_source_code_candidates(name):
+        try:
+            with transaction.atomic():
+                return FundSource.objects.create(
+                    fund_source_name=name,
+                    fund_source_code=code,
+                )
+        except IntegrityError:
+            # Another request may have created the name, or the generated code
+            # may already belong to a different source.
+            existing = FundSource.objects.filter(**lookup).order_by(
+                'fund_source_id'
+            ).first()
+            if existing is not None:
+                return _ensure_fund_source_code(existing)
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -618,41 +697,16 @@ class InfrastructureProjectForm(forms.Form):
         addr.save()
         infra.address = addr
 
-        contractor_name = (data.get('contractor') or '').strip()
-        contractor_obj = None
-        if contractor_name:
-            contractor_obj = Contractor.objects.filter(
-                contractor_name__iexact=contractor_name
-            ).first()
-            if contractor_obj is None:
-                try:
-                    contractor_obj = Contractor.objects.create(
-                        contractor_name=contractor_name,
-                    )
-                except IntegrityError:
-                    contractor_obj = Contractor.objects.filter(
-                        contractor_name__iexact=contractor_name
-                    ).first()
-                    if contractor_obj is None:
-                        raise
-
-        implementing_office_name = (data.get('implementing_office') or '').strip()
-        implementing_office_obj = None
-        if implementing_office_name:
-            implementing_office_obj = ImplementingOffice.objects.filter(
-                office_name__iexact=implementing_office_name
-            ).first()
-            if implementing_office_obj is None:
-                try:
-                    implementing_office_obj = ImplementingOffice.objects.create(
-                        office_name=implementing_office_name,
-                    )
-                except IntegrityError:
-                    implementing_office_obj = ImplementingOffice.objects.filter(
-                        office_name__iexact=implementing_office_name
-                    ).first()
-                    if implementing_office_obj is None:
-                        raise
+        contractor_obj = _get_or_create_named_lookup(
+            Contractor,
+            'contractor_name',
+            data.get('contractor'),
+        )
+        implementing_office_obj = _get_or_create_named_lookup(
+            ImplementingOffice,
+            'office_name',
+            data.get('implementing_office'),
+        )
 
         infra.contractor = contractor_obj
         infra.implementing_office = implementing_office_obj
@@ -701,23 +755,7 @@ class InfrastructureProjectForm(forms.Form):
 
         abc = data.get('abc_amount')
         bid = data.get('contract_price')
-        fund_source_name = (data.get('fund_source') or '').strip()
-        fund_source_obj = None
-        if fund_source_name:
-            fund_source_obj = FundSource.objects.filter(
-                fund_source_name__iexact=fund_source_name
-            ).first()
-            if fund_source_obj is None:
-                try:
-                    fund_source_obj = FundSource.objects.create(
-                        fund_source_name=fund_source_name,
-                    )
-                except IntegrityError:
-                    fund_source_obj = FundSource.objects.filter(
-                        fund_source_name__iexact=fund_source_name
-                    ).first()
-                    if fund_source_obj is None:
-                        raise
+        fund_source_obj = _get_or_create_fund_source(data.get('fund_source'))
 
         actual_exp = data.get('actual_expenditure')
         existing_fin = infra.financial_records.order_by('-financial_id').first()
