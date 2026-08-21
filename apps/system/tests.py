@@ -1,3 +1,7 @@
+import json
+from datetime import date, time
+from decimal import Decimal
+
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
@@ -13,9 +17,11 @@ from .models import (
     InfrastructureCategory,
     Infrastructure_Schedule,
     Infrastructure_Project,
+    NonInfrastructureCategory,
     Non_Infrastructure_Project,
     Project,
     Project_Image,
+    Project_Inspection,
     ProjectPublicationRevision,
     UserProfile,
 )
@@ -25,6 +31,7 @@ from .publication_workflow import (
     can_transition_publication,
     validate_publication_transition,
 )
+from .publication_snapshots import build_project_publication_snapshot
 
 
 class PublicationWorkflowTests(TestCase):
@@ -159,6 +166,183 @@ class ProjectPublicationRevisionModelTests(TestCase):
             second_revision,
             first_revision.superseded_by_revisions.all(),
         )
+
+
+class ProjectPublicationSnapshotTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='snapshot-author',
+            first_name='Snapshot',
+            last_name='Author',
+            password='password123',
+        )
+
+    def test_builds_complete_json_safe_infrastructure_snapshot(self):
+        project = Project.objects.create(
+            project_type='infrastructure',
+            created_by_user=self.user,
+            updated_by_user=self.user,
+        )
+        category = InfrastructureCategory.objects.create(
+            category_code='roads',
+            category_name='Roads',
+        )
+        address = Address.objects.create(
+            street='Rizal Street',
+            barangay='Bagting',
+            municipality='Gabaldon',
+            province='Nueva Ecija',
+            latitude=Decimal('15.2915000'),
+            longitude=Decimal('121.3386000'),
+        )
+        contractor = Contractor.objects.create(
+            contractor_name='Road Builder Inc.',
+        )
+        office = ImplementingOffice.objects.create(
+            office_name='Municipal Engineering Office',
+        )
+        infrastructure = Infrastructure_Project.objects.create(
+            project=project,
+            infrastructure_code='INF-001',
+            infrastructure_title='Barangay Road Rehabilitation',
+            infrastructure_description='Rehabilitation description.',
+            category=category,
+            address=address,
+            contractor=contractor,
+            implementing_office=office,
+            procurement_method='competitive_bidding',
+            award_status='awarded',
+            planned_start_date=date(2026, 1, 15),
+            planned_end_date=date(2026, 8, 30),
+            cost_progress_percentage=Decimal('42.50'),
+            physical_progress_percentage=Decimal('55.25'),
+        )
+        fund_source = FundSource.objects.create(
+            fund_source_code='ldf',
+            fund_source_name='Local Development Fund',
+            fund_percentage=Decimal('20.00'),
+        )
+        Financial.objects.create(
+            infrastructure=infrastructure,
+            fund_source=fund_source,
+            approved_budget=Decimal('2500000.00'),
+            bid_amount=Decimal('2400000.00'),
+            actual_expenditure=Decimal('500000.00'),
+        )
+        Infrastructure_Schedule.objects.create(
+            infrastructure=infrastructure,
+            posting_date=date(2025, 12, 1),
+            actual_start_date=date(2026, 1, 20),
+            duration_days=180,
+        )
+        Project_Inspection.objects.create(
+            project=project,
+            inspection_date=date(2026, 4, 15),
+            inspected_by_user=self.user,
+            completion_percentage=Decimal('55.25'),
+            findings='Work is on schedule.',
+        )
+        Project_Image.objects.create(
+            project=project,
+            image_url='/media/projects/road-cover.jpg',
+            is_cover=True,
+        )
+        Project_Image.objects.create(
+            project=project,
+            image_url='/media/projects/road-progress.jpg',
+        )
+
+        snapshot = build_project_publication_snapshot(project)
+
+        self.assertEqual(snapshot['schema_version'], 1)
+        self.assertEqual(
+            snapshot['infrastructure']['title'],
+            'Barangay Road Rehabilitation',
+        )
+        self.assertEqual(
+            snapshot['infrastructure']['category']['name'],
+            'Roads',
+        )
+        self.assertEqual(
+            snapshot['infrastructure']['address']['latitude'],
+            '15.2915000',
+        )
+        self.assertEqual(
+            snapshot['financial']['approved_budget'],
+            '2500000.00',
+        )
+        self.assertEqual(snapshot['schedule']['duration_days'], 180)
+        self.assertEqual(
+            snapshot['inspection']['completion_percentage'],
+            '55.25',
+        )
+        self.assertEqual(
+            snapshot['project']['cover_image_url'],
+            '/media/projects/road-cover.jpg',
+        )
+        self.assertEqual(len(snapshot['images']), 2)
+        json.dumps(snapshot)
+
+    def test_builds_complete_json_safe_non_infrastructure_snapshot(self):
+        project = Project.objects.create(
+            project_type='non_infrastructure',
+            created_by_user=self.user,
+            updated_by_user=self.user,
+        )
+        category = NonInfrastructureCategory.objects.create(
+            type_code='health',
+            type_name='Health Program',
+        )
+        address = Address.objects.create(
+            barangay='South Poblacion',
+            municipality='Gabaldon',
+            province='Nueva Ecija',
+        )
+        non_infrastructure = Non_Infrastructure_Project.objects.create(
+            project=project,
+            non_infra_name='Community Health Day',
+            non_infra_category=category,
+            status='planned',
+            description='Free health services.',
+            proponent='Municipal Health Office',
+            beneficiaries=250,
+            event_date=date(2026, 9, 1),
+            start_time=time(8, 30),
+            end_time=time(16, 0),
+            venue_name='Municipal Gymnasium',
+            address=address,
+        )
+        Project_Image.objects.create(
+            project=project,
+            image_url='/media/projects/health-cover.jpg',
+            is_cover=True,
+        )
+
+        snapshot = build_project_publication_snapshot(project)
+
+        content = snapshot['non_infrastructure']
+        self.assertEqual(content['id'], non_infrastructure.pk)
+        self.assertEqual(content['code'], f'NINF-{non_infrastructure.pk:05d}')
+        self.assertEqual(content['title'], 'Community Health Day')
+        self.assertEqual(content['category']['name'], 'Health Program')
+        self.assertEqual(content['status_label'], 'Planned')
+        self.assertEqual(content['event_date'], '2026-09-01')
+        self.assertEqual(content['start_time'], '08:30:00')
+        self.assertEqual(content['beneficiaries'], 250)
+        self.assertEqual(
+            snapshot['project']['cover_image_url'],
+            '/media/projects/health-cover.jpg',
+        )
+        json.dumps(snapshot)
+
+    def test_rejects_unsupported_project_types(self):
+        project = Project.objects.create(project_type='gallery')
+
+        with self.assertRaisesMessage(
+            ValueError,
+            "Unsupported project type: 'gallery'.",
+        ):
+            build_project_publication_snapshot(project)
 
 
 class PublicDashboardInfrastructureDataSourceTests(TestCase):
