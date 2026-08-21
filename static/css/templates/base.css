@@ -30,6 +30,14 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        /* Keep the shared site navigation visible while scrolling. */
+        body > header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 14px rgba(17, 24, 39, 0.12);
+        }
+
         header nav {
             display: flex;
             justify-content: space-between;
