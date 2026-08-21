@@ -109,91 +109,36 @@ class PublicInfrastructureProjectDetailView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        from .publication_public import get_public_project
 
-        from apps.system.models import (
-            Financial,
-            Infrastructure_Project,
-            Infrastructure_Schedule,
-            Project_Image,
-        )
-
-        project = get_object_or_404(
-            Infrastructure_Project.objects.select_related(
-                'project',
-                'project__created_by_user',
-                'address',
-                'category',
-                'contractor',
-                'implementing_office',
-            ).prefetch_related(
-                Prefetch(
-                    'project__images',
-                    queryset=Project_Image.objects.order_by(
-                        '-is_cover',
-                        '-created_at',
-                    ),
-                    to_attr='public_images',
-                ),
-                Prefetch(
-                    'financial_records',
-                    queryset=Financial.objects.select_related(
-                        'fund_source',
-                    ).order_by('-financial_id'),
-                    to_attr='public_financial_records',
-                ),
-                Prefetch(
-                    'schedules',
-                    queryset=Infrastructure_Schedule.objects.order_by(
-                        '-schedule_id',
-                    ),
-                    to_attr='public_schedules',
-                ),
-            ),
-            pk=self.kwargs['pk'],
-        )
-
-        creator = project.project.created_by_user if project.project else None
-        address = project.address
+        project = get_public_project('infrastructure', self.kwargs['pk'])
+        address = project['address']
         has_coordinates = bool(
             address
-            and address.latitude is not None
-            and address.longitude is not None
+            and address.get('latitude') is not None
+            and address.get('longitude') is not None
         )
 
         context.update({
             'public_project': project,
-            'project_code': (
-                project.infrastructure_code
-                or f'INF-{project.pk:05d}'
-            ),
-            'project_images': (
-                project.project.public_images if project.project else []
-            ),
-            'financial': (
-                project.public_financial_records[0]
-                if project.public_financial_records else None
-            ),
-            'schedule': (
-                project.public_schedules[0]
-                if project.public_schedules else None
-            ),
-            'created_by_name': (
-                creator.get_full_name() or creator.username
-                if creator else ''
-            ),
+            'project_code': project['code'],
+            'project_images': project['images'],
+            'financial': project['financial'],
+            'schedule': project['schedule'],
+            'created_by_name': project['created_by_name'],
             'project_gis': {
-                'project_id': project.pk,
+                'project_id': project['record_id'],
                 'project_type': 'infrastructure',
                 'has_coordinates': has_coordinates,
                 'latitude': (
-                    float(address.latitude) if has_coordinates else ''
+                    float(address['latitude']) if has_coordinates else ''
                 ),
                 'longitude': (
-                    float(address.longitude) if has_coordinates else ''
+                    float(address['longitude']) if has_coordinates else ''
                 ),
                 'google_maps_url': (
                     'https://www.google.com/maps'
-                    f'?q={address.latitude},{address.longitude}'
+                    f"?q={address['latitude']},{address['longitude']}"
                     if has_coordinates else ''
                 ),
                 'coordinate_message': (
@@ -211,43 +156,16 @@ class PublicNonInfrastructureProjectDetailView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        from .publication_public import get_public_project
 
-        from apps.system.models import Non_Infrastructure_Project, Project_Image
-
-        project = get_object_or_404(
-            Non_Infrastructure_Project.objects.select_related(
-                'project',
-                'project__created_by_user',
-                'non_infra_category',
-            ).prefetch_related(
-                Prefetch(
-                    'project__images',
-                    queryset=Project_Image.objects.order_by(
-                        '-is_cover',
-                        '-created_at',
-                    ),
-                    to_attr='public_images',
-                )
-            ),
-            pk=self.kwargs['pk'],
-        )
-
-        creator = project.project.created_by_user if project.project else None
+        project = get_public_project('non_infrastructure', self.kwargs['pk'])
 
         context.update({
             'public_project': project,
-            'project_code': f'NINF-{project.pk:05d}',
-            'project_category': (
-                project.non_infra_category.type_name
-                if project.non_infra_category else ''
-            ),
-            'project_images': (
-                project.project.public_images if project.project else []
-            ),
-            'created_by_name': (
-                creator.get_full_name() or creator.username
-                if creator else ''
-            ),
+            'project_code': project['code'],
+            'project_category': project['category'].get('name') or '',
+            'project_images': project['images'],
+            'created_by_name': project['created_by_name'],
         })
         return context
 
@@ -257,362 +175,65 @@ class PublicDashboardView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        from apps.system.models import (
-            Financial,
-            InfrastructureCategory,
-            Infrastructure_Schedule,
-            Infrastructure_Project,
-            Non_Infrastructure_Project,
-            Project_Image,
+        from .publication_public import (
+            infrastructure_dashboard_row,
+            non_infrastructure_dashboard_row,
+            public_projects,
         )
-        from apps.system.models import NonInfrastructureCategory
         from apps.infrastructure.models import (
             InfrastructureProject as LegacyInfrastructureProject,
         )
-
-        infra_qs = Infrastructure_Project.objects.select_related(
-            'project',
-            'project__created_by_user',
-            'address',
-            'category',
-            'contractor',
-            'implementing_office',
-        ).prefetch_related(
-            Prefetch(
-                'project__images',
-                queryset=Project_Image.objects.order_by(
-                    '-is_cover',
-                    '-created_at',
-                ),
-                to_attr='public_images',
-            ),
-            Prefetch(
-                'financial_records',
-                queryset=Financial.objects.select_related(
-                    'fund_source',
-                ).order_by('-financial_id'),
-                to_attr='public_financial_records',
-            ),
-            Prefetch(
-                'schedules',
-                queryset=Infrastructure_Schedule.objects.order_by(
-                    '-schedule_id',
-                ),
-                to_attr='public_schedules',
-            ),
-        ).order_by('-created_at')
-        noninfra_qs = Non_Infrastructure_Project.objects.select_related(
-            'project', 'project__created_by_user', 'non_infra_category'
-        ).prefetch_related(
-            Prefetch(
-                'project__images',
-                queryset=Project_Image.objects.order_by('-is_cover', '-created_at'),
-                to_attr='public_images',
-            )
-        ).order_by('-created_at')
-
-        infra_total = infra_qs.count()
-        noninfra_total = noninfra_qs.count()
+        infra_projects, noninfra_projects = public_projects()
+        infra_total = len(infra_projects)
+        noninfra_total = len(noninfra_projects)
         total_projects = infra_total + noninfra_total
-
-        infra_completed = infra_qs.filter(award_status='completed').count()
-        infra_ongoing = infra_qs.filter(award_status__in=['ongoing_bidding', 'awarded']).count()
-
-        noninfra_completed = noninfra_qs.filter(status='completed').count()
-        noninfra_ongoing = noninfra_qs.filter(status='ongoing').count()
-        noninfra_planned = noninfra_qs.filter(status='planned').count()
-
+        infra_completed = sum(p['award_status'] == 'completed' for p in infra_projects)
+        infra_ongoing = sum(p['award_status'] in ('ongoing_bidding', 'awarded') for p in infra_projects)
+        noninfra_completed = sum(p['status'] == 'completed' for p in noninfra_projects)
+        noninfra_ongoing = sum(p['status'] == 'ongoing' for p in noninfra_projects)
+        noninfra_planned = sum(p['status'] == 'planned' for p in noninfra_projects)
         completed_projects = infra_completed + noninfra_completed
         ongoing_projects = infra_ongoing + noninfra_ongoing
-
         infra_budget_total = sum(
-            (
-                p.public_financial_records[0].approved_budget
-                or p.public_financial_records[0].bid_amount
-                or 0
-            )
-            if p.public_financial_records else 0
-            for p in infra_qs
+            p['financial'].get('approved_budget')
+            or p['financial'].get('contract_price')
+            or 0
+            for p in infra_projects
         )
-        # No Financial record exists for non-infra projects in the normalized schema
-        # (Financial only FKs to Infrastructure_Project right now). Contributes 0
-        # until that's resolved — see MIGRATION_PLAN item 6.
-        noninfra_budget_total = 0
-        total_budget = infra_budget_total + noninfra_budget_total
-
-        if total_projects:
-            portfolio_progress = round((completed_projects / total_projects) * 100)
-        else:
-            portfolio_progress = 0
-
-        rows = []
-
-        # Barangays are a municipal lookup list rather than project data.
-        # Keep all official choices visible, then include any distinct saved
-        # values so migrated/custom records remain filterable.
+        total_budget = infra_budget_total
+        portfolio_progress = (
+            round((completed_projects / total_projects) * 100)
+            if total_projects else 0
+        )
         location_options_map = {
             code: label
             for code, label in LegacyInfrastructureProject.LOCATION_CHOICES
         }
-        for project in infra_qs:
-            if not project.address or not project.address.barangay:
+        for project in infra_projects:
+            barangay = project['address'].get('barangay') or ''
+            if not barangay:
                 continue
-            saved_barangay = project.address.barangay.strip()
+            saved_barangay = barangay.strip()
             saved_key = saved_barangay.lower().replace(' ', '_')
             if saved_key.startswith('bitulok'):
                 saved_key = 'bitulok'
             location_options_map.setdefault(saved_key, saved_barangay)
-
-        infrastructure_category_options = [
-            (
-                f'infra:{category.category_code}',
-                category.category_name,
-            )
-            for category in InfrastructureCategory.objects.filter(
-                is_active=True,
-            ).order_by('category_name')
-        ]
-        noninfrastructure_category_options = [
-            (f'noninfra:{category.type_code}', category.type_name)
-            for category in NonInfrastructureCategory.objects.all().order_by(
-                'type_name',
-            )
-        ]
+        infrastructure_category_options = sorted({
+            (f"infra:{p['category'].get('code', '')}", p['category'].get('name') or '')
+            for p in infra_projects if p['category'].get('code')
+        }, key=lambda item: item[1])
+        noninfrastructure_category_options = sorted({
+            (f"noninfra:{p['category'].get('code', '')}", p['category'].get('name') or '')
+            for p in noninfra_projects if p['category'].get('code')
+        }, key=lambda item: item[1])
         category_options = [
             *infrastructure_category_options,
             *noninfrastructure_category_options,
         ]
-
-        # Add Infrastructure Projects to rows
-        for p in infra_qs:
-            status_key = {
-                'ongoing_bidding': 'ongoing',
-                'awarded': 'ongoing',
-                'completed': 'completed',
-            }.get(p.award_status, p.award_status or 'planned')
-            status_label = p.get_award_status_display() or 'Planned'
-
-            category_name = (
-                p.category.category_name if p.category else ''
-            )
-            location = p.address.barangay if p.address else ''
-            location_key = location.lower().replace(' ', '_')
-            if location_key.startswith('bitulok'):
-                location_key = 'bitulok'
-            creator = (
-                p.project.created_by_user if p.project else None
-            )
-            financial = (
-                p.public_financial_records[0]
-                if p.public_financial_records else None
-            )
-            schedule = (
-                p.public_schedules[0] if p.public_schedules else None
-            )
-            cover_image = (
-                p.project.public_images[0]
-                if p.project and p.project.public_images else None
-            )
-            office_name = (
-                p.implementing_office.office_name
-                if p.implementing_office else ''
-            )
-            contractor_name = (
-                p.contractor.contractor_name if p.contractor else ''
-            )
-            approved_budget = (
-                financial.approved_budget if financial else None
-            )
-            contract_price = (
-                financial.bid_amount if financial else None
-            )
-            budget_amount = approved_budget or contract_price or 0
-            cost_progress = p.cost_progress_percentage
-            physical_progress = p.physical_progress_percentage
-            has_financial = bool(
-                financial and (
-                    approved_budget is not None
-                    or contract_price is not None
-                )
-            )
-            has_progress = (
-                physical_progress is not None
-                or cost_progress is not None
-            )
-            progress = (
-                physical_progress
-                if physical_progress is not None
-                else cost_progress or 0
-            )
-
-            detail_url = '#'
-            try:
-                detail_url = reverse(
-                    'public_infrastructure_project_detail',
-                    args=[p.pk]
-                )
-            except Exception:
-                pass
-
-            rows.append({
-                'record_id': f'infra-{p.pk}',
-                'category': 'infra',
-                'project_category_key': (
-                    f'infra:{p.category.category_code}'
-                    if p.category else ''
-                ),
-                'project_category_label': f'Infrastructure - {category_name}',
-                'type_label': 'Infrastructure',
-                'title': p.infrastructure_title,
-                'cover_image_url': (
-                    cover_image.image_url
-                    if cover_image and cover_image.image_url else ''
-                ),
-                'location_key': location_key,
-                'location': location,
-                'status_key': status_key,
-                'status_label': status_label,
-                'office': office_name,
-                'implementing_office': office_name,
-                'category_label': category_name,
-                'contractor': contractor_name,
-                'procurement_method': p.get_procurement_method_display() or '',
-                'source_of_fund': (
-                    financial.fund_source.fund_source_name
-                    if financial and financial.fund_source else ''
-                ),
-                'budget': budget_amount,
-                'has_financial': has_financial,
-                'budget_amount': budget_amount,
-                'abc_amount': approved_budget or '',
-                'contract_price': contract_price or '',
-                'progress': progress,
-                'has_progress': has_progress,
-                'progress_percentage': progress,
-                'overall_progress_percentage': progress,
-                'cost_progress_percentage': (
-                    cost_progress if cost_progress is not None else ''
-                ),
-                'physical_progress_percentage': (
-                    physical_progress
-                    if physical_progress is not None else ''
-                ),
-                'description': p.infrastructure_description,
-                'planned_start_date': p.planned_start_date,
-                'planned_end_date': p.planned_end_date,
-                'actual_start_date': (
-                    schedule.actual_start_date if schedule else None
-                ),
-                'created_by_name': (
-                    creator.get_full_name() or creator.username
-                    if creator else ''
-                ),
-                'created_at': p.created_at,
-                'updated_at': p.updated_at,
-                'detail_url': detail_url,
-                'hide_financial': False,
-            })
-
-        # Add Non-Infrastructure Projects to rows
-        for p in noninfra_qs:
-            status_key = p.status
-            status_label = p.get_status_display()
-
-            category_code = (
-                p.non_infra_category.type_code
-                if p.non_infra_category else ''
-            )
-            category_name = (
-                p.non_infra_category.type_name
-                if p.non_infra_category else ''
-            )
-
-            creator = p.project.created_by_user if p.project else None
-            cover_image = (
-                p.project.public_images[0]
-                if p.project and p.project.public_images
-                else None
-            )
-
-            rows.append({
-                'record_id': f'noninfra-{p.pk}',
-                'category': 'noninfra',
-                'project_category_key': f'noninfra:{category_code}',
-                'project_category_label': (
-                    f'Non-Infrastructure - {category_name}'
-                    if category_name
-                    else 'Non-Infrastructure'
-                ),
-                'type_label': 'Non-Infrastructure',
-
-                'title': p.non_infra_name,
-                'cover_image_url': (
-                    cover_image.image_url
-                    if cover_image and cover_image.image_url
-                    else ''
-                ),
-
-                'location_key': '',
-                'location': '',
-
-                'status_key': status_key,
-                'status_label': status_label,
-
-                'office': '',
-                'implementing_office': '',
-                'category_label': category_name,
-                'proponent': p.proponent or '',
-                'beneficiaries': p.beneficiaries,
-
-                'contractor': '',
-                'procurement_method': '',
-                'source_of_fund': '',
-
-                'budget': 0,
-                'has_financial': False,
-                'budget_amount': 0,
-                'abc_amount': '',
-                'contract_price': '',
-
-                'progress': 0,
-                'has_progress': False,
-                'progress_percentage': 0,
-                'overall_progress_percentage': '',
-                'cost_progress_percentage': '',
-                'physical_progress_percentage': '',
-
-                'description': p.description,
-
-                'venue_name': p.venue_name or '',
-                'event_date': p.event_date,
-                'start_time': (
-                    p.start_time.strftime('%H:%M')
-                    if p.start_time else ''
-                ),
-                'end_time': (
-                    p.end_time.strftime('%H:%M')
-                    if p.end_time else ''
-                ),
-
-                'planned_start_date': p.event_date,
-                'planned_end_date': None,
-                'actual_start_date': None,
-
-                'created_by_name': (
-                    creator.get_full_name() or creator.username
-                    if creator else ''
-                ),
-
-                'created_at': p.created_at,
-                'updated_at': p.updated_at,
-                'detail_url': reverse(
-                    'public_non_infrastructure_project_detail',
-                    args=[p.pk],
-                ),
-                'hide_financial': False,  # Non-infrastructure can show financial data if available
-            })
-
+        rows = [
+            *(infrastructure_dashboard_row(p) for p in infra_projects),
+            *(non_infrastructure_dashboard_row(p) for p in noninfra_projects),
+        ]
         rows.sort(key=lambda x: x['created_at'], reverse=True)
 
         context.update({

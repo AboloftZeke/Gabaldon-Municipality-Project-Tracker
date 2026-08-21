@@ -1,14 +1,12 @@
 import json
 import os
-from datetime import date
-
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponseNotFound, JsonResponse
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
-from .models import Infrastructure_Project, Non_Infrastructure_Project, Project_Image
+from .publication_public import current_public_revisions, public_projects
 
 STATIC_GIS_DIR = os.path.join(settings.BASE_DIR, "static", "gis")
 ALLOWED_STATIC_LAYERS = {
@@ -55,15 +53,6 @@ def _status_color_key(status):
     return "unknown"
 
 
-def _infer_noninfra_status(noninfra):
-    event_dt = getattr(noninfra, "event_date", None)
-    if event_dt is None:
-        return "planned", "Planned"
-    if event_dt < date.today():
-        return "completed", "Completed"
-    return "planned", "Planned"
-
-
 @require_GET
 def projects_geojson(request):
     project_type = request.GET.get("type")
@@ -76,41 +65,28 @@ def projects_geojson(request):
 
     features = []
 
-    infra_qs = (
-        Infrastructure_Project.objects.select_related(
-            "project", "address", "implementing_office"
-        )
-        .prefetch_related("financial_records__fund_source")
-        .all()
-    )
-
-    for infra in infra_qs:
+    infrastructure, non_infrastructure = public_projects()
+    for infra in infrastructure:
         if project_type and project_type != "infrastructure":
             continue
 
-        address = infra.address
-        if not address or address.latitude is None or address.longitude is None:
+        address = infra["address"]
+        if not address or address.get("latitude") is None or address.get("longitude") is None:
             continue
 
-        status_label = infra.get_award_status_display() or "Planned"
+        status_label = infra["award_status_label"] or "Planned"
         status_key = _status_color_key(status_label)
-        office_name = infra.implementing_office or ""
-
-        financial = infra.financial_records.first()
-        funding_source = ""
-        budget = None
-        if financial:
-            budget = financial.approved_budget or financial.bid_amount
-            if financial.fund_source:
-                funding_source = financial.fund_source.fund_source_name or ""
-
-        project_name = infra.infrastructure_title or "Infrastructure Project"
-        project_code = infra.infrastructure_code or f"INF-{infra.infrastructure_id}"
-        project_year = infra.planned_start_date.year if infra.planned_start_date else ""
+        office_name = infra["implementing_office"].get("name") or ""
+        financial = infra["financial"]
+        funding_source = (financial.get("fund_source") or {}).get("name") or ""
+        budget = financial.get("approved_budget") or financial.get("contract_price")
+        project_name = infra["title"] or "Infrastructure Project"
+        project_code = infra["code"]
+        project_year = infra["planned_start_date"].year if infra["planned_start_date"] else ""
 
         if status_filter and status_key != status_filter:
             continue
-        if barangay_filter and (address.barangay or "").strip().lower() != barangay_filter:
+        if barangay_filter and (address.get("barangay") or "").strip().lower() != barangay_filter:
             continue
         if office_filter and office_filter not in office_name.lower():
             continue
@@ -126,46 +102,45 @@ def projects_geojson(request):
                 "type": "Feature",
                 "geometry": {
                     "type": "Point",
-                    "coordinates": [float(address.longitude), float(address.latitude)],
+                    "coordinates": [float(address["longitude"]), float(address["latitude"])],
                 },
                 "properties": {
-                    "project_id": infra.project.project_id,
-                    "location_id": address.address_id,
+                    "project_id": infra["project_id"],
+                    "location_id": address.get("id"),
                     "name": project_name,
                     "code": project_code,
                     "type": "infrastructure",
                     "status": status_label,
                     "status_key": status_key,
-                    "progress": infra.physical_progress_percentage,
+                    "progress": infra["physical_progress_percentage"],
                     "budget": budget,
                     "funding_source": funding_source,
                     "implementing_office": office_name,
-                    "barangay": address.barangay,
-                    "address": address.street or "",
-                    "detail_url": reverse("engineering_projects:project_detail", kwargs={"pk": infra.infrastructure_id}),
+                    "barangay": address.get("barangay") or "",
+                    "address": address.get("street") or "",
+                    "detail_url": reverse("public_infrastructure_project_detail", kwargs={"pk": infra["record_id"]}),
                 },
             }
         )
 
-    noninfra_qs = Non_Infrastructure_Project.objects.select_related("project", "address").all()
-
-    for noninfra in noninfra_qs:
+    for noninfra in non_infrastructure:
         if project_type and project_type != "non_infrastructure":
             continue
 
-        address = noninfra.address
-        if not address or address.latitude is None or address.longitude is None:
+        address = noninfra["address"]
+        if not address or address.get("latitude") is None or address.get("longitude") is None:
             continue
 
-        status_key, status_label = _infer_noninfra_status(noninfra)
-        project_name = noninfra.non_infra_name or "Non-Infrastructure Project"
-        project_code = f"NINF-{noninfra.non_infra_id}"
-        project_year = noninfra.event_date.year if noninfra.event_date else ""
-        office_name = noninfra.proponent or ""
+        status_key = _status_color_key(noninfra["status"])
+        status_label = noninfra["status_label"]
+        project_name = noninfra["title"] or "Non-Infrastructure Project"
+        project_code = noninfra["code"]
+        project_year = noninfra["event_date"].year if noninfra["event_date"] else ""
+        office_name = noninfra["proponent"]
 
         if status_filter and status_key != status_filter:
             continue
-        if barangay_filter and (address.barangay or "").strip().lower() != barangay_filter:
+        if barangay_filter and (address.get("barangay") or "").strip().lower() != barangay_filter:
             continue
         if office_filter and office_filter not in office_name.lower():
             continue
@@ -179,11 +154,11 @@ def projects_geojson(request):
                 "type": "Feature",
                 "geometry": {
                     "type": "Point",
-                    "coordinates": [float(address.longitude), float(address.latitude)],
+                    "coordinates": [float(address["longitude"]), float(address["latitude"])],
                 },
                 "properties": {
-                    "project_id": noninfra.project.project_id,
-                    "location_id": address.address_id,
+                    "project_id": noninfra["project_id"],
+                    "location_id": address.get("id"),
                     "name": project_name,
                     "code": project_code,
                     "type": "non_infrastructure",
@@ -193,12 +168,9 @@ def projects_geojson(request):
                     "budget": None,
                     "funding_source": "",
                     "implementing_office": office_name,
-                    "barangay": address.barangay,
-                    "address": address.street or noninfra.venue_name or "",
-                    "detail_url": reverse(
-                        "mayor_projects:non_infrastructure_project_detail",
-                        kwargs={"pk": noninfra.non_infra_id},
-                    ),
+                    "barangay": address.get("barangay") or "",
+                    "address": address.get("street") or noninfra["venue_name"],
+                    "detail_url": reverse("public_non_infrastructure_project_detail", kwargs={"pk": noninfra["record_id"]}),
                 },
             }
         )
@@ -212,20 +184,13 @@ def projects_geojson(request):
 
 @require_GET
 def project_photos(request, project_id):
-    photos = Project_Image.objects.filter(project_id=project_id).order_by(
-        "-is_cover",
-        "-created_at",
-    )
-
-    data = [
-        {
-            "id": p.project_image_id,
-            "url": p.image_url,
-            "caption": "",
-            "is_cover": p.is_cover,
-        }
-        for p in photos
-        if p.image_url
-    ]
+    revision = current_public_revisions().filter(project_id=project_id).first()
+    photos = (revision.snapshot_data or {}).get("images", []) if revision else []
+    data = [{
+        "id": photo.get("id"),
+        "url": photo.get("url") or "",
+        "caption": "",
+        "is_cover": bool(photo.get("is_cover")),
+    } for photo in photos if photo.get("url")]
 
     return JsonResponse({"project_id": project_id, "photos": data})

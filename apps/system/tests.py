@@ -35,6 +35,19 @@ from .publication_snapshots import build_project_publication_snapshot
 from .publication_images import retire_project_images
 
 
+def publish_current_snapshot(project):
+    # Reload so model date/time fields assigned as test strings are normalized.
+    project = Project.objects.get(pk=project.pk)
+    return ProjectPublicationRevision.objects.create(
+        project=project,
+        revision_number=1,
+        status=PublicationStatus.PUBLISHED,
+        snapshot_data=build_project_publication_snapshot(project),
+        source_updated_at=project.updated_at,
+        is_current_public_revision=True,
+    )
+
+
 class PublicationWorkflowTests(TestCase):
     def test_workflow_exposes_expected_review_path(self):
         self.assertEqual(
@@ -490,6 +503,7 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             image_url='/media/projects/infrastructure-cover.jpg',
             is_cover=True,
         )
+        self.public_revision = publish_current_snapshot(base_project)
 
     def test_public_dashboard_reads_normalized_infrastructure_relations(self):
         response = self.client.get(reverse('public_dashboard'))
@@ -645,10 +659,11 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertNotContains(response, 'Delete Project')
 
     def test_public_infrastructure_detail_handles_missing_coordinates(self):
-        address = self.infrastructure.address
-        address.latitude = None
-        address.longitude = None
-        address.save(update_fields=['latitude', 'longitude'])
+        snapshot = self.public_revision.snapshot_data
+        snapshot['infrastructure']['address']['latitude'] = None
+        snapshot['infrastructure']['address']['longitude'] = None
+        self.public_revision.snapshot_data = snapshot
+        self.public_revision.save(update_fields=['snapshot_data'])
 
         response = self.client.get(
             reverse(
@@ -661,6 +676,55 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertContains(response, 'Map location unavailable')
         self.assertContains(response, 'Location has not yet been assigned.')
         self.assertNotContains(response, 'id="gabaldon-gis-root"')
+
+    def test_public_surfaces_stay_on_snapshot_until_a_new_revision_is_published(self):
+        self.infrastructure.infrastructure_title = 'Unapproved Edited Title'
+        self.infrastructure.physical_progress_percentage = 99
+        self.infrastructure.save(update_fields=[
+            'infrastructure_title',
+            'physical_progress_percentage',
+        ])
+        self.infrastructure.project.images.create(
+            image_url='/media/projects/unapproved-new-image.jpg',
+        )
+
+        dashboard = self.client.get(reverse('public_dashboard'))
+        detail = self.client.get(reverse(
+            'public_infrastructure_project_detail',
+            args=[self.infrastructure.pk],
+        ))
+        gis = self.client.get(reverse('gis_projects_layer'))
+        photos = self.client.get(reverse(
+            'gis_project_photos',
+            args=[self.infrastructure.project_id],
+        ))
+
+        self.assertContains(dashboard, 'Normalized Road Project')
+        self.assertNotContains(dashboard, 'Unapproved Edited Title')
+        self.assertContains(detail, 'Normalized Road Project')
+        self.assertNotContains(detail, 'Unapproved Edited Title')
+        self.assertEqual(gis.json()['features'][0]['properties']['name'], 'Normalized Road Project')
+        self.assertEqual(gis.json()['features'][0]['properties']['progress'], '55.00')
+        self.assertEqual(
+            [photo['url'] for photo in photos.json()['photos']],
+            ['/media/projects/infrastructure-cover.jpg'],
+        )
+
+    def test_unpublished_project_is_absent_and_its_public_detail_is_404(self):
+        project = Project.objects.create(project_type='infrastructure')
+        unpublished = Infrastructure_Project.objects.create(
+            project=project,
+            infrastructure_title='Internal Draft Project',
+        )
+
+        dashboard = self.client.get(reverse('public_dashboard'))
+        detail = self.client.get(reverse(
+            'public_infrastructure_project_detail',
+            args=[unpublished.pk],
+        ))
+
+        self.assertNotContains(dashboard, 'Internal Draft Project')
+        self.assertEqual(detail.status_code, 404)
 
 
 class PublicDashboardNonInfrastructureStatusTests(TestCase):
@@ -696,6 +760,7 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
                     project=noninfra.project,
                     image_url='/media/projects/ongoing-other.jpg',
                 )
+            publish_current_snapshot(project)
 
     def test_public_dashboard_uses_saved_non_infrastructure_statuses(self):
         response = self.client.get(reverse('public_dashboard'))

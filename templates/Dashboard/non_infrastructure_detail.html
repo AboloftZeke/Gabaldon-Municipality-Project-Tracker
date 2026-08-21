@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ public_project.non_infra_name }} - Gabaldon Transparency Dashboard</title>
+  <title>{{ public_project.title }} - Gabaldon Transparency Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
@@ -39,12 +39,12 @@
         <div class="public-detail__hero-overlay"></div>
         <div class="public-detail__heading-content">
           <p class="public-detail__eyebrow">Public Non-Infrastructure Program · {{ project_code }}</p>
-          <h1>{{ public_project.non_infra_name }}</h1>
+          <h1>{{ public_project.title }}</h1>
           <p>{{ project_category|default:"Uncategorized" }}</p>
         </div>
       </div>
       <div class="public-detail__summary" aria-label="Program summary">
-        <div class="summary-item"><span>Status</span><strong>{{ public_project.get_status_display|default:"N/A" }}</strong></div>
+        <div class="summary-item"><span>Status</span><strong>{{ public_project.status_label|default:"N/A" }}</strong></div>
         <div class="summary-item"><span>Beneficiaries</span><strong>{{ public_project.beneficiaries|default_if_none:"N/A" }}</strong></div>
         <div class="summary-item"><span>Event Date</span><strong>{{ public_project.event_date|date:"F j, Y"|default:"N/A" }}</strong></div>
         <div class="summary-item"><span>Venue</span><strong>{{ public_project.venue_name|default:"N/A" }}</strong></div>
@@ -82,7 +82,7 @@
       <div class="public-image-grid">
         {% for image in project_images %}
         <figure class="public-image-card">
-          <img src="{{ image.image_url }}" alt="{{ public_project.non_infra_name }} photo {{ forloop.counter }}" loading="lazy">
+          <img src="{{ image.image_url }}" alt="{{ public_project.title }} photo {{ forloop.counter }}" loading="lazy">
           {% if image.is_cover %}<figcaption>Cover photo</figcaption>{% endif %}
         </figure>
         {% endfor %}

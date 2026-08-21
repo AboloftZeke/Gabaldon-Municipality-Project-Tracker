@@ -29,8 +29,8 @@ urlpatterns = [
     path('mayor/dashboard/non-infrastructure/', include(('apps.non_infrastructure.urls', 'non_infrastructure'), namespace='mayor_projects')),
 
     # GIS data endpoints
-    path('gis/layers/<str:layer_name>.json', gis_views.static_layer_geojson, name='gis_static_layer'),
     path('gis/layers/projects.json', gis_views.projects_geojson, name='gis_projects_layer'),
+    path('gis/layers/<str:layer_name>.json', gis_views.static_layer_geojson, name='gis_static_layer'),
     path('gis/projects/<int:project_id>/photos.json', gis_views.project_photos, name='gis_project_photos'),
     
     # Legacy admin dashboard URL (kept for compatibility)
