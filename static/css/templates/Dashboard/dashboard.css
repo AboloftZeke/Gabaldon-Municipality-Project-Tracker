@@ -22,10 +22,12 @@ body {
 }
 
 .site-header {
-  position: relative;
-  z-index: 3;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   background: linear-gradient(180deg, #f9faf7, #eef2eb);
   border-bottom: 1px solid #d7ded6;
+  box-shadow: 0 4px 14px rgba(18, 61, 42, 0.08);
 }
 
 .site-header-inner {
