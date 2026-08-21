@@ -666,12 +666,21 @@ class Project_Inspection(models.Model):
         return f'Inspection {self.inspection_id}'
 
 
+class ActiveProjectImageManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
 class Project_Image(models.Model):
     """Simple project image metadata for the normalized ERD."""
     project_image_id = models.BigAutoField(primary_key=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='images')
     image_url = models.URLField(max_length=500, blank=True, null=True)
     is_cover = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    removed_at = models.DateTimeField(null=True, blank=True)
+    objects = ActiveProjectImageManager()
+    all_objects = models.Manager()
     # Removed `image_name` and `caption` fields to simplify image storage.
     # Use `image_url` and `created_at` to identify/label images. Run migrations after this change.
     created_at = models.DateTimeField(auto_now_add=True)

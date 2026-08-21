@@ -11,6 +11,7 @@ from apps.system.models import (
     Project,
     Project_Image,
 )
+from apps.system.publication_images import retire_project_images
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -199,7 +200,7 @@ class NonInfrastructureProjectForm(forms.Form):
                     image_ids.append(int(image_id))
 
             if image_ids:
-                project.images.filter(pk__in=image_ids).delete()
+                retire_project_images(project, image_ids)
 
         uploaded_files = []
 

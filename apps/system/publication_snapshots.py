@@ -41,7 +41,10 @@ def _address_data(address):
 
 
 def _image_data(project):
-    images = project.images.order_by('-is_cover', '-created_at')
+    images = project.images.filter(is_active=True).order_by(
+        '-is_cover',
+        '-created_at',
+    )
     return [
         {
             'id': image.pk,

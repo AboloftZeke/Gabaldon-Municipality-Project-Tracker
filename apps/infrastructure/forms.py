@@ -17,6 +17,7 @@ from apps.system.models import (
     Project_Image,
     Project_Inspection,
 )
+from apps.system.publication_images import retire_project_images
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -462,7 +463,7 @@ class InfrastructureProjectForm(forms.Form):
             if image_id.strip().isdigit()
         ]
         if image_ids:
-            project.images.filter(pk__in=image_ids).delete()
+            retire_project_images(project, image_ids)
 
         raw_files = []
         if hasattr(self, 'files') and self.files:

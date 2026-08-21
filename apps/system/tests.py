@@ -32,6 +32,7 @@ from .publication_workflow import (
     validate_publication_transition,
 )
 from .publication_snapshots import build_project_publication_snapshot
+from .publication_images import retire_project_images
 
 
 class PublicationWorkflowTests(TestCase):
@@ -343,6 +344,88 @@ class ProjectPublicationSnapshotTests(TestCase):
             "Unsupported project type: 'gallery'.",
         ):
             build_project_publication_snapshot(project)
+
+
+class ProjectPublicationImageRetentionTests(TestCase):
+    def setUp(self):
+        self.project = Project.objects.create(project_type='infrastructure')
+        self.infrastructure = Infrastructure_Project.objects.create(
+            project=self.project,
+            infrastructure_title='Image Retention Project',
+        )
+
+    def test_revision_referenced_image_is_retired_not_deleted(self):
+        image = Project_Image.objects.create(
+            project=self.project,
+            image_url='/media/projects/published-cover.jpg',
+            is_cover=True,
+        )
+        ProjectPublicationRevision.objects.create(
+            project=self.project,
+            revision_number=1,
+            snapshot_data={
+                'images': [{
+                    'id': image.pk,
+                    'url': image.image_url,
+                    'is_cover': True,
+                }],
+            },
+        )
+
+        result = retire_project_images(self.project, [image.pk])
+
+        self.assertEqual(result, {'retired': 1, 'deleted': 0})
+        self.assertFalse(Project_Image.objects.filter(pk=image.pk).exists())
+        retained = Project_Image.all_objects.get(pk=image.pk)
+        self.assertFalse(retained.is_active)
+        self.assertFalse(retained.is_cover)
+        self.assertIsNotNone(retained.removed_at)
+        self.assertEqual(
+            retained.image_url,
+            '/media/projects/published-cover.jpg',
+        )
+
+    def test_unreferenced_image_metadata_is_deleted(self):
+        image = Project_Image.objects.create(
+            project=self.project,
+            image_url='/media/projects/unused.jpg',
+        )
+
+        result = retire_project_images(self.project, [image.pk])
+
+        self.assertEqual(result, {'retired': 0, 'deleted': 1})
+        self.assertFalse(
+            Project_Image.all_objects.filter(pk=image.pk).exists(),
+        )
+
+    def test_new_snapshots_exclude_retired_images(self):
+        retained_image = Project_Image.objects.create(
+            project=self.project,
+            image_url='/media/projects/old-version.jpg',
+        )
+        active_image = Project_Image.objects.create(
+            project=self.project,
+            image_url='/media/projects/current-version.jpg',
+            is_cover=True,
+        )
+        ProjectPublicationRevision.objects.create(
+            project=self.project,
+            revision_number=1,
+            snapshot_data={
+                'images': [{
+                    'id': retained_image.pk,
+                    'url': retained_image.image_url,
+                }],
+            },
+        )
+        retire_project_images(self.project, [retained_image.pk])
+
+        snapshot = build_project_publication_snapshot(self.project)
+
+        self.assertEqual(
+            [image['url'] for image in snapshot['images']],
+            ['/media/projects/current-version.jpg'],
+        )
 
 
 class PublicDashboardInfrastructureDataSourceTests(TestCase):
