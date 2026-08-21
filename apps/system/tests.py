@@ -1,7 +1,9 @@
 import json
+import importlib
 from datetime import date, time
 from decimal import Decimal
 
+from django.apps import apps as django_apps
 from django.test import TestCase
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
@@ -777,6 +779,171 @@ class ProjectPublicationSnapshotTests(TestCase):
             "Unsupported project type: 'gallery'.",
         ):
             build_project_publication_snapshot(project)
+
+
+class ProjectPublicationBackfillMigrationTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.migration = importlib.import_module(
+            'apps.system.migrations.0027_backfill_published_revisions',
+        )
+
+    def test_backfills_complete_current_revisions_for_existing_projects(self):
+        author = User.objects.create_user(
+            username='existing-author',
+            first_name='Existing',
+            last_name='Author',
+        )
+        infrastructure_project = Project.objects.create(
+            project_type='infrastructure',
+            created_by_user=author,
+        )
+        infrastructure = Infrastructure_Project.objects.create(
+            project=infrastructure_project,
+            infrastructure_title='Existing Road Project',
+            procurement_method='competitive_bidding',
+            award_status='awarded',
+        )
+        Financial.objects.create(
+            infrastructure=infrastructure,
+            approved_budget=Decimal('1000000.00'),
+        )
+        Project_Image.objects.create(
+            project=infrastructure_project,
+            image_url='/media/projects/existing-road.jpg',
+            is_cover=True,
+        )
+
+        non_infrastructure_project = Project.objects.create(
+            project_type='non_infrastructure',
+            created_by_user=author,
+        )
+        non_infrastructure = Non_Infrastructure_Project.objects.create(
+            project=non_infrastructure_project,
+            non_infra_name='Existing Community Program',
+            status='ongoing',
+        )
+
+        self.migration.backfill_published_revisions(django_apps, None)
+
+        infrastructure_revision = ProjectPublicationRevision.objects.get(
+            project=infrastructure_project,
+        )
+        self.assertEqual(infrastructure_revision.status, 'published')
+        self.assertTrue(infrastructure_revision.is_current_public_revision)
+        self.assertEqual(
+            infrastructure_revision.snapshot_data['infrastructure']['title'],
+            'Existing Road Project',
+        )
+        self.assertEqual(
+            infrastructure_revision.snapshot_data['financial'][
+                'approved_budget'
+            ],
+            '1000000.00',
+        )
+        self.assertEqual(
+            infrastructure_revision.snapshot_data['project'][
+                'cover_image_url'
+            ],
+            '/media/projects/existing-road.jpg',
+        )
+
+        non_infrastructure_revision = ProjectPublicationRevision.objects.get(
+            project=non_infrastructure_project,
+        )
+        self.assertEqual(
+            non_infrastructure_revision.snapshot_data[
+                'non_infrastructure'
+            ]['status_label'],
+            'Ongoing',
+        )
+        infrastructure_project.refresh_from_db()
+        non_infrastructure_project.refresh_from_db()
+        self.assertTrue(infrastructure_project.is_published)
+        self.assertTrue(infrastructure_project.is_visible_to_public)
+        self.assertTrue(non_infrastructure_project.is_published)
+        self.assertTrue(non_infrastructure_project.is_visible_to_public)
+
+    def test_is_idempotent_and_preserves_existing_workflow_revisions(self):
+        existing_project = Project.objects.create(
+            project_type='infrastructure',
+        )
+        Infrastructure_Project.objects.create(
+            project=existing_project,
+            infrastructure_title='Already in Workflow',
+        )
+        existing_revision = ProjectPublicationRevision.objects.create(
+            project=existing_project,
+            revision_number=1,
+            status='draft',
+            snapshot_data={'existing': True},
+        )
+        backfill_project = Project.objects.create(
+            project_type='non_infrastructure',
+        )
+        Non_Infrastructure_Project.objects.create(
+            project=backfill_project,
+            non_infra_name='Needs Backfill',
+        )
+
+        self.migration.backfill_published_revisions(django_apps, None)
+        self.migration.backfill_published_revisions(django_apps, None)
+
+        self.assertEqual(
+            ProjectPublicationRevision.objects.filter(
+                project=existing_project,
+            ).count(),
+            1,
+        )
+        existing_revision.refresh_from_db()
+        self.assertEqual(existing_revision.snapshot_data, {'existing': True})
+        self.assertEqual(
+            ProjectPublicationRevision.objects.filter(
+                project=backfill_project,
+            ).count(),
+            1,
+        )
+
+    def test_reverse_removes_only_generated_revisions(self):
+        backfill_project = Project.objects.create(
+            project_type='non_infrastructure',
+        )
+        Non_Infrastructure_Project.objects.create(
+            project=backfill_project,
+            non_infra_name='Generated Revision',
+        )
+        existing_project = Project.objects.create(
+            project_type='infrastructure',
+        )
+        Infrastructure_Project.objects.create(
+            project=existing_project,
+            infrastructure_title='Manual Revision',
+        )
+        manual_revision = ProjectPublicationRevision.objects.create(
+            project=existing_project,
+            revision_number=1,
+            status='published',
+            snapshot_data={'manual': True},
+            is_current_public_revision=True,
+        )
+
+        self.migration.backfill_published_revisions(django_apps, None)
+        self.migration.remove_backfilled_revisions(django_apps, None)
+
+        self.assertFalse(
+            ProjectPublicationRevision.objects.filter(
+                project=backfill_project,
+            ).exists(),
+        )
+        self.assertTrue(
+            ProjectPublicationRevision.objects.filter(
+                pk=manual_revision.pk,
+            ).exists(),
+        )
+        backfill_project.refresh_from_db()
+        self.assertFalse(backfill_project.is_published)
+        self.assertFalse(backfill_project.is_visible_to_public)
 
 
 class ProjectPublicationImageRetentionTests(TestCase):
