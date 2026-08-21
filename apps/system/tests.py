@@ -523,6 +523,39 @@ class AdminPublicationReviewViewTests(TestCase):
         self.assertContains(detail, '/media/projects/admin-review-cover.jpg')
         self.assertContains(detail, 'Record Decision')
 
+    def test_admin_can_return_from_working_project_without_role_403(self):
+        self.client.force_login(self.admin)
+        review_url = reverse(
+            'publication_revision_detail',
+            args=[self.revision.pk],
+        )
+        working_url = reverse(
+            'engineering_projects:project_detail',
+            args=[self.infrastructure.pk],
+        )
+
+        review = self.client.get(review_url)
+        working = self.client.get(
+            working_url,
+            {'from_review': self.revision.pk},
+        )
+        project_list = self.client.get(reverse(
+            'engineering_projects:project_list',
+        ))
+        dashboard = self.client.get(reverse('engineering_dashboard'))
+
+        self.assertContains(
+            review,
+            f'{working_url}?from_review={self.revision.pk}',
+        )
+        self.assertEqual(working.status_code, 200)
+        self.assertContains(working, 'Back to Publication Review')
+        self.assertContains(working, f'href="{review_url}"')
+        self.assertNotContains(working, 'Edit Project')
+        self.assertNotContains(working, 'Delete Project')
+        self.assertEqual(project_list.status_code, 200)
+        self.assertEqual(dashboard.status_code, 200)
+
     def test_review_workspace_and_actions_are_admin_only(self):
         self.client.force_login(self.employee)
 
