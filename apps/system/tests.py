@@ -1613,4 +1613,3 @@ class UserCreateConfirmViewTests(TestCase):
         self.assertEqual(created_user.profile.department, 'mayor')
         self.assertTrue(created_user.profile.must_change_password)
 
-
