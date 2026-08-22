@@ -187,6 +187,7 @@ class PublicInfrastructureProjectDetailView(TemplateView):
                     if project.project else ''
                 ),
                 'project_type': 'infrastructure',
+                'project_name': project.infrastructure_title,
                 'has_coordinates': has_coordinates,
                 'latitude': (
                     float(address.latitude) if has_coordinates else ''
