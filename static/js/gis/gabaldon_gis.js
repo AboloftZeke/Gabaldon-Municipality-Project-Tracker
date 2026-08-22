@@ -48,7 +48,7 @@
   // ---------------------------------------------------------------
   // Map init
   // ---------------------------------------------------------------
-  const GABALDON_CENTER = [15.365, 121.16]; // approx municipality center; adjust once real boundary data is loaded
+  const GABALDON_CENTER = [15.4540, 121.3371]; // Gabaldon, Nueva Ecija municipality center
   const focusProjectId = (root.dataset.focusProjectId || "").trim();
   const focusProjectType = (root.dataset.focusProjectType || "").trim();
   const focusLat = Number.parseFloat(root.dataset.focusLat);
