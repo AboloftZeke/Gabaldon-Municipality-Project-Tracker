@@ -182,7 +182,10 @@ class PublicInfrastructureProjectDetailView(TemplateView):
                 if creator else ''
             ),
             'project_gis': {
-                'project_id': project.pk,
+                'project_id': (
+                    project.project.project_id
+                    if project.project else ''
+                ),
                 'project_type': 'infrastructure',
                 'has_coordinates': has_coordinates,
                 'latitude': (
