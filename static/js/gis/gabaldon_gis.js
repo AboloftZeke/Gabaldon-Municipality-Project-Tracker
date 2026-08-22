@@ -51,6 +51,7 @@
   const GABALDON_CENTER = [15.4540, 121.3371]; // Gabaldon, Nueva Ecija municipality center
   const focusProjectId = (root.dataset.focusProjectId || "").trim();
   const focusProjectType = (root.dataset.focusProjectType || "").trim();
+  const focusProjectName = (root.dataset.focusProjectName || "Current project").trim();
   const focusLat = Number.parseFloat(root.dataset.focusLat);
   const focusLng = Number.parseFloat(root.dataset.focusLng);
   const hasFocusCoordinates = Number.isFinite(focusLat) && Number.isFinite(focusLng);
@@ -119,6 +120,7 @@
   let allBarangayNames = [];
   let projectFeaturesCache = []; // last-fetched project GeoJSON features
   const projectMarkersByKey = new Map();
+  let focusFallbackMarker = null;
 
   // ---------------------------------------------------------------
   // Fetch helper
@@ -393,7 +395,30 @@
     );
 
     if (!marker) {
-      if (hasFocusCoordinates) map.setView([focusLat, focusLng], 16);
+      if (!hasFocusCoordinates) return;
+
+      map.setView([focusLat, focusLng], 16);
+
+      // A project can have saved coordinates before it is returned by the
+      // aggregate GIS endpoint. Keep that project's location visible instead
+      // of showing only an unexplained zoomed-in map.
+      if (!focusFallbackMarker) {
+        const type = focusProjectType === "non_infrastructure"
+          ? "non_infrastructure"
+          : "infrastructure";
+        focusFallbackMarker = L.marker([focusLat, focusLng], {
+          icon: projectMarkerIcon({ type, status_key: "unknown" }),
+        })
+          .addTo(map)
+          .bindPopup(
+            `<div class="gis-popup gis-popup-project">
+              <h4>${escapeHtml(focusProjectName || "Current project")}</h4>
+              <p>Saved project location</p>
+            </div>`
+          );
+      }
+
+      focusFallbackMarker.openPopup();
       return;
     }
 
