@@ -388,11 +388,11 @@
   }
 
   function focusConfiguredProject() {
-    if (!focusProjectId || !focusProjectType) return;
+    if (!hasFocusCoordinates) return;
 
-    const marker = projectMarkersByKey.get(
-      `${focusProjectType}:${focusProjectId}`
-    );
+    const marker = focusProjectId && focusProjectType
+      ? projectMarkersByKey.get(`${focusProjectType}:${focusProjectId}`)
+      : null;
 
     if (!marker) {
       if (!hasFocusCoordinates) return;
