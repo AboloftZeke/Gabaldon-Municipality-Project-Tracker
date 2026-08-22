@@ -458,6 +458,10 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
         # GIS DATA
         # ---------------------------------------------------------
         context['project_gis'] = {
+            'project_id': (
+                infra.project.project_id
+                if infra and infra.project else ''
+            ),
             'has_coordinates': has_coordinates,
 
             'latitude': (
@@ -502,7 +506,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
 
             'project_code': context['project_code'],
 
-            'project_type': 'Infrastructure',
+            'project_type': 'infrastructure',
 
             'description': description,
 
