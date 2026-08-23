@@ -1,5 +1,9 @@
 import json
 import os
+from functools import lru_cache
+from urllib.parse import urlencode
+from urllib.request import urlopen
+
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponseNotFound, JsonResponse
@@ -9,6 +13,11 @@ from django.views.decorators.http import require_GET
 from .publication_public import current_public_revisions, public_projects
 
 STATIC_GIS_DIR = os.path.join(settings.BASE_DIR, "static", "gis")
+AUTHORITATIVE_BARANGAY_SERVICE = (
+    "https://ulap-nga.georisk.gov.ph/arcgis/rest/services/"
+    "PSA/BarangayPopMF/MapServer/0/query"
+)
+
 ALLOWED_STATIC_LAYERS = {
     "barangays": "barangays.geojson",
     "roads": "roads.geojson",
@@ -18,8 +27,55 @@ ALLOWED_STATIC_LAYERS = {
 }
 
 
+@lru_cache(maxsize=1)
+def authoritative_gabaldon_barangays():
+    """Return real Gabaldon barangay polygons from the GeoRisk/PSA service."""
+    params = urlencode(
+        {
+            "where": "prov_name = 'Nueva Ecija' AND city_name LIKE '%Gabaldon%'",
+            "outFields": "brgy_name,brgy_code,psgc_10d,city_name,prov_name",
+            "returnGeometry": "true",
+            "f": "geojson",
+        }
+    )
+
+    try:
+        with urlopen(f"{AUTHORITATIVE_BARANGAY_SERVICE}?{params}", timeout=20) as response:
+            data = json.load(response)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+    if data.get("type") != "FeatureCollection":
+        return None
+
+    for feature in data.get("features", []):
+        properties = feature.setdefault("properties", {})
+        properties["name"] = (
+            properties.get("brgy_name")
+            or properties.get("name")
+            or "Unnamed barangay"
+        )
+        properties["is_placeholder"] = False
+
+    data["_source"] = "GeoRisk Philippines / Philippine Statistics Authority"
+    return data
+
+
 @require_GET
 def static_layer_geojson(request, layer_name):
+    if layer_name == "barangays":
+        data = authoritative_gabaldon_barangays()
+        if data is not None:
+            return JsonResponse(data, safe=False)
+        return JsonResponse(
+            {
+                "type": "FeatureCollection",
+                "features": [],
+                "_error": "Authoritative Gabaldon barangay boundaries are unavailable.",
+            },
+            status=503,
+        )
+
     filename = ALLOWED_STATIC_LAYERS.get(layer_name)
     if not filename:
         return HttpResponseNotFound("Unknown GIS layer.")

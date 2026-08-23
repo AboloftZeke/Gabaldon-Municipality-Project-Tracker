@@ -129,6 +129,7 @@ class PublicInfrastructureProjectDetailView(TemplateView):
             'project_gis': {
                 'project_id': project['record_id'],
                 'project_type': 'infrastructure',
+                'project_name': project['title'],
                 'has_coordinates': has_coordinates,
                 'latitude': (
                     float(address['latitude']) if has_coordinates else ''
