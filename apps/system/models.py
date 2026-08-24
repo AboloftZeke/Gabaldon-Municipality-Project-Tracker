@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+import uuid
 
 from .publication_workflow import PublicationStatus
 
@@ -134,6 +135,36 @@ class PasswordChangeHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.get_method_display()} - {self.changed_at.strftime('%Y-%m-%d %H:%M')}"
+
+
+class LoginOTPChallenge(models.Model):
+    """Short-lived, hashed email verification challenge for a pending login."""
+
+    challenge_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='login_otp_challenges',
+    )
+    code_hash = models.CharField(max_length=128)
+    expires_at = models.DateTimeField()
+    attempts_remaining = models.PositiveSmallIntegerField(default=5)
+    consumed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['expires_at', 'consumed_at']),
+        ]
+
+    def __str__(self):
+        return f'Login verification for user {self.user_id}'
 
 
 class Address(models.Model):

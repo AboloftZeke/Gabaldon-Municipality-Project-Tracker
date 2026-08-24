@@ -181,6 +181,16 @@ The provided `.env.example` shows the required variables; credentials must not
 be committed to source control. Reset links expire after 24 hours by default,
 configurable with `PASSWORD_RESET_TIMEOUT`.
 
+### Email login verification
+
+After valid username and password credentials, staff users receive a one-time
+six-digit code at their registered email address. Codes are generated with a
+cryptographically secure generator, stored only as password hashes, expire
+after five minutes, allow five attempts, and are invalidated when used or
+replaced. Resends have a 60-second cooldown and are limited to five codes per
+15-minute window. These limits can be adjusted using the `LOGIN_OTP_*`
+variables documented in `.env.example`.
+
 ## Security Notes
 
 ⚠️ **Development Only Settings**

@@ -1,7 +1,7 @@
 import json
 import importlib
 import re
-from datetime import date, time
+from datetime import date, time, timedelta
 from decimal import Decimal
 
 from django.apps import apps as django_apps
@@ -11,6 +11,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.utils import timezone
 from .forms import CustomUserCreationForm
 from .models import (
     Address,
@@ -21,6 +22,7 @@ from .models import (
     InfrastructureCategory,
     Infrastructure_Schedule,
     Infrastructure_Project,
+    LoginOTPChallenge,
     NonInfrastructureCategory,
     Non_Infrastructure_Project,
     Project,
@@ -1822,7 +1824,184 @@ class PublicPasswordResetTests(TestCase):
         })
         self.assertRedirects(
             login_response,
+            reverse('login_otp_verify'),
+            fetch_redirect_response=False,
+        )
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    LOGIN_OTP_TIMEOUT=300,
+    LOGIN_OTP_MAX_ATTEMPTS=5,
+    LOGIN_OTP_RESEND_COOLDOWN=60,
+    LOGIN_OTP_RATE_LIMIT=5,
+    LOGIN_OTP_RATE_WINDOW=900,
+)
+class LoginOTPTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='otp-user',
+            email='otp-user@example.com',
+            password='ValidLoginPass!2026',
+            is_staff=True,
+        )
+        UserFlag.objects.update_or_create(
+            user=self.user,
+            defaults={'department': 'engineer'},
+        )
+
+    def _start_login(self):
+        return self.client.post(reverse('login'), {
+            'username': self.user.username,
+            'password': 'ValidLoginPass!2026',
+        })
+
+    def _emailed_code(self, index=-1):
+        match = re.search(r'\b(\d{6})\b', mail.outbox[index].body)
+        self.assertIsNotNone(match)
+        return match.group(1)
+
+    def test_valid_credentials_send_hashed_otp_without_authenticating(self):
+        response = self._start_login()
+
+        self.assertRedirects(
+            response,
+            reverse('login_otp_verify'),
+            fetch_redirect_response=False,
+        )
+        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertEqual(len(mail.outbox), 1)
+        code = self._emailed_code()
+        challenge = LoginOTPChallenge.objects.get()
+        self.assertNotEqual(challenge.code_hash, code)
+        self.assertNotIn(code, challenge.code_hash)
+        self.assertEqual(challenge.attempts_remaining, 5)
+
+    def test_correct_code_is_one_time_and_starts_authenticated_session(self):
+        self._start_login()
+        code = self._emailed_code()
+
+        response = self.client.post(
+            reverse('login_otp_verify'),
+            {'code': code},
+        )
+
+        self.assertRedirects(
+            response,
             reverse('engineering_dashboard'),
+            fetch_redirect_response=False,
+        )
+        self.assertEqual(
+            int(self.client.session['_auth_user_id']),
+            self.user.pk,
+        )
+        challenge = LoginOTPChallenge.objects.get()
+        self.assertIsNotNone(challenge.consumed_at)
+        self.client.logout()
+        reused = self.client.post(
+            reverse('login_otp_verify'),
+            {'code': code},
+        )
+        self.assertContains(reused, 'Invalid or expired verification code.')
+
+    def test_five_invalid_attempts_lock_the_challenge(self):
+        self._start_login()
+
+        for _ in range(5):
+            response = self.client.post(
+                reverse('login_otp_verify'),
+                {'code': '000000'},
+            )
+            self.assertContains(
+                response,
+                'Invalid or expired verification code.',
+            )
+
+        challenge = LoginOTPChallenge.objects.get()
+        self.assertEqual(challenge.attempts_remaining, 0)
+        self.assertIsNotNone(challenge.consumed_at)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_expired_challenge_cannot_authenticate(self):
+        self._start_login()
+        code = self._emailed_code()
+        LoginOTPChallenge.objects.update(
+            expires_at=timezone.now() - timedelta(seconds=1),
+        )
+
+        response = self.client.post(
+            reverse('login_otp_verify'),
+            {'code': code},
+        )
+
+        self.assertContains(response, 'Invalid or expired verification code.')
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_resend_cooldown_does_not_generate_another_code(self):
+        self._start_login()
+
+        response = self.client.post(
+            reverse('login_otp_resend'),
+            follow=True,
+        )
+
+        self.assertContains(response, 'Please wait before requesting another code.')
+        self.assertEqual(LoginOTPChallenge.objects.count(), 1)
+        self.assertEqual(len(mail.outbox), 1)
+
+    @override_settings(LOGIN_OTP_RESEND_COOLDOWN=0)
+    def test_resend_invalidates_previous_code(self):
+        self._start_login()
+        first_code = self._emailed_code()
+        first_challenge = LoginOTPChallenge.objects.get()
+
+        response = self.client.post(reverse('login_otp_resend'))
+
+        self.assertRedirects(
+            response,
+            reverse('login_otp_verify'),
+            fetch_redirect_response=False,
+        )
+        first_challenge.refresh_from_db()
+        self.assertIsNotNone(first_challenge.consumed_at)
+        self.assertEqual(LoginOTPChallenge.objects.count(), 2)
+        self.assertNotEqual(first_code, self._emailed_code())
+
+    @override_settings(
+        LOGIN_OTP_RESEND_COOLDOWN=0,
+        LOGIN_OTP_RATE_LIMIT=2,
+    )
+    def test_generation_rate_limit_blocks_excess_resends(self):
+        self._start_login()
+        self.client.post(reverse('login_otp_resend'))
+
+        response = self.client.post(
+            reverse('login_otp_resend'),
+            follow=True,
+        )
+
+        self.assertContains(
+            response,
+            'Too many verification codes requested. Please try again later.',
+        )
+        self.assertEqual(LoginOTPChallenge.objects.count(), 2)
+        self.assertEqual(len(mail.outbox), 2)
+
+    def test_mandatory_password_change_happens_after_otp(self):
+        UserFlag.objects.filter(user=self.user).update(
+            must_change_password=True,
+        )
+        self._start_login()
+
+        response = self.client.post(
+            reverse('login_otp_verify'),
+            {'code': self._emailed_code()},
+        )
+
+        self.assertRedirects(
+            response,
+            reverse('password_change'),
             fetch_redirect_response=False,
         )
 

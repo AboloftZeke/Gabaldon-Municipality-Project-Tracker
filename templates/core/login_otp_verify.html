@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Verify Login - Municipality Project Tracker{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/templates/registration/password_reset_confirm.css' %}">{% endblock %}
+{% block show_header %}{% endblock %}
+{% block show_footer %}{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="reset-form-wrapper">
+        <h1 class="form-title">Verify Your Login</h1>
+        <p class="form-subtitle">Enter the six-digit verification code sent to your registered email address. The code expires in five minutes.</p>
+
+        {% if error %}<div class="error-messages">{{ error }}</div>{% endif %}
+
+        <form method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="code" class="required">Verification Code</label>
+                <input type="text" id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required autofocus>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Verify</button>
+            </div>
+        </form>
+
+        <form method="post" action="{% url 'login_otp_resend' %}">
+            {% csrf_token %}
+            <button type="submit" class="back-link">Resend Code</button>
+        </form>
+        <a href="{% url 'login' %}" class="back-link">Cancel and Return to Login</a>
+    </div>
+</div>
+{% endblock %}

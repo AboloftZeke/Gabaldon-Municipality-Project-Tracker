@@ -23,6 +23,18 @@ from .forms import (
 )
 import json
 
+from .login_otp import (
+    OTPCooldownError,
+    OTPDeliveryError,
+    OTPRateLimitError,
+    active_challenge,
+    issue_login_otp,
+    verify_login_otp,
+)
+
+
+PENDING_LOGIN_OTP_SESSION_KEY = 'pending_login_otp_challenge'
+
 
 def _department_for_user(user):
     profile = getattr(user, 'profile', None)
@@ -31,6 +43,19 @@ def _department_for_user(user):
 
 def _password_history_model():
     return User._meta.get_field('password_changes').related_model
+
+
+def _redirect_authenticated_user(user):
+    if getattr(getattr(user, 'flags', None), 'must_change_password', False):
+        return redirect('password_change')
+    if user.is_superuser:
+        return redirect('admin_dashboard')
+    department = _department_for_user(user)
+    if department == 'engineer':
+        return redirect('engineering_dashboard')
+    if department == 'mayor':
+        return redirect('mayor_dashboard')
+    return redirect('admin_dashboard')
 
 
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -70,32 +95,101 @@ class LoginView(View):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            login(request, user)
-
-            department = _department_for_user(user)
-
-            if getattr(getattr(user, 'flags', None), 'must_change_password', False):
-                return redirect('password_change')
-
             if not user.is_staff:
-                logout(request)
                 return render(
                     request,
                     self.template_name,
                     {'error': 'Your account does not have access to this module.'}
                 )
-            
+            if not user.email:
+                return render(
+                    request,
+                    self.template_name,
+                    {'error': 'Email verification is unavailable. Contact your administrator.'},
+                )
+            try:
+                challenge = issue_login_otp(user)
+            except (OTPCooldownError, OTPRateLimitError):
+                return render(
+                    request,
+                    self.template_name,
+                    {'error': 'Please wait before requesting another verification code.'},
+                )
+            except OTPDeliveryError:
+                return render(
+                    request,
+                    self.template_name,
+                    {'error': 'Unable to send a verification code. Please try again later.'},
+                )
 
-            # Redirect based on user role
-            if user.is_superuser:
-                return redirect('admin_dashboard')
-            if department == 'engineer':
-                return redirect('engineering_dashboard')
-            elif department == 'mayor':
-                return redirect('mayor_dashboard')
-            return redirect('admin_dashboard')
+            request.session[PENDING_LOGIN_OTP_SESSION_KEY] = str(
+                challenge.challenge_id,
+            )
+            return redirect('login_otp_verify')
         else:
             return render(request, self.template_name, {'error': 'Invalid credentials'})
+
+
+class LoginOTPVerifyView(View):
+    template_name = 'core/login_otp_verify.html'
+
+    def _challenge(self, request):
+        challenge_id = request.session.get(PENDING_LOGIN_OTP_SESSION_KEY)
+        return active_challenge(challenge_id) if challenge_id else None
+
+    def get(self, request):
+        challenge = self._challenge(request)
+        if challenge is None:
+            request.session.pop(PENDING_LOGIN_OTP_SESSION_KEY, None)
+            messages.error(request, 'Your login verification has expired. Please sign in again.')
+            return redirect('login')
+        return render(request, self.template_name)
+
+    def post(self, request):
+        challenge_id = request.session.get(PENDING_LOGIN_OTP_SESSION_KEY)
+        code = (request.POST.get('code') or '').strip()
+        user = verify_login_otp(challenge_id, code) if challenge_id else None
+        if user is None:
+            if active_challenge(challenge_id) is None:
+                request.session.pop(PENDING_LOGIN_OTP_SESSION_KEY, None)
+            return render(
+                request,
+                self.template_name,
+                {'error': 'Invalid or expired verification code.'},
+            )
+
+        request.session.pop(PENDING_LOGIN_OTP_SESSION_KEY, None)
+        login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
+        request.session.set_expiry(None)
+        return _redirect_authenticated_user(user)
+
+
+class LoginOTPResendView(View):
+    def post(self, request):
+        challenge_id = request.session.get(PENDING_LOGIN_OTP_SESSION_KEY)
+        challenge = active_challenge(challenge_id) if challenge_id else None
+        if challenge is None:
+            request.session.pop(PENDING_LOGIN_OTP_SESSION_KEY, None)
+            messages.error(request, 'Your login verification has expired. Please sign in again.')
+            return redirect('login')
+
+        try:
+            replacement = issue_login_otp(challenge.user)
+        except OTPCooldownError:
+            messages.error(request, 'Please wait before requesting another code.')
+            return redirect('login_otp_verify')
+        except OTPRateLimitError:
+            messages.error(request, 'Too many verification codes requested. Please try again later.')
+            return redirect('login_otp_verify')
+        except OTPDeliveryError:
+            messages.error(request, 'Unable to send a verification code. Please try again later.')
+            return redirect('login_otp_verify')
+
+        request.session[PENDING_LOGIN_OTP_SESSION_KEY] = str(
+            replacement.challenge_id,
+        )
+        messages.success(request, 'A new verification code has been sent.')
+        return redirect('login_otp_verify')
 
 
 class LogoutView(View):

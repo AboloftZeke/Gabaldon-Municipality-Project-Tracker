@@ -128,3 +128,10 @@ EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=10, cast=int)
 
 # Password reset token expiration in seconds (24 hours by default).
 PASSWORD_RESET_TIMEOUT = config('PASSWORD_RESET_TIMEOUT', default=86400, cast=int)
+
+# Email OTP controls for the second login step.
+LOGIN_OTP_TIMEOUT = config('LOGIN_OTP_TIMEOUT', default=300, cast=int)
+LOGIN_OTP_MAX_ATTEMPTS = config('LOGIN_OTP_MAX_ATTEMPTS', default=5, cast=int)
+LOGIN_OTP_RESEND_COOLDOWN = config('LOGIN_OTP_RESEND_COOLDOWN', default=60, cast=int)
+LOGIN_OTP_RATE_LIMIT = config('LOGIN_OTP_RATE_LIMIT', default=5, cast=int)
+LOGIN_OTP_RATE_WINDOW = config('LOGIN_OTP_RATE_WINDOW', default=900, cast=int)

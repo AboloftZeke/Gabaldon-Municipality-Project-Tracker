@@ -21,6 +21,16 @@ urlpatterns = [
     ),
 
     path('login/', views.LoginView.as_view(), name='login'),
+    path(
+        'login/verify/',
+        views.LoginOTPVerifyView.as_view(),
+        name='login_otp_verify',
+    ),
+    path(
+        'login/verify/resend/',
+        views.LoginOTPResendView.as_view(),
+        name='login_otp_resend',
+    ),
     path('logout/', views.LogoutView.as_view(), name='logout'),
     path(
         'forgot-password/',
