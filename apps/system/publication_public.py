@@ -75,6 +75,7 @@ def infrastructure_public_data(revision):
     infrastructure = snapshot.get('infrastructure') or {}
     financial = snapshot.get('financial') or {}
     schedule = snapshot.get('schedule') or {}
+    inspection = snapshot.get('inspection') or {}
     address = infrastructure.get('address') or {}
     category = infrastructure.get('category') or {}
     office = infrastructure.get('implementing_office') or {}
@@ -141,6 +142,13 @@ def infrastructure_public_data(revision):
                 schedule.get('actual_completion_date'),
             ),
         } if schedule else {},
+        'inspection': {
+            **inspection,
+            'inspection_date': _date(inspection.get('inspection_date')),
+            'completion_percentage': _decimal(
+                inspection.get('completion_percentage'),
+            ),
+        } if inspection else {},
         'images': images,
         'cover_image_url': (
             project.get('cover_image_url')

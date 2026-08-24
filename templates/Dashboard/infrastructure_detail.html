@@ -57,12 +57,26 @@
     <section class="public-detail__section">
       <h2>Project Information</h2>
       <div class="detail-grid">
+        <div class="detail-item"><span>Category</span><strong>{{ public_project.category.name|default:"N/A" }}</strong></div>
         <div class="detail-item"><span>Implementing Office</span><strong>{{ public_project.implementing_office.name|default:"N/A" }}</strong></div>
         <div class="detail-item"><span>Contractor</span><strong>{{ public_project.contractor.name|default:"N/A" }}</strong></div>
         <div class="detail-item"><span>Published By</span><strong>{{ created_by_name|default:"N/A" }}</strong></div>
         <div class="detail-item"><span>Last Updated</span><strong>{{ public_project.updated_at|date:"F j, Y"|default:"N/A" }}</strong></div>
       </div>
     </section>
+
+    {% if public_project.inspection %}
+    <section class="public-detail__section">
+      <h2>Inspection Details</h2>
+      <div class="detail-grid">
+        <div class="detail-item"><span>Inspection Date</span><strong>{{ public_project.inspection.inspection_date|date:"F j, Y"|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Completion Percentage</span><strong>{% if public_project.inspection.completion_percentage is not None %}{{ public_project.inspection.completion_percentage|floatformat:1 }}%{% else %}N/A{% endif %}</strong></div>
+        <div class="detail-item"><span>Findings</span><strong>{{ public_project.inspection.findings|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Remarks</span><strong>{{ public_project.inspection.remarks|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Inspected By</span><strong>{{ public_project.inspection.inspected_by.display_name|default:"N/A" }}</strong></div>
+      </div>
+    </section>
+    {% endif %}
 
     <section class="public-detail__section">
       <h2>Location</h2>

@@ -1185,6 +1185,14 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             infrastructure=self.infrastructure,
             actual_start_date='2026-01-20',
         )
+        Project_Inspection.objects.create(
+            project=base_project,
+            inspection_date='2026-04-15',
+            inspected_by_user=self.user,
+            completion_percentage=55.25,
+            findings='Work is on schedule.',
+            remarks='Continue regular monitoring.',
+        )
         Project_Image.objects.create(
             project=base_project,
             image_url='/media/projects/infrastructure-cover.jpg',
@@ -1321,6 +1329,26 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertContains(response, '2500000.00')
         self.assertContains(response, '55.0%')
         self.assertContains(response, 'Bagting')
+        self.assertContains(response, '<span>Category</span>', html=False)
+        self.assertContains(response, '<strong>Road Test</strong>', html=False)
+        self.assertContains(response, 'Inspection Details')
+        self.assertContains(response, 'April 15, 2026')
+        self.assertContains(response, '55.3%')
+        self.assertContains(response, 'Work is on schedule.')
+        self.assertContains(response, 'Continue regular monitoring.')
+        self.assertContains(response, 'infrastructure-dashboard-author')
+        self.assertEqual(
+            response.context['public_project']['inspection'][
+                'inspection_date'
+            ],
+            date(2026, 4, 15),
+        )
+        self.assertEqual(
+            response.context['public_project']['inspection'][
+                'completion_percentage'
+            ],
+            Decimal('55.25'),
+        )
         self.assertContains(
             response,
             '/media/projects/infrastructure-cover.jpg',
@@ -1344,6 +1372,20 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertContains(response, 'Open exact location in Google Maps')
         self.assertNotContains(response, 'Edit Project')
         self.assertNotContains(response, 'Delete Project')
+
+    def test_public_infrastructure_detail_hides_missing_inspection(self):
+        snapshot = self.public_revision.snapshot_data
+        snapshot['inspection'] = None
+        self.public_revision.snapshot_data = snapshot
+        self.public_revision.save(update_fields=['snapshot_data'])
+
+        response = self.client.get(reverse(
+            'public_infrastructure_project_detail',
+            args=[self.infrastructure.pk],
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Inspection Details')
 
     def test_public_infrastructure_detail_handles_missing_coordinates(self):
         snapshot = self.public_revision.snapshot_data
