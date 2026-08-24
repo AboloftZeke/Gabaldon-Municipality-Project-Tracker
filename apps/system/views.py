@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.contrib.auth.views import PasswordResetConfirmView
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -101,6 +102,21 @@ class LogoutView(View):
     def get(self, request):
         logout(request)
         return render(request, 'core/logout.html')
+
+
+class PublicPasswordResetConfirmView(PasswordResetConfirmView):
+    """Record history only after a public reset successfully changes a password."""
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        history_model = _password_history_model()
+        history_model.objects.create(
+            user=form.user,
+            changed_by=None,
+            method='reset_link',
+            notes='Password changed through self-service email reset',
+        )
+        return response
 
 
 class PublicInfrastructureProjectDetailView(TemplateView):

@@ -1782,6 +1782,7 @@ class PublicPasswordResetTests(TestCase):
         self.assertContains(response, 'This password is too common.')
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password('OriginalPass!2026'))
+        self.assertFalse(self.user.password_changes.exists())
 
     def test_reset_changes_password_invalidates_link_and_allows_login(self):
         self._request_reset()
@@ -1803,8 +1804,17 @@ class PublicPasswordResetTests(TestCase):
         self.assertTrue(self.user.check_password('UpdatedSecurePass!2026'))
         self.assertFalse(self.user.check_password('OriginalPass!2026'))
 
+        history = self.user.password_changes.get()
+        self.assertEqual(history.method, 'reset_link')
+        self.assertIsNone(history.changed_by)
+        self.assertEqual(
+            history.notes,
+            'Password changed through self-service email reset',
+        )
+
         reused_link = self.client.get(initial_path, follow=True)
         self.assertContains(reused_link, 'Invalid or Expired Link')
+        self.assertEqual(self.user.password_changes.count(), 1)
 
         login_response = self.client.post(reverse('login'), {
             'username': self.user.username,

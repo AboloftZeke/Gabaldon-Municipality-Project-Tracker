@@ -42,7 +42,7 @@ urlpatterns = [
     ),
     path(
         'reset-password/<uidb64>/<token>/',
-        auth_views.PasswordResetConfirmView.as_view(
+        views.PublicPasswordResetConfirmView.as_view(
             template_name='registration/password_reset_confirm.html',
             success_url=reverse_lazy('password_reset_complete'),
         ),
