@@ -290,6 +290,7 @@ def infrastructure_dashboard_row(data):
 
 def non_infrastructure_dashboard_row(data):
     category = data['category']
+    address = data['address']
     return {
         'record_id': f"noninfra-{data['record_id']}",
         'category': 'noninfra',
@@ -301,7 +302,8 @@ def non_infrastructure_dashboard_row(data):
         'type_label': 'Non-Infrastructure',
         'title': data['title'],
         'cover_image_url': data['cover_image_url'],
-        'location_key': '', 'location': '',
+        'location_key': _location_key(address.get('barangay')),
+        'location': address.get('barangay') or '',
         'status_key': data['status'], 'status_label': data['status_label'],
         'office': '', 'implementing_office': '',
         'category_label': category.get('name') or '',
