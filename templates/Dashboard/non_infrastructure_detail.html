@@ -72,6 +72,16 @@
     </section>
 
     <section class="public-detail__section">
+      <h2>Location</h2>
+      <div class="detail-grid">
+        <div class="detail-item"><span>Street</span><strong>{{ public_project.address.street|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Barangay</span><strong>{{ public_project.address.barangay|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Municipality</span><strong>{{ public_project.address.municipality|default:"Gabaldon" }}</strong></div>
+        <div class="detail-item"><span>Province</span><strong>{{ public_project.address.province|default:"Nueva Ecija" }}</strong></div>
+      </div>
+    </section>
+
+    <section class="public-detail__section">
       <h2>Description</h2>
       <p class="public-detail__description">{{ public_project.description|default:"No description provided." }}</p>
     </section>
