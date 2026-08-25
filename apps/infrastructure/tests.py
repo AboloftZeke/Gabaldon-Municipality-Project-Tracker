@@ -109,7 +109,12 @@ class InfrastructureProjectFormTests(TestCase):
             'project-photos',
         ):
             self.assertContains(response, f'id="{section_id}"')
-        self.assertContains(response, 'form-section-nav')
+        self.assertContains(response, 'wizard-progress')
+        self.assertContains(response, 'data-wizard-step="0"')
+        self.assertContains(response, 'data-wizard-step="6"')
+        self.assertContains(response, 'data-wizard-next')
+        self.assertContains(response, 'data-wizard-back')
+        self.assertContains(response, 'data-wizard-submit')
 
     def test_edit_form_renders_sections_and_existing_values(self):
         infrastructure = self.create_project()
