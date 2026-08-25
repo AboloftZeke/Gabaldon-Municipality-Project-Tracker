@@ -35,7 +35,12 @@
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="{{ form.new_password1.id_for_label }}" class="required">{{ form.new_password1.label }}</label>
-                    {{ form.new_password1 }}
+                    <div class="password-wrapper">
+                        {{ form.new_password1 }}
+                        <button type="button" class="toggle-password" aria-label="Show password" aria-pressed="false" data-password-toggle="{{ form.new_password1.id_for_label }}" data-view-icon="{% static 'images/view-password.png' %}" data-hide-icon="{% static 'images/hide-password.png' %}">
+                            <img src="{% static 'images/view-password.png' %}" alt="Show password">
+                        </button>
+                    </div>
                     {% if form.new_password1.errors %}
                         <div class="field-errors">{% for error in form.new_password1.errors %}{{ error }}<br>{% endfor %}</div>
                     {% endif %}
@@ -43,7 +48,12 @@
                 </div>
                 <div class="form-group">
                     <label for="{{ form.new_password2.id_for_label }}" class="required">{{ form.new_password2.label }}</label>
-                    {{ form.new_password2 }}
+                    <div class="password-wrapper">
+                        {{ form.new_password2 }}
+                        <button type="button" class="toggle-password" aria-label="Show password" aria-pressed="false" data-password-toggle="{{ form.new_password2.id_for_label }}" data-view-icon="{% static 'images/view-password.png' %}" data-hide-icon="{% static 'images/hide-password.png' %}">
+                            <img src="{% static 'images/view-password.png' %}" alt="Show password">
+                        </button>
+                    </div>
                     {% if form.new_password2.errors %}
                         <div class="field-errors">{% for error in form.new_password2.errors %}{{ error }}<br>{% endfor %}</div>
                     {% endif %}
@@ -64,4 +74,5 @@
         {% endif %}
     </div>
 </div>
+<script src="{% static 'js/password_visibility.js' %}"></script>
 {% endblock %}
