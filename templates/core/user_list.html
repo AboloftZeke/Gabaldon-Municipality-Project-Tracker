@@ -107,7 +107,9 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if user.is_active %}
+                            {% if not user.has_usable_password %}
+                                <span class="status-badge status-setup-pending">Setup Pending</span>
+                            {% elif user.is_active %}
                                 <span class="status-badge status-active">Active</span>
                             {% else %}
                                 <span class="status-badge status-inactive">Inactive</span>
@@ -115,6 +117,12 @@
                         </td>
                         <td>
                             <div class="action-buttons">
+                                {% if not user.has_usable_password %}
+                                    <form method="post" action="{% url 'user_resend_account_setup' user.pk %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-btn action-btn-setup">Resend Setup</button>
+                                    </form>
+                                {% endif %}
                                 <a href="{% url 'user_edit' user.pk %}" class="action-btn action-btn-primary">Edit</a>
                                 {% if user.is_active %}
                                     <a href="{% url 'user_deactivate' user.pk %}" class="action-btn action-btn-danger">Deactivate</a>

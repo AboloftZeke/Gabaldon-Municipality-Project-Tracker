@@ -393,6 +393,11 @@
         color: var(--danger-text);
     }
 
+    .status-setup-pending {
+        background: rgba(168, 85, 247, 0.14);
+        color: #7e22ce;
+    }
+
     .action-buttons {
         display: flex;
         flex-wrap: wrap;
@@ -453,6 +458,16 @@
 
     .action-btn-success:hover {
         background: rgba(34, 197, 94, 0.2);
+    }
+
+    .action-btn-setup {
+        border: none;
+        background: rgba(168, 85, 247, 0.15);
+        color: #7e22ce;
+    }
+
+    .action-btn-setup:hover {
+        background: rgba(168, 85, 247, 0.25);
     }
 
     .empty-state {
