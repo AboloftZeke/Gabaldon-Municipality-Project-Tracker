@@ -5,12 +5,23 @@
 {% block extra_head %}<link rel="stylesheet" href="{% static 'css/templates/registration/password_reset_confirm.css' %}">{% endblock %}
 {% block show_header %}{% endblock %}
 {% block show_footer %}{% endblock %}
+{% block global_messages %}{% endblock %}
 
 {% block content %}
 <div class="page-wrapper">
     <div class="reset-form-wrapper">
         <h1 class="form-title">Verify Your Login</h1>
         <p class="form-subtitle">Enter the six-digit verification code sent to your registered email address. The code expires in five minutes.</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    <div class="success-message">{{ message }}</div>
+                {% else %}
+                    <div class="error-messages">{{ message }}</div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
 
         {% if error %}<div class="error-messages">{{ error }}</div>{% endif %}
 
