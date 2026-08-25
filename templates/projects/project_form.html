@@ -4,8 +4,8 @@
 {% block title %}{% if action == 'Create' %}New Project{% else %}Edit Project{% endif %} - Municipality Project Tracker{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_form.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -17,7 +17,13 @@
 
 <div class="form-container">
     <div class="form-card">
-        <h2>{{ action }} Infrastructure Project</h2>
+        <div class="form-heading">
+            <div>
+                <p class="form-eyebrow">Engineering Office</p>
+                <h2>{{ action }} Infrastructure Project</h2>
+                <p class="form-intro">Complete the project record using the organized sections below. All information remains on this page.</p>
+            </div>
+        </div>
 
         {% if form.non_field_errors %}
             {% for error in form.non_field_errors %}
@@ -33,9 +39,21 @@
                 <span>Fields marked <span class="required-marker">*</span> are required. Fields marked <span class="optional-badge">Optional</span> may be left blank.</span>
             </div>
 
-            <div class="fieldset">
-                <legend>Basic Project Information</legend>
-                <p class="section-description">Enter the project's main identifying and responsible-party details.</p>
+            <nav class="form-section-nav" aria-label="Infrastructure form sections">
+                <a href="#basic-information"><span>1</span>Basic Information</a>
+                <a href="#project-location"><span>2</span>Location</a>
+                <a href="#funding-contract"><span>3</span>Funding &amp; Contract</a>
+                <a href="#project-schedule"><span>4</span>Schedule</a>
+                <a href="#progress-status"><span>5</span>Progress &amp; Status</a>
+                <a href="#inspection-information"><span>6</span>Inspection</a>
+                <a href="#project-photos"><span>7</span>Photos</a>
+            </nav>
+
+            <div class="fieldset" id="basic-information">
+                <div class="section-heading">
+                    <span class="section-number">1</span>
+                    <div><h3>Basic Project Information</h3><p>Enter the project's main identifying and responsible-party details.</p></div>
+                </div>
                 <div class="form-grid">
                     <div class="form-group full-span">
                         <label for="{{ form.title.id_for_label }}">Project Title</label>
@@ -83,19 +101,14 @@
                         {% endif %}
                     </div>
 
-                    <div class="form-group">
-                        <label for="{{ form.contractor.id_for_label }}">Contractor</label>
-                        {{ form.contractor }}
-                        {% if form.contractor.errors %}
-                            <div class="error-message">{{ form.contractor.errors.0 }}</div>
-                        {% endif %}
-                    </div>
                 </div>
             </div>
 
-            <div class="fieldset">
-                <legend>Location</legend>
-                <p class="section-description">Provide the project site and geographic reference information.</p>
+            <div class="fieldset" id="project-location">
+                <div class="section-heading">
+                    <span class="section-number">2</span>
+                    <div><h3>Project Location</h3><p>Provide the project site and geographic reference information.</p></div>
+                </div>
                 <div class="form-grid">
                     <div class="form-group full-span">
                         <label for="{{ form.street.id_for_label }}">Street</label>
@@ -114,22 +127,6 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="{{ form.latitude.id_for_label }}">Latitude</label>
-                        {{ form.latitude }}
-                        {% if form.latitude.errors %}
-                            <div class="error-message">{{ form.latitude.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group">
-                        <label for="{{ form.longitude.id_for_label }}">Longitude</label>
-                        {{ form.longitude }}
-                        {% if form.longitude.errors %}
-                            <div class="error-message">{{ form.longitude.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group">
                         <label for="{{ form.municipality.id_for_label }}">Municipality</label>
                         {{ form.municipality }}
                         {% if form.municipality.errors %}
@@ -144,13 +141,36 @@
                             <div class="error-message">{{ form.province.errors.0 }}</div>
                         {% endif %}
                     </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.latitude.id_for_label }}">Latitude</label>
+                        {{ form.latitude }}
+                        {% if form.latitude.errors %}
+                            <div class="error-message">{{ form.latitude.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.longitude.id_for_label }}">Longitude</label>
+                        {{ form.longitude }}
+                        {% if form.longitude.errors %}
+                            <div class="error-message">{{ form.longitude.errors.0 }}</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
-            <div class="fieldset">
-                <legend>Procurement</legend>
-                <p class="section-description">Enter the required bidding and award information for this project.</p>
+            <div class="fieldset" id="funding-contract">
+                <div class="section-heading">
+                    <span class="section-number">3</span>
+                    <div><h3>Funding &amp; Contract</h3><p>Record the contractor, procurement method, approved funding, and expenditure details.</p></div>
+                </div>
                 <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.contractor.id_for_label }}">Contractor</label>
+                        {{ form.contractor }}
+                        {% if form.contractor.errors %}<div class="error-message">{{ form.contractor.errors.0 }}</div>{% endif %}
+                    </div>
                     <div class="form-group">
                         <label for="{{ form.procurement_method.id_for_label }}">Procurement Method</label>
                         {{ form.procurement_method }}
@@ -160,45 +180,38 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="{{ form.award_status.id_for_label }}">Award Status</label>
-                        {{ form.award_status }}
-                        {% if form.award_status.errors %}
-                            <div class="error-message">{{ form.award_status.errors.0 }}</div>
-                        {% endif %}
+                        <label for="{{ form.abc_amount.id_for_label }}">Approved Budget (₱)</label>
+                        {{ form.abc_amount }}
+                        {% if form.abc_amount.errors %}<div class="error-message">{{ form.abc_amount.errors.0 }}</div>{% endif %}
                     </div>
-
                     <div class="form-group">
-                        <label for="{{ form.posting_date.id_for_label }}">Posting Date</label>
-                        {{ form.posting_date }}
-                        {% if form.posting_date.errors %}
-                            <div class="error-message">{{ form.posting_date.errors.0 }}</div>
-                        {% endif %}
+                        <label for="{{ form.contract_price.id_for_label }}">Contract Price (₱)</label>
+                        {{ form.contract_price }}
+                        {% if form.contract_price.errors %}<div class="error-message">{{ form.contract_price.errors.0 }}</div>{% endif %}
                     </div>
-
                     <div class="form-group">
-                        <label for="{{ form.pre_bid_date.id_for_label }}">Pre-Bid Date</label>
-                        {{ form.pre_bid_date }}
-                        {% if form.pre_bid_date.errors %}
-                            <div class="error-message">{{ form.pre_bid_date.errors.0 }}</div>
-                        {% endif %}
+                        <label for="{{ form.fund_source.id_for_label }}">Fund Source</label>
+                        {{ form.fund_source }}
+                        {% if form.fund_source.errors %}<div class="error-message">{{ form.fund_source.errors.0 }}</div>{% endif %}
                     </div>
-
                     <div class="form-group">
-                        <label for="{{ form.bidding_date.id_for_label }}">Bidding Date</label>
-                        {{ form.bidding_date }}
-                        {% if form.bidding_date.errors %}
-                            <div class="error-message">{{ form.bidding_date.errors.0 }}</div>
-                        {% endif %}
+                        <label for="{{ form.actual_expenditure.id_for_label }}">Actual Expenditure (₱)</label>
+                        {{ form.actual_expenditure }}
+                        {% if form.actual_expenditure.errors %}<div class="error-message">{{ form.actual_expenditure.errors.0 }}</div>{% endif %}
                     </div>
+                </div>
+            </div>
 
-                    <div class="form-group">
-                        <label for="{{ form.notice_award_date.id_for_label }}">Notice of Award</label>
-                        {{ form.notice_award_date }}
-                        {% if form.notice_award_date.errors %}
-                            <div class="error-message">{{ form.notice_award_date.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
+            <div class="fieldset" id="project-schedule">
+                <div class="section-heading">
+                    <span class="section-number">4</span>
+                    <div><h3>Project Schedule</h3><p>Enter procurement milestones and the planned and actual delivery timeline.</p></div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group"><label for="{{ form.posting_date.id_for_label }}">Posting Date</label>{{ form.posting_date }}{% if form.posting_date.errors %}<div class="error-message">{{ form.posting_date.errors.0 }}</div>{% endif %}</div>
+                    <div class="form-group"><label for="{{ form.pre_bid_date.id_for_label }}">Pre-Bid Date</label>{{ form.pre_bid_date }}{% if form.pre_bid_date.errors %}<div class="error-message">{{ form.pre_bid_date.errors.0 }}</div>{% endif %}</div>
+                    <div class="form-group"><label for="{{ form.bidding_date.id_for_label }}">Bidding Date</label>{{ form.bidding_date }}{% if form.bidding_date.errors %}<div class="error-message">{{ form.bidding_date.errors.0 }}</div>{% endif %}</div>
+                    <div class="form-group"><label for="{{ form.notice_award_date.id_for_label }}">Notice of Award</label>{{ form.notice_award_date }}{% if form.notice_award_date.errors %}<div class="error-message">{{ form.notice_award_date.errors.0 }}</div>{% endif %}</div>
                     <div class="form-group">
                         <label for="{{ form.notice_to_proceed_date.id_for_label }}">Notice to Proceed</label>
                         {{ form.notice_to_proceed_date }}
@@ -214,51 +227,6 @@
                             <div class="error-message">{{ form.duration_days.errors.0 }}</div>
                         {% endif %}
                     </div>
-                </div>
-            </div>
-
-            <div class="fieldset">
-                <legend>Financial Information</legend>
-                <p class="section-description">Record the project's approved funding and expenditure details.</p>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="{{ form.abc_amount.id_for_label }}">Approved Budget (₱)</label>
-                        {{ form.abc_amount }}
-                        {% if form.abc_amount.errors %}
-                            <div class="error-message">{{ form.abc_amount.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group">
-                        <label for="{{ form.contract_price.id_for_label }}">Contract Price (₱)</label>
-                        {{ form.contract_price }}
-                        {% if form.contract_price.errors %}
-                            <div class="error-message">{{ form.contract_price.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group">
-                        <label for="{{ form.fund_source.id_for_label }}">Fund Source</label>
-                        {{ form.fund_source }}
-                        {% if form.fund_source.errors %}
-                            <div class="error-message">{{ form.fund_source.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group">
-                        <label for="{{ form.actual_expenditure.id_for_label }}">Actual Expenditure (₱)</label>
-                        {{ form.actual_expenditure }}
-                        {% if form.actual_expenditure.errors %}
-                            <div class="error-message">{{ form.actual_expenditure.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <div class="fieldset">
-                <legend>Project Schedule</legend>
-                <p class="section-description">Set the planned timeline and record actual delivery dates when available.</p>
-                <div class="form-grid">
                     <div class="form-group">
                         <label for="{{ form.planned_start_date.id_for_label }}">Planned Start Date</label>
                         {{ form.planned_start_date }}
@@ -294,10 +262,17 @@
                 </div>
             </div>
 
-            <div class="fieldset">
-                <legend>Progress</legend>
-                <p class="section-description">Update financial and physical completion percentages as work advances.</p>
+            <div class="fieldset" id="progress-status">
+                <div class="section-heading">
+                    <span class="section-number">5</span>
+                    <div><h3>Progress &amp; Status</h3><p>Record the current award status and completion percentages.</p></div>
+                </div>
                 <div class="form-grid">
+                    <div class="form-group full-span">
+                        <label for="{{ form.award_status.id_for_label }}">Award Status</label>
+                        {{ form.award_status }}
+                        {% if form.award_status.errors %}<div class="error-message">{{ form.award_status.errors.0 }}</div>{% endif %}
+                    </div>
                     <div class="form-group">
                         <label for="{{ form.cost_progress_percentage.id_for_label }}">Cost Progress (%)</label>
                         {{ form.cost_progress_percentage }}
@@ -316,9 +291,11 @@
                 </div>
             </div>
 
-            <div class="fieldset">
-                <legend>Inspection</legend>
-                <p class="section-description">Add inspection details when a site inspection has been completed.</p>
+            <div class="fieldset" id="inspection-information">
+                <div class="section-heading">
+                    <span class="section-number">6</span>
+                    <div><h3>Inspection Information</h3><p>Add inspection details when a site inspection has been completed.</p></div>
+                </div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="{{ form.inspection_date.id_for_label }}">Inspection Date</label>
@@ -358,10 +335,12 @@
      PROJECT IMAGES
      ========================================================= -->
 
-<div class="fieldset">
+<div class="fieldset" id="project-photos">
 
-    <legend>Project Images <span class="optional-badge">Optional</span></legend>
-    <p class="section-description">Upload project photos, preview them, and choose the image shown as the cover.</p>
+    <div class="section-heading">
+        <span class="section-number">7</span>
+        <div><h3>Project Photos / Attachments <span class="optional-badge">Optional</span></h3><p>Upload project photos, preview them, and choose the image shown as the cover.</p></div>
+    </div>
 
     <div class="form-group full-span">
     

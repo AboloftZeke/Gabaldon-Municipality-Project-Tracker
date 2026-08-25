@@ -3,6 +3,7 @@ from decimal import Decimal
 from django import forms
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
 
 from apps.infrastructure.forms import InfrastructureProjectForm
 from apps.system.models import (
@@ -11,6 +12,7 @@ from apps.system.models import (
     ImplementingOffice,
     InfrastructureCategory,
     Project_Image,
+    UserFlag,
 )
 
 
@@ -81,6 +83,54 @@ class InfrastructureProjectFormTests(TestCase):
         self.assertIsInstance(form.fields['fund_source'], forms.CharField)
         self.assertEqual(form.fields['municipality'].initial, 'Gabaldon')
         self.assertEqual(form.fields['province'].initial, 'Nueva Ecija')
+
+    def test_create_form_renders_all_organized_sections(self):
+        self.user.is_staff = True
+        self.user.save(update_fields=['is_staff'])
+        UserFlag.objects.update_or_create(
+            user=self.user,
+            defaults={'department': 'engineer'},
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse(
+            'engineering_projects:project_create',
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'projects/project_form.html')
+        for section_id in (
+            'basic-information',
+            'project-location',
+            'funding-contract',
+            'project-schedule',
+            'progress-status',
+            'inspection-information',
+            'project-photos',
+        ):
+            self.assertContains(response, f'id="{section_id}"')
+        self.assertContains(response, 'form-section-nav')
+
+    def test_edit_form_renders_sections_and_existing_values(self):
+        infrastructure = self.create_project()
+        self.user.is_staff = True
+        self.user.save(update_fields=['is_staff'])
+        UserFlag.objects.update_or_create(
+            user=self.user,
+            defaults={'department': 'engineer'},
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse(
+            'engineering_projects:project_update',
+            args=[infrastructure.pk],
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'projects/project_form.html')
+        self.assertContains(response, 'Edit Infrastructure Project')
+        self.assertContains(response, 'Road Improvement Project')
+        self.assertContains(response, 'id="project-photos"')
 
     def test_save_persists_normalized_relationships_and_financials(self):
         infra = self.create_project()
