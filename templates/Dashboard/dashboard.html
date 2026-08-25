@@ -88,6 +88,20 @@
       </div>
 
       <div class="toolbar" role="search">
+        <div class="toolbar-primary">
+          <label class="dashboard-search" for="project-search">
+            <span class="dashboard-search__label">Search projects</span>
+            <input id="project-search" type="search" placeholder="Search by project name, location, or details">
+          </label>
+
+          <div class="view-switcher" role="group" aria-label="Project display view">
+            <span class="view-switcher__label">View:</span>
+            <button type="button" class="view-btn is-active" data-dashboard-view="detail" aria-pressed="true">Detail</button>
+            <button type="button" class="view-btn" data-dashboard-view="card" aria-pressed="false">Card</button>
+          </div>
+        </div>
+
+        <div class="toolbar-filter-row">
         <div class="tab-buttons">
           <button type="button" class="tab-btn is-active" data-category="all">All Projects</button>
           <button type="button" class="tab-btn" data-category="infra">Infrastructure</button>
@@ -122,11 +136,6 @@
             <button type="button" class="status-btn" data-status="completed">Completed</button>
           </div>
         </div>
-
-        <div class="view-switcher" role="group" aria-label="Project display view">
-          <span class="view-switcher__label">View:</span>
-          <button type="button" class="view-btn is-active" data-dashboard-view="detail" aria-pressed="true">Detail</button>
-          <button type="button" class="view-btn" data-dashboard-view="card" aria-pressed="false">Card</button>
         </div>
       </div>
 
