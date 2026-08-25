@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.template.loader import render_to_string
 
 from apps.non_infrastructure.forms import NonInfrastructureProjectForm
 from apps.system.models import (
@@ -25,6 +26,59 @@ class NonInfrastructureProjectFormTests(TestCase):
             type_name='Health Care',
             description='Health care services',
         )
+
+    def test_create_form_renders_five_step_wizard(self):
+        content = render_to_string(
+            'non_infrastructure/non_infrastructure_form.html',
+            {'form': NonInfrastructureProjectForm(), 'action': 'Create'},
+        )
+
+        self.assertIn('data-infrastructure-wizard', content)
+        self.assertIn('Step 1 of 5', content)
+        for step in range(5):
+            self.assertIn(f'data-wizard-step="{step}"', content)
+        self.assertIn('data-wizard-back', content)
+        self.assertIn('data-wizard-next', content)
+        self.assertIn('data-wizard-submit', content)
+        self.assertIn('js/templates/projects/project_form.js', content)
+
+    def test_edit_form_renders_wizard_with_existing_values_and_images(self):
+        project = Project.objects.create(
+            project_type='non_infrastructure',
+            created_by_user=self.user,
+            updated_by_user=self.user,
+        )
+        existing = Non_Infrastructure_Project.objects.create(
+            project=project,
+            non_infra_name='Existing Community Program',
+            description='Existing program description.',
+            non_infra_category=self.category,
+            status='ongoing',
+            proponent='Mayor Office',
+            beneficiaries=80,
+            event_date='2026-09-20',
+            start_time='08:00',
+            end_time='11:00',
+            venue_name='Municipal Hall',
+        )
+        image = Project_Image.objects.create(
+            project=project,
+            image_url='https://example.com/existing.jpg',
+            is_cover=True,
+        )
+
+        content = render_to_string(
+            'non_infrastructure/non_infrastructure_form.html',
+            {
+                'form': NonInfrastructureProjectForm(instance=existing),
+                'action': 'Edit',
+            },
+        )
+
+        self.assertIn('Existing Community Program', content)
+        self.assertIn('Municipal Hall', content)
+        self.assertIn(f'data-image-id="{image.pk}"', content)
+        self.assertIn('Edit Project', content)
 
     def test_form_saves_normalized_non_infrastructure_project(self):
         form = NonInfrastructureProjectForm(

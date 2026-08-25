@@ -24,7 +24,7 @@
             {% endfor %}
         {% endif %}
 
-        <form method="post" enctype="multipart/form-data" novalidate>
+        <form method="post" enctype="multipart/form-data" novalidate data-infrastructure-wizard>
             {% csrf_token %}
 
             <div class="field-requirements-banner" role="note">
@@ -32,9 +32,23 @@
                 <span>Fields marked <span class="required-marker">*</span> are required. Fields marked <span class="optional-badge">Optional</span> may be left blank.</span>
             </div>
 
-            <div class="fieldset">
+            <div class="wizard-progress" aria-label="Non-infrastructure form progress">
+                <div class="wizard-progress-summary">
+                    <span data-wizard-progress-text>Step 1 of 5</span>
+                    <span>Complete each step to continue</span>
+                </div>
+                <ol class="wizard-steps">
+                    <li data-wizard-indicator="0"><span>1</span><strong>Basic Info</strong></li>
+                    <li data-wizard-indicator="1"><span>2</span><strong>Program</strong></li>
+                    <li data-wizard-indicator="2"><span>3</span><strong>Schedule</strong></li>
+                    <li data-wizard-indicator="3"><span>4</span><strong>Location</strong></li>
+                    <li data-wizard-indicator="4"><span>5</span><strong>Photos</strong></li>
+                </ol>
+            </div>
+
+            <div class="fieldset wizard-panel" data-wizard-step="0">
                 <legend>Basic Project Information</legend>
-                <p class="section-description">Enter the project's purpose, category, status, and intended beneficiaries.</p>
+                <p class="section-description">Enter the project's title, purpose, category, and current status.</p>
                 <div class="form-grid">
                     <div class="form-group full-span">
                         <label for="{{ form.non_infra_name.id_for_label }}">Project Title</label>
@@ -68,6 +82,13 @@
                     {% endif %}
                     </div>
 
+                </div>
+            </div>
+
+            <div class="fieldset wizard-panel" data-wizard-step="1" hidden>
+                <legend>Program Details</legend>
+                <p class="section-description">Identify the program proponent and intended number of beneficiaries.</p>
+                <div class="form-grid">
                     <div class="form-group">
                         <label for="{{ form.proponent.id_for_label }}">Proponent</label>
                         {{ form.proponent }}
@@ -83,13 +104,12 @@
                             <div class="error-message">{{ form.beneficiaries.errors.0 }}</div>
                         {% endif %}
                     </div>
-
                 </div>
             </div>
 
-            <div class="fieldset">
-                <legend>Event/Activity Details</legend>
-                <p class="section-description">Set when and where the program or activity will take place.</p>
+            <div class="fieldset wizard-panel" data-wizard-step="2" hidden>
+                <legend>Event Schedule</legend>
+                <p class="section-description">Set when the program or activity will take place.</p>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="{{ form.event_date.id_for_label }}">Event Date</label>
@@ -115,13 +135,6 @@
                         {% endif %}
                     </div>
 
-                    <div class="form-group full-span">
-                        <label for="{{ form.venue_name.id_for_label }}">Venue Name</label>
-                        {{ form.venue_name }}
-                        {% if form.venue_name.errors %}
-                            <div class="error-message">{{ form.venue_name.errors.0 }}</div>
-                        {% endif %}
-                    </div>
                 </div>
             </div>
 
@@ -129,12 +142,20 @@
      LOCATION
      ========================================================= -->
 
-<div class="fieldset">
+<div class="fieldset wizard-panel" data-wizard-step="3" hidden>
 
     <legend>Location</legend>
     <p class="section-description">Provide the activity location. Municipality and Province are set by the system.</p>
 
     <div class="form-grid">
+
+        <div class="form-group full-span">
+            <label for="{{ form.venue_name.id_for_label }}">Venue Name</label>
+            {{ form.venue_name }}
+            {% if form.venue_name.errors %}
+                <div class="error-message">{{ form.venue_name.errors.0 }}</div>
+            {% endif %}
+        </div>
 
         <!-- Street -->
 
@@ -220,7 +241,7 @@
      PROJECT IMAGES
      ========================================================= -->
 
-<div class="fieldset">
+<div class="fieldset wizard-panel" data-wizard-step="4" hidden>
 
     <legend>Project Images <span class="optional-badge">Optional</span></legend>
     <p class="section-description">Upload project photos, preview them, and choose the image shown as the cover.</p>
@@ -459,13 +480,15 @@
      FORM ACTIONS
      ========================================================= -->
 
-<div class="form-actions">
+<div class="form-actions wizard-actions">
 
     <button
-        type="submit"
-        class="btn btn-submit"
+        type="button"
+        class="btn btn-back"
+        data-wizard-back
+        hidden
     >
-        {{ action }} Project
+        Back
     </button>
 
 
@@ -475,6 +498,12 @@
     >
         Cancel
     </a>
+
+    <button type="button" class="btn btn-next" data-wizard-next>Next</button>
+
+    <button type="submit" class="btn btn-submit" data-wizard-submit hidden>
+        {{ action }} Project
+    </button>
 
 </div>
 
@@ -525,17 +554,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
-
-    const firstError = projectForm.querySelector('.form-group.has-error');
-    if (firstError) {
-        window.requestAnimationFrame(function () {
-            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            const firstField = firstError.querySelector('input:not([type="hidden"]), select, textarea');
-            if (firstField) {
-                firstField.focus({ preventScroll: true });
-            }
-        });
-    }
 
     const startTimeInput = document.getElementById(
         '{{ form.start_time.id_for_label }}'
@@ -879,5 +897,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
+<script src="{% static 'js/templates/projects/project_form.js' %}"></script>
 
 {% endblock %}
