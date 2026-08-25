@@ -96,8 +96,14 @@
 
           <div class="view-switcher" role="group" aria-label="Project display view">
             <span class="view-switcher__label">View:</span>
-            <button type="button" class="view-btn is-active" data-dashboard-view="detail" aria-pressed="true">Detail</button>
-            <button type="button" class="view-btn" data-dashboard-view="card" aria-pressed="false">Card</button>
+            <button type="button" class="view-btn is-active" data-dashboard-view="detail" aria-pressed="true" aria-label="Detail view" title="Detail view">
+              <svg class="view-btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 10h16M4 15h16M4 20h16" /></svg>
+              <span class="sr-only">Detail view</span>
+            </button>
+            <button type="button" class="view-btn" data-dashboard-view="card" aria-pressed="false" aria-label="Card view" title="Card view">
+              <svg class="view-btn__icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" /></svg>
+              <span class="sr-only">Card view</span>
+            </button>
           </div>
         </div>
 
