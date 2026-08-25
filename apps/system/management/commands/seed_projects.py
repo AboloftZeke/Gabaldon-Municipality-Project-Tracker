@@ -303,7 +303,6 @@ class Command(BaseCommand):
             user=user,
             defaults={
                 'department': department,
-                'must_change_password': False,
             },
         )
         return user

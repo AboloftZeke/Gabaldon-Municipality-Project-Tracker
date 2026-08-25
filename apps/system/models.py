@@ -28,11 +28,6 @@ class UserProfile(models.Model):
         default='admin'
     )
 
-    must_change_password = models.BooleanField(
-        default=False,
-        help_text="Require the user to change their password upon next login."
-    )
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -78,7 +73,6 @@ class UserProfile(models.Model):
             def __init__(self, user):
                 self.user = user
                 self.department = cls.department_for_user(user)
-                self.must_change_password = False
         return _P(user)
 
     class Meta:
@@ -262,7 +256,6 @@ class UserFlag(models.Model):
 
     id = models.BigAutoField(primary_key=True)
     user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='flags')
-    must_change_password = models.BooleanField(default=False)
     department = models.CharField(
         max_length=20,
         choices=DEPARTMENT_CHOICES,

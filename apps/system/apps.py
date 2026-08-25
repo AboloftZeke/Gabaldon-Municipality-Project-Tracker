@@ -13,9 +13,8 @@ class SystemConfig(AppConfig):
         from django.contrib.auth.models import User
 
         def _profile(self):
-            # Persist a small compatibility dict on the user instance so that
-            # attributes set at runtime (e.g., `must_change_password`) remain
-            # available for the duration of the process (tests/requests).
+            # Persist a small compatibility dict on the user instance for the
+            # duration of the process (tests/requests).
             if '_compat_profile' not in self.__dict__:
                 dept = 'mayor'
                 if getattr(self, 'is_superuser', False):
@@ -41,15 +40,6 @@ class SystemConfig(AppConfig):
                     # Check in-memory compat profile first
                     if item in self._user._compat_profile:
                         return self._user._compat_profile.get(item)
-                    # Fallback: check persistent UserFlag for must_change_password
-                    if item == 'must_change_password':
-                        try:
-                            from apps.system.models import UserFlag
-                            flag = UserFlag.objects.filter(user=self._user).first()
-                            if flag:
-                                return flag.must_change_password
-                        except Exception:
-                            return False
                     return None
 
                 def __setattr__(self, key, value):

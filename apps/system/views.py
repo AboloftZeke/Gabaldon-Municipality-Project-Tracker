@@ -5,9 +5,9 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Prefetch, Q
 from django.conf import settings
-from django.utils.crypto import get_random_string
 from .forms import (
     CustomUserCreationForm,
     CustomUserChangeForm,
@@ -24,6 +24,7 @@ from .login_otp import (
     issue_login_otp,
     verify_login_otp,
 )
+from .account_setup import AccountSetupDeliveryError, send_account_setup_email
 
 
 PENDING_LOGIN_OTP_SESSION_KEY = 'pending_login_otp_challenge'
@@ -35,8 +36,6 @@ def _department_for_user(user):
 
 
 def _redirect_authenticated_user(user):
-    if getattr(getattr(user, 'flags', None), 'must_change_password', False):
-        return redirect('password_change')
     if user.is_superuser:
         return redirect('admin_dashboard')
     department = _department_for_user(user)
@@ -70,8 +69,8 @@ class AdminRequiredMixin(StaffRequiredMixin):
 class LoginView(View):
     """
     Handle user login with Django's authentication system.
-    Redirects to password change if a temporary password must be replaced.
-    Otherwise redirects to the user's role-specific dashboard.
+    Valid credentials proceed to email OTP verification before the user's
+    role-specific dashboard is opened.
     """
     template_name = 'core/login.html'
 
@@ -574,33 +573,65 @@ class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
             form = CustomUserCreationForm(form_data)
 
             if form.is_valid():
-                temporary_password = get_random_string(
-                    length=12,
-                    allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()'
-                    )
-                user = form.save(
-                    commit=True,
-                    temporary_password=temporary_password
-                )
-
-                # Persist a runtime flag so the application enforces password
-                # change on first login without recreating the archived profile.
-                from .models import UserFlag
-                UserFlag.objects.update_or_create(user=user, defaults={'must_change_password': True})
+                with transaction.atomic():
+                    user = form.save(commit=True)
+                    send_account_setup_email(user, request)
 
                 del request.session['user_create_form_data']
                 messages.success(
                     request,
-                     f"User '{user.username}' created successfully. "
-                     f" Temporary password: {temporary_password}. User will be required to change password on first login.")
+                    f"User '{user.username}' created successfully. "
+                    f"Account setup instructions were sent to {user.email}.",
+                )
                 return redirect('user_list')
             else:
                 request.session['user_create_form_data'] = form_data
                 messages.error(request, 'Validation failed. Please check your input.')
                 return redirect('user_create')
-        except Exception as e:
-            messages.error(request, f'Error creating user: {str(e)}')
+        except AccountSetupDeliveryError:
+            messages.error(
+                request,
+                'The account was not created because the setup email could '
+                'not be sent. Please verify the email configuration and try '
+                'again.',
+            )
             return redirect('user_create')
+        except Exception:
+            messages.error(
+                request,
+                'The account could not be created. Please try again.',
+            )
+            return redirect('user_create')
+
+
+class UserAccountSetupResendView(AdminRequiredMixin, View):
+    """Send a replacement setup link for an account without a password."""
+
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        if user.has_usable_password():
+            messages.info(request, 'This account has already been set up.')
+            return redirect('user_list')
+
+        try:
+            with transaction.atomic():
+                locked_user = User.objects.select_for_update().get(pk=user.pk)
+                locked_user.set_unusable_password()
+                locked_user.save(update_fields=['password'])
+                send_account_setup_email(locked_user, request)
+        except AccountSetupDeliveryError:
+            messages.error(
+                request,
+                'The setup email could not be sent. Please verify the email '
+                'configuration and try again.',
+            )
+            return redirect('user_list')
+
+        messages.success(
+            request,
+            f'New account setup instructions were sent to {user.email}.',
+        )
+        return redirect('user_list')
 
 
 class UserEditConfirmView(AdminRequiredMixin, TemplateView):
@@ -766,13 +797,6 @@ class PasswordChangeView(LoginRequiredMixin, View):
 
         if form.is_valid():
             form.save()
-
-            # Clear the temporary-password requirement.
-            from .models import UserFlag
-            UserFlag.objects.update_or_create(
-                user=request.user,
-                defaults={'must_change_password': False},
-            )
 
             messages.success(
                 request,

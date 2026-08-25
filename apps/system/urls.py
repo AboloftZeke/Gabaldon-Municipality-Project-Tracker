@@ -65,6 +65,21 @@ urlpatterns = [
         ),
         name='password_reset_complete',
     ),
+    path(
+        'account-setup/<uidb64>/<token>/',
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name='registration/account_setup_confirm.html',
+            success_url=reverse_lazy('account_setup_complete'),
+        ),
+        name='account_setup_confirm',
+    ),
+    path(
+        'account-setup/complete/',
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name='registration/account_setup_complete.html',
+        ),
+        name='account_setup_complete',
+    ),
 
     # Administrator publication review
     path('admin-dashboard/publications/', publication_views.PublicationReviewQueueView.as_view(), name='publication_review_queue'),
@@ -98,6 +113,7 @@ urlpatterns = [
     path('users/<int:pk>/edit/confirm/', views.UserEditConfirmView.as_view(), name='user_edit_confirm'),
     path('users/<int:pk>/deactivate/', views.UserDeactivateView.as_view(), name='user_deactivate'),
     path('users/<int:pk>/activate/', views.UserActivateView.as_view(), name='user_activate'),
+    path('users/<int:pk>/resend-setup/', views.UserAccountSetupResendView.as_view(), name='user_resend_account_setup'),
     path('password-change/', views.PasswordChangeView.as_view(),name='password_change'),
 ]
 

@@ -6,8 +6,7 @@ from django.core.exceptions import ValidationError
 
 class CustomUserCreationForm(forms.ModelForm):
     """
-    Form for creating new users.
-    Passwords are generated later as temporary passwords.
+    Form for creating users who will establish a password by email.
     """
     ROLE_ADMIN = 'admin'
     ROLE_ENGINEERING = 'engineering'
@@ -20,6 +19,7 @@ class CustomUserCreationForm(forms.ModelForm):
     )
 
     role = forms.ChoiceField(label='Department', choices=ROLE_CHOICES, initial='')
+    email = forms.EmailField(required=True)
 
     class Meta:
         model = User
@@ -37,14 +37,10 @@ class CustomUserCreationForm(forms.ModelForm):
             raise forms.ValidationError('Please select a department.')
         return role
 
-    def save(self, commit=True, temporary_password=None):
+    def save(self, commit=True):
         user = super().save(commit=False)
         role = self.cleaned_data['role']
-
-        if not temporary_password:
-            raise ValueError('temporary_password is required when creating a user.')
-
-        user.set_password(temporary_password)
+        user.set_unusable_password()
 
         # Treat all module-access roles as Django staff so mayor's office users
         # can log in like the other restricted access roles.
@@ -71,7 +67,7 @@ class CustomUserCreationForm(forms.ModelForm):
         user.profile.department = department
         UserFlag.objects.update_or_create(
             user=user,
-            defaults={'department': department, 'must_change_password': False},
+            defaults={'department': department},
         )
 
 
@@ -155,7 +151,7 @@ class CustomUserChangeForm(forms.ModelForm):
         user.profile.department = department
         UserFlag.objects.update_or_create(
             user=user,
-            defaults={'department': department, 'must_change_password': False},
+            defaults={'department': department},
         )
 
 
@@ -173,8 +169,7 @@ class UserListFilterForm(forms.Form):
 
 class UserPasswordChangeForm(forms.Form):
     """
-    Form for users to change their password.
-    Used when an employee is required to replace their temporary password.
+    Form for authenticated users to change their password.
     """
 
     current_password = forms.CharField(
