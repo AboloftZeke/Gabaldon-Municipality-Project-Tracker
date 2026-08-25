@@ -923,3 +923,20 @@ th {
 .view-btn__icon { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @media (max-width: 760px) { .view-btn { flex: 0 0 2.4rem; } }
+
+
+/* Public GIS project map */
+.gis-panel { margin-top: 2rem; padding: 1.25rem; background: #ffffff; border: 1px solid var(--line); }
+.gis-panel__head { display: flex; justify-content: space-between; align-items: end; gap: 1rem; margin-bottom: 1rem; }
+.gis-panel__head h2 { margin: .2rem 0 0; font-family: "Libre Franklin", sans-serif; font-size: clamp(1.55rem, 2.3vw, 2.15rem); }
+.gis-panel__head p { margin: .5rem 0 0; max-width: 760px; color: var(--ink-600); }
+.gis-panel__map-wrap { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 7px; }
+.project-gis-map { height: 460px; background: #e7eee8; }
+.gis-panel__empty { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 2rem; text-align: center; color: var(--ink-600); background: rgba(255,255,255,.86); }
+.gis-legend { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem 1rem; margin-top: .85rem; font-size: .88rem; color: #335243; }
+.gis-legend__title { font-weight: 800; }
+.gis-legend span:not(.gis-legend__title) { display: inline-flex; align-items: center; gap: .35rem; }
+.gis-legend__dot { width: .7rem; height: .7rem; border-radius: 50%; background: #64748b; }
+.gis-legend__dot--planned { background: #64748b; }.gis-legend__dot--ongoing { background: #d97706; }.gis-legend__dot--awarded { background: #2563eb; }.gis-legend__dot--completed { background: #15803d; }.gis-legend__dot--cancelled { background: #b91c1c; }.gis-legend__dot--rebid { background: #9333ea; }
+.gis-popup h3 { margin: 0 0 .3rem; font-size: 1rem; }.gis-popup p { margin: .3rem 0; }.gis-popup__meta { color: var(--ink-600); }.gis-popup__image { width: 100%; max-height: 130px; margin-bottom: .65rem; border-radius: 4px; object-fit: cover; }.gis-popup__action { margin-top: .65rem; }
+@media (max-width: 760px) { .gis-panel { padding: .85rem; }.gis-panel__head { align-items: flex-start; flex-direction: column; }.gis-panel__head .live-badge { width: 100%; }.project-gis-map { height: 360px; }.gis-legend { gap: .55rem .75rem; } }
