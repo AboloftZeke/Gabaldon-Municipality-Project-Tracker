@@ -3,6 +3,7 @@ import importlib
 import re
 from datetime import date, time, timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.apps import apps as django_apps
 from django.test import TestCase, override_settings
@@ -13,6 +14,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from django.utils import timezone
 from .forms import CustomUserCreationForm
+from .account_setup import AccountSetupDeliveryError
 from .models import (
     Address,
     Contractor,
@@ -1652,9 +1654,9 @@ class UserCreationFormTests(TestCase):
 
         self.assertTrue(form.is_valid())
 
-        user = form.save(commit=True, temporary_password='TempPass123!')
+        user = form.save(commit=True)
 
-        self.assertTrue(user.check_password('TempPass123!'))
+        self.assertFalse(user.has_usable_password())
         self.assertEqual(user.profile.department, 'engineer')
 
     def test_mayor_user_is_staff_and_keeps_mayor_department(self):
@@ -1670,13 +1672,17 @@ class UserCreationFormTests(TestCase):
 
         self.assertTrue(form.is_valid())
 
-        user = form.save(commit=True, temporary_password='TempPass123!')
+        user = form.save(commit=True)
 
+        self.assertFalse(user.has_usable_password())
         self.assertTrue(user.is_staff)
         self.assertFalse(user.is_superuser)
         self.assertEqual(user.profile.department, 'mayor')
 
 
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+)
 class UserCreateConfirmViewTests(TestCase):
     def setUp(self):
         self.admin = User.objects.create_superuser(
@@ -1702,7 +1708,208 @@ class UserCreateConfirmViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         created_user = User.objects.get(username='mayoruser')
         self.assertEqual(created_user.profile.department, 'mayor')
-        self.assertTrue(created_user.profile.must_change_password)
+        self.assertFalse(created_user.has_usable_password())
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [created_user.email])
+        self.assertIn('/account-setup/', mail.outbox[0].body)
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    LOGIN_OTP_TIMEOUT=300,
+    LOGIN_OTP_MAX_ATTEMPTS=5,
+    LOGIN_OTP_RESEND_COOLDOWN=60,
+    LOGIN_OTP_RATE_LIMIT=5,
+    LOGIN_OTP_RATE_WINDOW=900,
+)
+class AccountSetupFlowTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username='setup-admin',
+            email='setup-admin@example.com',
+            password='AdminPass!2026',
+        )
+        self.client.force_login(self.admin)
+
+    def _create_pending_user(self, username='new-employee'):
+        session = self.client.session
+        session['user_create_form_data'] = {
+            'username': username,
+            'email': f'{username}@example.com',
+            'first_name': 'New',
+            'last_name': 'Employee',
+            'role': 'engineering',
+        }
+        session.save()
+        response = self.client.post(
+            reverse('user_create_confirm'),
+            follow=True,
+        )
+        return User.objects.get(username=username), response
+
+    def _setup_path(self, email_index=-1):
+        match = re.search(
+            r'http://testserver(?P<path>/account-setup/[^\s]+)',
+            mail.outbox[email_index].body,
+        )
+        self.assertIsNotNone(match)
+        return match.group('path')
+
+    def _complete_setup(self, password='EmployeeSecurePass!2026'):
+        initial_path = self._setup_path()
+        redirect_response = self.client.get(initial_path)
+        self.assertRedirects(
+            redirect_response,
+            redirect_response.url,
+            fetch_redirect_response=False,
+        )
+        response = self.client.post(
+            redirect_response.url,
+            {
+                'new_password1': password,
+                'new_password2': password,
+            },
+            follow=True,
+        )
+        return initial_path, response
+
+    def test_admin_creation_sends_setup_email_without_password(self):
+        user, response = self._create_pending_user()
+
+        self.assertRedirects(response, reverse('user_list'))
+        self.assertFalse(user.has_usable_password())
+        self.assertEqual(user.flags.department, 'engineer')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [user.email])
+        self.assertIn('Set up your Municipality Project Tracker account', mail.outbox[0].subject)
+        self.assertNotContains(response, 'Temporary password')
+        self.assertContains(response, 'Setup Pending')
+        self.assertContains(response, 'Resend Setup')
+
+    def test_setup_email_failure_rolls_back_account_creation(self):
+        session = self.client.session
+        session['user_create_form_data'] = {
+            'username': 'delivery-failure',
+            'email': 'delivery-failure@example.com',
+            'first_name': 'Delivery',
+            'last_name': 'Failure',
+            'role': 'engineering',
+        }
+        session.save()
+
+        with patch(
+            'apps.system.views.send_account_setup_email',
+            side_effect=AccountSetupDeliveryError,
+        ):
+            response = self.client.post(
+                reverse('user_create_confirm'),
+                follow=True,
+            )
+
+        self.assertFalse(User.objects.filter(username='delivery-failure').exists())
+        self.assertContains(response, 'setup email could not be sent')
+        self.assertIn('user_create_form_data', self.client.session)
+
+    def test_pending_account_cannot_login_before_setup(self):
+        user, _ = self._create_pending_user()
+        self.client.logout()
+        mail.outbox.clear()
+
+        response = self.client.post(
+            reverse('login'),
+            {'username': user.username, 'password': 'AnyPassword!2026'},
+        )
+
+        self.assertContains(response, 'Invalid credentials')
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_setup_validators_reject_weak_password(self):
+        user, _ = self._create_pending_user()
+        initial_path = self._setup_path()
+        redirect_response = self.client.get(initial_path)
+
+        response = self.client.post(
+            redirect_response.url,
+            {'new_password1': 'password', 'new_password2': 'password'},
+        )
+
+        self.assertContains(response, 'This password is too common.')
+        user.refresh_from_db()
+        self.assertFalse(user.has_usable_password())
+
+    def test_valid_setup_is_one_time_then_login_requires_otp(self):
+        user, _ = self._create_pending_user()
+        initial_path, response = self._complete_setup()
+
+        self.assertRedirects(response, reverse('account_setup_complete'))
+        user.refresh_from_db()
+        self.assertTrue(user.check_password('EmployeeSecurePass!2026'))
+        reused = self.client.get(initial_path, follow=True)
+        self.assertContains(reused, 'Invalid or Expired Setup Link')
+
+        self.client.logout()
+        mail.outbox.clear()
+        login_response = self.client.post(
+            reverse('login'),
+            {
+                'username': user.username,
+                'password': 'EmployeeSecurePass!2026',
+            },
+        )
+        self.assertRedirects(
+            login_response,
+            reverse('login_otp_verify'),
+            fetch_redirect_response=False,
+        )
+        self.assertNotIn('_auth_user_id', self.client.session)
+        otp_match = re.search(r'\b(\d{6})\b', mail.outbox[-1].body)
+        self.assertIsNotNone(otp_match)
+        otp_response = self.client.post(
+            reverse('login_otp_verify'),
+            {'code': otp_match.group(1)},
+        )
+        self.assertRedirects(
+            otp_response,
+            reverse('engineering_dashboard'),
+            fetch_redirect_response=False,
+        )
+        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
+
+    def test_invalid_and_expired_setup_links_are_rejected(self):
+        _, _ = self._create_pending_user()
+        setup_path = self._setup_path()
+        invalid_path = setup_path.rsplit('/', 2)[0] + '/invalid-token/'
+
+        invalid_response = self.client.get(invalid_path)
+        self.assertContains(invalid_response, 'Invalid or Expired Setup Link')
+
+        with override_settings(PASSWORD_RESET_TIMEOUT=-1):
+            expired_response = self.client.get(setup_path)
+        self.assertContains(expired_response, 'Invalid or Expired Setup Link')
+
+    def test_resend_invalidates_previous_setup_link(self):
+        user, _ = self._create_pending_user()
+        original_path = self._setup_path()
+
+        response = self.client.post(
+            reverse('user_resend_account_setup', args=[user.pk]),
+            follow=True,
+        )
+
+        self.assertRedirects(response, reverse('user_list'))
+        self.assertEqual(len(mail.outbox), 2)
+        replacement_path = self._setup_path(email_index=1)
+        self.assertContains(
+            self.client.get(original_path),
+            'Invalid or Expired Setup Link',
+        )
+        replacement_response = self.client.get(replacement_path)
+        self.assertRedirects(
+            replacement_response,
+            replacement_response.url,
+            fetch_redirect_response=False,
+        )
 
 
 @override_settings(
@@ -2015,21 +2222,3 @@ class LoginOTPTests(TestCase):
         )
         self.assertEqual(LoginOTPChallenge.objects.count(), 2)
         self.assertEqual(len(mail.outbox), 2)
-
-    def test_mandatory_password_change_happens_after_otp(self):
-        UserFlag.objects.filter(user=self.user).update(
-            must_change_password=True,
-        )
-        self._start_login()
-
-        response = self.client.post(
-            reverse('login_otp_verify'),
-            {'code': self._emailed_code()},
-        )
-
-        self.assertRedirects(
-            response,
-            reverse('password_change'),
-            fetch_redirect_response=False,
-        )
-
