@@ -87,56 +87,6 @@ class UserProfile(models.Model):
         ordering = ['user__username']
 
 
-class PasswordChangeHistory(models.Model):
-    """
-    Compatibility model pointing at the archived password change log.
-    """
-    CHANGE_METHOD_CHOICES = [
-        ('creation', 'User Creation'),
-        ('reset_link', 'Password Reset Link'),
-        ('admin_edit', 'Admin Edit'),
-        ('user_edit', 'User Self-Edit'),
-        ('signal', 'System Change'),
-    ]
-
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='password_changes'
-    )
-
-    changed_at = models.DateTimeField(auto_now_add=True, db_index=True)
-
-    changed_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='password_changes_made'
-    )
-
-    method = models.CharField(
-        max_length=20,
-        choices=CHANGE_METHOD_CHOICES,
-        default='signal'
-    )
-
-    notes = models.TextField(blank=True, default='')
-
-    class Meta:
-        managed = False
-        db_table = 'system_legacy_passwordchangehistory_archive'
-        ordering = ['-changed_at']
-        verbose_name_plural = 'Password Change History'
-        indexes = [
-            models.Index(fields=['-changed_at']),
-            models.Index(fields=['user', '-changed_at']),
-        ]
-
-    def __str__(self):
-        return f"{self.user.username} - {self.get_method_display()} - {self.changed_at.strftime('%Y-%m-%d %H:%M')}"
-
-
 class LoginOTPChallenge(models.Model):
     """Short-lived, hashed email verification challenge for a pending login."""
 

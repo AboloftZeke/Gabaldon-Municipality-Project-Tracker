@@ -6,8 +6,7 @@ class SystemConfig(AppConfig):
     label = 'system'
 
     def ready(self):
-        """Register signal handlers when the app is ready."""
-        import apps.system.signals  # noqa: F401
+        """Install runtime compatibility helpers for user access checks."""
         # Provide a runtime-only `profile` compatibility property on User so
         # templates and code referencing `user.profile` work without touching
         # the archived profile table.

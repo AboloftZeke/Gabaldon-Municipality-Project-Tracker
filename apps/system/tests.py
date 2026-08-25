@@ -1784,7 +1784,7 @@ class PublicPasswordResetTests(TestCase):
         self.assertContains(response, 'This password is too common.')
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password('OriginalPass!2026'))
-        self.assertFalse(self.user.password_changes.exists())
+        self.assertFalse(hasattr(self.user, 'password_changes'))
 
     def test_reset_changes_password_invalidates_link_and_allows_login(self):
         self._request_reset()
@@ -1806,17 +1806,9 @@ class PublicPasswordResetTests(TestCase):
         self.assertTrue(self.user.check_password('UpdatedSecurePass!2026'))
         self.assertFalse(self.user.check_password('OriginalPass!2026'))
 
-        history = self.user.password_changes.get()
-        self.assertEqual(history.method, 'reset_link')
-        self.assertIsNone(history.changed_by)
-        self.assertEqual(
-            history.notes,
-            'Password changed through self-service email reset',
-        )
-
         reused_link = self.client.get(initial_path, follow=True)
         self.assertContains(reused_link, 'Invalid or Expired Link')
-        self.assertEqual(self.user.password_changes.count(), 1)
+        self.assertFalse(hasattr(self.user, 'password_changes'))
 
         login_response = self.client.post(reverse('login'), {
             'username': self.user.username,
@@ -1828,6 +1820,42 @@ class PublicPasswordResetTests(TestCase):
             fetch_redirect_response=False,
         )
         self.assertNotIn('_auth_user_id', self.client.session)
+
+        otp_match = re.search(r'\b(\d{6})\b', mail.outbox[-1].body)
+        self.assertIsNotNone(otp_match)
+        otp_response = self.client.post(
+            reverse('login_otp_verify'),
+            {'code': otp_match.group(1)},
+        )
+        self.assertRedirects(
+            otp_response,
+            reverse('engineering_dashboard'),
+            fetch_redirect_response=False,
+        )
+        self.assertEqual(
+            int(self.client.session['_auth_user_id']),
+            self.user.pk,
+        )
+
+    def test_admin_password_history_and_reset_routes_are_removed(self):
+        admin = User.objects.create_superuser(
+            username='admin-user',
+            email='admin@example.com',
+            password='AdminPass!2026',
+        )
+        self.client.force_login(admin)
+
+        for path in (
+            '/password-history/',
+            f'/users/{self.user.pk}/password-history/',
+            f'/users/{self.user.pk}/reset-password/',
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 404)
+
+        response = self.client.get(reverse('user_list'))
+        self.assertNotContains(response, 'History')
+        self.assertNotContains(response, 'Reset Password')
 
 
 @override_settings(

@@ -52,7 +52,7 @@ urlpatterns = [
     ),
     path(
         'reset-password/<uidb64>/<token>/',
-        views.PublicPasswordResetConfirmView.as_view(
+        auth_views.PasswordResetConfirmView.as_view(
             template_name='registration/password_reset_confirm.html',
             success_url=reverse_lazy('password_reset_complete'),
         ),
@@ -98,9 +98,6 @@ urlpatterns = [
     path('users/<int:pk>/edit/confirm/', views.UserEditConfirmView.as_view(), name='user_edit_confirm'),
     path('users/<int:pk>/deactivate/', views.UserDeactivateView.as_view(), name='user_deactivate'),
     path('users/<int:pk>/activate/', views.UserActivateView.as_view(), name='user_activate'),
-    path('users/<int:pk>/reset-password/', views.UserPasswordResetInitiateView.as_view(), name='user_initiate_password_reset'),
-    path('users/<int:pk>/password-history/', views.UserPasswordHistoryView.as_view(), name='user_password_history'),
-    path('password-history/', views.PasswordHistoryListView.as_view(), name='password_history_list'),
     path('password-change/', views.PasswordChangeView.as_view(),name='password_change'),
 ]
 

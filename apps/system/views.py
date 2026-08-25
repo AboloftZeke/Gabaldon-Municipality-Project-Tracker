@@ -4,16 +4,9 @@ from django.views.generic import TemplateView, ListView, CreateView, UpdateView,
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.contrib.auth.views import PasswordResetConfirmView
 from django.contrib import messages
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
-from django.urls import reverse_lazy, reverse
 from django.db.models import Prefetch, Q
 from django.conf import settings
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
 from django.utils.crypto import get_random_string
 from .forms import (
     CustomUserCreationForm,
@@ -39,10 +32,6 @@ PENDING_LOGIN_OTP_SESSION_KEY = 'pending_login_otp_challenge'
 def _department_for_user(user):
     profile = getattr(user, 'profile', None)
     return getattr(profile, 'department', None) if profile is not None else None
-
-
-def _password_history_model():
-    return User._meta.get_field('password_changes').related_model
 
 
 def _redirect_authenticated_user(user):
@@ -196,21 +185,6 @@ class LogoutView(View):
     def get(self, request):
         logout(request)
         return render(request, 'core/logout.html')
-
-
-class PublicPasswordResetConfirmView(PasswordResetConfirmView):
-    """Record history only after a public reset successfully changes a password."""
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        history_model = _password_history_model()
-        history_model.objects.create(
-            user=form.user,
-            changed_by=None,
-            method='reset_link',
-            notes='Password changed through self-service email reset',
-        )
-        return response
 
 
 class PublicInfrastructureProjectDetailView(TemplateView):
@@ -766,174 +740,6 @@ class UserActivateView(AdminRequiredMixin, View):
         )
         return redirect('user_list')
 
-
-class UserPasswordResetInitiateView(AdminRequiredMixin, DetailView):
-    """
-    Initiate password reset for a user by sending email with reset link.
-    """
-    model = User
-    template_name = 'core/user_password_reset_confirm.html'
-    context_object_name = 'reset_user'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['action'] = 'Reset Password'
-        return context
-
-    def post(self, request, *args, **kwargs):
-        user = self.get_object()
-
-        # Generate token
-        token_generator = PasswordResetTokenGenerator()
-        token = token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-
-        # Build password reset link (using Django's default password reset confirm view)
-        reset_url = request.build_absolute_uri(
-            reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
-        )
-
-        # Prepare email context
-        email_context = {
-            'user': user,
-            'reset_link': reset_url,
-            'site_name': 'Municipality Project Tracker',
-            'token_expiration_hours': 24,
-        }
-
-        # Send email
-        try:
-            # Text version
-            text_message = render_to_string(
-                'core/email/password_reset_email.txt',
-                email_context,
-                request=request
-            )
-
-            # HTML version
-            html_message = render_to_string(
-                'core/email/password_reset_email.html',
-                email_context,
-                request=request
-            )
-
-            send_mail(
-                subject='Password Reset Request - Municipality Project Tracker',
-                message=text_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_message,
-                fail_silently=False,
-            )
-
-            # Log password reset in history
-            history_model = _password_history_model()
-            history_model.objects.create(
-                user=user,
-                changed_by=request.user,
-                method='reset_link',
-                notes=f'Password reset link sent by {request.user.username}'
-            )
-
-            # Show success message
-            from django.contrib import messages
-            messages.success(
-                request,
-                f'Password reset link has been sent to {user.email}'
-            )
-        except Exception as e:
-            from django.contrib import messages
-            messages.error(
-                request,
-                f'Error sending password reset email: {str(e)}'
-            )
-
-        return redirect('user_list')
-
-
-class UserPasswordHistoryView(AdminRequiredMixin, DetailView):
-    """
-    Display password change history for a specific user.
-    """
-    model = User
-    template_name = 'core/user_password_history.html'
-    context_object_name = 'history_user'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        user = self.get_object()
-        history_model = _password_history_model()
-        context['password_changes'] = history_model.objects.filter(
-            user=user
-        ).order_by('-changed_at')
-        return context
-
-
-class PasswordHistoryListView(AdminRequiredMixin, ListView):
-    """
-    Display all password changes across all users with filters.
-    """
-    template_name = 'core/password_history_list.html'
-    context_object_name = 'password_changes'
-    paginate_by = 20
-
-    def get_queryset(self):
-        history_model = _password_history_model()
-        queryset = history_model.objects.select_related(
-            'user', 'changed_by'
-        ).order_by('-changed_at')
-
-        # Filter by user
-        user_filter = self.request.GET.get('user', '').strip()
-        if user_filter:
-            queryset = queryset.filter(user__username__icontains=user_filter)
-
-        # Filter by method
-        method_filter = self.request.GET.get('method', '').strip()
-        if method_filter:
-            queryset = queryset.filter(method=method_filter)
-
-        # Filter by date range
-        date_from = self.request.GET.get('date_from', '').strip()
-        date_to = self.request.GET.get('date_to', '').strip()
-
-        if date_from:
-            from datetime import datetime
-            try:
-                start_date = datetime.strptime(date_from, '%Y-%m-%d')
-                queryset = queryset.filter(changed_at__gte=start_date)
-            except ValueError:
-                pass
-
-        if date_to:
-            from datetime import datetime, timedelta
-            try:
-                end_date = datetime.strptime(date_to, '%Y-%m-%d')
-                # Include entire day
-                end_date = end_date + timedelta(days=1)
-                queryset = queryset.filter(changed_at__lt=end_date)
-            except ValueError:
-                pass
-
-        return queryset
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        history_model = _password_history_model()
-
-        # Add method choices for filter dropdown
-        context['method_choices'] = history_model.CHANGE_METHOD_CHOICES
-
-        # Get all users for filter dropdown
-        context['all_users'] = User.objects.all().order_by('username')
-
-        # Add current filter values
-        context['user_filter'] = self.request.GET.get('user', '')
-        context['method_filter'] = self.request.GET.get('method', '')
-        context['date_from'] = self.request.GET.get('date_from', '')
-        context['date_to'] = self.request.GET.get('date_to', '')
-
-        return context
 
 class PasswordChangeView(LoginRequiredMixin, View):
     """
