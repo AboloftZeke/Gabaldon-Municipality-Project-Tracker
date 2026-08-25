@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}">
   <link rel="stylesheet" href="{% static 'css/templates/projects/project_modal.css' %}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ5A1C4H5iR4eKpD/UT3CXYu7bH1C7Q=" crossorigin="">
 </head>
 <body>
   <header class="site-header">
@@ -76,6 +77,32 @@
         <span class="metric-label">Ongoing</span>
         <strong class="metric-value">{{ ongoing_projects }}</strong>
       </article>
+    </section>
+
+    <section class="gis-panel" aria-labelledby="gis-heading">
+      <div class="gis-panel__head">
+        <div>
+          <p class="section-kicker">Public Project Overview</p>
+          <h2 id="gis-heading">GIS Project Map</h2>
+          <p>Explore the location and current status of municipal projects across Gabaldon. The map follows the filters and search controls below.</p>
+        </div>
+        <div class="live-badge" id="gis-visible-count" aria-live="polite">Loading mapped projects…</div>
+      </div>
+
+      <div class="gis-panel__map-wrap">
+        <div id="project-gis-map" class="project-gis-map" aria-label="Interactive map of municipal projects"></div>
+        <p class="gis-panel__empty" id="gis-empty-state" hidden></p>
+      </div>
+
+      <div class="gis-legend" aria-label="Project status map legend">
+        <span class="gis-legend__title">Project status</span>
+        <span><i class="gis-legend__dot gis-legend__dot--planned"></i>Planned</span>
+        <span><i class="gis-legend__dot gis-legend__dot--ongoing"></i>Ongoing</span>
+        <span><i class="gis-legend__dot gis-legend__dot--awarded"></i>Awarded</span>
+        <span><i class="gis-legend__dot gis-legend__dot--completed"></i>Completed</span>
+        <span><i class="gis-legend__dot gis-legend__dot--cancelled"></i>Cancelled</span>
+        <span><i class="gis-legend__dot gis-legend__dot--rebid"></i>Re-bid</span>
+      </div>
     </section>
 
     <section class="panel" aria-labelledby="registry-heading">
@@ -259,6 +286,7 @@
 
   {% include "projects/project_detail_modal.html" %}
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="{% static 'js/templates/Dashboard/dashboard.js' %}"></script>
   <script src="{% static 'js/templates/projects/project_modal.js' %}"></script>
 </body>
