@@ -59,7 +59,7 @@
                             {% if row.project_type == 'infrastructure' %}Infrastructure Project{% else %}Non-Infrastructure Program{% endif %}
                         </p>
                         <dl class="review-card__meta">
-                            <div><dt>Submitted by</dt><dd>{{ row.revision.submitted_by.get_full_name|default:row.revision.submitted_by.username|default:"Unknown" }}</dd></div>
+                            <div><dt>Submitted by</dt><dd>{% if row.revision.submitted_by %}{{ row.revision.submitted_by.get_full_name|default:row.revision.submitted_by.username }}{% else %}Unknown{% endif %}</dd></div>
                             <div><dt>Submitted</dt><dd>{{ row.revision.submitted_at|date:"M d, Y g:i A"|default:"Not recorded" }}</dd></div>
                         </dl>
                         <a href="{% url 'publication_revision_detail' row.revision.pk %}" class="review-primary-link">
