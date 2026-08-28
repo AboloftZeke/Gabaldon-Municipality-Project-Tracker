@@ -111,7 +111,7 @@
             <section>
                 <h2>Submission Record</h2>
                 <dl>
-                    <div><dt>Submitted by</dt><dd>{{ revision.submitted_by.get_full_name|default:revision.submitted_by.username|default:"Unknown" }}</dd></div>
+                    <div><dt>Submitted by</dt><dd>{% if revision.submitted_by %}{{ revision.submitted_by.get_full_name|default:revision.submitted_by.username }}{% else %}Unknown{% endif %}</dd></div>
                     <div><dt>Submitted</dt><dd>{{ revision.submitted_at|date:"M d, Y g:i A"|default:"N/A" }}</dd></div>
                     {% if revision.reviewed_at %}<div><dt>Reviewed</dt><dd>{{ revision.reviewed_at|date:"M d, Y g:i A" }}</dd></div>{% endif %}
                     {% if revision.published_at %}<div><dt>Published</dt><dd>{{ revision.published_at|date:"M d, Y g:i A" }}</dd></div>{% endif %}
