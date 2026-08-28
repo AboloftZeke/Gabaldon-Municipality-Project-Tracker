@@ -359,7 +359,7 @@ class InfrastructureProjectForm(forms.Form):
                 'project', 'address', 'category'
             ).first()
 
-        project_id = getattr(instance, 'project_id', getattr(instance, 'id', None))
+        project_id = getattr(instance, 'project_id', None)
         if project_id is not None:
             infra = Infrastructure_Project.objects.filter(project_id=project_id).select_related(
                 'project', 'address', 'category'
@@ -369,9 +369,21 @@ class InfrastructureProjectForm(forms.Form):
 
         project = getattr(instance, 'project', None)
         if project is not None:
-            return Infrastructure_Project.objects.filter(project=project).select_related(
+            infra = Infrastructure_Project.objects.filter(project=project).select_related(
                 'project', 'address', 'category'
             ).first()
+            if infra is not None:
+                return infra
+
+        # The legacy compatibility InfrastructureProject model maps its `id`
+        # column directly to `Infrastructure_Project.infrastructure_id`. Do not
+        # reinterpret that value as a base Project.project_id; those sequences
+        # are independent and can point at a different project (or none at all).
+        instance_id = getattr(instance, 'id', None)
+        if instance_id is not None:
+            return Infrastructure_Project.objects.filter(
+                infrastructure_id=instance_id
+            ).select_related('project', 'address', 'category').first()
 
         return None
 
