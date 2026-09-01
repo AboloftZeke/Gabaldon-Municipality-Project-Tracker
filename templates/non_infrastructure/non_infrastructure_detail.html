@@ -17,10 +17,6 @@
         <a href="{% url 'publication_revision_detail' request.GET.from_review %}" class="btn btn-back">
             ← Back to Publication Review
         </a>
-    {% elif request.META.HTTP_REFERER %}
-        <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-back">
-            ← Back to Dashboard
-        </a>
     {% else %}
         <a href="{% url 'mayor_dashboard' %}" class="btn btn-back">
             ← Back to Dashboard
