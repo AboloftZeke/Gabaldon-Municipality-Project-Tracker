@@ -163,23 +163,43 @@
 }
 
 /* Popups */
+.gabaldon-gis .leaflet-popup-content-wrapper {
+  max-width: 340px;
+}
+.gabaldon-gis .leaflet-popup-content {
+  width: min(310px, calc(100vw - 80px)) !important;
+  max-width: 310px;
+  margin: 13px 16px;
+}
+.gis-popup {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
 .gis-popup h4 {
   margin: 0 0 6px;
   color: var(--gis-navy);
   font-size: 1rem;
+  line-height: 1.3;
 }
 .gis-popup table {
   border-collapse: collapse;
   font-size: 0.82rem;
   width: 100%;
+  table-layout: fixed;
 }
 .gis-popup table td {
   padding: 2px 6px 2px 0;
   vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .gis-popup table td:first-child {
   color: #5b6b70;
-  white-space: nowrap;
+  width: 42%;
+  white-space: normal;
+}
+.gis-popup table td:last-child {
+  width: 58%;
 }
 .gis-placeholder-note {
   margin-top: 6px;
@@ -192,6 +212,10 @@
 }
 .gis-popup-link {
   margin-top: 8px;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
+  text-align: center;
 }
 .gis-popup-photos {
   display: flex;
@@ -269,5 +293,16 @@
   }
   .gabaldon-gis #gabaldon-gis-map {
     height: 340px;
+  }
+  .gabaldon-gis .leaflet-popup-content {
+    width: min(270px, calc(100vw - 64px)) !important;
+    max-width: 270px;
+    margin: 11px 13px;
+  }
+  .gis-popup table td:first-child {
+    width: 40%;
+  }
+  .gis-popup table td:last-child {
+    width: 60%;
   }
 }
