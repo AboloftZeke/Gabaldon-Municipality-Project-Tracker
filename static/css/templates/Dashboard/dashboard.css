@@ -933,6 +933,7 @@ th {
 .gis-panel__map-wrap { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 7px; }
 .project-gis-map { height: 460px; background: #e7eee8; }
 .gis-panel__empty { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 2rem; text-align: center; color: var(--ink-600); background: rgba(255,255,255,.86); }
+.gis-panel__empty[hidden] { display: none !important; }
 .gis-legend { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem 1rem; margin-top: .85rem; font-size: .88rem; color: #335243; }
 .gis-legend__title { font-weight: 800; }
 .gis-legend span:not(.gis-legend__title) { display: inline-flex; align-items: center; gap: .35rem; }
