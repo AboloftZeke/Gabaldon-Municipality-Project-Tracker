@@ -1,72 +1,16 @@
-(function () {
-  const categoryFilter = document.getElementById("category-filter");
-  const locationFilter = document.getElementById("location-filter");
-  const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
-  const statusButtons = Array.from(document.querySelectorAll(".status-btn"));
-  const visibleCount = document.getElementById("visible-count");
-  const rows = Array.from(document.querySelectorAll(".project-row"));
-
-  let currentCategory = "all";
-  let currentProjectCategory = "all";
-  let currentStatus = "all";
-
-  if (!rows.length) {
-    if (visibleCount) {
-      visibleCount.textContent = "0";
-    }
-    return;
-  }
-
-  function applyFilters() {
-    const projectCategory = categoryFilter ? categoryFilter.value : "all";
-    const location = locationFilter ? locationFilter.value : "all";
-    let shown = 0;
-
-    rows.forEach((row) => {
-      const matchesCategory = currentCategory === "all" || row.dataset.category === currentCategory;
-      const matchesProjectCategory = projectCategory === "all" || row.dataset.projectCategory === projectCategory;
-      const matchesStatus = currentStatus === "all" || row.dataset.status === currentStatus;
-      const matchesLocation = location === "all" || row.dataset.location === location;
-      const show = matchesCategory && matchesProjectCategory && matchesStatus && matchesLocation;
-      row.classList.toggle("hidden-row", !show);
-      if (show) {
-        shown += 1;
-      }
-    });
-
-    if (visibleCount) {
-      visibleCount.textContent = String(shown);
-    }
-  }
-
-  tabButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      currentCategory = button.dataset.category || "all";
-      tabButtons.forEach((item) => item.classList.remove("is-active"));
-      button.classList.add("is-active");
-      applyFilters();
-    });
-  });
-
-  if (categoryFilter) {
-    categoryFilter.addEventListener("change", () => {
-      currentProjectCategory = categoryFilter.value || "all";
-      applyFilters();
-    });
-  }
-
-  statusButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      currentStatus = button.dataset.status || "all";
-      statusButtons.forEach((item) => item.classList.remove("is-active"));
-      button.classList.add("is-active");
-      applyFilters();
-    });
-  });
-
-  if (locationFilter) {
-    locationFilter.addEventListener("change", applyFilters);
-  }
-
-  applyFilters();
-})();
+(function(){
+const q=(s,p=document)=>p.querySelector(s),qa=(s,p=document)=>[...p.querySelectorAll(s)],rows=qa(".project-row"),host=q("#project-card-grid"),table=q(".table-wrap"),count=q("#visible-count"),categorySelect=q("#category-filter"),locationSelect=q("#location-filter"),searchInput=q("#project-search"),tabs=qa(".tab-btn"),statuses=qa(".status-btn"),views=qa("[data-dashboard-view]"),mapHost=q("#project-gis-map"),mapCount=q("#gis-visible-count"),mapEmpty=q("#gis-empty-state");let category="all",status="all",projectMap=null,mapMarkers=null,mapFeatures=[],didFitMap=false;
+const groups=categorySelect?qa("optgroup",categorySelect).map(g=>({type:g.dataset.projectCategoryType,label:g.label,items:qa("option",g).map(o=>[o.value,o.textContent])})):[];
+function refreshCategories(){if(!categorySelect)return;const prior=categorySelect.value,valid=new Set(["all"]);categorySelect.replaceChildren();const all=document.createElement("option");all.value="all";all.textContent=category==="infra"?"All Infrastructure Categories":category==="noninfra"?"All Non-Infrastructure Categories":"All Categories";categorySelect.append(all);groups.forEach(g=>{if(category!=="all"&&g.type!==category)return;const og=document.createElement("optgroup");og.label=g.label;g.items.forEach(([value,label])=>{const o=document.createElement("option");o.value=value;o.textContent=label;og.append(o);valid.add(value)});categorySelect.append(og)});categorySelect.value=valid.has(prior)?prior:"all"}
+function field(label,value){const el=document.createElement("div"),a=document.createElement("span"),b=document.createElement("span");el.className="project-card__field";a.className="project-card__field-label";b.className="project-card__field-value";a.textContent=label;b.textContent=value||"—";el.append(a,b);return el}
+const cards=host?rows.map((row,index)=>{const card=document.createElement("article"),thumb=q(".project-thumb",row),image=document.createElement("img"),body=document.createElement("div"),title=document.createElement("h3"),location=q(".project-subtext",row)?.textContent.trim(),chip=q(".status-chip",row),fields=document.createElement("div"),source=q(".row-link",row);card.className="project-card";card.dataset.projectIndex=index;image.className="project-card__image";image.src=thumb?(thumb.currentSrc||thumb.src):"";image.alt=thumb?thumb.alt:"Project cover";body.className="project-card__content";title.className="project-card__title";title.textContent=q(".project-title",row)?.textContent.trim()||"Untitled project";body.append(title);if(location){const p=document.createElement("p");p.className="project-card__location";p.textContent=location;body.append(p)}if(chip)body.append(chip.cloneNode(true));fields.className="project-card__fields";fields.append(field("Type",q("td:nth-child(2)",row)?.textContent.trim()),field("Budget / Cost",q("td:nth-child(4)",row)?.textContent.trim()),field("Progress",q("td:nth-child(5)",row)?.textContent.trim()));body.append(fields);if(source){const link=source.cloneNode(true);link.classList.add("project-card__action");link.addEventListener("click",e=>{e.preventDefault();source.click()});body.append(link)}card.append(image,body);host.append(card);return card}):[];
+function escapeHtml(value){const node=document.createElement("span");node.textContent=value==null?"":String(value);return node.innerHTML}
+function mapLocationKey(value){const key=(value||"").trim().toLowerCase().replace(/\s+/g,"_");return key.startsWith("bitulok")?"bitulok":key}
+function mapStatusMatches(feature){if(status==="all")return true;const value=feature.properties.dashboard_status||"";return status==="ongoing"?["ongoing","ongoing_bidding","awarded"].includes(value):value===status}
+function mapPopup(feature,imageUrl){const p=feature.properties;const image=imageUrl?'<img class="gis-popup__image" src="'+escapeHtml(imageUrl)+'" alt="'+escapeHtml(p.name)+' cover">':"";const budget=p.budget!=null?"₱"+Number(p.budget).toLocaleString("en-PH",{minimumFractionDigits:2,maximumFractionDigits:2}):"—";const progress=p.progress!=null?Number(p.progress).toFixed(0)+"%":"—";return '<article class="gis-popup">'+image+'<h3>'+escapeHtml(p.name)+'</h3><p class="gis-popup__meta">'+escapeHtml(p.category||p.type)+" · "+escapeHtml(p.barangay||"Location not specified")+'</p><p><strong>Status:</strong> '+escapeHtml(p.status||"—")+'</p><p><strong>Budget / Cost:</strong> '+budget+'</p><p><strong>Progress:</strong> '+progress+'</p><a class="row-link gis-popup__action" href="'+escapeHtml(p.detail_url)+'">View Project Details</a></article>'}
+function mapMarker(feature){const p=feature.properties,colors={planned:"#64748b",ongoing:"#d97706",awarded:"#2563eb",completed:"#15803d",cancelled:"#b91c1c",rebid:"#9333ea"};const color=colors[p.dashboard_status]||colors[p.status_key]||"#475569";const marker=L.circleMarker([feature.geometry.coordinates[1],feature.geometry.coordinates[0]],{radius:9,color:"#fff",weight:2,fillColor:color,fillOpacity:1});marker.bindPopup(mapPopup(feature,""),{maxWidth:260});marker.on("popupopen",()=>{fetch("/gis/projects/"+encodeURIComponent(p.project_id)+"/photos.json").then(r=>r.ok?r.json():null).then(data=>{const cover=data?.photos?.find(photo=>photo.is_cover)||data?.photos?.[0];if(cover?.url)marker.setPopupContent(mapPopup(feature,cover.url))}).catch(()=>{})});return marker}
+function refreshMap(){if(!projectMap||!mapMarkers)return;const projectCategory=categorySelect?.value||"all",location=locationSelect?.value||"all",search=(searchInput?.value||"").trim().toLowerCase();const visible=mapFeatures.filter(feature=>{const p=feature.properties;const typeMatches=category==="all"||(category==="infra"&&p.type==="infrastructure")||(category==="noninfra"&&p.type==="non_infrastructure");const categoryMatches=projectCategory==="all"||p.category_key===projectCategory;const locationMatches=location==="all"||mapLocationKey(p.barangay)===location;const searchText=[p.name,p.code,p.category,p.barangay,p.address,p.implementing_office,p.funding_source,p.status].join(" ").toLowerCase();return typeMatches&&categoryMatches&&locationMatches&&mapStatusMatches(feature)&&(!search||searchText.includes(search))});mapMarkers.clearLayers();visible.forEach(feature=>mapMarker(feature).addTo(mapMarkers));if(mapCount)mapCount.textContent="Showing "+visible.length+" of "+mapFeatures.length+" mapped projects";if(mapEmpty){const hasUnmapped=rows.length>mapFeatures.length;mapEmpty.hidden=visible.length>0;mapEmpty.textContent=visible.length?"":(hasUnmapped?"No matching projects have usable map coordinates yet.":"No mapped projects are available yet.")}if(visible.length&&!didFitMap){const coordinates=visible.map(feature=>[feature.geometry.coordinates[1],feature.geometry.coordinates[0]]);if(coordinates.length===1)projectMap.setView(coordinates[0],14);else projectMap.fitBounds(coordinates,{padding:[28,28],maxZoom:15});didFitMap=true}}
+function initMap(){if(!mapHost)return;if(!window.L){if(mapEmpty){mapEmpty.hidden=false;mapEmpty.textContent="The interactive map could not be loaded."}return}projectMap=L.map(mapHost,{scrollWheelZoom:false}).setView([15.45,121.34],12);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(projectMap);mapMarkers=L.layerGroup().addTo(projectMap);fetch("/gis/layers/projects.json").then(response=>response.ok?response.json():Promise.reject()).then(data=>{mapFeatures=Array.isArray(data.features)?data.features:[];refreshMap()}).catch(()=>{if(mapEmpty){mapEmpty.hidden=false;mapEmpty.textContent="Project map data is currently unavailable."}if(mapCount)mapCount.textContent="Map unavailable"})}
+function filter(){const pc=categorySelect?.value||"all",loc=locationSelect?.value||"all",search=(searchInput?.value||"").trim().toLowerCase();let shown=0;rows.forEach((row,i)=>{const show=(category==="all"||row.dataset.category===category)&&(pc==="all"||row.dataset.projectCategory===pc)&&(status==="all"||row.dataset.status===status)&&(loc==="all"||row.dataset.location===loc)&&(!search||row.textContent.toLowerCase().includes(search));row.classList.toggle("hidden-row",!show);if(cards[i])cards[i].hidden=!show;if(show)shown++});if(count)count.textContent=shown;refreshMap()}
+function setView(view){const card=view==="card";if(table)table.hidden=card;if(host)host.hidden=!card;views.forEach(b=>{const active=b.dataset.dashboardView===view;b.classList.toggle("is-active",active);b.setAttribute("aria-pressed",active)});try{sessionStorage.setItem("dashboard-view",card?"card":"detail")}catch(_){}}
+tabs.forEach(b=>b.addEventListener("click",()=>{category=b.dataset.category||"all";tabs.forEach(x=>x.classList.remove("is-active"));b.classList.add("is-active");refreshCategories();filter()}));categorySelect?.addEventListener("change",filter);statuses.forEach(b=>b.addEventListener("click",()=>{status=b.dataset.status||"all";statuses.forEach(x=>x.classList.remove("is-active"));b.classList.add("is-active");filter()}));locationSelect?.addEventListener("change",filter);searchInput?.addEventListener("input",filter);views.forEach(b=>b.addEventListener("click",()=>setView(b.dataset.dashboardView)));refreshCategories();initMap();filter();try{setView(sessionStorage.getItem("dashboard-view")==="card"?"card":"detail")}catch(_){setView("detail")}})();

@@ -1,19 +1,27 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy, reverse, NoReverseMatch
 from django.db import models
 from django.db.models import Q, Sum
 from django.templatetags.static import static
-from .models import NonInfrastructureProject
+from django.utils import timezone
 from .forms import NonInfrastructureProjectForm
+from apps.system.models import NonInfrastructureProject as SystemNonInfrastructureProject
+from apps.system.models import Non_Infrastructure_Project, Project, Project_Image
+from apps.system.publication_service import (
+    publication_state,
+    submit_project_for_review,
+)
 
-# Import UserProfile from system app
-try:
-    from apps.system.models import UserProfile
-except ImportError:
-    from system.models import UserProfile
+
+def _department_for_user(user):
+    profile = getattr(user, 'profile', None)
+    return getattr(profile, 'department', None) if profile is not None else None
 
 
 class MayorsOfficeOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -25,10 +33,8 @@ class MayorsOfficeOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
         # Explicitly exclude superusers/admins
         if self.request.user.is_superuser:
             return False
-        try:
-            return self.request.user.profile.department == 'mayor'
-        except UserProfile.DoesNotExist:
-            return False
+        department = _department_for_user(self.request.user)
+        return department == 'mayor'
 
 
 class MayorsOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -39,10 +45,8 @@ class MayorsOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
         if self.request.user.is_superuser:
             return True
-        try:
-            return self.request.user.profile.department == 'mayor'
-        except UserProfile.DoesNotExist:
-            return False
+        department = _department_for_user(self.request.user)
+        return department == 'mayor'
 
 
 class MayorsOfficeEditMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -55,10 +59,8 @@ class MayorsOfficeEditMixin(LoginRequiredMixin, UserPassesTestMixin):
         if self.request.user.is_superuser:
             return True
         # Allow Mayor's office only, deny engineering office
-        try:
-            return self.request.user.profile.department == 'mayor'
-        except UserProfile.DoesNotExist:
-            return False
+        department = _department_for_user(self.request.user)
+        return department == 'mayor'
 
     def get_namespaced_url(self, url_name, *args, **kwargs):
         """
@@ -78,35 +80,37 @@ class MayorsOfficeEditMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 
 class NonInfrastructureProjectDashboardView(MayorsOfficeRequiredMixin, TemplateView):
-    """Dashboard for Mayor's Office to manage non-infrastructure projects"""
-    template_name = 'non_infrastructure/non_infrastructure_dashboard.html'
+        """Dashboard for Mayor's Office to manage non-infrastructure projects"""
+        template_name = 'non_infrastructure/non_infrastructure_dashboard.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
 
-        # All Mayor's Office users see the same project pool.
-        user_projects = NonInfrastructureProject.objects.all()
+            # All Mayor's Office users see the same project pool using the normalized compatibility model.
+            user_projects = SystemNonInfrastructureProject.objects.all()
 
-        context['total_projects'] = user_projects.count()
+            context['total_projects'] = user_projects.count()
 
-        # Count projects by progress
-        context['planned_projects'] = user_projects.filter(overall_progress_percentage__isnull=True).count()
-        context['in_progress_projects'] = user_projects.exclude(overall_progress_percentage__isnull=True).exclude(overall_progress_percentage=100).count()
-        context['completed_projects'] = user_projects.filter(overall_progress_percentage=100).count()
-        context['recent_projects'] = user_projects.order_by('-created_at')[:5]
+            # Non-infrastructure projects no longer have a progress/status field
+            # in the redesigned schema, so these cannot be calculated reliably.
+            context['planned_projects'] = 0
+            context['in_progress_projects'] = 0
+            context['completed_projects'] = 0
 
-        return context
+            context['recent_projects'] = user_projects.order_by('-created_at')[:5]
+
+            return context
 
 
 class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
     """Display list of non-infrastructure projects"""
-    model = NonInfrastructureProject
+    model = SystemNonInfrastructureProject
     template_name = 'non_infrastructure/non_infrastructure_list.html'
     context_object_name = 'projects'
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = NonInfrastructureProject.objects.all()
+        queryset = SystemNonInfrastructureProject.objects.all()
 
         # Filter by location
         location = self.request.GET.get('location', '').strip()
@@ -122,28 +126,31 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['locations'] = NonInfrastructureProject.LOCATION_CHOICES
-        context['categories'] = NonInfrastructureProject.PROJECT_CATEGORY_CHOICES
+        normalized_projects = {
+            project.pk: project
+            for project in Non_Infrastructure_Project.objects.filter(
+                pk__in=[item.pk for item in context['projects']],
+            ).select_related('project')
+        }
+        for project in context['projects']:
+            normalized = normalized_projects.get(project.pk)
+            project.publication_state = (
+                publication_state(normalized.project)
+                if normalized and normalized.project else None
+            )
+        context['locations'] = getattr(SystemNonInfrastructureProject, 'LOCATION_CHOICES', [])
+        context['categories'] = getattr(SystemNonInfrastructureProject, 'PROJECT_CATEGORY_CHOICES', [])
         return context
 
 
 class NonInfrastructureProjectCreateView(MayorsOfficeOnlyMixin, CreateView):
     """Create a new non-infrastructure project - Mayor's Office only"""
-    model = NonInfrastructureProject
+    model = SystemNonInfrastructureProject
     form_class = NonInfrastructureProjectForm
     template_name = 'non_infrastructure/non_infrastructure_form.html'
 
     def get_success_url(self):
-        namespace = self.request.resolver_match.namespace
-        if namespace:
-            try:
-                return reverse(f"{namespace}:non_infrastructure_project_list")
-            except NoReverseMatch:
-                pass
-        try:
-            return reverse('non_infrastructure_project_list')
-        except NoReverseMatch:
-            return reverse_lazy('non_infrastructure_project_list')
+        return reverse('mayor_projects:non_infrastructure_project_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -151,86 +158,176 @@ class NonInfrastructureProjectCreateView(MayorsOfficeOnlyMixin, CreateView):
         return context
 
     def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
+        non = form.save(user=self.request.user)
+        self.object = SystemNonInfrastructureProject.objects.filter(non_infra_name=non.non_infra_name).first()
+        return redirect(self.get_success_url())
 
 
 class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
     """Display project details"""
-    model = NonInfrastructureProject
+    model = SystemNonInfrastructureProject
     template_name = 'non_infrastructure/non_infrastructure_detail.html'
     context_object_name = 'project'
 
     def get_queryset(self):
-        return NonInfrastructureProject.objects.all()
+        return SystemNonInfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        project = self.object
-        has_coordinates = project.latitude is not None and project.longitude is not None
-        fallback_lat = 15.2915
-        fallback_lng = 121.3386
-        map_lat = float(project.latitude) if has_coordinates else fallback_lat
-        map_lng = float(project.longitude) if has_coordinates else fallback_lng
+        compat_project = self.object
 
-        context['project_code'] = f'NINF-{project.pk:05d}'
+        normalized = (
+            Non_Infrastructure_Project.objects
+            .filter(non_infra_id=compat_project.non_infra_id)
+            .select_related(
+                'project',
+                'project__created_by_user',
+                'address',
+                'non_infra_category',
+            )
+            .first()
+        )
+
+        project = normalized if normalized is not None else compat_project
+
+        project_name = (
+            getattr(project, 'non_infra_name', '')
+            or 'Non-Infrastructure Project'
+        )
+
+        creator = (
+            getattr(project.project, 'created_by_user', None)
+            if getattr(project, 'project', None)
+            else None
+        )
+
+        project_manager = (
+            creator.get_full_name() or creator.username
+            if creator
+            else 'N/A'
+        )
+
+        project_images = []
+
+        if getattr(project, 'project', None):
+            project_images = list(
+                project.project.images.order_by('-is_cover', '-created_at')
+            )
+
+        context['project_code'] = f'NINF-{compat_project.pk:05d}'
         context['project_type_label'] = 'Non-Infrastructure'
-        context['project_manager'] = project.created_by.get_full_name() or project.created_by.username
-        context['project_progress_value'] = project.overall_progress_percentage
-        context['project_budget_value'] = project.budget_cost
-        context['project_target_completion_date'] = project.revised_completion_date or project.planned_end_date
-        context['project_google_maps_url'] = f'https://www.google.com/maps?q={map_lat},{map_lng}'
-        context['project_images'] = []
-        context['project_placeholder_image'] = static('images/project-placeholder.svg')
-        context['project_gis'] = {
-            'has_coordinates': has_coordinates,
-            'latitude': float(project.latitude) if has_coordinates else '',
-            'longitude': float(project.longitude) if has_coordinates else '',
-            'map_center_lat': map_lat,
-            'map_center_lng': map_lng,
-            'google_maps_url': f'https://www.google.com/maps?q={map_lat},{map_lng}',
-            'barangay': project.get_location_display(),
-            'municipality': 'Gabaldon',
-            'province': 'Nueva Ecija',
-            'status_label': 'Completed' if (project.overall_progress_percentage or 0) >= 100 else ('Ongoing' if (project.overall_progress_percentage or 0) > 0 else 'Planned'),
-            'progress_label': f'{project.overall_progress_percentage:.2f}%' if project.overall_progress_percentage is not None else '0%',
-            'budget_label': f'₱ {project.budget_cost:,.2f}' if project.budget_cost is not None else 'N/A',
-            'project_name': project.title,
-            'project_code': context['project_code'],
-            'project_type': 'Non-Infrastructure',
-            'description': project.description or '',
-            'project_manager': context['project_manager'],
-            'contractor': '',
-            'funding_source': project.source_of_fund or '',
-            'implementing_office': project.implementing_office or '',
-            'start_date': project.planned_start_date,
-            'target_completion_date': context['project_target_completion_date'],
-            'coordinate_message': 'Location has not yet been assigned.' if not has_coordinates else '',
-            'detail_url': reverse('non_infrastructure:non_infrastructure_project_detail', args=[project.pk]),
-        }
+        context['project_name'] = project_name
+        context['project_manager'] = project_manager
+
+        context['project_status'] = project.get_status_display()
+        context['project_category'] = (
+            getattr(
+                getattr(project, 'non_infra_category', None),
+                'type_name',
+                ''
+            )
+        )
+
+        context['project_description'] = (
+            getattr(project, 'description', '') or ''
+        )
+
+        context['project_proponent'] = (
+            getattr(project, 'proponent', '') or ''
+        )
+
+        context['project_beneficiaries'] = getattr(
+            project,
+            'beneficiaries',
+            None
+        )
+
+        context['project_event_date'] = getattr(
+            project,
+            'event_date',
+            None
+        )
+
+        context['project_start_time'] = getattr(
+            project,
+            'start_time',
+            None
+        )
+
+        context['project_end_time'] = getattr(
+            project,
+            'end_time',
+            None
+        )
+
+        context['project_venue'] = (
+            getattr(project, 'venue_name', '') or ''
+        )
+
+        context['project_address'] = getattr(
+            project,
+            'address',
+            None
+        )
+
+        context['project_images'] = project_images
+
+        context['project_placeholder_image'] = static(
+            'images/project-placeholder.svg'
+        )
+
+        if normalized and normalized.project:
+            context['publication'] = publication_state(normalized.project)
+            context['publication_submit_url'] = reverse(
+                'mayor_projects:non_infrastructure_project_submit_for_review',
+                args=[compat_project.pk],
+            )
+            context['can_manage_publication'] = not self.request.user.is_superuser
+
         return context
+
+
+class NonInfrastructureProjectSubmitForReviewView(
+    MayorsOfficeOnlyMixin,
+    View,
+):
+    """Submit a non-infrastructure working copy to the administrator."""
+
+    def post(self, request, pk):
+        non_infrastructure = get_object_or_404(
+            Non_Infrastructure_Project.objects.select_related('project'),
+            pk=pk,
+        )
+        try:
+            revision = submit_project_for_review(
+                non_infrastructure.project,
+                request.user,
+            )
+        except ValidationError as exc:
+            messages.error(request, '; '.join(exc.messages))
+        else:
+            messages.success(
+                request,
+                f'Revision {revision.revision_number} was submitted for '
+                'administrator review.',
+            )
+        return redirect(
+            'mayor_projects:non_infrastructure_project_detail',
+            pk=pk,
+        )
 
 
 class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
     """Update an existing non-infrastructure project - Mayor's Office and admins only"""
-    model = NonInfrastructureProject
+    model = SystemNonInfrastructureProject
     form_class = NonInfrastructureProjectForm
     template_name = 'non_infrastructure/non_infrastructure_form.html'
 
     def get_success_url(self):
-        namespace = self.request.resolver_match.namespace
-        if namespace:
-            try:
-                return reverse(f"{namespace}:non_infrastructure_project_list")
-            except NoReverseMatch:
-                pass
-        try:
-            return reverse('non_infrastructure_project_list')
-        except NoReverseMatch:
-            return reverse_lazy('non_infrastructure_project_list')
+        return reverse('mayor_projects:non_infrastructure_project_list')
 
     def get_queryset(self):
-        return NonInfrastructureProject.objects.all()
+        return SystemNonInfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -238,59 +335,49 @@ class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        form.instance.updated_by = self.request.user
-        return super().form_valid(form)
+        non = form.save(user=self.request.user, instance=self.get_object())
+        self.object = SystemNonInfrastructureProject.objects.filter(non_infra_name=non.non_infra_name).first()
+        return redirect(self.get_success_url())
 
 
 class NonInfrastructureProjectDeleteView(MayorsOfficeEditMixin, DeleteView):
     """Delete a non-infrastructure project - Mayor's Office and admins only"""
-    model = NonInfrastructureProject
+    model = SystemNonInfrastructureProject
     template_name = 'non_infrastructure/non_infrastructure_confirm_delete.html'
 
     def get_success_url(self):
-        namespace = self.request.resolver_match.namespace
-        if namespace:
-            try:
-                return reverse(f"{namespace}:non_infrastructure_project_list")
-            except NoReverseMatch:
-                pass
-        try:
-            return reverse('non_infrastructure_project_list')
-        except NoReverseMatch:
-            return reverse_lazy('non_infrastructure_project_list')
+        return reverse('mayor_projects:non_infrastructure_project_list')
 
     def get_queryset(self):
-        return NonInfrastructureProject.objects.all()
+        return SystemNonInfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         obj = self.get_object()
 
-        # Attempt to resolve the properly namespaced detail URL based on current resolver namespace.
-        namespace = self.request.resolver_match.namespace
-        cancel_url = None
-        if namespace:
-            try:
-                cancel_url = reverse(f"{namespace}:non_infrastructure_project_detail", args=[obj.pk])
-            except NoReverseMatch:
-                try:
-                    cancel_url = reverse('non_infrastructure_project_detail', args=[obj.pk])
-                except NoReverseMatch:
-                    cancel_url = None
-        else:
-            try:
-                cancel_url = reverse('non_infrastructure_project_detail', args=[obj.pk])
-            except NoReverseMatch:
-                cancel_url = None
-
-        # Fallback: build a path by removing the trailing 'delete/' segment from the current path
-        if not cancel_url:
-            path = self.request.path
-            if path.endswith('/delete/'):
-                cancel_url = path[:-7]
-            else:
-                cancel_url = path.rstrip('/').rsplit('/', 1)[0] + '/'
-
-        context['cancel_url'] = cancel_url
+        context['cancel_url'] = reverse('mayor_projects:non_infrastructure_project_detail', args=[obj.pk])
         return context
 
+    def form_valid(self, form):
+        compat_project = self.get_object()
+        normalized = (
+            Non_Infrastructure_Project.objects
+            .filter(pk=compat_project.pk)
+            .select_related('project')
+            .first()
+        )
+        if normalized and normalized.project:
+            if normalized.project.publication_revisions.exists():
+                messages.error(
+                    self.request,
+                    'A project with publication history cannot be deleted. '
+                    'Contact an administrator to archive it instead.',
+                )
+                return redirect(
+                    'mayor_projects:non_infrastructure_project_detail',
+                    pk=compat_project.pk,
+                )
+            normalized.project.delete()
+        else:
+            compat_project.delete()
+        return redirect(self.get_success_url())

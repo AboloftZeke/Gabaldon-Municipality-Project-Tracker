@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Account Setup Complete - Municipality Project Tracker{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/templates/registration/password_reset_confirm.css' %}">{% endblock %}
+{% block show_header %}{% endblock %}
+{% block show_footer %}{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="reset-form-wrapper">
+        <h2 class="form-title">Account Setup Complete</h2>
+        <p class="form-subtitle">Your password has been created. You can now sign in and complete email verification.</p>
+        <a href="{% url 'login' %}" class="back-link">Continue to Login</a>
+    </div>
+</div>
+{% endblock %}

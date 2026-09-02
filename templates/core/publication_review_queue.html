@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Publication Review - Municipality Project Tracker{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}?v=20260821-1">
+<link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}?v=20260821-1">
+{% endblock %}
+
+{% block content %}
+<main class="review-workspace">
+    <nav class="review-breadcrumb" aria-label="Breadcrumb">
+        <a href="{% url 'admin_dashboard' %}">Administrative Dashboard</a>
+        <span>/</span>
+        <strong>Publication Review</strong>
+    </nav>
+
+    <header class="review-header">
+        <div>
+            <p class="review-eyebrow">Administrator Workspace</p>
+            <h1>Publication Review</h1>
+            <p>Confirm exactly what residents will see before a project reaches the public dashboard.</p>
+        </div>
+        <div class="review-summary">
+            <div><strong>{{ pending_count }}</strong><span>Pending review</span></div>
+            <div><strong>{{ approved_count }}</strong><span>Approved to publish</span></div>
+        </div>
+    </header>
+
+    <nav class="review-filters" aria-label="Revision status filters">
+        {% for filter in status_filters %}
+            <a href="?status={{ filter.value }}" class="{% if selected_status == filter.value %}active{% endif %}">
+                {{ filter.label }} <span>{{ filter.count }}</span>
+            </a>
+        {% endfor %}
+    </nav>
+
+    {% if revision_rows %}
+        <div class="review-list">
+            {% for row in revision_rows %}
+                <article class="review-card">
+                    <div class="review-card__image">
+                        {% if row.preview.cover_image_url %}
+                            <img src="{{ row.preview.cover_image_url }}" alt="">
+                        {% else %}
+                            <img src="{% static 'images/project-placeholder.svg' %}" alt="">
+                        {% endif %}
+                    </div>
+                    <div class="review-card__body">
+                        <div class="review-card__topline">
+                            <span class="publication-badge publication-status-{{ row.revision.status }}">
+                                {{ row.revision.get_status_display }}
+                            </span>
+                            <span>Revision {{ row.revision.revision_number }}</span>
+                        </div>
+                        <h2>{{ row.preview.title|default:"Unavailable project snapshot" }}</h2>
+                        <p class="review-card__type">
+                            {% if row.project_type == 'infrastructure' %}Infrastructure Project{% else %}Non-Infrastructure Program{% endif %}
+                        </p>
+                        <dl class="review-card__meta">
+                            <div><dt>Submitted by</dt><dd>{% if row.revision.submitted_by %}{{ row.revision.submitted_by.get_full_name|default:row.revision.submitted_by.username }}{% else %}Unknown{% endif %}</dd></div>
+                            <div><dt>Submitted</dt><dd>{{ row.revision.submitted_at|date:"M d, Y g:i A"|default:"Not recorded" }}</dd></div>
+                        </dl>
+                        <a href="{% url 'publication_revision_detail' row.revision.pk %}" class="review-primary-link">
+                            {% if row.revision.status == 'pending_review' %}Review Submission{% else %}View Revision{% endif %}
+                        </a>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <section class="review-empty">
+            <h2>No {{ selected_status|cut:"_" }} revisions</h2>
+            <p>There are no project revisions in this status.</p>
+        </section>
+    {% endif %}
+
+    {% if is_paginated %}
+        <nav class="review-pagination" aria-label="Pagination">
+            {% if page_obj.has_previous %}<a href="?status={{ selected_status }}&page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a href="?status={{ selected_status }}&page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+        </nav>
+    {% endif %}
+</main>
+{% endblock %}

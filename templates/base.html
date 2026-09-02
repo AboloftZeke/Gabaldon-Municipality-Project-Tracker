@@ -8,12 +8,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/templates/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/templates/base.css' %}?v=20260821-1">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
     {% block show_header %}
-    <header>
+    <header class="site-header">
     <nav>
         <div class="header-brand">
             <img src="{% static 'images/Gabaldon seal.png' %}" alt="Gabaldon Seal" class="header-logo">
@@ -39,10 +39,11 @@
 
                 {% if user.is_superuser %}
                     <li><a href="{% url 'user_list' %}">Users</a></li>
+                    <li><a href="{% url 'publication_review_queue' %}">Publication Review</a></li>
                 {% endif %}
 
                 <li><a href="{% url 'logout' %}">Logout</a></li>
-                <li><span>Welcome, {{ user.username }}</span></li>
+                <li><span>Welcome, {{ request.user.username }}</span></li>
 
             </ul>
         {% else %}
@@ -54,6 +55,7 @@
 </header>
     {% endblock %}
 
+{% block global_messages %}
 {% if messages %}
 <div class="messages-container">
     {% for message in messages %}
@@ -63,6 +65,7 @@
     {% endfor %}
 </div>
 {% endif %}
+{% endblock %}
 
     <main>
         {% block content %}

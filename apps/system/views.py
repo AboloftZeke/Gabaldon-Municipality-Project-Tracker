@@ -4,24 +4,46 @@ from django.views.generic import TemplateView, ListView, CreateView, UpdateView,
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib import messages
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
-from django.urls import reverse_lazy, reverse
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import Prefetch, Q
 from django.conf import settings
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from django.utils.crypto import get_random_string
 from .forms import (
     CustomUserCreationForm,
     CustomUserChangeForm,
     UserListFilterForm,
     UserPasswordChangeForm,
 )
-from .models import UserProfile
 import json
+
+from .login_otp import (
+    OTPCooldownError,
+    OTPDeliveryError,
+    OTPRateLimitError,
+    active_challenge,
+    issue_login_otp,
+    verify_login_otp,
+)
+from .account_setup import AccountSetupDeliveryError, send_account_setup_email
+
+
+PENDING_LOGIN_OTP_SESSION_KEY = 'pending_login_otp_challenge'
+
+
+def _department_for_user(user):
+    profile = getattr(user, 'profile', None)
+    return getattr(profile, 'department', None) if profile is not None else None
+
+
+def _redirect_authenticated_user(user):
+    if user.is_superuser:
+        return redirect('admin_dashboard')
+    department = _department_for_user(user)
+    if department == 'engineer':
+        return redirect('engineering_dashboard')
+    if department == 'mayor':
+        return redirect('mayor_dashboard')
+    return redirect('admin_dashboard')
 
 
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -47,8 +69,8 @@ class AdminRequiredMixin(StaffRequiredMixin):
 class LoginView(View):
     """
     Handle user login with Django's authentication system.
-    Redirects to password change if a temporary password must be replaced.
-    Otherwise redirects to the user's role-specific dashboard.
+    Valid credentials proceed to email OTP verification before the user's
+    role-specific dashboard is opened.
     """
     template_name = 'core/login.html'
 
@@ -61,33 +83,101 @@ class LoginView(View):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            login(request, user)
             if not user.is_staff:
-                logout(request)
                 return render(
                     request,
                     self.template_name,
                     {'error': 'Your account does not have access to this module.'}
                 )
+            if not user.email:
+                return render(
+                    request,
+                    self.template_name,
+                    {'error': 'Email verification is unavailable. Contact your administrator.'},
+                )
             try:
-                if user.profile.must_change_password:
-                    return redirect('password_change')
-            except UserProfile.DoesNotExist:
-                pass
+                challenge = issue_login_otp(user)
+            except (OTPCooldownError, OTPRateLimitError):
+                return render(
+                    request,
+                    self.template_name,
+                    {'error': 'Please wait before requesting another verification code.'},
+                )
+            except OTPDeliveryError:
+                return render(
+                    request,
+                    self.template_name,
+                    {'error': 'Unable to send a verification code. Please try again later.'},
+                )
 
-            # Redirect based on user role
-            if user.is_superuser:
-                return redirect('admin_dashboard')
-            try:
-                if user.profile.department == 'engineer':
-                    return redirect('engineering_dashboard')
-                elif user.profile.department == 'mayor':
-                    return redirect('mayor_dashboard')
-            except:
-                pass
-            return redirect('admin_dashboard')
+            request.session[PENDING_LOGIN_OTP_SESSION_KEY] = str(
+                challenge.challenge_id,
+            )
+            return redirect('login_otp_verify')
         else:
             return render(request, self.template_name, {'error': 'Invalid credentials'})
+
+
+class LoginOTPVerifyView(View):
+    template_name = 'core/login_otp_verify.html'
+
+    def _challenge(self, request):
+        challenge_id = request.session.get(PENDING_LOGIN_OTP_SESSION_KEY)
+        return active_challenge(challenge_id) if challenge_id else None
+
+    def get(self, request):
+        challenge = self._challenge(request)
+        if challenge is None:
+            request.session.pop(PENDING_LOGIN_OTP_SESSION_KEY, None)
+            messages.error(request, 'Your login verification has expired. Please sign in again.')
+            return redirect('login')
+        return render(request, self.template_name)
+
+    def post(self, request):
+        challenge_id = request.session.get(PENDING_LOGIN_OTP_SESSION_KEY)
+        code = (request.POST.get('code') or '').strip()
+        user = verify_login_otp(challenge_id, code) if challenge_id else None
+        if user is None:
+            if active_challenge(challenge_id) is None:
+                request.session.pop(PENDING_LOGIN_OTP_SESSION_KEY, None)
+            return render(
+                request,
+                self.template_name,
+                {'error': 'Invalid or expired verification code.'},
+            )
+
+        request.session.pop(PENDING_LOGIN_OTP_SESSION_KEY, None)
+        login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
+        request.session.set_expiry(None)
+        return _redirect_authenticated_user(user)
+
+
+class LoginOTPResendView(View):
+    def post(self, request):
+        challenge_id = request.session.get(PENDING_LOGIN_OTP_SESSION_KEY)
+        challenge = active_challenge(challenge_id) if challenge_id else None
+        if challenge is None:
+            request.session.pop(PENDING_LOGIN_OTP_SESSION_KEY, None)
+            messages.error(request, 'Your login verification has expired. Please sign in again.')
+            return redirect('login')
+
+        try:
+            replacement = issue_login_otp(challenge.user)
+        except OTPCooldownError:
+            messages.error(request, 'Please wait before requesting another code.')
+            return redirect('login_otp_verify')
+        except OTPRateLimitError:
+            messages.error(request, 'Too many verification codes requested. Please try again later.')
+            return redirect('login_otp_verify')
+        except OTPDeliveryError:
+            messages.error(request, 'Unable to send a verification code. Please try again later.')
+            return redirect('login_otp_verify')
+
+        request.session[PENDING_LOGIN_OTP_SESSION_KEY] = str(
+            replacement.challenge_id,
+        )
+        messages.success(request, 'A new verification code has been sent.')
+        return redirect('login_otp_verify')
 
 
 class LogoutView(View):
@@ -96,182 +186,138 @@ class LogoutView(View):
         return render(request, 'core/logout.html')
 
 
+class PublicInfrastructureProjectDetailView(TemplateView):
+    """Public, read-only details for an infrastructure project."""
+    template_name = 'Dashboard/infrastructure_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from .publication_public import get_public_project
+
+        project = get_public_project('infrastructure', self.kwargs['pk'])
+        address = project['address']
+        has_coordinates = bool(
+            address
+            and address.get('latitude') is not None
+            and address.get('longitude') is not None
+        )
+
+        context.update({
+            'public_project': project,
+            'project_code': project['code'],
+            'project_images': project['images'],
+            'financial': project['financial'],
+            'schedule': project['schedule'],
+            'created_by_name': project['created_by_name'],
+            'project_gis': {
+                'project_id': project['record_id'],
+                'project_type': 'infrastructure',
+                'project_name': project['title'],
+                'has_coordinates': has_coordinates,
+                'latitude': (
+                    float(address['latitude']) if has_coordinates else ''
+                ),
+                'longitude': (
+                    float(address['longitude']) if has_coordinates else ''
+                ),
+                'google_maps_url': (
+                    'https://www.google.com/maps'
+                    f"?q={address['latitude']},{address['longitude']}"
+                    if has_coordinates else ''
+                ),
+                'coordinate_message': (
+                    '' if has_coordinates
+                    else 'Location has not yet been assigned.'
+                ),
+            },
+        })
+        return context
+
+
+class PublicNonInfrastructureProjectDetailView(TemplateView):
+    """Public, read-only details for a non-infrastructure program."""
+    template_name = 'Dashboard/non_infrastructure_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from .publication_public import get_public_project
+
+        project = get_public_project('non_infrastructure', self.kwargs['pk'])
+
+        context.update({
+            'public_project': project,
+            'project_code': project['code'],
+            'project_category': project['category'].get('name') or '',
+            'project_images': project['images'],
+            'created_by_name': project['created_by_name'],
+        })
+        return context
+
+
 class PublicDashboardView(TemplateView):
-    """
-    Public transparency dashboard showing live project data.
-    """
     template_name = 'Dashboard/dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        from apps.infrastructure.models import InfrastructureProject
-        from apps.non_infrastructure.models import NonInfrastructureProject
-
-        infra_qs = InfrastructureProject.objects.all().order_by('-created_at')
-        noninfra_qs = NonInfrastructureProject.objects.all().order_by('-created_at')
-
-        infra_total = infra_qs.count()
-        noninfra_total = noninfra_qs.count()
+        from .publication_public import (
+            infrastructure_dashboard_row,
+            non_infrastructure_dashboard_row,
+            public_projects,
+        )
+        from apps.infrastructure.models import (
+            InfrastructureProject as LegacyInfrastructureProject,
+        )
+        infra_projects, noninfra_projects = public_projects()
+        infra_total = len(infra_projects)
+        noninfra_total = len(noninfra_projects)
         total_projects = infra_total + noninfra_total
-
-        infra_completed = infra_qs.filter(award_status='completed').count()
-        infra_ongoing = infra_qs.filter(award_status__in=['ongoing_bidding', 'awarded']).count()
-
-        noninfra_completed = noninfra_qs.filter(overall_progress_percentage__gte=100).count()
-        noninfra_ongoing = noninfra_qs.filter(
-            overall_progress_percentage__gt=0,
-            overall_progress_percentage__lt=100,
-        ).count()
-        noninfra_planned = noninfra_qs.filter(
-            Q(overall_progress_percentage__isnull=True) | Q(overall_progress_percentage=0)
-        ).count()
-
+        infra_completed = sum(p['award_status'] == 'completed' for p in infra_projects)
+        infra_ongoing = sum(p['award_status'] in ('ongoing_bidding', 'awarded') for p in infra_projects)
+        noninfra_completed = sum(p['status'] == 'completed' for p in noninfra_projects)
+        noninfra_ongoing = sum(p['status'] == 'ongoing' for p in noninfra_projects)
+        noninfra_planned = sum(p['status'] == 'planned' for p in noninfra_projects)
         completed_projects = infra_completed + noninfra_completed
         ongoing_projects = infra_ongoing + noninfra_ongoing
-
-        infra_budget_total = sum((p.abc_amount or p.contract_price or 0) for p in infra_qs)
-        noninfra_budget_total = sum((p.budget_cost or 0) for p in noninfra_qs)
-        total_budget = infra_budget_total + noninfra_budget_total
-
-        if total_projects:
-            portfolio_progress = round((completed_projects / total_projects) * 100)
-        else:
-            portfolio_progress = 0
-
-        rows = []
-
-        infra_location_map = dict(InfrastructureProject.LOCATION_CHOICES)
-        noninfra_location_map = dict(NonInfrastructureProject.LOCATION_CHOICES)
-        location_options_map = {**infra_location_map, **noninfra_location_map}
-
-        category_options = []
-        for value, label in InfrastructureProject.PROJECT_CATEGORY_CHOICES:
-            category_options.append((f'infra:{value}', f'Infrastructure - {label}'))
-        for value, label in NonInfrastructureProject.PROJECT_CATEGORY_CHOICES:
-            category_options.append((f'noninfra:{value}', f'Non-Infrastructure - {label}'))
-
-        for p in infra_qs:
-            if p.award_status == 'completed':
-                status_key = 'completed'
-                status_label = 'Completed'
-            elif p.award_status in ['ongoing_bidding', 'awarded']:
-                status_key = 'ongoing'
-                status_label = 'Ongoing'
-            else:
-                status_key = 'planned'
-                status_label = 'Planned'
-
-            detail_url = '#'
-            try:
-                detail_url = reverse('infrastructure_default:project_detail', args=[p.pk])
-            except Exception:
-                pass
-
-            rows.append({
-                'record_id': f'infra-{p.pk}',
-                'category': 'infra',
-                'project_category_key': f'infra:{p.category}',
-                'project_category_label': f'Infrastructure - {p.get_category_display()}',
-                'type_label': 'Infrastructure',
-                'title': p.title,
-                'location_key': p.location,
-                'location': p.get_location_display(),
-                'status_key': status_key,
-                'status_label': status_label,
-                'office': p.implementing_office,
-                'implementing_office': p.implementing_office,
-                'category_label': p.get_category_display(),
-                'contractor': p.contractor,
-                'procurement_method': p.get_procurement_method_display(),
-                'source_of_fund': p.source_of_fund,
-                'budget': p.abc_amount or p.contract_price or 0,
-                'budget_amount': p.abc_amount or p.contract_price or 0,
-                'abc_amount': p.abc_amount,
-                'contract_price': p.contract_price,
-                'progress': p.physical_progress_percentage or 0,
-                'progress_percentage': p.physical_progress_percentage or 0,
-                'cost_progress_percentage': p.cost_progress_percentage,
-                'physical_progress_percentage': p.physical_progress_percentage,
-                'description': '',
-                'service_description': '',
-                'beneficiaries_description': '',
-                'service_location_details': '',
-                'service_period': '',
-                'service_time': '',
-                'results_achieved': '',
-                'revised_completion_date': '',
-                'planned_start_date': p.planned_start_date,
-                'planned_end_date': p.planned_end_date,
-                'actual_start_date': p.actual_start_date,
-                'overall_progress_percentage': '',
-                'created_by_name': p.created_by.get_full_name() or p.created_by.username,
-                'created_at': p.created_at,
-                'updated_at': p.updated_at,
-                'detail_url': detail_url,
-            })
-
-        for p in noninfra_qs:
-            progress_value = p.overall_progress_percentage or 0
-            if progress_value >= 100:
-                status_key = 'completed'
-                status_label = 'Completed'
-            elif progress_value > 0:
-                status_key = 'ongoing'
-                status_label = 'Ongoing'
-            else:
-                status_key = 'planned'
-                status_label = 'Planned'
-
-            detail_url = '#'
-            try:
-                detail_url = reverse('non_infrastructure_default:non_infrastructure_project_detail', args=[p.pk])
-            except Exception:
-                pass
-
-            rows.append({
-                'record_id': f'noninfra-{p.pk}',
-                'category': 'noninfra',
-                'project_category_key': f'noninfra:{p.category}',
-                'project_category_label': f'Non-Infrastructure - {p.get_category_display()}',
-                'type_label': 'Non-Infrastructure',
-                'title': p.title,
-                'location_key': p.location,
-                'location': p.get_location_display(),
-                'status_key': status_key,
-                'status_label': status_label,
-                'office': p.implementing_office,
-                'implementing_office': p.implementing_office,
-                'category_label': p.get_category_display(),
-                'contractor': '',
-                'procurement_method': '',
-                'source_of_fund': p.source_of_fund,
-                'budget': p.budget_cost or 0,
-                'budget_amount': p.budget_cost or 0,
-                'abc_amount': '',
-                'contract_price': '',
-                'progress': progress_value,
-                'progress_percentage': progress_value,
-                'overall_progress_percentage': p.overall_progress_percentage,
-                'cost_progress_percentage': '',
-                'physical_progress_percentage': '',
-                'description': p.description,
-                'service_description': p.service_description,
-                'beneficiaries_description': p.beneficiaries_description,
-                'service_location_details': p.service_location_details,
-                'service_period': p.service_period,
-                'service_time': p.service_time.strftime('%H:%M') if p.service_time else '',
-                'results_achieved': p.results_achieved,
-                'revised_completion_date': p.revised_completion_date,
-                'planned_start_date': p.planned_start_date,
-                'planned_end_date': p.planned_end_date,
-                'actual_start_date': p.actual_start_date,
-                'created_by_name': p.created_by.get_full_name() or p.created_by.username,
-                'created_at': p.created_at,
-                'updated_at': p.updated_at,
-                'detail_url': detail_url,
-            })
-
+        infra_budget_total = sum(
+            p['financial'].get('approved_budget')
+            or p['financial'].get('contract_price')
+            or 0
+            for p in infra_projects
+        )
+        total_budget = infra_budget_total
+        portfolio_progress = (
+            round((completed_projects / total_projects) * 100)
+            if total_projects else 0
+        )
+        location_options_map = {
+            code: label
+            for code, label in LegacyInfrastructureProject.LOCATION_CHOICES
+        }
+        for project in infra_projects:
+            barangay = project['address'].get('barangay') or ''
+            if not barangay:
+                continue
+            saved_barangay = barangay.strip()
+            saved_key = saved_barangay.lower().replace(' ', '_')
+            if saved_key.startswith('bitulok'):
+                saved_key = 'bitulok'
+            location_options_map.setdefault(saved_key, saved_barangay)
+        infrastructure_category_options = sorted({
+            (f"infra:{p['category'].get('code', '')}", p['category'].get('name') or '')
+            for p in infra_projects if p['category'].get('code')
+        }, key=lambda item: item[1])
+        noninfrastructure_category_options = sorted({
+            (f"noninfra:{p['category'].get('code', '')}", p['category'].get('name') or '')
+            for p in noninfra_projects if p['category'].get('code')
+        }, key=lambda item: item[1])
+        category_options = [
+            *infrastructure_category_options,
+            *noninfrastructure_category_options,
+        ]
+        rows = [
+            *(infrastructure_dashboard_row(p) for p in infra_projects),
+            *(non_infrastructure_dashboard_row(p) for p in noninfra_projects),
+        ]
         rows.sort(key=lambda x: x['created_at'], reverse=True)
 
         context.update({
@@ -286,7 +332,14 @@ class PublicDashboardView(TemplateView):
             'project_rows': rows,
             'recent_rows': rows[:8],
             'project_categories': category_options,
-            'location_options': sorted(location_options_map.items(), key=lambda x: x[1]),
+            'infrastructure_categories': infrastructure_category_options,
+            'noninfrastructure_categories': (
+                noninfrastructure_category_options
+            ),
+            'location_options': sorted(
+                location_options_map.items(),
+                key=lambda item: item[1],
+            ),
         })
 
         return context
@@ -303,9 +356,22 @@ class AdminDashboardView(StaffRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        from .models import ProjectPublicationRevision
+        from .publication_workflow import PublicationStatus
+
         context['total_users'] = User.objects.count()
         context['total_admins'] = User.objects.filter(is_superuser=True).count()
         context['total_staff'] = User.objects.filter(is_staff=True, is_superuser=False).count()
+        context['pending_publication_reviews'] = (
+            ProjectPublicationRevision.objects.filter(
+                status=PublicationStatus.PENDING_REVIEW,
+            ).count()
+        )
+        context['approved_publication_revisions'] = (
+            ProjectPublicationRevision.objects.filter(
+                status=PublicationStatus.APPROVED,
+            ).count()
+        )
         return context
 
 
@@ -316,14 +382,14 @@ class EngineeringDashboardView(StaffRequiredMixin, TemplateView):
     template_name = 'core/engineering_dashboard.html'
 
     def test_func(self):
-        try:
-            return self.request.user.profile.department == 'engineer'
-        except:
-            return False
+        if self.request.user.is_superuser:
+            return True
+        department = _department_for_user(self.request.user)
+        return department == 'engineer'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from apps.infrastructure.models import InfrastructureProject
+        from apps.system.models import InfrastructureProject
         
         user_projects = InfrastructureProject.objects.all()
         context['total_projects'] = user_projects.count()
@@ -341,20 +407,24 @@ class MayorDashboardView(StaffRequiredMixin, TemplateView):
     template_name = 'core/mayor_dashboard.html'
 
     def test_func(self):
-        try:
-            return self.request.user.profile.department == 'mayor'
-        except:
-            return False
+        if self.request.user.is_superuser:
+            return True
+        department = _department_for_user(self.request.user)
+        return department == 'mayor'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from apps.non_infrastructure.models import NonInfrastructureProject
+        from apps.system.models import NonInfrastructureProject
         
         user_projects = NonInfrastructureProject.objects.all()
+
         context['total_projects'] = user_projects.count()
-        context['planned_projects'] = user_projects.filter(overall_progress_percentage__isnull=True).count()
-        context['in_progress_projects'] = user_projects.exclude(overall_progress_percentage__isnull=True).exclude(overall_progress_percentage=100).count()
-        context['completed_projects'] = user_projects.filter(overall_progress_percentage=100).count()
+
+        # Non-infrastructure projects no longer have a progress/status field
+        # in the redesigned schema, so these cannot be calculated reliably.
+        context['planned_projects'] = 0
+        context['in_progress_projects'] = 0
+        context['completed_projects'] = 0
         
         return context
 
@@ -383,7 +453,7 @@ class UserListView(AdminRequiredMixin, ListView):
 
         # Filter by department if provided
         if department:
-            queryset = queryset.filter(profile__department=department)
+            queryset = queryset.filter(flags__department=department)
 
         return queryset
 
@@ -503,40 +573,65 @@ class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
             form = CustomUserCreationForm(form_data)
 
             if form.is_valid():
-                temporary_password = get_random_string(
-                    length=12,
-                    allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()'
-                    )
-                user = form.save(
-                    commit=True,
-                    temporary_password=temporary_password
-                )
-
-                profile = UserProfile.objects.get(user=user)
-                profile.must_change_password = True
-                profile.save(update_fields=['must_change_password', 'updated_at'])
-
-                from .models import PasswordChangeHistory
-                PasswordChangeHistory.objects.create(
-                    user=user,
-                    changed_by=request.user,
-                    method='creation',
-                    notes=f'User created by {request.user.username}'
-                )
+                with transaction.atomic():
+                    user = form.save(commit=True)
+                    send_account_setup_email(user, request)
 
                 del request.session['user_create_form_data']
                 messages.success(
                     request,
-                     f"User '{user.username}' created successfully. "
-                     f" Temporary password: {temporary_password}. User will be required to change password on first login.")
+                    f"User '{user.username}' created successfully. "
+                    f"Account setup instructions were sent to {user.email}.",
+                )
                 return redirect('user_list')
             else:
                 request.session['user_create_form_data'] = form_data
                 messages.error(request, 'Validation failed. Please check your input.')
                 return redirect('user_create')
-        except Exception as e:
-            messages.error(request, f'Error creating user: {str(e)}')
+        except AccountSetupDeliveryError:
+            messages.error(
+                request,
+                'The account was not created because the setup email could '
+                'not be sent. Please verify the email configuration and try '
+                'again.',
+            )
             return redirect('user_create')
+        except Exception:
+            messages.error(
+                request,
+                'The account could not be created. Please try again.',
+            )
+            return redirect('user_create')
+
+
+class UserAccountSetupResendView(AdminRequiredMixin, View):
+    """Send a replacement setup link for an account without a password."""
+
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        if user.has_usable_password():
+            messages.info(request, 'This account has already been set up.')
+            return redirect('user_list')
+
+        try:
+            with transaction.atomic():
+                locked_user = User.objects.select_for_update().get(pk=user.pk)
+                locked_user.set_unusable_password()
+                locked_user.save(update_fields=['password'])
+                send_account_setup_email(locked_user, request)
+        except AccountSetupDeliveryError:
+            messages.error(
+                request,
+                'The setup email could not be sent. Please verify the email '
+                'configuration and try again.',
+            )
+            return redirect('user_list')
+
+        messages.success(
+            request,
+            f'New account setup instructions were sent to {user.email}.',
+        )
+        return redirect('user_list')
 
 
 class UserEditConfirmView(AdminRequiredMixin, TemplateView):
@@ -677,174 +772,6 @@ class UserActivateView(AdminRequiredMixin, View):
         return redirect('user_list')
 
 
-class UserPasswordResetInitiateView(AdminRequiredMixin, DetailView):
-    """
-    Initiate password reset for a user by sending email with reset link.
-    """
-    model = User
-    template_name = 'core/user_password_reset_confirm.html'
-    context_object_name = 'reset_user'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['action'] = 'Reset Password'
-        return context
-
-    def post(self, request, *args, **kwargs):
-        user = self.get_object()
-
-        # Generate token
-        token_generator = PasswordResetTokenGenerator()
-        token = token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-
-        # Build password reset link (using Django's default password reset confirm view)
-        reset_url = request.build_absolute_uri(
-            reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
-        )
-
-        # Prepare email context
-        email_context = {
-            'user': user,
-            'reset_link': reset_url,
-            'site_name': 'Municipality Project Tracker',
-            'token_expiration_hours': 24,
-        }
-
-        # Send email
-        try:
-            # Text version
-            text_message = render_to_string(
-                'core/email/password_reset_email.txt',
-                email_context,
-                request=request
-            )
-
-            # HTML version
-            html_message = render_to_string(
-                'core/email/password_reset_email.html',
-                email_context,
-                request=request
-            )
-
-            send_mail(
-                subject='Password Reset Request - Municipality Project Tracker',
-                message=text_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_message,
-                fail_silently=False,
-            )
-
-            # Log password reset in history
-            from .models import PasswordChangeHistory
-            PasswordChangeHistory.objects.create(
-                user=user,
-                changed_by=request.user,
-                method='reset_link',
-                notes=f'Password reset link sent by {request.user.username}'
-            )
-
-            # Show success message
-            from django.contrib import messages
-            messages.success(
-                request,
-                f'Password reset link has been sent to {user.email}'
-            )
-        except Exception as e:
-            from django.contrib import messages
-            messages.error(
-                request,
-                f'Error sending password reset email: {str(e)}'
-            )
-
-        return redirect('user_list')
-
-
-class UserPasswordHistoryView(AdminRequiredMixin, DetailView):
-    """
-    Display password change history for a specific user.
-    """
-    model = User
-    template_name = 'core/user_password_history.html'
-    context_object_name = 'history_user'
-
-    def get_context_data(self, **kwargs):
-        from .models import PasswordChangeHistory
-        context = super().get_context_data(**kwargs)
-        user = self.get_object()
-        context['password_changes'] = PasswordChangeHistory.objects.filter(
-            user=user
-        ).order_by('-changed_at')
-        return context
-
-
-class PasswordHistoryListView(AdminRequiredMixin, ListView):
-    """
-    Display all password changes across all users with filters.
-    """
-    template_name = 'core/password_history_list.html'
-    context_object_name = 'password_changes'
-    paginate_by = 20
-
-    def get_queryset(self):
-        from .models import PasswordChangeHistory
-        queryset = PasswordChangeHistory.objects.select_related(
-            'user', 'changed_by'
-        ).order_by('-changed_at')
-
-        # Filter by user
-        user_filter = self.request.GET.get('user', '').strip()
-        if user_filter:
-            queryset = queryset.filter(user__username__icontains=user_filter)
-
-        # Filter by method
-        method_filter = self.request.GET.get('method', '').strip()
-        if method_filter:
-            queryset = queryset.filter(method=method_filter)
-
-        # Filter by date range
-        date_from = self.request.GET.get('date_from', '').strip()
-        date_to = self.request.GET.get('date_to', '').strip()
-
-        if date_from:
-            from datetime import datetime
-            try:
-                start_date = datetime.strptime(date_from, '%Y-%m-%d')
-                queryset = queryset.filter(changed_at__gte=start_date)
-            except ValueError:
-                pass
-
-        if date_to:
-            from datetime import datetime, timedelta
-            try:
-                end_date = datetime.strptime(date_to, '%Y-%m-%d')
-                # Include entire day
-                end_date = end_date + timedelta(days=1)
-                queryset = queryset.filter(changed_at__lt=end_date)
-            except ValueError:
-                pass
-
-        return queryset
-
-    def get_context_data(self, **kwargs):
-        from .models import PasswordChangeHistory
-        context = super().get_context_data(**kwargs)
-
-        # Add method choices for filter dropdown
-        context['method_choices'] = PasswordChangeHistory.CHANGE_METHOD_CHOICES
-
-        # Get all users for filter dropdown
-        context['all_users'] = User.objects.all().order_by('username')
-
-        # Add current filter values
-        context['user_filter'] = self.request.GET.get('user', '')
-        context['method_filter'] = self.request.GET.get('method', '')
-        context['date_from'] = self.request.GET.get('date_from', '')
-        context['date_to'] = self.request.GET.get('date_to', '')
-
-        return context
-
 class PasswordChangeView(LoginRequiredMixin, View):
     """
     Allow the logged-in user to change their password.
@@ -871,12 +798,6 @@ class PasswordChangeView(LoginRequiredMixin, View):
         if form.is_valid():
             form.save()
 
-            # Clear the temporary-password requirement.
-            request.user.profile.must_change_password = False
-            request.user.profile.save(
-                update_fields=['must_change_password']
-            )
-
             messages.success(
                 request,
                 'Your password has been changed successfully.'
@@ -891,15 +812,11 @@ class PasswordChangeView(LoginRequiredMixin, View):
             if request.user.is_superuser:
                 return redirect('admin_dashboard')
 
-            try:
-                if request.user.profile.department == 'engineer':
-                    return redirect('engineering_dashboard')
-
-                elif request.user.profile.department == 'mayor':
-                    return redirect('mayor_dashboard')
-
-            except UserProfile.DoesNotExist:
-                pass
+            department = _department_for_user(request.user)
+            if department == 'engineer':
+                return redirect('engineering_dashboard')
+            elif department == 'mayor':
+                return redirect('mayor_dashboard')
 
             return redirect('admin_dashboard')
 
@@ -908,3 +825,4 @@ class PasswordChangeView(LoginRequiredMixin, View):
             self.template_name,
             {'form': form}
         )
+

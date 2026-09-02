@@ -16,13 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('django.contrib.auth.urls')),
     path('', include('apps.system.urls')),
-    path('projects/', include(('apps.infrastructure.urls', 'infrastructure'), namespace='infrastructure_default')),
-    path('non-infrastructure/', include(('apps.non_infrastructure.urls', 'non_infrastructure'), namespace='non_infrastructure_default')),
-    path('mayor/dashboard/non-infrastructure/',include('apps.non_infrastructure.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

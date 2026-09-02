@@ -22,15 +22,16 @@
             color: var(--ink-900);
         }
 
-        /* Header Styles */
-        header {
+        /* Shared navigation header. The explicit class prevents these rules
+           from leaking into semantic page headers such as project heroes. */
+        .site-header {
             background: var(--panel-green);
             color: var(--white);
             padding: 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        header nav {
+        .site-header nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -53,14 +54,14 @@
             flex-shrink: 0;
         }
 
-        header nav h1 {
+        .site-header nav h1 {
             font-size: 1.25rem;
             font-weight: 700;
             margin: 0;
             flex-shrink: 0;
         }
 
-        header nav ul {
+        .site-header nav ul {
             display: flex;
             list-style: none;
             gap: 2rem;
@@ -69,11 +70,11 @@
             justify-content: flex-end;
         }
 
-        header nav li {
+        .site-header nav li {
             white-space: nowrap;
         }
 
-        header nav a {
+        .site-header nav a {
             color: rgba(255, 255, 255, 0.9);
             text-decoration: none;
             font-size: 0.94rem;
@@ -84,12 +85,12 @@
             display: inline-block;
         }
 
-        header nav a:hover {
+        .site-header nav a:hover {
             color: var(--white);
             border-bottom-color: var(--white);
         }
 
-        header nav a:focus {
+        .site-header nav a:focus {
             outline: 2px solid rgba(255, 255, 255, 0.5);
             outline-offset: 2px;
             border-radius: 4px;
@@ -191,7 +192,7 @@
 
         /* Tablet Responsive */
         @media (max-width: 768px) {
-            header nav {
+            .site-header nav {
                 flex-direction: column;
                 gap: 1rem;
                 padding: 1rem;
@@ -203,7 +204,7 @@
                 width: 100%;
             }
 
-            header nav h1 {
+            .site-header nav h1 {
                 font-size: 1.1rem;
                 text-align: center;
             }
@@ -213,14 +214,14 @@
                 height: 40px;
             }
 
-            header nav ul {
+            .site-header nav ul {
                 gap: 1rem;
                 font-size: 0.9rem;
                 justify-content: center;
                 width: 100%;
             }
 
-            header nav li {
+            .site-header nav li {
                 white-space: normal;
             }
 
@@ -269,11 +270,11 @@
 
         /* Mobile Responsive */
         @media (max-width: 480px) {
-            header nav {
+            .site-header nav {
                 padding: 0.75rem;
             }
 
-            header nav h1 {
+            .site-header nav h1 {
                 font-size: 1rem;
             }
 
@@ -282,12 +283,12 @@
                 height: 35px;
             }
 
-            header nav ul {
+            .site-header nav ul {
                 gap: 0.5rem;
                 font-size: 0.85rem;
             }
 
-            header nav a {
+            .site-header nav a {
                 padding: 0.5rem 0.5rem;
             }
 
@@ -303,7 +304,7 @@
             }
 
             .footer-bottom {
-                padding: 1.5rem clamp(1rem, 5vw, 2rem);
+                padding: 1.5rem clamp(1rem, 5vw, 4rem);
             }
 
             .footer-middle {

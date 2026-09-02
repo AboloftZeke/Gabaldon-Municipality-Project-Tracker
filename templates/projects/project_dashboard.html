@@ -9,91 +9,261 @@
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
-    <h1 class="dashboard-title">Project Dashboard</h1>
+<div class="project-dashboard-layout">
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-label">Total Projects</div>
-            <div class="stat-value">{{ total_projects }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Awarded</div>
-            <div class="stat-value">{{ awarded_projects }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Ongoing</div>
-            <div class="stat-value">{{ ongoing_projects }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Completed</div>
-            <div class="stat-value">{{ completed_projects }}</div>
-            
-        </div>
-    </div>
+    <!-- =========================================
+         SIDEBAR
+         ========================================= -->
+    <div class="sidebar">
 
-    {% if total_investment > 0 %}
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-label">Total Investment</div>
-            <div class="stat-value">₱{{ total_investment|floatformat:0 }}</div>
-        </div>
-    </div>
-    {% endif %}
+        <div class="sidebar-section">
+            <p class="sidebar-title">Navigation</p>
 
-    <div class="recent-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3 class="section-title" style="margin: 0;">Recent Projects</h3>
-            <a href="{% url 'infrastructure:project_create' %}" class="btn-small btn-primary">+ New Project</a>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{% url 'engineering_dashboard' %}">
+                        Dashboard
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'engineering_projects:project_dashboard' %}"
+                       class="active">
+                        Projects
+                    </a>
+                </li>
+            </ul>
         </div>
 
-        {% if recent_projects %}
-            {% for project in recent_projects %}
-                <div class="project-item">
-                    <div class="project-info">
-                        <div class="project-name">{{ project.title }}</div>
-                        <div class="project-meta">{{ project.location|title }} • {{ project.get_category_display }}</div>
-                    </div>
-                    <div class="btn-group">
-                        <a href="{% url 'infrastructure:project_detail' project.pk %}"
-                           class="btn-small btn-primary"
-                           data-project-modal-trigger
-                           data-project-title="{{ project.title|escape }}"
-                           data-project-location="{{ project.get_location_display|default:project.location|escape }}"
-                           data-project-implementing-office="{{ project.implementing_office|escape }}"
-                           data-project-category="{{ project.get_category_display|escape }}"
-                           data-project-contractor="{{ project.contractor|default_if_none:''|escape }}"
-                           data-project-procurement-method="{{ project.get_procurement_method_display|escape }}"
-                           data-project-award-status="{{ project.get_award_status_display|escape }}"
-                           data-project-award-status-label="{{ project.get_award_status_display|escape }}"
-                           data-project-status-class="status-{{ project.award_status }}"
-                           data-project-source-of-fund="{{ project.source_of_fund|default_if_none:''|escape }}"
-                           data-project-abc-amount="{% if project.abc_amount is not None %}₱{{ project.abc_amount|floatformat:2 }}{% endif %}"
-                           data-project-contract-price="{% if project.contract_price is not None %}₱{{ project.contract_price|floatformat:2 }}{% endif %}"
-                           data-project-planned-start-date="{% if project.planned_start_date %}{{ project.planned_start_date|date:'M d, Y' }}{% endif %}"
-                           data-project-planned-end-date="{% if project.planned_end_date %}{{ project.planned_end_date|date:'M d, Y' }}{% endif %}"
-                           data-project-actual-start-date="{% if project.actual_start_date %}{{ project.actual_start_date|date:'M d, Y' }}{% endif %}"
-                           data-project-cost-progress-percentage="{% if project.cost_progress_percentage is not None %}{{ project.cost_progress_percentage|floatformat:2 }}{% endif %}"
-                           data-project-physical-progress-percentage="{% if project.physical_progress_percentage is not None %}{{ project.physical_progress_percentage|floatformat:2 }}{% endif %}"
-                           data-project-created-by="{{ project.created_by.get_full_name|default:project.created_by.username|escape }}"
-                           data-project-created-at="{{ project.created_at|date:'M d, Y \a\t H:i' }}"
-                           data-project-updated-at="{{ project.updated_at|date:'M d, Y \a\t H:i' }}"
-                           data-project-description="{{ project.description|default_if_none:''|escape }}"
-                           data-project-detail-url="{% url 'infrastructure:project_detail' project.pk %}">View</a>
-                        <a href="{% url 'infrastructure:project_update' project.pk %}" class="btn-small" style="background: #6b7280; color: white;">Edit</a>
-                    </div>
-                </div>
-            {% endfor %}
-        {% else %}
-            <div class="empty-state">
-                <p>No projects yet. Create your first infrastructure project.</p>
-                <a href="{% url 'infrastructure:project_create' %}" class="btn-small btn-primary">Create Project</a>
+
+        <div class="sidebar-section">
+            <p class="sidebar-title">Account</p>
+
+            <div class="quick-actions">
+                <h4>{{ request.user.username }}</h4>
+
+                <a href="{% url 'logout' %}"
+                   class="action-button secondary">
+                    Sign Out
+                </a>
             </div>
-        {% endif %}
+        </div>
+
     </div>
+
+
+    <!-- =========================================
+         MAIN CONTENT
+         ========================================= -->
+    <div class="dashboard-content">
+
+    <div class="dashboard-container">
+
+        <h1 class="dashboard-title">
+            Project Dashboard
+        </h1>
+
+
+        <!-- =========================================
+             PROJECT STATISTICS
+             ========================================= -->
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <div class="stat-label">
+                    Total Projects
+                </div>
+
+                <div class="stat-value">
+                    {{ total_projects }}
+                </div>
+            </div>
+
+
+            <div class="stat-card">
+                <div class="stat-label">
+                    Awarded
+                </div>
+
+                <div class="stat-value">
+                    {{ awarded_projects }}
+                </div>
+            </div>
+
+
+            <div class="stat-card">
+                <div class="stat-label">
+                    Ongoing
+                </div>
+
+                <div class="stat-value">
+                    {{ ongoing_projects }}
+                </div>
+            </div>
+
+
+            <div class="stat-card">
+                <div class="stat-label">
+                    Completed
+                </div>
+
+                <div class="stat-value">
+                    {{ completed_projects }}
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- =========================================
+             TOTAL INVESTMENT
+             ========================================= -->
+        {% if total_investment > 0 %}
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <div class="stat-label">
+                    Total Investment
+                </div>
+
+                <div class="stat-value">
+                    ₱{{ total_investment|floatformat:0 }}
+                </div>
+            </div>
+
+        </div>
+
+        {% endif %}
+
+
+        <!-- =========================================
+             RECENT PROJECTS
+             ========================================= -->
+        <div class="recent-section">
+
+            <div class="recent-header">
+
+                <h3 class="section-title">
+                    Recent Projects
+                </h3>
+
+                <div class="btn-group">
+                    <a href="{% url 'engineering_projects:project_list' %}"
+                       class="btn-small btn-primary">
+                        View All Projects
+                    </a>
+
+                    <a href="{% url 'engineering_projects:project_create' %}"
+                       class="btn-small btn-primary">
+                        + New Project
+                    </a>
+                </div>
+
+            </div>
+
+
+            {% if recent_projects %}
+
+                {% for project in recent_projects %}
+
+                <div class="project-item">
+
+                    <!-- Project Image -->
+                    <div class="project-thumb">
+
+                        <img
+                            src="{% if project.cover_image_url %}{{ project.cover_image_url }}{% else %}{% static 'images/project-placeholder.svg' %}{% endif %}"
+                            alt="{{ project.title }} cover"
+                        >
+
+                    </div>
+
+
+                    <!-- Project Information -->
+                    <div class="project-info">
+
+                        <div class="project-name">
+                            {{ project.title }}
+                        </div>
+
+                        <div class="project-meta">
+                            {% if project.address and project.address.barangay %}
+                                {{ project.address.barangay }}
+                            {% else %}
+                                Location not specified
+                            {% endif %}
+                            •
+                            {% if project.category %}
+                                {{ project.category.category_name }}
+                            {% else %}
+                                Category not specified
+                            {% endif %}
+                        </div>
+
+                    </div>
+
+
+                    <!-- Project Actions -->
+                    <div class="btn-group">
+
+                        <a
+                            href="{% url 'engineering_projects:project_detail' project.pk %}"
+                            class="btn-small btn-primary"
+                        >
+                            View
+                        </a>
+
+
+                        <a
+                            href="{% url 'engineering_projects:project_update' project.pk %}"
+                            class="btn-small btn-edit"
+                        >
+                            Edit
+                        </a>
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+
+            {% else %}
+
+                <!-- Empty State -->
+                <div class="empty-state">
+
+                    <p>
+                        No projects yet. Create your first infrastructure project.
+                    </p>
+
+                    <a
+                        href="{% url 'engineering_projects:project_create' %}"
+                        class="btn-small btn-primary"
+                    >
+                        Create Project
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
 </div>
+
+
+<!-- =========================================
+     PROJECT MODAL
+     ========================================= -->
 {% include "projects/project_detail_modal.html" %}
+
+
 {% endblock %}
+
 
 {% block extra_scripts %}
 <script src="{% static 'js/templates/projects/project_modal.js' %}"></script>

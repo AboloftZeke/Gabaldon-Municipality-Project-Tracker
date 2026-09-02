@@ -5,11 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gabaldon Transparency Dashboard</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/gabaldon-project-tracker-favicon.png' %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}">
   <link rel="stylesheet" href="{% static 'css/templates/projects/project_modal.css' %}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ5A1C4H5iR4eKpD/UT3CXYu7bH1C7Q=" crossorigin="">
 </head>
 <body>
   <header class="site-header">
@@ -77,6 +79,32 @@
       </article>
     </section>
 
+    <section class="gis-panel" aria-labelledby="gis-heading">
+      <div class="gis-panel__head">
+        <div>
+          <p class="section-kicker">Public Project Overview</p>
+          <h2 id="gis-heading">GIS Project Map</h2>
+          <p>Explore the location and current status of municipal projects across Gabaldon. The map follows the filters and search controls below.</p>
+        </div>
+        <div class="live-badge" id="gis-visible-count" aria-live="polite">Loading mapped projects…</div>
+      </div>
+
+      <div class="gis-panel__map-wrap">
+        <div id="project-gis-map" class="project-gis-map" aria-label="Interactive map of municipal projects"></div>
+        <p class="gis-panel__empty" id="gis-empty-state" hidden></p>
+      </div>
+
+      <div class="gis-legend" aria-label="Project status map legend">
+        <span class="gis-legend__title">Project status</span>
+        <span><i class="gis-legend__dot gis-legend__dot--planned"></i>Planned</span>
+        <span><i class="gis-legend__dot gis-legend__dot--ongoing"></i>Ongoing</span>
+        <span><i class="gis-legend__dot gis-legend__dot--awarded"></i>Awarded</span>
+        <span><i class="gis-legend__dot gis-legend__dot--completed"></i>Completed</span>
+        <span><i class="gis-legend__dot gis-legend__dot--cancelled"></i>Cancelled</span>
+        <span><i class="gis-legend__dot gis-legend__dot--rebid"></i>Re-bid</span>
+      </div>
+    </section>
+
     <section class="panel" aria-labelledby="registry-heading">
       <div class="panel-head top-copy">
         <div>
@@ -88,6 +116,26 @@
       </div>
 
       <div class="toolbar" role="search">
+        <div class="toolbar-primary">
+          <label class="dashboard-search" for="project-search">
+            <span class="dashboard-search__label">Search projects</span>
+            <input id="project-search" type="search" placeholder="Search by project name, location, or details">
+          </label>
+
+          <div class="view-switcher" role="group" aria-label="Project display view">
+            <span class="view-switcher__label">View:</span>
+            <button type="button" class="view-btn is-active" data-dashboard-view="detail" aria-pressed="true" aria-label="Detail view" title="Detail view">
+              <svg class="view-btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 10h16M4 15h16M4 20h16" /></svg>
+              <span class="sr-only">Detail view</span>
+            </button>
+            <button type="button" class="view-btn" data-dashboard-view="card" aria-pressed="false" aria-label="Card view" title="Card view">
+              <svg class="view-btn__icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" /></svg>
+              <span class="sr-only">Card view</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="toolbar-filter-row">
         <div class="tab-buttons">
           <button type="button" class="tab-btn is-active" data-category="all">All Projects</button>
           <button type="button" class="tab-btn" data-category="infra">Infrastructure</button>
@@ -97,9 +145,16 @@
         <div class="filter-group">
           <select id="category-filter" aria-label="Filter by project category">
             <option value="all">All Categories</option>
-            {% for code, label in project_categories %}
-            <option value="{{ code }}">{{ label }}</option>
-            {% endfor %}
+            <optgroup label="Infrastructure Categories" data-project-category-type="infra">
+              {% for code, label in infrastructure_categories %}
+              <option value="{{ code }}">{{ label }}</option>
+              {% endfor %}
+            </optgroup>
+            <optgroup label="Non-Infrastructure Categories" data-project-category-type="noninfra">
+              {% for code, label in noninfrastructure_categories %}
+              <option value="{{ code }}">{{ label }}</option>
+              {% endfor %}
+            </optgroup>
           </select>
 
           <select id="location-filter" aria-label="Filter by location">
@@ -115,6 +170,7 @@
             <button type="button" class="status-btn" data-status="completed">Completed</button>
           </div>
         </div>
+        </div>
       </div>
 
       <div class="table-wrap">
@@ -124,8 +180,8 @@
               <th>Project</th>
               <th>Type</th>
               <th>Status</th>
-              <th>Budget</th>
-              <th>Physical Progress</th>
+              <th id="budget-column">Budget</th>
+              <th id="progress-column">Physical Progress</th>
               <th>Office / Contractor</th>
               <th>Action</th>
             </tr>
@@ -134,63 +190,82 @@
             {% for row in project_rows %}
             <tr class="project-row"
                 data-category="{{ row.category }}"
-              data-project-category="{{ row.project_category_key }}"
+                data-project-category="{{ row.project_category_key }}"
                 data-status="{{ row.status_key }}"
-                data-location="{{ row.location_key }}">
+                data-location="{{ row.location_key }}"
+                data-hide-financial="{{ row.hide_financial|lower }}">
               <td>
                 <div class="project-cell">
-                  {% if row.category == 'infra' %}
-                  <img src="{% static 'images/infra-icon.png' %}" alt="Infrastructure" class="project-thumb">
+                  {% if row.cover_image_url %}
+                  <img src="{{ row.cover_image_url }}" alt="{{ row.title }} cover" class="project-thumb">
                   {% else %}
-                  <img src="{% static 'images/project-icon.png' %}" alt="Non-Infrastructure" class="project-thumb">
+                  <img src="{% static 'images/project-placeholder.svg' %}" alt="No project cover available" class="project-thumb">
                   {% endif %}
                   <div>
                     <div class="project-title">{{ row.title }}</div>
+                    {% if row.location %}
                     <div class="project-subtext">{{ row.location }}</div>
+                    {% endif %}
                   </div>
                 </div>
               </td>
               <td>{{ row.type_label }}</td>
               <td><span class="status-chip status-{{ row.status_key }}">{{ row.status_label }}</span></td>
-              <td>P{{ row.budget|floatformat:2 }}</td>
-              <td>{{ row.progress|floatformat:0 }}%</td>
-              <td>{{ row.office }}</td>
+              <td class="financial-cell">{% if row.has_financial %}P{{ row.budget|floatformat:2 }}{% else %}—{% endif %}</td>
+              <td class="financial-cell">{% if row.has_progress %}{{ row.progress|floatformat:0 }}%{% else %}—{% endif %}</td>
               <td>
-                <a href="{{ row.detail_url }}"
+                {% if row.office %}{{ row.office }}{% else %}—{% endif %}
+                {% if row.contractor %}<div class="project-subtext">{{ row.contractor }}</div>{% endif %}
+              </td>
+              <td>
+                {% if row.category == 'noninfra' %}
+                <a href="#"
                    class="row-link"
                    data-project-modal-trigger
-                   data-project-title="{{ row.title|escape }}"
-                   data-project-type-label="{{ row.type_label|escape }}"
-                   data-project-office="{{ row.office|default_if_none:''|escape }}"
-                   data-project-location="{{ row.location|escape }}"
-                   data-project-category="{{ row.project_category_label|default_if_none:row.type_label|escape }}"
-                   data-project-contractor="{{ row.contractor|default_if_none:''|escape }}"
-                   data-project-procurement-method="{{ row.procurement_method|default_if_none:''|escape }}"
-                   data-project-status-label="{{ row.status_label|escape }}"
+                   data-project-title="{{ row.title }}"
+                   data-project-type-label="{{ row.type_label }}"
+                   data-project-status-label="{{ row.status_label }}"
                    data-project-status-class="status-{{ row.status_key }}"
-                   data-project-source-of-fund="{{ row.source_of_fund|default_if_none:''|escape }}"
-                   data-project-budget-amount="{{ row.budget|floatformat:2 }}"
-                   data-project-abc-amount="{{ row.abc_amount|default_if_none:''|floatformat:2 }}"
-                   data-project-contract-price="{{ row.contract_price|default_if_none:''|floatformat:2 }}"
-                   data-project-progress-percentage="{{ row.progress|floatformat:0 }}%"
-                   data-project-overall-progress-percentage="{{ row.overall_progress_percentage|default_if_none:''|floatformat:2 }}"
-                   data-project-service-description="{{ row.service_description|default_if_none:''|escape }}"
-                   data-project-beneficiaries-description="{{ row.beneficiaries_description|default_if_none:''|escape }}"
-                   data-project-service-location-details="{{ row.service_location_details|default_if_none:''|escape }}"
-                   data-project-service-period="{{ row.service_period|default_if_none:''|escape }}"
-                   data-project-service-time="{{ row.service_time|default_if_none:''|escape }}"
-                   data-project-results-achieved="{{ row.results_achieved|default_if_none:''|escape }}"
-                   data-project-planned-start-date="{% if row.planned_start_date %}{{ row.planned_start_date|date:'M d, Y' }}{% endif %}"
-                   data-project-planned-end-date="{% if row.planned_end_date %}{{ row.planned_end_date|date:'M d, Y' }}{% endif %}"
-                   data-project-actual-start-date="{% if row.actual_start_date %}{{ row.actual_start_date|date:'M d, Y' }}{% endif %}"
-                   data-project-revised-completion-date="{% if row.revised_completion_date %}{{ row.revised_completion_date|date:'M d, Y' }}{% endif %}"
-                   data-project-cost-progress-percentage="{{ row.cost_progress_percentage|default_if_none:''|floatformat:2 }}"
-                   data-project-physical-progress-percentage="{{ row.physical_progress_percentage|default_if_none:''|floatformat:2 }}"
-                   data-project-created-by="{{ row.created_by_name|default_if_none:''|escape }}"
-                   data-project-created-at="{{ row.created_at|date:'M d, Y \a\t H:i' }}"
-                   data-project-updated-at="{{ row.updated_at|date:'M d, Y \a\t H:i' }}"
-                   data-project-description="{{ row.description|default_if_none:''|escape }}"
-                   data-project-detail-url="{{ row.detail_url }}">View</a>
+                   data-project-category="{{ row.category_label }}"
+                   data-project-proponent="{{ row.proponent }}"
+                   data-project-beneficiaries-description="{{ row.beneficiaries|default_if_none:'' }}"
+                   data-project-venue="{{ row.venue_name }}"
+                   data-project-service-period="{{ row.event_date|date:'F j, Y' }}"
+                   data-project-service-time="{% if row.start_time %}{{ row.start_time }}{% if row.end_time %} – {{ row.end_time }}{% endif %}{% endif %}"
+                   data-project-created-by="{{ row.created_by_name }}"
+                   data-project-created-at="{{ row.created_at|date:'F j, Y' }}"
+                   data-project-updated-at="{{ row.updated_at|date:'F j, Y' }}"
+                   data-project-detail-url="{{ row.detail_url }}"
+                   data-project-description="{{ row.description }}">View</a>
+                {% else %}
+                <a href="#"
+                   class="row-link"
+                   data-project-modal-trigger
+                   data-project-title="{{ row.title }}"
+                   data-project-type-label="{{ row.type_label }}"
+                   data-project-status-label="{{ row.status_label }}"
+                   data-project-status-class="status-{{ row.status_key }}"
+                   data-project-office="{{ row.office }}"
+                   data-project-location="{{ row.location }}"
+                   data-project-category="{{ row.category_label }}"
+                   data-project-contractor="{{ row.contractor }}"
+                   data-project-procurement-method="{{ row.procurement_method }}"
+                   data-project-source-of-fund="{{ row.source_of_fund }}"
+                   data-project-budget-amount="{% if row.budget_amount %}P{{ row.budget_amount|floatformat:2 }}{% endif %}"
+                   data-project-abc-amount="{% if row.abc_amount %}P{{ row.abc_amount|floatformat:2 }}{% endif %}"
+                   data-project-contract-price="{% if row.contract_price %}P{{ row.contract_price|floatformat:2 }}{% endif %}"
+                   data-project-progress-percentage="{% if row.progress_percentage is not None %}{{ row.progress_percentage|floatformat:1 }}%{% endif %}"
+                   data-project-cost-progress-percentage="{% if row.cost_progress_percentage != '' %}{{ row.cost_progress_percentage|floatformat:1 }}%{% endif %}"
+                   data-project-physical-progress-percentage="{% if row.physical_progress_percentage != '' %}{{ row.physical_progress_percentage|floatformat:1 }}%{% endif %}"
+                   data-project-planned-start-date="{{ row.planned_start_date|date:'F j, Y' }}"
+                   data-project-planned-end-date="{{ row.planned_end_date|date:'F j, Y' }}"
+                   data-project-actual-start-date="{{ row.actual_start_date|date:'F j, Y' }}"
+                   data-project-created-by="{{ row.created_by_name }}"
+                   data-project-created-at="{{ row.created_at|date:'F j, Y' }}"
+                   data-project-updated-at="{{ row.updated_at|date:'F j, Y' }}"
+                   data-project-detail-url="{{ row.detail_url }}"
+                   data-project-description="{{ row.description }}">View</a>
+                {% endif %}
               </td>
             </tr>
             {% empty %}
@@ -201,25 +276,7 @@
           </tbody>
         </table>
       </div>
-    </section>
-
-    <section class="panel" aria-labelledby="recent-heading">
-      <div class="panel-head">
-        <h2 id="recent-heading">Recently Created Projects</h2>
-      </div>
-      <ul class="recent-list">
-        {% for row in recent_rows %}
-        <li>
-          <div>
-            <p class="recent-title">{{ row.title }}</p>
-            <p class="recent-subtext">{{ row.type_label }} - {{ row.location }} - {{ row.status_label }}</p>
-          </div>
-          <span class="recent-date">{{ row.created_at|date:"M d, Y" }}</span>
-        </li>
-        {% empty %}
-        <li class="empty-row">No recent projects yet.</li>
-        {% endfor %}
-      </ul>
+      <div class="project-card-grid" id="project-card-grid" hidden aria-live="polite"></div>
     </section>
   </main>
 
@@ -229,6 +286,7 @@
 
   {% include "projects/project_detail_modal.html" %}
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="{% static 'js/templates/Dashboard/dashboard.js' %}"></script>
   <script src="{% static 'js/templates/projects/project_modal.js' %}"></script>
 </body>

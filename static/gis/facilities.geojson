@@ -1,0 +1,54 @@
+{
+  "type": "FeatureCollection",
+  "_notice": "Verified public-school locations for Gabaldon, Nueva Ecija. Coordinates were transcribed from Philippine government DICT school-location records; verify on the ground before operational use.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "school-calabasa-elementary",
+        "name": "Calabasa Elementary School",
+        "type": "School",
+        "barangay": "Calabasa",
+        "description": "Public elementary school.",
+        "source": "Philippine DICT, PICS Phase 1 Region III school-location annex",
+        "source_url": "https://cms-cdn.e.gov.ph/DICT/pdf/DTS_BAC-2025-008%20%28Provision%20of%20Internet%20Connectivity%20Services%20%28PICS%29%20in%20Public%20Schools%20-%20Phase%201%20under%20Region%20III%29.pdf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [121.2777772, 15.52833976]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "school-pinamalisan-elementary",
+        "name": "Pinamalisan Elementary School",
+        "type": "School",
+        "barangay": "Pinamalisan",
+        "description": "Public elementary school.",
+        "source": "Philippine DICT e-learning connectivity school-location records",
+        "source_url": "https://cms-cdn.e.gov.ph/DICT/pdf/Bid%20docs%20elearning.pdf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [121.3614415, 15.4227626]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "school-bagting-national-high",
+        "name": "Bagting National High School",
+        "type": "School",
+        "barangay": "Bagting",
+        "description": "Public national high school.",
+        "source": "Philippine DICT e-learning connectivity school-location records",
+        "source_url": "https://cms-cdn.e.gov.ph/DICT/pdf/Bid%20docs%20elearning.pdf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [121.2564544, 15.5494284]
+      }
+    }
+  ]
+}

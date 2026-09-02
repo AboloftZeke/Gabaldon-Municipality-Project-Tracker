@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en">
+<body style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6;">
+  <h1 style="font-size: 22px;">Set up your account</h1>
+  <p>Hello {{ user.get_full_name|default:user.get_username }},</p>
+  <p>An employee account has been created for you in the Municipality Project Tracker.</p>
+  <p><a href="{{ setup_url }}">Create your password</a></p>
+  <p>This secure link expires after {{ expiry_hours }} hours and can only be used once.</p>
+  <p>If you were not expecting this account, contact your system administrator. Do not forward this email or share the setup link.</p>
+</body>
+</html>

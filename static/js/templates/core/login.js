@@ -93,24 +93,3 @@
         }
     }, 0);
 })();
-
-(function () {
-    const passwordInput = document.getElementById('password');
-    const toggleButton = document.getElementById('togglePassword');
-    const toggleIcon = document.getElementById('passwordToggleIcon');
-
-    if (!passwordInput || !toggleButton || !toggleIcon) {
-        return;
-    }
-
-    const viewIcon = toggleButton.dataset.viewIcon || toggleIcon.src;
-    const hideIcon = toggleButton.dataset.hideIcon || toggleIcon.src;
-
-    toggleButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        const isPassword = passwordInput.type === 'password';
-        passwordInput.type = isPassword ? 'text' : 'password';
-        toggleIcon.src = isPassword ? hideIcon : viewIcon;
-        toggleIcon.alt = isPassword ? 'Hide password' : 'Show password';
-    });
-})();
