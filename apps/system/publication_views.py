@@ -242,3 +242,43 @@ class NonInfrastructureCheckerRevisionReviewView(
     queue_url_name = 'noninfrastructure_checker_review_queue'
     detail_url_name = 'noninfrastructure_checker_revision_detail'
     review_url_name = 'noninfrastructure_checker_revision_review'
+
+
+
+class AdminPublicationHistoryView(
+    LoginRequiredMixin,
+    UserPassesTestMixin,
+    ListView,
+):
+    """Read-only cross-project approval history for system administrators."""
+
+    login_url = 'login'
+    raise_exception = True
+    model = ProjectPublicationRevision
+    template_name = 'core/publication_history.html'
+    context_object_name = 'revisions'
+    paginate_by = 25
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_queryset(self):
+        return ProjectPublicationRevision.objects.select_related(
+            'project',
+            'submitted_by',
+            'reviewed_by',
+            'published_by',
+        ).order_by('-reviewed_at', '-submitted_at', '-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        rows = []
+        for revision in context['revisions']:
+            project_type, preview = _revision_preview(revision)
+            rows.append({
+                'revision': revision,
+                'project_type': project_type,
+                'preview': preview,
+            })
+        context['revision_rows'] = rows
+        return context
