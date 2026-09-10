@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Approval History - Municipality Project Tracker{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}?v=20260821-1">
+<link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}?v=20260821-1">
+{% endblock %}
+
+{% block content %}
+<main class="review-workspace">
+    <nav class="review-breadcrumb" aria-label="Breadcrumb">
+        <a href="{% url 'admin_dashboard' %}">Administrative Dashboard</a>
+        <span>/</span>
+        <strong>Approval History</strong>
+    </nav>
+
+    <header class="review-header">
+        <div>
+            <p class="review-eyebrow">Read-only administrative record</p>
+            <h1>Approval History</h1>
+            <p>Review submission and checker decisions without approval controls.</p>
+        </div>
+    </header>
+
+    {% if revision_rows %}
+        <div class="review-list">
+            {% for row in revision_rows %}
+                <article class="review-card">
+                    <div class="review-card__image">
+                        {% if row.preview.cover_image_url %}
+                            <img src="{{ row.preview.cover_image_url }}" alt="">
+                        {% else %}
+                            <img src="{% static 'images/project-placeholder.svg' %}" alt="">
+                        {% endif %}
+                    </div>
+                    <div class="review-card__body">
+                        <div class="review-card__topline">
+                            <span class="publication-badge publication-status-{{ row.revision.status }}">
+                                {{ row.revision.get_status_display }}
+                            </span>
+                            <span>Revision {{ row.revision.revision_number }}</span>
+                        </div>
+                        <h2>{{ row.preview.title|default:"Unavailable project snapshot" }}</h2>
+                        <p class="review-card__type">
+                            {% if row.project_type == 'infrastructure' %}Infrastructure Project{% else %}Non-Infrastructure Program{% endif %}
+                        </p>
+                        <dl class="review-card__meta">
+                            <div><dt>Submitted</dt><dd>{{ row.revision.submitted_at|date:"M d, Y g:i A"|default:"Not recorded" }}</dd></div>
+                            <div><dt>Reviewed by</dt><dd>{% if row.revision.reviewed_by %}{{ row.revision.reviewed_by.get_full_name|default:row.revision.reviewed_by.username }}{% else %}Not yet reviewed{% endif %}</dd></div>
+                        </dl>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <section class="review-empty">
+            <h2>No approval history yet</h2>
+            <p>Submitted project revisions will appear here.</p>
+        </section>
+    {% endif %}
+
+    {% if is_paginated %}
+        <nav class="review-pagination" aria-label="Pagination">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+        </nav>
+    {% endif %}
+</main>
+{% endblock %}
