@@ -28,6 +28,18 @@ class ProjectAdmin(admin.ModelAdmin):
     list_filter = ('project_type', 'is_visible_to_public', 'is_published')
     search_fields = ('project_type',)
 
+    # Publication state is controlled only by the scoped checker workflow.
+    # The Django admin exposes normalized project rows for inspection, not
+    # manual publication or approval changes.
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(InfrastructureCategory)
 class InfrastructureCategoryAdmin(admin.ModelAdmin):
