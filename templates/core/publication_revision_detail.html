@@ -11,7 +11,7 @@
 {% block content %}
 <main class="review-workspace">
     <nav class="review-breadcrumb" aria-label="Breadcrumb">
-        <a href="{% url 'publication_review_queue' %}?status={{ revision.status }}">Publication Review</a>
+        <a href="{% url review_queue_url %}?status={{ revision.status }}">Publication Review</a>
         <span>/</span>
         <strong>Revision {{ revision.revision_number }}</strong>
     </nav>
@@ -30,7 +30,7 @@
 
     <section class="revision-notice">
         <strong>You are reviewing the submitted version.</strong>
-        <p>Later employee edits are not included here. Publishing will expose this exact snapshot and preserve the previous public revision in history.</p>
+        <p>Later employee edits are not included here. Approval publishes this exact snapshot and preserves the previous public revision in history.</p>
         {% if preview.working_detail_url %}<a href="{{ preview.working_detail_url }}?from_review={{ revision.pk }}">View current working project</a>{% endif %}
     </section>
 
@@ -122,7 +122,7 @@
             {% if can_review %}
                 <section>
                     <h2>Review Decision</h2>
-                    <form method="post" action="{% url 'publication_revision_review' revision.pk %}" class="review-decision-form">
+                    <form method="post" action="{% url review_action_url revision.pk %}" class="review-decision-form">
                         {% csrf_token %}
                         {{ review_form.decision }}
                         {% for error in review_form.decision.errors %}<p class="review-form-error">{{ error }}</p>{% endfor %}
@@ -130,24 +130,6 @@
                         {{ review_form.notes }}
                         {% for error in review_form.notes.errors %}<p class="review-form-error">{{ error }}</p>{% endfor %}
                         <button type="submit" class="review-button review-button--primary">Record Decision</button>
-                    </form>
-                </section>
-            {% elif can_publish %}
-                <section class="publish-confirmation">
-                    <h2>Ready to Publish</h2>
-                    <p>Publishing replaces the current public version immediately. This submitted snapshot cannot be changed afterward.</p>
-                    <form method="post" action="{% url 'publication_revision_publish' revision.pk %}">
-                        {% csrf_token %}
-                        <button type="submit" class="review-button review-button--primary">Publish to Public Dashboard</button>
-                    </form>
-                </section>
-            {% elif can_archive %}
-                <section>
-                    <h2>Public Revision</h2>
-                    <p>This is the version residents currently see.</p>
-                    <form method="post" action="{% url 'publication_revision_archive' revision.pk %}">
-                        {% csrf_token %}
-                        <button type="submit" class="review-button review-button--danger">Archive and Remove from Public</button>
                     </form>
                 </section>
             {% endif %}
