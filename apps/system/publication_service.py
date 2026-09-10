@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
+from .checker_permissions import require_project_checker, revision_project_type
 from .models import Project, ProjectPublicationRevision
 from .publication_snapshots import build_project_publication_snapshot
 from .publication_workflow import (
@@ -88,7 +89,7 @@ def create_publication_draft(project, actor):
 
 @transaction.atomic
 def submit_publication_revision(revision, actor):
-    """Refresh a draft from working data and submit it for admin review."""
+    """Refresh a draft from working data and submit it for checker review."""
     _require_authenticated(actor)
     locked_revision = _locked_revision(revision)
     validate_publication_transition(
@@ -122,8 +123,7 @@ def submit_publication_revision(revision, actor):
 
 @transaction.atomic
 def review_publication_revision(revision, reviewer, decision, notes=''):
-    """Record an administrator's approval or return/rejection decision."""
-    _require_admin(reviewer)
+    """Record the authorized checker's approval, return, or rejection decision."""
     allowed_decisions = {
         PublicationStatus.APPROVED,
         PublicationStatus.NEEDS_REVISION,
@@ -149,6 +149,7 @@ def review_publication_revision(revision, reviewer, decision, notes=''):
         )
 
     locked_revision = _locked_revision(revision)
+    require_project_checker(reviewer, revision_project_type(locked_revision))
     validate_publication_transition(
         locked_revision.status,
         normalized_decision,
@@ -164,14 +165,18 @@ def review_publication_revision(revision, reviewer, decision, notes=''):
         'review_notes',
         'updated_at',
     ])
+    if normalized_decision == PublicationStatus.APPROVED:
+        # Approval is the final publication decision; the approved revision is
+        # immediately made public without an administrator approval step.
+        return publish_publication_revision(locked_revision, reviewer)
     return locked_revision
 
 
 @transaction.atomic
 def publish_publication_revision(revision, publisher):
-    """Atomically replace the project's current public revision."""
-    _require_admin(publisher)
+    """Atomically replace the project's current public revision after checker approval."""
     locked_revision = _locked_project_revision(revision)
+    require_project_checker(publisher, revision_project_type(locked_revision))
     validate_publication_transition(
         locked_revision.status,
         PublicationStatus.PUBLISHED,
@@ -305,7 +310,7 @@ def submit_project_for_review(project, actor):
         PublicationStatus.NEEDS_REVISION,
     }:
         raise ValidationError(
-            'This project already has a revision awaiting administrator action.',
+            'This project already has a revision awaiting checker action.',
         )
     revision = active or create_publication_draft(locked_project, actor)
     return submit_publication_revision(revision, actor)
