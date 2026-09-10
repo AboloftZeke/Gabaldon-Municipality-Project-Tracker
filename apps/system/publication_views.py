@@ -3,7 +3,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.views import View
 from django.views.generic import DetailView, ListView
 
@@ -22,23 +21,15 @@ from .publication_workflow import PublicationStatus
 
 
 def _revision_preview(revision):
+    """Return a display-only submitted snapshot for the authorized checker."""
     project_type = revision_project_type(revision)
     if project_type == 'infrastructure':
         data = infrastructure_public_data(revision)
-        detail_url_name = 'engineering_projects:project_detail'
     elif project_type == 'non_infrastructure':
         data = non_infrastructure_public_data(revision)
-        detail_url_name = 'mayor_projects:non_infrastructure_project_detail'
     else:
         data = None
-        detail_url_name = None
-    if data and detail_url_name:
-        data['working_detail_url'] = reverse(
-            detail_url_name,
-            args=[data['record_id']],
-        )
     return project_type, data
-
 
 class ScopedProjectCheckerMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Apply one project-type scope to every checker queue, page, and POST."""
