@@ -253,6 +253,8 @@ class UserFlag(models.Model):
     DEPARTMENT_CHOICES = [
         ('engineer', 'Engineering Office'),
         ('mayor', "Mayor's Office"),
+        ('infra_checker', 'Infrastructure Project Checker'),
+        ('noninfra_checker', 'Non-Infrastructure Project Checker'),
         ('admin', 'Administration'),
     ]
 
