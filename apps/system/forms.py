@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
-
 class CustomUserCreationForm(forms.ModelForm):
     """
     Form for creating users who will establish a password by email.
@@ -55,19 +54,20 @@ class CustomUserCreationForm(forms.ModelForm):
         return user
 
     def _save_user_profile(self, user, role):
-        """Helper method to save the runtime department for access checks."""
+        """Save the user's runtime department."""
         from apps.system.models import UserFlag
 
         department_map = {
-            self.ROLE_ADMIN: 'admin',
-            self.ROLE_ENGINEERING: 'engineer',
-            self.ROLE_MAYORS: 'mayor',
+            self.ROLE_ADMIN: "admin",
+            self.ROLE_ENGINEERING: "engineer",
+            self.ROLE_MAYORS: "mayor",
         }
+
         department = department_map[role]
-        user.profile.department = department
+
         UserFlag.objects.update_or_create(
             user=user,
-            defaults={'department': department},
+            defaults={"department": department},
         )
 
 
@@ -139,19 +139,20 @@ class CustomUserChangeForm(forms.ModelForm):
         return user
 
     def _save_user_profile(self, user, role):
-        """Helper method to save the runtime department for access checks."""
+        """Save the user's runtime department."""
         from apps.system.models import UserFlag
 
         department_map = {
-            self.ROLE_ADMIN: 'admin',
-            self.ROLE_ENGINEERING: 'engineer',
-            self.ROLE_MAYORS: 'mayor',
+            self.ROLE_ADMIN: "admin",
+            self.ROLE_ENGINEERING: "engineer",
+            self.ROLE_MAYORS: "mayor",
         }
-        department = department_map.get(role, 'engineer')
-        user.profile.department = department
+
+        department = department_map[role]
+
         UserFlag.objects.update_or_create(
             user=user,
-            defaults={'department': department},
+            defaults={"department": department},
         )
 
 

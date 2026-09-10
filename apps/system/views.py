@@ -15,6 +15,9 @@ from .forms import (
     UserPasswordChangeForm,
 )
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .login_otp import (
     OTPCooldownError,
@@ -30,9 +33,17 @@ from .account_setup import AccountSetupDeliveryError, send_account_setup_email
 PENDING_LOGIN_OTP_SESSION_KEY = 'pending_login_otp_challenge'
 
 
+from apps.system.models import UserFlag
+
 def _department_for_user(user):
-    profile = getattr(user, 'profile', None)
-    return getattr(profile, 'department', None) if profile is not None else None
+    if not user or not user.is_authenticated:
+        return None
+
+    if user.is_superuser:
+        return "admin"
+
+    flag = UserFlag.objects.filter(user=user).only("department").first()
+    return flag.department if flag and flag.department else None
 
 
 def _redirect_authenticated_user(user):
@@ -597,11 +608,12 @@ class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
             )
             return redirect('user_create')
         except Exception:
-            messages.error(
-                request,
-                'The account could not be created. Please try again.',
-            )
-            return redirect('user_create')
+                logger.exception("User account creation failed")
+                messages.error(
+                    request,
+                    "The account could not be created. Please contact an administrator.",
+                )
+                return redirect("user_create")
 
 
 class UserAccountSetupResendView(AdminRequiredMixin, View):

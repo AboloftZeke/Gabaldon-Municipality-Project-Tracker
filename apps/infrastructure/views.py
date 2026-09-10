@@ -19,9 +19,17 @@ from apps.system.publication_service import (
 )
 
 
+from apps.system.models import UserFlag
+
 def _department_for_user(user):
-    profile = getattr(user, 'profile', None)
-    return getattr(profile, 'department', None) if profile is not None else None
+    if not user or not user.is_authenticated:
+        return None
+
+    if user.is_superuser:
+        return "admin"
+
+    flag = UserFlag.objects.filter(user=user).only("department").first()
+    return flag.department if flag and flag.department else None
 
 
 class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
