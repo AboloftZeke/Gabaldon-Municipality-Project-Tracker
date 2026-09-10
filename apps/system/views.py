@@ -33,17 +33,10 @@ from .account_setup import AccountSetupDeliveryError, send_account_setup_email
 PENDING_LOGIN_OTP_SESSION_KEY = 'pending_login_otp_challenge'
 
 
-from apps.system.models import UserFlag
+from .checker_permissions import department_for_user
 
 def _department_for_user(user):
-    if not user or not user.is_authenticated:
-        return None
-
-    if user.is_superuser:
-        return "admin"
-
-    flag = UserFlag.objects.filter(user=user).only("department").first()
-    return flag.department if flag and flag.department else None
+    return department_for_user(user)
 
 
 def _redirect_authenticated_user(user):
@@ -54,6 +47,10 @@ def _redirect_authenticated_user(user):
         return redirect('engineering_dashboard')
     if department == 'mayor':
         return redirect('mayor_dashboard')
+    if department == 'infra_checker':
+        return redirect('infrastructure_checker_review_queue')
+    if department == 'noninfra_checker':
+        return redirect('noninfrastructure_checker_review_queue')
     return redirect('admin_dashboard')
 
 
@@ -450,7 +447,7 @@ class UserListView(AdminRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = User.objects.all().order_by('username')
+        queryset = User.objects.select_related('flags').all().order_by('username')
         search = self.request.GET.get('search', '').strip()
         department = self.request.GET.get('department', '').strip()
 
