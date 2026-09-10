@@ -81,12 +81,13 @@ urlpatterns = [
         name='account_setup_complete',
     ),
 
-    # Administrator publication review
-    path('admin-dashboard/publications/', publication_views.PublicationReviewQueueView.as_view(), name='publication_review_queue'),
-    path('admin-dashboard/publications/<int:revision_id>/', publication_views.PublicationRevisionDetailView.as_view(), name='publication_revision_detail'),
-    path('admin-dashboard/publications/<int:revision_id>/review/', publication_views.PublicationRevisionReviewView.as_view(), name='publication_revision_review'),
-    path('admin-dashboard/publications/<int:revision_id>/publish/', publication_views.PublicationRevisionPublishView.as_view(), name='publication_revision_publish'),
-    path('admin-dashboard/publications/<int:revision_id>/archive/', publication_views.PublicationRevisionArchiveView.as_view(), name='publication_revision_archive'),
+    # Type-scoped checker workspaces. Admin accounts have no approval endpoints.
+    path('project-checker/infrastructure/', publication_views.InfrastructureCheckerReviewQueueView.as_view(), name='infrastructure_checker_review_queue'),
+    path('project-checker/infrastructure/<int:revision_id>/', publication_views.InfrastructureCheckerRevisionDetailView.as_view(), name='infrastructure_checker_revision_detail'),
+    path('project-checker/infrastructure/<int:revision_id>/review/', publication_views.InfrastructureCheckerRevisionReviewView.as_view(), name='infrastructure_checker_revision_review'),
+    path('project-checker/non-infrastructure/', publication_views.NonInfrastructureCheckerReviewQueueView.as_view(), name='noninfrastructure_checker_review_queue'),
+    path('project-checker/non-infrastructure/<int:revision_id>/', publication_views.NonInfrastructureCheckerRevisionDetailView.as_view(), name='noninfrastructure_checker_revision_detail'),
+    path('project-checker/non-infrastructure/<int:revision_id>/review/', publication_views.NonInfrastructureCheckerRevisionReviewView.as_view(), name='noninfrastructure_checker_revision_review'),
 
     # Role-specific dashboards
     # Use a non-conflicting path so Django's admin site (mounted at /admin/) isn't intercepted.
