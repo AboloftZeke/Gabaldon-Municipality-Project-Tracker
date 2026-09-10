@@ -11,20 +11,20 @@
 {% block content %}
 <main class="review-workspace">
     <nav class="review-breadcrumb" aria-label="Breadcrumb">
-        <a href="{% url 'admin_dashboard' %}">Administrative Dashboard</a>
+        <a href="{% url review_queue_url %}">{{ checker_label }}</a>
         <span>/</span>
-        <strong>Publication Review</strong>
+        <strong>Review Queue</strong>
     </nav>
 
     <header class="review-header">
         <div>
-            <p class="review-eyebrow">Administrator Workspace</p>
-            <h1>Publication Review</h1>
-            <p>Confirm exactly what residents will see before a project reaches the public dashboard.</p>
+            <p class="review-eyebrow">Project Checker Workspace</p>
+            <h1>{{ checker_label }}</h1>
+            <p>Review only the submitted projects assigned to your checker scope.</p>
         </div>
         <div class="review-summary">
             <div><strong>{{ pending_count }}</strong><span>Pending review</span></div>
-            <div><strong>{{ approved_count }}</strong><span>Approved to publish</span></div>
+            <div><strong>{{ approved_count }}</strong><span>Approved revisions</span></div>
         </div>
     </header>
 
@@ -62,7 +62,7 @@
                             <div><dt>Submitted by</dt><dd>{% if row.revision.submitted_by %}{{ row.revision.submitted_by.get_full_name|default:row.revision.submitted_by.username }}{% else %}Unknown{% endif %}</dd></div>
                             <div><dt>Submitted</dt><dd>{{ row.revision.submitted_at|date:"M d, Y g:i A"|default:"Not recorded" }}</dd></div>
                         </dl>
-                        <a href="{% url 'publication_revision_detail' row.revision.pk %}" class="review-primary-link">
+                        <a href="{% url review_detail_url row.revision.pk %}" class="review-primary-link">
                             {% if row.revision.status == 'pending_review' %}Review Submission{% else %}View Revision{% endif %}
                         </a>
                     </div>
