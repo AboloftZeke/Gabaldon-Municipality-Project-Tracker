@@ -10,11 +10,15 @@ class CustomUserCreationForm(forms.ModelForm):
     ROLE_ADMIN = 'admin'
     ROLE_ENGINEERING = 'engineering'
     ROLE_MAYORS = 'mayors'
+    ROLE_INFRA_CHECKER = 'infra_checker'
+    ROLE_NONINFRA_CHECKER = 'noninfra_checker'
     ROLE_CHOICES = (
         ('', 'Select Department'),
         (ROLE_ADMIN, 'Admin'),
         (ROLE_ENGINEERING, 'Engineering Office'),
         (ROLE_MAYORS, "Mayor's Office"),
+        (ROLE_INFRA_CHECKER, 'Infrastructure Project Checker'),
+        (ROLE_NONINFRA_CHECKER, 'Non-Infrastructure Project Checker'),
     )
 
     role = forms.ChoiceField(label='Department', choices=ROLE_CHOICES, initial='')
@@ -43,7 +47,7 @@ class CustomUserCreationForm(forms.ModelForm):
 
         # Treat all module-access roles as Django staff so mayor's office users
         # can log in like the other restricted access roles.
-        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING, self.ROLE_MAYORS)
+        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING, self.ROLE_MAYORS, self.ROLE_INFRA_CHECKER, self.ROLE_NONINFRA_CHECKER)
         user.is_superuser = role == self.ROLE_ADMIN
 
         if commit:
@@ -61,6 +65,8 @@ class CustomUserCreationForm(forms.ModelForm):
             self.ROLE_ADMIN: "admin",
             self.ROLE_ENGINEERING: "engineer",
             self.ROLE_MAYORS: "mayor",
+            self.ROLE_INFRA_CHECKER: "infra_checker",
+            self.ROLE_NONINFRA_CHECKER: "noninfra_checker",
         }
 
         department = department_map[role]
@@ -79,10 +85,14 @@ class CustomUserChangeForm(forms.ModelForm):
     ROLE_ADMIN = 'admin'
     ROLE_ENGINEERING = 'engineering'
     ROLE_MAYORS = 'mayors'
+    ROLE_INFRA_CHECKER = 'infra_checker'
+    ROLE_NONINFRA_CHECKER = 'noninfra_checker'
     ROLE_CHOICES = (
         (ROLE_ADMIN, 'Admin'),
         (ROLE_ENGINEERING, 'Engineering Office'),
         (ROLE_MAYORS, "Mayor's Office"),
+        (ROLE_INFRA_CHECKER, 'Infrastructure Project Checker'),
+        (ROLE_NONINFRA_CHECKER, 'Non-Infrastructure Project Checker'),
     )
 
     role = forms.ChoiceField(label='Department', choices=ROLE_CHOICES)
@@ -100,20 +110,20 @@ class CustomUserChangeForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['is_active'].initial = self.instance.is_active
 
-        # Set initial role based on the compatibility profile or superuser status.
-        profile = getattr(self.instance, 'profile', None)
-        if profile:
-            department_reverse_map = {
-                'admin': self.ROLE_ADMIN,
-                'engineer': self.ROLE_ENGINEERING,
-                'mayor': self.ROLE_MAYORS,
-            }
-            self.fields['role'].initial = department_reverse_map.get(
-                profile.department,
-                self.ROLE_ENGINEERING
-            )
-        else:
-            self.fields['role'].initial = self.ROLE_ADMIN if self.instance.is_superuser else self.ROLE_ENGINEERING
+        # The runtime role is stored in UserFlag, not the archived profile.
+        from apps.system.models import UserFlag
+        flag = UserFlag.objects.filter(user=self.instance).only('department').first()
+        department_reverse_map = {
+            'admin': self.ROLE_ADMIN,
+            'engineer': self.ROLE_ENGINEERING,
+            'mayor': self.ROLE_MAYORS,
+            'infra_checker': self.ROLE_INFRA_CHECKER,
+            'noninfra_checker': self.ROLE_NONINFRA_CHECKER,
+        }
+        department = flag.department if flag else ('admin' if self.instance.is_superuser else 'engineer')
+        self.fields['role'].initial = department_reverse_map.get(
+            department, self.ROLE_ENGINEERING
+        )
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip()
@@ -128,7 +138,7 @@ class CustomUserChangeForm(forms.ModelForm):
 
         # Keep Mayor's Office accounts in the staff-access group so they can log
         # into the application like the other module-approved roles.
-        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING, self.ROLE_MAYORS)
+        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING, self.ROLE_MAYORS, self.ROLE_INFRA_CHECKER, self.ROLE_NONINFRA_CHECKER)
         user.is_superuser = role == self.ROLE_ADMIN
 
         if commit:
@@ -146,6 +156,8 @@ class CustomUserChangeForm(forms.ModelForm):
             self.ROLE_ADMIN: "admin",
             self.ROLE_ENGINEERING: "engineer",
             self.ROLE_MAYORS: "mayor",
+            self.ROLE_INFRA_CHECKER: "infra_checker",
+            self.ROLE_NONINFRA_CHECKER: "noninfra_checker",
         }
 
         department = department_map[role]
