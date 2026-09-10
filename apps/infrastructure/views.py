@@ -676,7 +676,7 @@ class ProjectSubmitForReviewView(EngineerOnlyMixin, View):
             messages.success(
                 request,
                 f'Revision {revision.revision_number} was submitted for '
-                'administrator review.',
+                'Infrastructure Project Checker review.',
             )
         return redirect(
             'engineering_projects:project_detail',
