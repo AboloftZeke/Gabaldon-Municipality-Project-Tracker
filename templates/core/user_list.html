@@ -50,6 +50,8 @@
             <li><a href="?department=engineer" class="{% if current_department == 'engineer' %}active-filter{% endif %}">Engineering Office</a></li>
             <li><a href="?department=mayor" class="{% if current_department == 'mayor' %}active-filter{% endif %}">Mayor's Office</a></li>
             <li><a href="?department=admin" class="{% if current_department == 'admin' %}active-filter{% endif %}">Administration</a></li>
+            <li><a href="?department=infra_checker" class="{% if current_department == 'infra_checker' %}active-filter{% endif %}">Infrastructure Checkers</a></li>
+            <li><a href="?department=noninfra_checker" class="{% if current_department == 'noninfra_checker' %}active-filter{% endif %}">Non-Infrastructure Checkers</a></li>
         </ul>
     </div>
 </div>
@@ -92,13 +94,17 @@
                         </td>
                         <td>{{ user.email }}</td>
                         <td>
-                            {% if user.profile %}
-                                {% if user.profile.department == 'engineer' %}
+                            {% if user.flags %}
+                                {% if user.flags.department == 'engineer' %}
                                     <span class="department-badge department-engineering">Engineering Office</span>
-                                {% elif user.profile.department == 'mayor' %}
+                                {% elif user.flags.department == 'mayor' %}
                                     <span class="department-badge department-mayor">Mayor's Office</span>
-                                {% elif user.profile.department == 'admin' %}
+                                {% elif user.flags.department == 'admin' %}
                                     <span class="department-badge department-admin">Administration</span>
+                                {% elif user.flags.department == 'infra_checker' %}
+                                    <span class="department-badge department-engineering">Infrastructure Project Checker</span>
+                                {% elif user.flags.department == 'noninfra_checker' %}
+                                    <span class="department-badge department-mayor">Non-Infrastructure Project Checker</span>
                                 {% else %}
                                     <span class="department-badge department-engineering">Engineering Office</span>
                                 {% endif %}
