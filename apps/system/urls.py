@@ -89,6 +89,9 @@ urlpatterns = [
     path('project-checker/non-infrastructure/<int:revision_id>/', publication_views.NonInfrastructureCheckerRevisionDetailView.as_view(), name='noninfrastructure_checker_revision_detail'),
     path('project-checker/non-infrastructure/<int:revision_id>/review/', publication_views.NonInfrastructureCheckerRevisionReviewView.as_view(), name='noninfrastructure_checker_revision_review'),
 
+    # Admin can inspect history but has no approval or publication endpoint.
+    path('admin-dashboard/publication-history/', publication_views.AdminPublicationHistoryView.as_view(), name='publication_history'),
+
     # Role-specific dashboards
     # Use a non-conflicting path so Django's admin site (mounted at /admin/) isn't intercepted.
     path('admin-dashboard/', views.AdminDashboardView.as_view(), name='admin_dashboard'),
