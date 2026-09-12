@@ -381,6 +381,7 @@
       tileErrorCount += 1;
       if (tileErrorCount >= 3 && !mapUnavailable) {
         mapUnavailable = true;
+        mapTiles.setOpacity(0);
         if (mapCount) mapCount.textContent = 'Map temporarily unavailable';
         showMapState(
           'Map temporarily unavailable',
