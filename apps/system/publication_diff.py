@@ -29,6 +29,27 @@ NUMERIC = {
 }
 
 
+def revision_comparison(revision):
+    """Use the same current revision selector as public read paths, never drafts."""
+    from .publication_public import current_public_revisions
+    from .publication_workflow import PublicationStatus
+
+    baseline = current_public_revisions().filter(project_id=revision.project_id).first()
+    previously_published = baseline is not None or revision.project.publication_revisions.filter(
+        status__in=[PublicationStatus.PUBLISHED, PublicationStatus.ARCHIVED],
+    ).exists()
+    result = compare_snapshots(
+        revision.snapshot_data,
+        baseline.snapshot_data if baseline is not None else None,
+    )
+    result.update({
+        'baseline': baseline,
+        'is_initial': not previously_published,
+        'is_current': baseline is not None and baseline.pk == revision.pk,
+    })
+    return result
+
+
 def _empty(value):
     return value is None or value == '' or value == {} or value == []
 

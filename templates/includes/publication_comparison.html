@@ -1,0 +1,59 @@
+<section class="revision-section comparison-summary">
+    {% if comparison.is_initial %}
+        <h2>Initial Publication Submission</h2>
+        <p>This project has never been published. Review the submitted values below.</p>
+    {% elif comparison.is_current %}
+        <h2>Current Published Revision</h2>
+        <p>This is the version the public currently sees.</p>
+    {% elif comparison.baseline %}
+        <h2>Changes Compared with Current Published Revision {{ comparison.baseline.revision_number }}</h2>
+        <p>{% if comparison.change_count %}{{ comparison.change_count }} changed field{{ comparison.change_count|pluralize }} or image{{ comparison.change_count|pluralize }}. Highlighted values show the current published version and this submitted version.{% else %}No changes from the current published version.{% endif %}</p>
+    {% else %}
+        <h2>No Current Published Revision</h2>
+        <p>This project was previously published but has no current public version to compare. Review the submitted values below.</p>
+    {% endif %}
+</section>
+
+{% for section in comparison.sections %}
+    <section class="revision-section">
+        <h2>{{ section.label }} {% if section.changed %}<span class="snapshot-change-badge">Changed</span>{% endif %}</h2>
+        <dl class="snapshot-grid">
+            {% for field in section.fields %}
+                <div{% if field.changed %} class="snapshot-change snapshot-change--{{ field.state }}"{% endif %}>
+                    <dt>{{ field.label }} {% if field.changed %}<span class="snapshot-change-badge">{{ field.badge }}</span>{% endif %}</dt>
+                    {% if field.changed %}
+                        <dd class="snapshot-before"><span class="snapshot-value-label">Previously published</span>{{ field.before }}</dd>
+                        <dd><span class="snapshot-value-label">Newly submitted{% if field.state == 'removed' %} · Cleared{% endif %}</span>{{ field.after }}</dd>
+                    {% else %}
+                        <dd>{{ field.after }}</dd>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </dl>
+    </section>
+{% endfor %}
+
+{% if comparison.images %}
+    <section class="revision-section">
+        <h2>Project Images {% if comparison.images_changed %}<span class="snapshot-change-badge">Changed</span>{% endif %}</h2>
+        <div class="snapshot-images">
+            {% for image in comparison.images %}
+                <article{% if image.changed %} class="snapshot-change snapshot-change--{{ image.state }}"{% endif %}>
+                    {% if image.changed %}<span class="snapshot-change-badge">{% if image.state == 'modified' %}Changed{% else %}{{ image.state|title }}{% endif %}</span>{% endif %}
+                    {% if image.changed and image.before %}
+                        <figure>
+                            <img src="{{ image.before.url }}" alt="Previously published project image {{ forloop.counter }}" loading="lazy">
+                            <figcaption>Previously published{% if image.before.is_cover %} · Cover image{% endif %}</figcaption>
+                        </figure>
+                    {% endif %}
+                    {% if image.after %}
+                        <figure>
+                            <img src="{{ image.after.url }}" alt="Submitted project image {{ forloop.counter }}" loading="lazy">
+                            <figcaption>Submitted{% if image.after.is_cover %} · Cover image{% endif %}</figcaption>
+                        </figure>
+                    {% else %}<p>Removed from submission</p>{% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}

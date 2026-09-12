@@ -4,7 +4,7 @@
 {% block title %}Review Revision {{ revision.revision_number }} - Municipality Project Tracker{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}?v=20260821-1">
+<link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}?v=20260912-1">
 <link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}?v=20260821-1">
 {% endblock %}
 
@@ -45,66 +45,7 @@
                 <div><span>{{ preview.code }}</span><h2>{{ preview.title }}</h2><p>{{ preview.description|default:"No description provided." }}</p></div>
             </section>
 
-            {% if project_type == 'infrastructure' %}
-                <section class="revision-section">
-                    <h2>Project Information</h2>
-                    <dl class="snapshot-grid">
-                        <div><dt>Category</dt><dd>{{ preview.category.name|default:"N/A" }}</dd></div>
-                        <div><dt>Status</dt><dd>{{ preview.award_status_label|default:"N/A" }}</dd></div>
-                        <div><dt>Implementing Office</dt><dd>{{ preview.implementing_office.name|default:"N/A" }}</dd></div>
-                        <div><dt>Contractor</dt><dd>{{ preview.contractor.name|default:"N/A" }}</dd></div>
-                        <div><dt>Procurement Method</dt><dd>{{ preview.procurement_method_label|default:"N/A" }}</dd></div>
-                        <div><dt>Published By Attribution</dt><dd>{{ preview.created_by_name|default:"N/A" }}</dd></div>
-                    </dl>
-                </section>
-                <section class="revision-section">
-                    <h2>Location</h2>
-                    <dl class="snapshot-grid">
-                        <div><dt>Street</dt><dd>{{ preview.address.street|default:"N/A" }}</dd></div>
-                        <div><dt>Barangay</dt><dd>{{ preview.address.barangay|default:"N/A" }}</dd></div>
-                        <div><dt>Municipality</dt><dd>{{ preview.address.municipality|default:"Gabaldon" }}</dd></div>
-                        <div><dt>Province</dt><dd>{{ preview.address.province|default:"Nueva Ecija" }}</dd></div>
-                        <div><dt>Latitude</dt><dd>{{ preview.address.latitude|default:"N/A" }}</dd></div>
-                        <div><dt>Longitude</dt><dd>{{ preview.address.longitude|default:"N/A" }}</dd></div>
-                    </dl>
-                </section>
-                <section class="revision-section">
-                    <h2>Funding and Progress</h2>
-                    <dl class="snapshot-grid">
-                        <div><dt>Approved Budget</dt><dd>{% if preview.financial.approved_budget is not None %}₱{{ preview.financial.approved_budget|floatformat:2 }}{% else %}N/A{% endif %}</dd></div>
-                        <div><dt>Contract Price</dt><dd>{% if preview.financial.contract_price is not None %}₱{{ preview.financial.contract_price|floatformat:2 }}{% else %}N/A{% endif %}</dd></div>
-                        <div><dt>Fund Source</dt><dd>{{ preview.financial.fund_source.name|default:"N/A" }}</dd></div>
-                        <div><dt>Physical Progress</dt><dd>{% if preview.physical_progress_percentage is not None %}{{ preview.physical_progress_percentage|floatformat:1 }}%{% else %}N/A{% endif %}</dd></div>
-                        <div><dt>Planned Start</dt><dd>{{ preview.planned_start_date|date:"M d, Y"|default:"N/A" }}</dd></div>
-                        <div><dt>Planned End</dt><dd>{{ preview.planned_end_date|date:"M d, Y"|default:"N/A" }}</dd></div>
-                    </dl>
-                </section>
-            {% else %}
-                <section class="revision-section">
-                    <h2>Program Information</h2>
-                    <dl class="snapshot-grid">
-                        <div><dt>Category</dt><dd>{{ preview.category.name|default:"N/A" }}</dd></div>
-                        <div><dt>Status</dt><dd>{{ preview.status_label|default:"N/A" }}</dd></div>
-                        <div><dt>Proponent</dt><dd>{{ preview.proponent|default:"N/A" }}</dd></div>
-                        <div><dt>Beneficiaries</dt><dd>{{ preview.beneficiaries|default_if_none:"N/A" }}</dd></div>
-                        <div><dt>Event Date</dt><dd>{{ preview.event_date|date:"M d, Y"|default:"N/A" }}</dd></div>
-                        <div><dt>Venue</dt><dd>{{ preview.venue_name|default:"N/A" }}</dd></div>
-                        <div><dt>Start Time</dt><dd>{{ preview.start_time|time:"g:i A"|default:"N/A" }}</dd></div>
-                        <div><dt>End Time</dt><dd>{{ preview.end_time|time:"g:i A"|default:"N/A" }}</dd></div>
-                    </dl>
-                </section>
-            {% endif %}
-
-            {% if preview.images %}
-                <section class="revision-section">
-                    <h2>Submitted Images</h2>
-                    <div class="snapshot-images">
-                        {% for image in preview.images %}
-                            <figure><img src="{{ image.image_url }}" alt="Submitted project image {{ forloop.counter }}">{% if image.is_cover %}<figcaption>Cover image</figcaption>{% endif %}</figure>
-                        {% endfor %}
-                    </div>
-                </section>
-            {% endif %}
+            {% include "includes/publication_comparison.html" %}
         </div>
 
         <aside class="revision-actions">

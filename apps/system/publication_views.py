@@ -9,6 +9,7 @@ from django.views.generic import DetailView, ListView
 
 from .models import ProjectPublicationRevision
 from .publication_forms import PublicationReviewForm
+from .publication_diff import revision_comparison
 from .publication_public import (
     infrastructure_public_data,
     non_infrastructure_public_data,
@@ -123,6 +124,7 @@ class PublicationRevisionDetailView(SuperuserRequiredMixin, DetailView):
             'project_type': project_type,
             'preview': preview,
             'review_form': PublicationReviewForm(),
+            'comparison': revision_comparison(self.object),
             'can_review': self.object.status == PublicationStatus.PENDING_REVIEW,
             'can_publish': self.object.status == PublicationStatus.APPROVED,
             'can_archive': (
@@ -150,6 +152,7 @@ class PublicationRevisionReviewView(SuperuserRequiredMixin, View):
                     'project_type': project_type,
                     'preview': preview,
                     'review_form': form,
+                    'comparison': revision_comparison(revision),
                     'can_review': (
                         revision.status == PublicationStatus.PENDING_REVIEW
                     ),

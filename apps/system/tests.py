@@ -534,7 +534,7 @@ class AdminPublicationReviewViewTests(TestCase):
         )
         self.assertContains(
             detail,
-            '/static/css/templates/core/publication_review.css?v=20260821-1',
+            '/static/css/templates/core/publication_review.css?v=20260912-1',
         )
         self.assertContains(
             detail,

@@ -457,6 +457,64 @@
     font-weight: 650;
 }
 
+.snapshot-grid > .snapshot-change,
+.snapshot-images > .snapshot-change {
+    border: 1px solid #a87614;
+    border-left: 4px solid #a87614;
+    background: #fff8e5;
+    padding: 0.8rem;
+    border-radius: 8px;
+}
+
+.snapshot-grid > .snapshot-change--added,
+.snapshot-images > .snapshot-change--added {
+    border-color: var(--review-green);
+    background: var(--review-green-soft);
+}
+
+.snapshot-grid > .snapshot-change--removed,
+.snapshot-images > .snapshot-change--removed {
+    border-color: #a52734;
+    background: #fff0f1;
+}
+
+.snapshot-change-badge {
+    display: inline-block;
+    padding: 0.15rem 0.45rem;
+    margin: 0 0 0.25rem 0.25rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    color: #70500d;
+    font-size: 0.7rem;
+    font-weight: 750;
+    vertical-align: middle;
+}
+
+.snapshot-value-label {
+    display: block;
+    margin-top: 0.6rem;
+    color: var(--review-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.snapshot-grid dd {
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.snapshot-before {
+    color: #5e655f;
+}
+
+.snapshot-images article {
+    min-width: 0;
+}
+
+.snapshot-images figure + figure {
+    margin-top: 0.8rem;
+}
+
 .snapshot-images {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
