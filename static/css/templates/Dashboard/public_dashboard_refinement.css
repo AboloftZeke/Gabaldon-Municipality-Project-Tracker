@@ -1,0 +1,567 @@
+/*
+ * Public dashboard refinement
+ * Scoped exclusively to templates/Dashboard/dashboard.html.
+ */
+
+:root {
+  --dashboard-green-deep: #103b28;
+  --dashboard-green: #17643d;
+  --dashboard-green-soft: #eaf3eb;
+  --dashboard-lime: #b8d534;
+  --dashboard-paper: #f6f7f2;
+  --dashboard-line: #d7e1d8;
+  --dashboard-ink: #18352a;
+  --dashboard-muted: #5c7165;
+}
+
+body {
+  background: var(--dashboard-paper);
+}
+
+.site-header {
+  background: rgba(249, 250, 247, .97);
+  border-bottom-color: #dfe6de;
+  box-shadow: 0 2px 12px rgba(16, 59, 40, .07);
+}
+
+.site-header-inner {
+  padding-block: .78rem;
+}
+
+.site-brand {
+  gap: .75rem;
+}
+
+.site-seal {
+  width: 46px;
+  height: 46px;
+  border-color: #d2ddd3;
+  background: #fff;
+}
+
+.site-brand-text p {
+  color: var(--dashboard-green);
+  font-size: .69rem;
+  letter-spacing: .1em;
+}
+
+.site-brand-text h2 {
+  font-size: 1.02rem;
+  letter-spacing: -.015em;
+}
+
+.hero-shell {
+  min-height: 31rem;
+  isolation: isolate;
+  border-top: 3px solid var(--dashboard-green);
+  background-position: center;
+}
+
+.hero-shell::before {
+  position: absolute;
+  z-index: 0;
+  inset: -5px;
+  background: inherit;
+  background-position: center;
+  background-size: cover;
+  content: "";
+  filter: blur(2px);
+  transform: scale(1.01);
+}
+
+.hero-overlay {
+  z-index: 1;
+  background: linear-gradient(100deg, rgba(8, 39, 25, .93), rgba(14, 70, 43, .83) 60%, rgba(18, 61, 42, .75));
+}
+
+.hero-grid {
+  z-index: 2;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+
+.hero-inner {
+  z-index: 3;
+  max-width: 80rem;
+  padding: 3.25rem 1.25rem 5.35rem;
+  gap: 2rem;
+}
+
+.hero-kicker {
+  margin-bottom: 1rem;
+  padding: .42rem .7rem;
+  border-color: rgba(215, 232, 220, .25);
+  background: rgba(255, 255, 255, .1);
+  color: #f6f8f3;
+  font-size: .72rem;
+  letter-spacing: .1em;
+}
+
+.hero-copy h1 {
+  max-width: 46rem;
+  font-family: "Libre Franklin", sans-serif;
+  font-size: clamp(2.3rem, 4.5vw, 4rem);
+  font-weight: 800;
+  letter-spacing: -.035em;
+  line-height: 1.04;
+  text-wrap: balance;
+}
+
+.hero-copy p {
+  max-width: 39rem;
+  margin-top: 1.2rem;
+  color: #e6eee7;
+  font-size: 1.08rem;
+  line-height: 1.65;
+}
+
+.hero-summary-card {
+  border: 1px solid rgba(235, 244, 236, .2);
+  border-left: 3px solid #d6c378;
+  border-radius: .75rem;
+  background: rgba(255, 255, 255, .12);
+  box-shadow: 0 14px 32px rgba(0, 25, 15, .18);
+  backdrop-filter: blur(8px);
+  padding: 1.3rem;
+}
+
+.summary-eyebrow {
+  color: #f0dfa1;
+  font-size: .72rem;
+  letter-spacing: .1em;
+}
+
+.summary-grid {
+  gap: 1rem;
+}
+
+.summary-grid strong {
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.35rem, 2vw, 1.85rem);
+  letter-spacing: -.025em;
+}
+
+.summary-grid span {
+  color: #e0ece2;
+  font-size: .84rem;
+  line-height: 1.3;
+}
+
+.currency-value {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.main-wrap {
+  max-width: 80rem;
+  margin-top: -2.55rem;
+  padding-inline: 1.25rem;
+}
+
+.metrics-row {
+  gap: 1rem;
+}
+
+.metric-card {
+  display: flex;
+  min-height: 7.7rem;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid #dfe7df;
+  border-radius: .75rem;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(16, 59, 40, .09);
+  padding: 1.15rem 1.2rem;
+}
+
+.metric-label {
+  color: var(--dashboard-muted);
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: .015em;
+  text-transform: none;
+}
+
+.metric-value {
+  margin-top: .8rem;
+  color: var(--dashboard-green-deep);
+  font-size: clamp(1.7rem, 2.6vw, 2.35rem);
+  letter-spacing: -.03em;
+}
+
+.gis-panel,
+.panel {
+  margin-top: 2.25rem;
+}
+
+.gis-panel {
+  border-radius: .8rem;
+  background: #fff;
+  padding: 1.35rem;
+}
+
+.gis-panel__head,
+.panel-head {
+  gap: 1.25rem;
+}
+
+.section-kicker {
+  color: var(--dashboard-green);
+  font-size: .73rem;
+  letter-spacing: .1em;
+}
+
+.gis-panel__head h2,
+.panel-head h2 {
+  color: var(--dashboard-ink);
+  letter-spacing: -.025em;
+}
+
+.gis-panel__head p,
+.panel-head p {
+  color: var(--dashboard-muted);
+  line-height: 1.6;
+}
+
+.live-badge {
+  border: 1px solid #d7e7d9;
+  border-radius: 999px;
+  background: var(--dashboard-green-soft);
+  color: #28533a;
+  font-size: .87rem;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.gis-panel__map-wrap {
+  min-height: 28.75rem;
+  border-radius: .65rem;
+  background: #eff4f0;
+}
+
+.project-gis-map {
+  height: 28.75rem;
+  min-height: 28.75rem;
+}
+
+.gis-panel__empty {
+  z-index: 500;
+  padding: 1.5rem;
+  background: rgba(247, 250, 247, .96);
+  color: var(--dashboard-muted);
+}
+
+.gis-panel__empty-content {
+  max-width: 22rem;
+}
+
+.gis-panel__empty strong {
+  display: block;
+  color: var(--dashboard-ink);
+  font-family: "Libre Franklin", sans-serif;
+  font-size: 1.1rem;
+}
+
+.gis-panel__empty p {
+  margin: .5rem 0 0;
+  line-height: 1.55;
+}
+
+.gis-panel__retry {
+  min-height: 2.45rem;
+  margin-top: 1rem;
+  border: 1px solid var(--dashboard-green);
+  border-radius: .4rem;
+  background: var(--dashboard-green);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+  padding: .5rem .85rem;
+}
+
+.gis-panel__retry:hover {
+  background: var(--dashboard-green-deep);
+}
+
+.gis-panel__retry:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(23, 100, 61, .28);
+}
+
+.gis-legend {
+  border-top: 1px solid #e2e9e2;
+  padding-top: .85rem;
+}
+
+.toolbar {
+  border: 1px solid var(--dashboard-line);
+  border-radius: .75rem;
+  background: #fff;
+  box-shadow: 0 5px 14px rgba(16, 59, 40, .05);
+  padding: 1rem;
+}
+
+.toolbar-primary {
+  border-bottom-color: #e5ece5;
+}
+
+.dashboard-search__label,
+.view-switcher__label {
+  color: var(--dashboard-muted);
+  font-size: .78rem;
+}
+
+#project-search,
+#category-filter,
+#location-filter {
+  min-height: 2.7rem;
+  border-color: #c4d3c6;
+  border-radius: .4rem;
+  box-shadow: none;
+}
+
+#project-search:focus,
+#category-filter:focus,
+#location-filter:focus {
+  border-color: var(--dashboard-green);
+  box-shadow: 0 0 0 3px rgba(23, 100, 61, .16);
+}
+
+.view-switcher,
+.tab-buttons {
+  border: 1px solid #d6e1d7;
+  border-radius: .45rem;
+  background: #f3f7f3;
+  padding: .22rem;
+}
+
+.view-btn,
+.tab-btn,
+.status-btn {
+  min-height: 2.35rem;
+  border-radius: .3rem;
+  font-size: .86rem;
+}
+
+.view-btn.is-active,
+.tab-btn.is-active {
+  background: var(--dashboard-green);
+  box-shadow: none;
+}
+
+.status-btn.is-active {
+  border-color: #b7ce40;
+  background: #dceaa0;
+  color: #304516;
+}
+
+.table-wrap {
+  border: 1px solid var(--dashboard-line);
+  border-radius: .75rem;
+  box-shadow: 0 5px 14px rgba(16, 59, 40, .05);
+}
+
+thead {
+  background: var(--dashboard-green-deep);
+}
+
+th {
+  color: #edf5ef;
+  font-size: .75rem;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+
+th,
+td {
+  padding: .95rem .9rem;
+}
+
+tbody tr:hover {
+  background: #f6faf6;
+}
+
+.project-title {
+  color: #193d2b;
+  font-size: 1rem;
+}
+
+.project-subtext {
+  color: var(--dashboard-muted);
+}
+
+#budget-column,
+#progress-column,
+.financial-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.not-reported {
+  color: #718076;
+  font-size: .86rem;
+  font-style: normal;
+}
+
+.status-chip {
+  border-width: 1px;
+  font-size: .74rem;
+  letter-spacing: .02em;
+}
+
+.row-link {
+  min-height: 2.3rem;
+  border-radius: .38rem;
+  background: var(--dashboard-green);
+  box-shadow: none;
+  padding-inline: .78rem;
+}
+
+.row-link::after {
+  content: "→";
+  margin-left: .3rem;
+  font-size: 1rem;
+}
+
+.row-link:hover {
+  background: var(--dashboard-green-deep);
+  box-shadow: none;
+  transform: none;
+}
+
+.empty-row {
+  padding: 2.25rem 1rem;
+  color: var(--dashboard-muted);
+  font-size: .95rem;
+}
+
+.project-card-grid {
+  margin-top: 1rem;
+  gap: 1rem;
+}
+
+.project-card {
+  border-radius: .7rem;
+}
+
+.project-card__title {
+  color: var(--dashboard-ink);
+}
+
+.project-card__field-label {
+  color: var(--dashboard-muted);
+}
+
+.site-footer {
+  margin-top: 3rem;
+  border-top: 3px solid var(--dashboard-lime);
+  background: var(--dashboard-green-deep);
+  color: #e9f1ea;
+  padding: 1.25rem;
+}
+
+@media (max-width: 1080px) {
+  .hero-inner {
+    padding-bottom: 4.2rem;
+  }
+
+  .main-wrap {
+    margin-top: -2rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero-shell {
+    min-height: auto;
+  }
+
+  .hero-inner {
+    padding: 2.5rem 1rem 3.4rem;
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(2rem, 10vw, 2.65rem);
+  }
+
+  .hero-copy p {
+    font-size: 1rem;
+  }
+
+  .hero-summary-card {
+    width: 100%;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .main-wrap {
+    margin-top: -1.45rem;
+    padding-inline: .75rem;
+  }
+
+  .metrics-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem;
+  }
+
+  .metric-card {
+    min-height: 6.8rem;
+    padding: 1rem;
+  }
+
+  .gis-panel {
+    padding: 1rem;
+  }
+
+  .gis-panel__map-wrap,
+  .project-gis-map {
+    min-height: 22.5rem;
+    height: 22.5rem;
+  }
+
+  .live-badge {
+    white-space: normal;
+  }
+
+  .toolbar {
+    padding: .85rem;
+  }
+
+  .tab-buttons,
+  .filter-group,
+  .status-buttons {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-header-inner {
+    padding-inline: .85rem;
+  }
+
+  .hero-inner {
+    padding-inline: .85rem;
+  }
+
+  .hero-copy h1 {
+    font-size: 2rem;
+  }
+
+  .summary-grid,
+  .metrics-row {
+    grid-template-columns: 1fr;
+  }
+
+  .project-gis-map,
+  .gis-panel__map-wrap {
+    min-height: 20rem;
+    height: 20rem;
+  }
+
+  .view-switcher {
+    justify-content: flex-start;
+  }
+}
