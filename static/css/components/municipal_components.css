@@ -534,3 +534,82 @@
     width: 100%;
   }
 }
+
+
+/* Shared municipal action colors for equivalent project actions. */
+.btn-create,
+.btn-view,
+.btn-primary,
+.action-button:not(.secondary),
+.review-button--primary,
+.review-primary-link {
+  background: var(--color-primary-700);
+  color: #fff;
+}
+
+.btn-create:hover,
+.btn-view:hover,
+.btn-primary:hover,
+.action-button:not(.secondary):hover,
+.review-button--primary:hover,
+.review-primary-link:hover {
+  background: var(--color-primary-800);
+  color: #fff;
+}
+
+.btn-edit,
+.btn-back,
+.btn-cancel,
+.action-button.secondary {
+  border-color: #aebcb1;
+  background: #fff;
+  color: #33453a;
+}
+
+.btn-delete,
+.review-button--danger {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+@media (max-width: 1024px) {
+  /* Preserve role-filtered navigation when the desktop sidebar no longer fits. */
+  .sidebar {
+    display: block;
+    padding: var(--space-2) var(--space-4);
+    overflow-x: auto;
+  }
+
+  .sidebar-section {
+    display: inline-block;
+    min-width: max-content;
+    padding: var(--space-2) var(--space-3);
+    vertical-align: top;
+  }
+
+  .sidebar-title {
+    margin-bottom: var(--space-2);
+    font-size: .7rem;
+  }
+
+  .sidebar-menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+
+  .sidebar-menu a {
+    padding: .5rem .65rem;
+  }
+
+  .quick-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .quick-actions h4 {
+    margin: 0;
+  }
+}
