@@ -577,3 +577,50 @@
     background: rgba(255, 255, 255, .22);
     color: #fff;
 }
+
+/* Compact dashboard statistics for faster scanning. */
+.project-dashboard-layout .stats-grid {
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.project-dashboard-layout .stat-card {
+    min-height: 6.4rem;
+    padding: 1rem;
+}
+
+.project-dashboard-layout .stat-label {
+    font-size: .78rem;
+    letter-spacing: .015em;
+}
+
+.project-dashboard-layout .stat-value {
+    margin: .35rem 0 0;
+    font-size: clamp(1.8rem, 2.6vw, 2.2rem);
+    line-height: 1.1;
+}
+
+.project-dashboard-layout .stats-grid--investment {
+    grid-template-columns: minmax(0, 22rem);
+    justify-content: center;
+}
+
+.project-dashboard-layout .stats-grid--investment .stat-card {
+    min-height: 5.9rem;
+}
+
+@media (max-width: 700px) {
+    .project-dashboard-layout .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .project-dashboard-layout .stats-grid--investment {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 420px) {
+    .project-dashboard-layout .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
