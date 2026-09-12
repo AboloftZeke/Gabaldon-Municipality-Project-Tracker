@@ -629,18 +629,30 @@
   color: rgba(255, 255, 255, .92);
 }
 
-:where(.dashboard-stats, .metrics-row, .action-grid) {
+.dashboard-stats,
+.metrics-row,
+.action-grid {
   gap: var(--space-4);
 }
 
-:where(.stat-card, .action-card, .form-section, .detail-section, .project-section,
-  .users-table-wrapper, .review-card, .project-detail-panel) {
+.stat-card,
+.action-card,
+.form-section,
+.detail-section,
+.project-section,
+.users-table-wrapper,
+.review-card,
+.project-detail-panel {
   border-color: var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
 
-:where(.stat-card, .action-card, .form-section, .detail-section, .project-section) {
+.stat-card,
+.action-card,
+.form-section,
+.detail-section,
+.project-section {
   background: var(--color-surface);
 }
 
@@ -654,11 +666,15 @@
   font-variant-numeric: tabular-nums;
 }
 
-:where(.form-card, .form-section, .form-wrapper) .form-group {
+.form-card .form-group,
+.form-section .form-group,
+.form-wrapper .form-group {
   margin-bottom: var(--space-4);
 }
 
-:where(.form-card, .form-section, .form-wrapper) .form-group > label,
+.form-card .form-group,
+.form-section .form-group,
+.form-wrapper .form-group > label,
 :where(.form-card, .form-section, .form-wrapper) .form-label {
   display: inline-block;
   margin-bottom: var(--space-2);
@@ -666,22 +682,32 @@
   font-weight: 700;
 }
 
-:where(.form-card, .form-section, .form-wrapper) input:not([type="checkbox"]):not([type="radio"]),
-:where(.form-card, .form-section, .form-wrapper) select,
-:where(.form-card, .form-section, .form-wrapper) textarea {
+.form-card input:not([type="checkbox"]):not([type="radio"]),
+.form-section input:not([type="checkbox"]):not([type="radio"]),
+.form-wrapper input:not([type="checkbox"]):not([type="radio"]),
+.form-card select,
+.form-section select,
+.form-wrapper select,
+.form-card textarea,
+.form-section textarea,
+.form-wrapper textarea {
   min-height: 2.65rem;
   border-color: #bdcbbf;
   border-radius: var(--radius-sm);
   box-shadow: none;
 }
 
-:where(.form-card, .form-section, .form-wrapper) textarea {
+.form-card textarea,
+.form-section textarea,
+.form-wrapper textarea {
   min-height: 7.5rem;
 }
 
 :where(.form-card, .form-section, .form-wrapper) input:focus,
 :where(.form-card, .form-section, .form-wrapper) select:focus,
-:where(.form-card, .form-section, .form-wrapper) textarea:focus {
+.form-card textarea,
+.form-section textarea,
+.form-wrapper textarea:focus {
   border-color: var(--color-primary-700);
   outline: none;
   box-shadow: var(--focus-ring);
@@ -709,22 +735,32 @@
   -webkit-overflow-scrolling: touch;
 }
 
-:where(.user-table, .review-list table, .detail-table) th {
+.user-table,
+.review-list table,
+.detail-table th {
   color: #f4f8f4;
   background: var(--color-primary-900);
 }
 
-:where(.user-table, .review-list table, .detail-table) th,
-:where(.user-table, .review-list table, .detail-table) td {
+.user-table,
+.review-list table,
+.detail-table th,
+.user-table,
+.review-list table,
+.detail-table td {
   padding: .85rem .9rem;
   vertical-align: middle;
 }
 
-:where(.user-table, .review-list table, .detail-table) tbody tr:hover {
+.user-table,
+.review-list table,
+.detail-table tbody tr:hover {
   background: #f4f8f4;
 }
 
-:where(.status-badge, .department-badge, .publication-badge) {
+.status-badge,
+.department-badge,
+.publication-badge {
   display: inline-flex;
   align-items: center;
   min-height: 1.65rem;
@@ -791,11 +827,17 @@
     flex-wrap: wrap;
   }
 
-  :where(.form-grid, .detail-grid, .project-detail-layout, .dashboard-stats) {
+  .form-grid,
+.detail-grid,
+.project-detail-layout,
+.dashboard-stats {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  :where(.page-content, .projects-container, .form-container, .review-workspace) {
+  .page-content,
+.projects-container,
+.form-container,
+.review-workspace {
     padding-inline: var(--space-4);
   }
 
@@ -818,8 +860,12 @@
     min-height: auto;
   }
 
-  :where(.user-table, .review-list table, .detail-table) th,
-  :where(.user-table, .review-list table, .detail-table) td {
+  .user-table,
+.review-list table,
+.detail-table th,
+  .user-table,
+.review-list table,
+.detail-table td {
     padding: .72rem;
   }
 }
