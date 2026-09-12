@@ -672,10 +672,12 @@
   margin-bottom: var(--space-4);
 }
 
-.form-card .form-group,
-.form-section .form-group,
+.form-card .form-group > label,
+.form-section .form-group > label,
 .form-wrapper .form-group > label,
-:where(.form-card, .form-section, .form-wrapper) .form-label {
+.form-card .form-label,
+.form-section .form-label,
+.form-wrapper .form-label {
   display: inline-block;
   margin-bottom: var(--space-2);
   color: var(--color-text);
@@ -703,10 +705,14 @@
   min-height: 7.5rem;
 }
 
-:where(.form-card, .form-section, .form-wrapper) input:focus,
-:where(.form-card, .form-section, .form-wrapper) select:focus,
-.form-card textarea,
-.form-section textarea,
+.form-card input:focus,
+.form-section input:focus,
+.form-wrapper input:focus,
+.form-card select:focus,
+.form-section select:focus,
+.form-wrapper select:focus,
+.form-card textarea:focus,
+.form-section textarea:focus,
 .form-wrapper textarea:focus {
   border-color: var(--color-primary-700);
   outline: none;
@@ -735,25 +741,25 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.user-table,
-.review-list table,
+.user-table th,
+.review-list table th,
 .detail-table th {
   color: #f4f8f4;
   background: var(--color-primary-900);
 }
 
-.user-table,
-.review-list table,
+.user-table th,
+.user-table td,
+.review-list table th,
+.review-list table td,
 .detail-table th,
-.user-table,
-.review-list table,
 .detail-table td {
   padding: .85rem .9rem;
   vertical-align: middle;
 }
 
-.user-table,
-.review-list table,
+.user-table tbody tr:hover,
+.review-list table tbody tr:hover,
 .detail-table tbody tr:hover {
   background: #f4f8f4;
 }
@@ -828,16 +834,16 @@
   }
 
   .form-grid,
-.detail-grid,
-.project-detail-layout,
-.dashboard-stats {
+  .detail-grid,
+  .project-detail-layout,
+  .dashboard-stats {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .page-content,
-.projects-container,
-.form-container,
-.review-workspace {
+  .projects-container,
+  .form-container,
+  .review-workspace {
     padding-inline: var(--space-4);
   }
 
@@ -860,13 +866,12 @@
     min-height: auto;
   }
 
-  .user-table,
-.review-list table,
-.detail-table th,
-  .user-table,
-.review-list table,
-.detail-table td {
+  .user-table th,
+  .user-table td,
+  .review-list table th,
+  .review-list table td,
+  .detail-table th,
+  .detail-table td {
     padding: .72rem;
   }
 }
-
