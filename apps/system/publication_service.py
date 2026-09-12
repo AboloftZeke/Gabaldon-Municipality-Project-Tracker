@@ -103,7 +103,7 @@ def create_publication_draft(project, actor):
 
 @transaction.atomic
 def submit_publication_revision(revision, actor):
-    """Refresh a draft from working data and submit it for admin review."""
+    """Refresh a draft from working data and submit it for office Head review."""
     _require_authenticated(actor)
     locked_revision = _locked_revision(revision)
     _require_project_manager(locked_revision.project, actor)
@@ -323,7 +323,7 @@ def submit_project_for_review(project, actor):
         PublicationStatus.NEEDS_REVISION,
     }:
         raise ValidationError(
-            'This project already has a revision awaiting administrator action.',
+            'This project already has a revision awaiting review or publication.',
         )
     revision = active or create_publication_draft(locked_project, actor)
     return submit_publication_revision(revision, actor)

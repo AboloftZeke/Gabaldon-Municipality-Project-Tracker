@@ -13,9 +13,9 @@
     {% if publication.status_key == 'not_submitted' %}
         <p>This project is saved internally and is not visible on the public dashboard.</p>
     {% elif publication.status_key == 'pending_review' %}
-        <p>Revision {{ publication.revision_number }} is waiting for administrator review. Your working project can still be edited, but those edits will not change the submitted revision.</p>
+        <p>Revision {{ publication.revision_number }} is waiting for office Head review. Your working project can still be edited, but those edits will not change the submitted revision.</p>
     {% elif publication.status_key == 'needs_revision' %}
-        <p>The administrator returned revision {{ publication.revision_number }} for changes. Edit the project, then resubmit it below.</p>
+        <p>The office Head returned revision {{ publication.revision_number }} for changes. Edit the project, then resubmit it below.</p>
     {% elif publication.status_key == 'approved' %}
         <p>Revision {{ publication.revision_number }} was approved and is waiting for an administrator to publish it.</p>
     {% elif publication.status_key == 'published' %}

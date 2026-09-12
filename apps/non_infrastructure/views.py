@@ -305,7 +305,7 @@ class NonInfrastructureProjectSubmitForReviewView(
             messages.success(
                 request,
                 f'Revision {revision.revision_number} was submitted for '
-                'administrator review.',
+                'office Head review.',
             )
         return redirect(
             'mayor_projects:non_infrastructure_project_detail',

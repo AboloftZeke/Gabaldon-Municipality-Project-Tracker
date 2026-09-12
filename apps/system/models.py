@@ -273,7 +273,7 @@ class UserFlag(models.Model):
         choices=Role.choices,
         default='',
         blank=True,
-        help_text='Office responsibility; currently not used for authorization.',
+        help_text='Office responsibility used with department for authorization.',
     )
 
     def clean(self):

@@ -833,17 +833,7 @@ class PasswordChangeView(LoginRequiredMixin, View):
             from django.contrib.auth import update_session_auth_hash
             update_session_auth_hash(request, request.user)
 
-            # Return the user to their normal dashboard.
-            if request.user.is_superuser:
-                return redirect('admin_dashboard')
-
-            department = _department_for_user(request.user)
-            if department == 'engineer':
-                return redirect('engineering_dashboard')
-            elif department == 'mayor':
-                return redirect('mayor_dashboard')
-
-            return redirect('admin_dashboard')
+            return _redirect_authenticated_user(request.user)
 
         return render(
             request,

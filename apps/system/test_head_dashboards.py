@@ -111,3 +111,16 @@ class HeadDashboardTests(TestCase):
         # A cached compatibility department must not select the login destination.
         head._compat_profile = type('Profile', (), {'department': 'mayor'})()
         self.assertEqual(dashboard_name(head), 'engineering_head_dashboard')
+
+    def test_password_change_preserves_session_and_role_destination(self):
+        for user, destination in self.users.values():
+            with self.subTest(destination=destination):
+                self.client.force_login(user)
+                response = self.client.post(reverse('password_change'), {
+                    'current_password': 'ValidLoginPass!2026',
+                    'new_password': 'UpdatedSecret!7392', 'confirm_password': 'UpdatedSecret!7392',
+                })
+                self.assertRedirects(response, reverse(destination))
+                user.refresh_from_db()
+                self.assertTrue(user.check_password('UpdatedSecret!7392'))
+                self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)

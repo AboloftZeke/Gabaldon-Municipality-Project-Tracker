@@ -1934,6 +1934,8 @@ class PublicPasswordResetTests(TestCase):
             is_staff=True,
         )
 
+        UserFlag.objects.create(user=self.user, department='engineer', role='staff')
+
     def _request_reset(self, email=None):
         return self.client.post(
             reverse('password_reset'),
