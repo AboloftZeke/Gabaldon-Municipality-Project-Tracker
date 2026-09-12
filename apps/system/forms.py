@@ -3,6 +3,45 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
+ACCOUNT_ASSIGNMENTS = {
+    'admin': ('admin', 'admin', 'Admin'),
+    'engineering': ('engineer', 'staff', 'Engineering Staff'),
+    'engineering_head': ('engineer', 'head', 'Engineering Head'),
+    'mayors': ('mayor', 'staff', "Mayor's Office Staff"),
+    'mayors_head': ('mayor', 'head', "Mayor's Office Head"),
+}
+ACCOUNT_ROLE_CHOICES = tuple((key, value[2]) for key, value in ACCOUNT_ASSIGNMENTS.items())
+
+
+def account_assignment(user):
+    """Read persisted role for account editing; retain legacy missing-flag fallback."""
+    from .models import UserFlag
+
+    if user.is_superuser:
+        return 'admin'
+    flag = UserFlag.objects.filter(user=user).first() if user.pk else None
+    if flag:
+        return next((key for key, pair in ACCOUNT_ASSIGNMENTS.items()
+                     if pair[:2] == (flag.department, flag.role)), '')
+    department = getattr(getattr(user, 'profile', None), 'department', None)
+    return {'engineer': 'engineering', 'mayor': 'mayors', 'admin': 'admin'}.get(department, '')
+
+
+def account_role_label(value):
+    return ACCOUNT_ASSIGNMENTS[value][2] if value in ACCOUNT_ASSIGNMENTS else 'Unassigned'
+
+
+def save_account_assignment(user, assignment):
+    from .models import UserFlag
+
+    department, role, _ = ACCOUNT_ASSIGNMENTS[assignment]
+    UserFlag.objects.update_or_create(
+        user=user, defaults={'department': department, 'role': role},
+    )
+    user.__dict__.pop('_compat_profile', None)
+    user._state.fields_cache.pop('flags', None)
+
+
 class CustomUserCreationForm(forms.ModelForm):
     """
     Form for creating users who will establish a password by email.
@@ -10,14 +49,9 @@ class CustomUserCreationForm(forms.ModelForm):
     ROLE_ADMIN = 'admin'
     ROLE_ENGINEERING = 'engineering'
     ROLE_MAYORS = 'mayors'
-    ROLE_CHOICES = (
-        ('', 'Select Department'),
-        (ROLE_ADMIN, 'Admin'),
-        (ROLE_ENGINEERING, 'Engineering Office'),
-        (ROLE_MAYORS, "Mayor's Office"),
-    )
+    ROLE_CHOICES = (('', 'Select account role'),) + ACCOUNT_ROLE_CHOICES
 
-    role = forms.ChoiceField(label='Department', choices=ROLE_CHOICES, initial='')
+    role = forms.ChoiceField(label='Account role', choices=ROLE_CHOICES, initial='')
     email = forms.EmailField(required=True)
 
     class Meta:
@@ -33,7 +67,7 @@ class CustomUserCreationForm(forms.ModelForm):
     def clean_role(self):
         role = self.cleaned_data.get('role', '')
         if not role:
-            raise forms.ValidationError('Please select a department.')
+            raise forms.ValidationError('Please select an account role.')
         return role
 
     def save(self, commit=True):
@@ -43,7 +77,7 @@ class CustomUserCreationForm(forms.ModelForm):
 
         # Treat all module-access roles as Django staff so mayor's office users
         # can log in like the other restricted access roles.
-        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING, self.ROLE_MAYORS)
+        user.is_staff = role in ACCOUNT_ASSIGNMENTS
         user.is_superuser = role == self.ROLE_ADMIN
 
         if commit:
@@ -54,21 +88,8 @@ class CustomUserCreationForm(forms.ModelForm):
         return user
 
     def _save_user_profile(self, user, role):
-        """Save the user's runtime department."""
-        from apps.system.models import UserFlag
-
-        department_map = {
-            self.ROLE_ADMIN: "admin",
-            self.ROLE_ENGINEERING: "engineer",
-            self.ROLE_MAYORS: "mayor",
-        }
-
-        department = department_map[role]
-
-        UserFlag.objects.update_or_create(
-            user=user,
-            defaults={"department": department},
-        )
+        """Persist the selected department and responsibility together."""
+        save_account_assignment(user, role)
 
 
 class CustomUserChangeForm(forms.ModelForm):
@@ -79,13 +100,9 @@ class CustomUserChangeForm(forms.ModelForm):
     ROLE_ADMIN = 'admin'
     ROLE_ENGINEERING = 'engineering'
     ROLE_MAYORS = 'mayors'
-    ROLE_CHOICES = (
-        (ROLE_ADMIN, 'Admin'),
-        (ROLE_ENGINEERING, 'Engineering Office'),
-        (ROLE_MAYORS, "Mayor's Office"),
-    )
+    ROLE_CHOICES = ACCOUNT_ROLE_CHOICES
 
-    role = forms.ChoiceField(label='Department', choices=ROLE_CHOICES)
+    role = forms.ChoiceField(label='Account role', choices=ROLE_CHOICES)
 
     # Preserve the user's current activation state through the edit/confirm
     # workflow without exposing activation as an editable field. Activation and
@@ -100,20 +117,7 @@ class CustomUserChangeForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['is_active'].initial = self.instance.is_active
 
-        # Set initial role based on the compatibility profile or superuser status.
-        profile = getattr(self.instance, 'profile', None)
-        if profile:
-            department_reverse_map = {
-                'admin': self.ROLE_ADMIN,
-                'engineer': self.ROLE_ENGINEERING,
-                'mayor': self.ROLE_MAYORS,
-            }
-            self.fields['role'].initial = department_reverse_map.get(
-                profile.department,
-                self.ROLE_ENGINEERING
-            )
-        else:
-            self.fields['role'].initial = self.ROLE_ADMIN if self.instance.is_superuser else self.ROLE_ENGINEERING
+        self.fields['role'].initial = account_assignment(self.instance)
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip()
@@ -128,7 +132,7 @@ class CustomUserChangeForm(forms.ModelForm):
 
         # Keep Mayor's Office accounts in the staff-access group so they can log
         # into the application like the other module-approved roles.
-        user.is_staff = role in (self.ROLE_ADMIN, self.ROLE_ENGINEERING, self.ROLE_MAYORS)
+        user.is_staff = role in ACCOUNT_ASSIGNMENTS
         user.is_superuser = role == self.ROLE_ADMIN
 
         if commit:
@@ -139,21 +143,8 @@ class CustomUserChangeForm(forms.ModelForm):
         return user
 
     def _save_user_profile(self, user, role):
-        """Save the user's runtime department."""
-        from apps.system.models import UserFlag
-
-        department_map = {
-            self.ROLE_ADMIN: "admin",
-            self.ROLE_ENGINEERING: "engineer",
-            self.ROLE_MAYORS: "mayor",
-        }
-
-        department = department_map[role]
-
-        UserFlag.objects.update_or_create(
-            user=user,
-            defaults={"department": department},
-        )
+        """Persist the selected department and responsibility together."""
+        save_account_assignment(user, role)
 
 
 class UserListFilterForm(forms.Form):

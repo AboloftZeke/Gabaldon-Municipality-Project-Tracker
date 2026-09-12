@@ -49,12 +49,9 @@
                         <span class="detail-value">{{ form_data.last_name|default:"—" }}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Department</span>
+                        <span class="detail-label">Account role</span>
                         <span class="detail-value">
-                            {% if form_data.role == 'admin' %}Admin
-                            {% elif form_data.role == 'engineering' %}Engineering Office
-                            {% elif form_data.role == 'mayors' %}Mayor's Office
-                            {% else %}{{ form_data.role }}{% endif %}
+                            {{ account_role_label }}
                         </span>
                     </div>
                 </div>

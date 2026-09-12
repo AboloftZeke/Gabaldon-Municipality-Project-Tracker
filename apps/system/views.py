@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.models import Prefetch, Q
 from django.conf import settings
 from .forms import (
+    account_assignment, account_role_label,
     CustomUserCreationForm,
     CustomUserChangeForm,
     UserListFilterForm,
@@ -470,6 +471,16 @@ class UserListView(AdminRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        for account in context['users']:
+            assignment = account_assignment(account)
+            account.account_role_label = account_role_label(assignment)
+            account.account_role_badge = {
+                'admin': 'department-admin',
+                'engineering': 'department-engineering',
+                'engineering_head': 'department-engineering',
+                'mayors': 'department-mayor',
+                'mayors_head': 'department-mayor',
+            }.get(assignment, '')
         context['filter_form'] = UserListFilterForm(self.request.GET)
         context['current_department'] = self.request.GET.get('department', '')
         return context
@@ -536,9 +547,7 @@ class UserEditView(AdminRequiredMixin, UpdateView):
             'last_name': user.last_name,
             'is_active': user.is_active,
         }
-        if hasattr(user, 'profile'):
-            old_role_map = {'admin': 'admin', 'engineer': 'engineering', 'mayor': 'mayors'}
-            old_data['role'] = old_role_map.get(user.profile.department, 'engineering')
+        old_data['role'] = account_assignment(user)
 
         new_data = {
             'username': form.cleaned_data['username'],
@@ -571,6 +580,7 @@ class UserCreateConfirmView(AdminRequiredMixin, TemplateView):
             return context
 
         context['form_data'] = form_data
+        context['account_role_label'] = account_role_label(form_data.get('role'))
         return context
 
     def post(self, request, *args, **kwargs):
@@ -662,6 +672,8 @@ class UserEditConfirmView(AdminRequiredMixin, TemplateView):
             return context
 
         context['form_data'] = form_data
+        context['old_account_role_label'] = account_role_label(form_data['old_data'].get('role'))
+        context['new_account_role_label'] = account_role_label(form_data['new_data'].get('role'))
         context['user_pk'] = pk
 
         user = User.objects.get(pk=pk)

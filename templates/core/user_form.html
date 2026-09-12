@@ -107,9 +107,9 @@
                 </div>
             </div>
 
-            <!-- Department & Permissions Section -->
+            <!-- Department & Role Section -->
             <div class="form-section">
-                <h3>Department & Permissions</h3>
+                <h3>Department & Role</h3>
 
                 {% if form.role %}
                     <div class="form-group {% if form.role.errors %}form-group-error{% endif %}">
@@ -118,7 +118,7 @@
                         {% if form.role.errors %}
                             <div class="field-error">{{ form.role.errors.0 }}</div>
                         {% endif %}
-                        <div class="form-help">Select user department: Admin (full system access) or specific department</div>
+                        <div class="form-help">Select the account’s department and role from the available assignments.</div>
                     </div>
                 {% endif %}
 

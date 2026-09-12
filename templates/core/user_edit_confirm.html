@@ -100,34 +100,22 @@
 
                             {% if old.role != new.role %}
                                 <tr class="changed">
-                                    <td class="field-name">Department <span class="changed-indicator">CHANGED</span></td>
+                                    <td class="field-name">Account role <span class="changed-indicator">CHANGED</span></td>
                                     <td class="field-value">
-                                        {% if old.role == 'admin' %}Admin
-                                        {% elif old.role == 'engineering' %}Engineering Office
-                                        {% elif old.role == 'mayors' %}Mayor's Office
-                                        {% else %}{{ old.role }}{% endif %}
+                                        {{ old_account_role_label }}
                                     </td>
                                     <td class="field-value new">
-                                        {% if new.role == 'admin' %}Admin
-                                        {% elif new.role == 'engineering' %}Engineering Office
-                                        {% elif new.role == 'mayors' %}Mayor's Office
-                                        {% else %}{{ new.role }}{% endif %}
+                                        {{ new_account_role_label }}
                                     </td>
                                 </tr>
                             {% else %}
                                 <tr class="unchanged">
-                                    <td class="field-name">Department</td>
+                                    <td class="field-name">Account role</td>
                                     <td class="field-value">
-                                        {% if old.role == 'admin' %}Admin
-                                        {% elif old.role == 'engineering' %}Engineering Office
-                                        {% elif old.role == 'mayors' %}Mayor's Office
-                                        {% else %}{{ old.role }}{% endif %}
+                                        {{ old_account_role_label }}
                                     </td>
                                     <td class="field-value new">
-                                        {% if new.role == 'admin' %}Admin
-                                        {% elif new.role == 'engineering' %}Engineering Office
-                                        {% elif new.role == 'mayors' %}Mayor's Office
-                                        {% else %}{{ new.role }}{% endif %}
+                                        {{ new_account_role_label }}
                                     </td>
                                 </tr>
                             {% endif %}

@@ -73,7 +73,7 @@
                 <tr>
                     <th>User Account</th>
                     <th>Email Address</th>
-                    <th>Department</th>
+                    <th>Account role</th>
                     <th>Account Status</th>
                     <th>Actions</th>
                 </tr>
@@ -92,19 +92,7 @@
                         </td>
                         <td>{{ user.email }}</td>
                         <td>
-                            {% if user.profile %}
-                                {% if user.profile.department == 'engineer' %}
-                                    <span class="department-badge department-engineering">Engineering Office</span>
-                                {% elif user.profile.department == 'mayor' %}
-                                    <span class="department-badge department-mayor">Mayor's Office</span>
-                                {% elif user.profile.department == 'admin' %}
-                                    <span class="department-badge department-admin">Administration</span>
-                                {% else %}
-                                    <span class="department-badge department-engineering">Engineering Office</span>
-                                {% endif %}
-                            {% else %}
-                                <span class="department-badge department-engineering">Engineering Office</span>
-                            {% endif %}
+                            <span class="department-badge {{ user.account_role_badge }}">{{ user.account_role_label }}</span>
                         </td>
                         <td>
                             {% if not user.has_usable_password %}
