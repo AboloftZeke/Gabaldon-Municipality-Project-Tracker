@@ -24,23 +24,21 @@
         {% if user.is_authenticated %}
             <ul>
 
-                <!-- ROLE-BASED DASHBOARD -->
+                <!-- ROLE-BASED NAVIGATION -->
                 {% if user.is_superuser %}
                     <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
-
-                {% elif user.profile.department == "engineer" %}
-                    <li><a href="{% url 'engineering_dashboard' %}">Dashboard</a></li>
-
-                {% elif user.profile.department == "mayor" %}
-                    <li><a href="{% url 'mayor_dashboard' %}">Dashboard</a></li>
-
-                {% else %}
-                    <li><a href="{% url 'engineering_dashboard' %}">Dashboard</a></li>
-                {% endif %}
-
-                {% if user.is_superuser %}
                     <li><a href="{% url 'user_list' %}">Users</a></li>
-                    <li><a href="{% url 'publication_review_queue' %}">Publication Review</a></li>
+                    <li><a href="{% url 'publication_history' %}">Approval History</a></li>
+                {% elif user.flags.department == "engineer" %}
+                    <li><a href="{% url 'engineering_dashboard' %}">Dashboard</a></li>
+                {% elif user.flags.department == "mayor" %}
+                    <li><a href="{% url 'mayor_dashboard' %}">Dashboard</a></li>
+                {% elif user.flags.department == "infra_checker" %}
+                    <li><a href="{% url 'infrastructure_checker_review_queue' %}">Infrastructure Approvals</a></li>
+                {% elif user.flags.department == "noninfra_checker" %}
+                    <li><a href="{% url 'noninfrastructure_checker_review_queue' %}">Non-Infrastructure Approvals</a></li>
+                {% else %}
+                    <li><a href="{% url 'public_dashboard' %}">Dashboard</a></li>
                 {% endif %}
 
                 <li><a href="{% url 'logout' %}">Logout</a></li>
