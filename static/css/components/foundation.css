@@ -1,0 +1,101 @@
+/*
+ * Shared visual foundation
+ * Applied before page-specific styles so screens can share a consistent system.
+ */
+:root {
+  --color-primary-900: #123d2a;
+  --color-primary-800: #145334;
+  --color-primary-700: #17643d;
+  --color-primary-600: #2f8f55;
+  --color-accent-500: #c99a20;
+  --color-accent-100: #fff5d9;
+  --color-page: #f5f7f1;
+  --color-surface: #ffffff;
+  --color-text: #17352a;
+  --color-muted: #597165;
+  --color-border: #dbe4dc;
+  --color-danger: #b42318;
+  --color-success: #157347;
+
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+
+  --radius-sm: .375rem;
+  --radius-md: .625rem;
+  --radius-lg: .875rem;
+  --shadow-sm: 0 1px 3px rgba(18, 61, 42, .08);
+  --shadow-md: 0 10px 24px rgba(18, 61, 42, .12);
+  --focus-ring: 0 0 0 3px rgba(47, 143, 85, .28);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+[type="button"],
+[type="submit"],
+[type="reset"] {
+  min-height: 2.5rem;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+img {
+  max-width: 100%;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
