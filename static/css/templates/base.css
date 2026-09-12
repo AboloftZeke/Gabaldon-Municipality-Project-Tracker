@@ -35,7 +35,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem clamp(1rem, 5vw, 3rem);
+            padding: 1.25rem clamp(1rem, 5vw, 3rem);
             max-width: 1400px;
             margin: 0 auto;
             width: 100%;
