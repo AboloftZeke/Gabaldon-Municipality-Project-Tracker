@@ -1,0 +1,466 @@
+/*
+ * Municipal component layer
+ * Loaded after page CSS. Selectors intentionally reuse existing template
+ * classes and never alter IDs, data attributes, or JavaScript state classes.
+ */
+
+:root {
+  --app-header-height: 4.5rem;
+  --app-sidebar-width: 17.5rem;
+  --content-max-width: 80rem;
+}
+
+.messages-container {
+  width: min(var(--content-max-width), calc(100% - 2rem));
+  margin: var(--space-4) auto;
+  padding: 0;
+}
+
+.message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  line-height: 1.45;
+}
+
+:where(.btn, .action-button, .action-btn, .btn-create, .btn-small,
+  .btn-edit, .btn-view, .review-button, .review-primary-link, .row-link) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  line-height: 1.15;
+  text-decoration: none;
+}
+
+:where(.btn, .action-button, .action-btn, .btn-create, .btn-small,
+  .btn-edit, .btn-view, .review-button, .review-primary-link, .row-link):focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+:where(.status-badge, .status-chip, .project-status, .publication-badge) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  min-height: 1.7rem;
+  padding: .28rem .65rem;
+  border-radius: 999px;
+  font-size: .76rem;
+  font-weight: 800;
+  letter-spacing: .025em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.publication-status-draft { background: #eef2f7; color: #334155; border-color: #cbd5e1; }
+.publication-status-pending_review { background: #fff4cc; color: #854d0e; border-color: #f4cf67; }
+.publication-status-needs_revision { background: #ffedd5; color: #9a3412; border-color: #fdba74; }
+.publication-status-approved,
+.publication-status-published { background: #dcfce7; color: #166534; border-color: #86efac; }
+.publication-status-rejected { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+
+.sidebar {
+  background: var(--color-surface);
+}
+
+.sidebar-title {
+  color: var(--color-muted);
+  letter-spacing: .08em;
+}
+
+.sidebar-menu a {
+  border-radius: var(--radius-sm);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.sidebar-menu a:hover {
+  background: #edf4ee;
+  color: var(--color-primary-800);
+}
+
+.sidebar-menu a.active,
+.sidebar-menu a.active-filter,
+.sidebar-menu a[aria-current="page"] {
+  background: var(--color-primary-800);
+  color: #fff;
+  box-shadow: none;
+}
+
+.dashboard-content,
+.page-content,
+.dashboard-container,
+.form-wrapper {
+  min-width: 0;
+}
+
+.dashboard-content,
+.page-content {
+  padding-block: var(--space-6);
+}
+
+.stats-grid,
+.metrics-row {
+  align-items: stretch;
+}
+
+.stat-card,
+.metric-card {
+  min-height: 8.6rem;
+  border-color: var(--color-border);
+}
+
+.stat-label,
+.metric-label {
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.stat-value,
+.metric-value {
+  color: var(--color-primary-900);
+  font-variant-numeric: tabular-nums;
+}
+
+.projects-container,
+.form-container,
+.project-detail-container,
+.review-workspace {
+  width: min(var(--content-max-width), calc(100% - 2rem));
+}
+
+.projects-header,
+.form-heading,
+.project-detail-header,
+.review-header,
+.revision-header {
+  gap: var(--space-4);
+}
+
+.projects-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: var(--space-5);
+}
+
+.project-card {
+  min-width: 0;
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.project-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.project-card-image {
+  aspect-ratio: 16 / 9;
+  height: auto;
+  max-height: none;
+  background: #edf3ee;
+}
+
+.project-card-image img,
+.project-detail-hero-image,
+.project-image {
+  object-fit: cover;
+}
+
+.project-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.project-card .project-actions {
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+
+.empty-state,
+.review-empty {
+  border: 1px dashed #b9cbbd;
+  border-radius: var(--radius-md);
+  background: #fbfdfb;
+  color: var(--color-muted);
+}
+
+.form-card,
+.form-section,
+.fieldset,
+.project-detail-panel,
+.detail-section,
+.project-section,
+.revision-section {
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.form-card {
+  box-shadow: var(--shadow-sm);
+}
+
+.form-grid {
+  gap: var(--space-4);
+}
+
+.form-group label,
+.form-section label,
+.fieldset label {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea,
+.form-section input,
+.form-section select,
+.form-section textarea,
+.filter-form input,
+.filter-form select,
+.review-decision-form textarea {
+  width: 100%;
+  min-height: 2.65rem;
+  border: 1px solid #bdcbbf;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--color-text);
+  padding: .6rem .75rem;
+}
+
+.form-group textarea,
+.form-section textarea,
+.review-decision-form textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus,
+.form-section input:focus,
+.form-section select:focus,
+.form-section textarea:focus,
+.filter-form input:focus,
+.filter-form select:focus,
+.review-decision-form textarea:focus {
+  border-color: var(--color-primary-600);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.error-message,
+.field-error,
+.review-form-error,
+.errorlist {
+  color: var(--color-danger);
+  font-size: .86rem;
+  font-weight: 650;
+}
+
+.form-actions,
+.wizard-actions,
+.action-buttons {
+  gap: var(--space-3);
+}
+
+.image-upload-area,
+.existing-images-section {
+  border-radius: var(--radius-md);
+}
+
+.project-detail-header,
+.project-detail-panel,
+.project-section,
+.detail-section,
+.revision-notice,
+.revision-section {
+  box-shadow: var(--shadow-sm);
+}
+
+.detail-grid,
+.project-info-grid,
+.snapshot-grid {
+  gap: var(--space-4);
+}
+
+.detail-item,
+.info-card,
+.snapshot-grid > div,
+.content-item {
+  min-width: 0;
+  border-color: var(--color-border);
+}
+
+.detail-label,
+.content-label,
+.info-label,
+.meta-label {
+  color: var(--color-muted);
+  font-size: .78rem;
+  letter-spacing: .065em;
+}
+
+.table-wrap,
+.users-table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  scrollbar-color: #9eb7a2 transparent;
+}
+
+.table-wrap table,
+.user-table {
+  min-width: 44rem;
+}
+
+.table-wrap th,
+.user-table th {
+  font-size: .78rem;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.table-wrap td,
+.user-table td {
+  vertical-align: middle;
+}
+
+.pagination,
+.review-pagination {
+  gap: var(--space-2);
+}
+
+.pagination a,
+.review-pagination a {
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+  border-radius: var(--radius-sm);
+}
+
+.project-modal__dialog {
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 48px rgba(18, 61, 42, .24);
+  background: var(--color-surface);
+}
+
+.project-modal__backdrop {
+  backdrop-filter: none;
+  background: rgba(16, 35, 25, .62);
+}
+
+.project-modal__close {
+  border-radius: var(--radius-sm);
+}
+
+.gis-panel,
+.gabaldon-gis .gis-map-shell,
+.project-map-card,
+.map-card {
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.project-gis-map {
+  min-height: 28rem;
+}
+
+.gabaldon-gis #gabaldon-gis-map {
+  min-height: 31rem;
+}
+
+@media (max-width: 900px) {
+  .project-detail-layout,
+  .revision-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .project-detail-panel--summary {
+    position: static;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content,
+  .page-content {
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .projects-container,
+  .form-container,
+  .project-detail-container,
+  .review-workspace {
+    width: min(100% - 1.5rem, var(--content-max-width));
+  }
+
+  .projects-header,
+  .form-heading,
+  .project-detail-header,
+  .review-header,
+  .revision-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .form-card {
+    padding: var(--space-4);
+  }
+
+  .form-grid,
+  .detail-grid,
+  .project-info-grid,
+  .snapshot-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-wrap table,
+  .user-table {
+    min-width: 40rem;
+  }
+
+  .project-gis-map {
+    min-height: 22.5rem;
+  }
+
+  .gabaldon-gis #gabaldon-gis-map {
+    min-height: 24rem;
+  }
+}
+
+@media (max-width: 480px) {
+  :where(.btn, .action-button, .action-btn, .btn-create, .btn-small,
+    .btn-edit, .btn-view, .review-button, .review-primary-link, .row-link) {
+    width: 100%;
+  }
+
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .project-card:hover {
+    transform: none;
+  }
+
+  .project-gis-map {
+    min-height: 20rem;
+  }
+
+  .gabaldon-gis #gabaldon-gis-map {
+    min-height: 20rem;
+  }
+}
