@@ -897,3 +897,162 @@
   color: var(--color-muted);
   font-style: italic;
 }
+
+
+/* Shared staff-dashboard shell: Engineering and Project Dashboard use these exact rules. */
+.staff-sidebar {
+    width: 17.5rem;
+    min-width: 0;
+    align-self: stretch;
+    padding: 2rem 0;
+    border-right: 1px solid var(--color-border);
+    background: #fff;
+    color: var(--color-text);
+}
+
+.project-dashboard-layout .staff-sidebar {
+    width: auto;
+    padding: 2rem 0;
+    border-right: 1px solid var(--color-border);
+    background: #fff;
+    color: var(--color-text);
+}
+
+.staff-sidebar .sidebar-section,
+.project-dashboard-layout .staff-sidebar .sidebar-section {
+    margin: 0;
+    padding: 1rem 1.5rem;
+    border: 0;
+}
+
+.staff-sidebar .sidebar-section + .sidebar-section,
+.project-dashboard-layout .staff-sidebar .sidebar-section + .sidebar-section {
+    margin-top: .75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.staff-sidebar .sidebar-title,
+.project-dashboard-layout .staff-sidebar .sidebar-title {
+    margin: 0 0 1rem;
+    padding: 0;
+    color: var(--color-muted);
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.staff-sidebar .sidebar-menu,
+.project-dashboard-layout .staff-sidebar .sidebar-menu {
+    display: block;
+}
+
+.staff-sidebar .sidebar-menu li,
+.project-dashboard-layout .staff-sidebar .sidebar-menu li {
+    margin-bottom: .5rem;
+}
+
+.staff-sidebar .sidebar-menu a,
+.project-dashboard-layout .staff-sidebar .sidebar-menu a {
+    display: flex;
+    min-height: 2.75rem;
+    align-items: center;
+    padding: .75rem 1rem;
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+    font-size: .94rem;
+    font-weight: 600;
+}
+
+.staff-sidebar .sidebar-menu a:hover,
+.project-dashboard-layout .staff-sidebar .sidebar-menu a:hover {
+    background: #f1f6f2;
+    color: var(--color-primary-800);
+}
+
+.staff-sidebar .sidebar-menu a.active,
+.project-dashboard-layout .staff-sidebar .sidebar-menu a.active {
+    background: var(--color-primary-700);
+    color: #fff;
+}
+
+.staff-sidebar .quick-actions,
+.project-dashboard-layout .staff-sidebar .quick-actions {
+    display: block;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: #fff;
+}
+
+.staff-sidebar .quick-actions h4,
+.project-dashboard-layout .staff-sidebar .quick-actions h4 {
+    display: block;
+    margin: 0 0 1rem;
+    color: var(--color-primary-900);
+    font-size: .95rem;
+    font-weight: 700;
+}
+
+.staff-sidebar .action-button.secondary,
+.project-dashboard-layout .staff-sidebar .action-button.secondary {
+    display: inline-flex;
+    width: 100%;
+    min-height: 2.55rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #a9c4b0;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    color: var(--color-primary-800);
+    font-weight: 700;
+}
+
+.staff-sidebar .action-button.secondary:hover,
+.project-dashboard-layout .staff-sidebar .action-button.secondary:hover {
+    border-color: var(--color-primary-700);
+    background: #eff7f0;
+    color: var(--color-primary-900);
+}
+
+.staff-dashboard-content {
+    width: min(100%, 62rem);
+    min-width: 0;
+    margin-inline: auto;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.project-dashboard-layout .staff-dashboard-content {
+    width: min(100%, 62rem);
+    min-width: 0;
+    margin-inline: auto;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.project-dashboard-layout .staff-dashboard-content .dashboard-container {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+
+@media (max-width: 700px) {
+    .staff-sidebar,
+    .project-dashboard-layout .staff-sidebar {
+        width: 100%;
+        padding: 1rem 0;
+        border-right: 0;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .staff-sidebar .sidebar-section,
+    .project-dashboard-layout .staff-sidebar .sidebar-section {
+        padding: .75rem 1rem;
+    }
+
+    .staff-dashboard-content,
+    .project-dashboard-layout .staff-dashboard-content {
+        width: 100%;
+        padding: 1rem;
+    }
+}
