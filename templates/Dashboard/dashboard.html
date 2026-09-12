@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20260912-1">
   <link rel="stylesheet" href="{% static 'css/templates/projects/project_modal.css' %}">
   <link rel="stylesheet" href="{% static 'css/components/municipal_components.css' %}?v=20260912-1">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/public_dashboard_refinement.css' %}?v=20260912-1">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ5A1C4H5iR4eKpD/UT3CXYu7bH1C7Q=" crossorigin="">
 </head>
 <body>
@@ -45,8 +46,8 @@
             <span>Total Projects</span>
           </div>
           <div>
-            <strong>P{{ total_budget|floatformat:2 }}</strong>
-            <span>Total Investment</span>
+            <strong><span class="currency-value" data-currency-value="{{ total_budget }}">₱{{ total_budget|floatformat:2 }}</span></strong>
+            <span>Programmed Budget</span>
           </div>
           <div>
             <strong>{{ completed_projects }}</strong>
@@ -69,7 +70,7 @@
       </article>
       <article class="metric-card">
         <span class="metric-label">Programmed Budget</span>
-        <strong class="metric-value">P{{ total_budget|floatformat:2 }}</strong>
+        <strong class="metric-value currency-value" data-currency-value="{{ total_budget }}">₱{{ total_budget|floatformat:2 }}</strong>
       </article>
       <article class="metric-card">
         <span class="metric-label">Completed</span>
@@ -93,7 +94,13 @@
 
       <div class="gis-panel__map-wrap">
         <div id="project-gis-map" class="project-gis-map" aria-label="Interactive map of municipal projects"></div>
-        <p class="gis-panel__empty" id="gis-empty-state" hidden></p>
+        <div class="gis-panel__empty" id="gis-empty-state" role="status" aria-live="polite" hidden>
+          <div class="gis-panel__empty-content">
+            <strong id="gis-state-title">Map temporarily unavailable</strong>
+            <p id="gis-state-message">Please try again shortly.</p>
+            <button type="button" class="gis-panel__retry" id="gis-retry-button" hidden>Try again</button>
+          </div>
+        </div>
       </div>
 
       <div class="gis-legend" aria-label="Project status map legend">
@@ -213,10 +220,10 @@
               </td>
               <td>{{ row.type_label }}</td>
               <td><span class="status-chip status-{{ row.status_key }}">{{ row.status_label }}</span></td>
-              <td class="financial-cell">{% if row.has_financial %}P{{ row.budget|floatformat:2 }}{% else %}—{% endif %}</td>
-              <td class="financial-cell">{% if row.has_progress %}{{ row.progress|floatformat:0 }}%{% else %}—{% endif %}</td>
+              <td class="financial-cell">{% if row.has_financial %}₱{{ row.budget|floatformat:2 }}{% else %}<span class="not-reported">Not reported</span>{% endif %}</td>
+              <td class="financial-cell">{% if row.has_progress %}{{ row.progress|floatformat:0 }}%{% else %}<span class="not-reported">Not reported</span>{% endif %}</td>
               <td>
-                {% if row.office %}{{ row.office }}{% else %}—{% endif %}
+                {% if row.office %}{{ row.office }}{% else %}<span class="not-reported">Not reported</span>{% endif %}
                 {% if row.contractor %}<div class="project-subtext">{{ row.contractor }}</div>{% endif %}
               </td>
               <td>
@@ -253,9 +260,9 @@
                    data-project-contractor="{{ row.contractor }}"
                    data-project-procurement-method="{{ row.procurement_method }}"
                    data-project-source-of-fund="{{ row.source_of_fund }}"
-                   data-project-budget-amount="{% if row.budget_amount %}P{{ row.budget_amount|floatformat:2 }}{% endif %}"
-                   data-project-abc-amount="{% if row.abc_amount %}P{{ row.abc_amount|floatformat:2 }}{% endif %}"
-                   data-project-contract-price="{% if row.contract_price %}P{{ row.contract_price|floatformat:2 }}{% endif %}"
+                   data-project-budget-amount="{% if row.budget_amount %}₱{{ row.budget_amount|floatformat:2 }}{% endif %}"
+                   data-project-abc-amount="{% if row.abc_amount %}₱{{ row.abc_amount|floatformat:2 }}{% endif %}"
+                   data-project-contract-price="{% if row.contract_price %}₱{{ row.contract_price|floatformat:2 }}{% endif %}"
                    data-project-progress-percentage="{% if row.progress_percentage is not None %}{{ row.progress_percentage|floatformat:1 }}%{% endif %}"
                    data-project-cost-progress-percentage="{% if row.cost_progress_percentage != '' %}{{ row.cost_progress_percentage|floatformat:1 }}%{% endif %}"
                    data-project-physical-progress-percentage="{% if row.physical_progress_percentage != '' %}{{ row.physical_progress_percentage|floatformat:1 }}%{% endif %}"
@@ -283,7 +290,7 @@
   </main>
 
   <footer class="site-footer">
-    <p>(c) 2026 Municipality of Gabaldon - Transparent Governance for the Community.</p>
+    <p>© 2026 Municipality of Gabaldon · Transparent Governance for the Community.</p>
   </footer>
 
   {% include "projects/project_detail_modal.html" %}
