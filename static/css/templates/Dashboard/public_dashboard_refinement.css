@@ -51,7 +51,7 @@ body {
 }
 
 .hero-shell {
-  min-height: 31rem;
+  min-height: 24rem;
   isolation: isolate;
   border-top: 3px solid var(--dashboard-green);
   background-position: center;
@@ -85,12 +85,12 @@ body {
 .hero-inner {
   z-index: 3;
   max-width: 80rem;
-  padding: 3.25rem 1.25rem 5.35rem;
-  gap: 2rem;
+  padding: 2.25rem 1.25rem 3.9rem;
+  gap: 1.5rem;
 }
 
 .hero-kicker {
-  margin-bottom: 1rem;
+  margin-bottom: .75rem;
   padding: .42rem .7rem;
   border-color: rgba(215, 232, 220, .25);
   background: rgba(255, 255, 255, .1);
@@ -111,7 +111,7 @@ body {
 
 .hero-copy p {
   max-width: 39rem;
-  margin-top: 1.2rem;
+  margin-top: .85rem;
   color: #e6eee7;
   font-size: 1.08rem;
   line-height: 1.65;
@@ -156,7 +156,7 @@ body {
 
 .main-wrap {
   max-width: 80rem;
-  margin-top: -2.55rem;
+  margin-top: -1.8rem;
   padding-inline: 1.25rem;
 }
 
@@ -464,11 +464,11 @@ tbody tr:hover {
 
 @media (max-width: 1080px) {
   .hero-inner {
-    padding-bottom: 4.2rem;
+    padding-bottom: 3.25rem;
   }
 
   .main-wrap {
-    margin-top: -2rem;
+    margin-top: -1.5rem;
   }
 }
 
@@ -478,7 +478,7 @@ tbody tr:hover {
   }
 
   .hero-inner {
-    padding: 2.5rem 1rem 3.4rem;
+    padding: 2rem 1rem 2.8rem;
   }
 
   .hero-copy h1 {
@@ -498,7 +498,7 @@ tbody tr:hover {
   }
 
   .main-wrap {
-    margin-top: -1.45rem;
+    margin-top: -1.2rem;
     padding-inline: .75rem;
   }
 
