@@ -613,3 +613,214 @@
     margin: 0;
   }
 }
+
+/* Final consistency layer: existing classes only, with no behavioral selectors changed. */
+.breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 3.25rem;
+  padding: var(--space-3) clamp(var(--space-4), 3vw, var(--space-6));
+  background: var(--color-primary-900);
+  color: #fff;
+}
+
+.breadcrumb-nav a {
+  color: rgba(255, 255, 255, .92);
+}
+
+:where(.dashboard-stats, .metrics-row, .action-grid) {
+  gap: var(--space-4);
+}
+
+:where(.stat-card, .action-card, .form-section, .detail-section, .project-section,
+  .users-table-wrapper, .review-card, .project-detail-panel) {
+  border-color: var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+:where(.stat-card, .action-card, .form-section, .detail-section, .project-section) {
+  background: var(--color-surface);
+}
+
+.stat-card,
+.action-card {
+  min-height: 8.25rem;
+}
+
+.stat-card .stat-value {
+  color: var(--color-primary-900);
+  font-variant-numeric: tabular-nums;
+}
+
+:where(.form-card, .form-section, .form-wrapper) .form-group {
+  margin-bottom: var(--space-4);
+}
+
+:where(.form-card, .form-section, .form-wrapper) .form-group > label,
+:where(.form-card, .form-section, .form-wrapper) .form-label {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+:where(.form-card, .form-section, .form-wrapper) input:not([type="checkbox"]):not([type="radio"]),
+:where(.form-card, .form-section, .form-wrapper) select,
+:where(.form-card, .form-section, .form-wrapper) textarea {
+  min-height: 2.65rem;
+  border-color: #bdcbbf;
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+:where(.form-card, .form-section, .form-wrapper) textarea {
+  min-height: 7.5rem;
+}
+
+:where(.form-card, .form-section, .form-wrapper) input:focus,
+:where(.form-card, .form-section, .form-wrapper) select:focus,
+:where(.form-card, .form-section, .form-wrapper) textarea:focus {
+  border-color: var(--color-primary-700);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.field-error,
+.error-message,
+.error-messages {
+  border-radius: var(--radius-sm);
+}
+
+.form-help,
+.project-subtext,
+.meta-label,
+.detail-label,
+.content-label,
+.review-card__meta {
+  color: var(--color-muted);
+}
+
+.users-table-wrapper,
+.table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+:where(.user-table, .review-list table, .detail-table) th {
+  color: #f4f8f4;
+  background: var(--color-primary-900);
+}
+
+:where(.user-table, .review-list table, .detail-table) th,
+:where(.user-table, .review-list table, .detail-table) td {
+  padding: .85rem .9rem;
+  vertical-align: middle;
+}
+
+:where(.user-table, .review-list table, .detail-table) tbody tr:hover {
+  background: #f4f8f4;
+}
+
+:where(.status-badge, .department-badge, .publication-badge) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.65rem;
+  border-radius: 999px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.empty-state,
+.review-empty {
+  border: 1px dashed #bfcfc2;
+  border-radius: var(--radius-lg);
+  background: #fafcf9;
+  color: var(--color-muted);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.pagination {
+  gap: var(--space-2);
+}
+
+.pagination a,
+.pagination button,
+.pagination .page-link {
+  min-width: 2.35rem;
+  min-height: 2.35rem;
+  border-radius: var(--radius-sm);
+}
+
+.project-modal__backdrop {
+  padding: var(--space-4);
+  background: rgba(8, 31, 20, .58);
+}
+
+.project-modal__dialog {
+  max-width: min(42rem, 100%);
+  max-height: min(46rem, calc(100vh - 2rem));
+  overflow-y: auto;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px rgba(7, 31, 20, .28);
+}
+
+.project-modal__header,
+.project-modal__actions {
+  padding-inline: clamp(var(--space-4), 4vw, var(--space-6));
+}
+
+.gabaldon-gis .leaflet-popup-content-wrapper,
+.gis-popup {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.gabaldon-gis .leaflet-popup-content,
+.gis-popup {
+  color: var(--color-text);
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .breadcrumb-nav {
+    min-height: 3rem;
+    flex-wrap: wrap;
+  }
+
+  :where(.form-grid, .detail-grid, .project-detail-layout, .dashboard-stats) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :where(.page-content, .projects-container, .form-container, .review-workspace) {
+    padding-inline: var(--space-4);
+  }
+
+  .project-modal__backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .project-modal__dialog {
+    width: 100%;
+    max-height: 90vh;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-card,
+  .action-card {
+    min-height: auto;
+  }
+
+  :where(.user-table, .review-list table, .detail-table) th,
+  :where(.user-table, .review-list table, .detail-table) td {
+    padding: .72rem;
+  }
+}
+
