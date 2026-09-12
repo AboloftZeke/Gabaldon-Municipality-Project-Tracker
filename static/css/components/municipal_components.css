@@ -875,3 +875,25 @@
     padding: .72rem;
   }
 }
+.user-email-cell {
+  color: var(--color-text);
+}
+
+.user-email-link {
+  color: var(--color-primary-800);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-decoration-color: rgba(23, 100, 61, .35);
+  text-underline-offset: .16em;
+}
+
+.user-email-link:hover {
+  color: var(--color-primary-900);
+  text-decoration-color: currentColor;
+}
+
+.user-email-empty {
+  color: var(--color-muted);
+  font-style: italic;
+}
