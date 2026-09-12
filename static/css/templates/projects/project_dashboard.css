@@ -526,3 +526,54 @@
     }
 
 }
+
+/* Keep the project-dashboard account panel readable after shared component styles. */
+.project-dashboard-layout .sidebar {
+    background: #1a5a3a;
+    color: #fff;
+}
+
+.project-dashboard-layout .sidebar-title {
+    color: rgba(255, 255, 255, .68);
+}
+
+.project-dashboard-layout .sidebar-menu a {
+    color: #fff;
+}
+
+.project-dashboard-layout .sidebar-menu a:hover {
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+}
+
+.project-dashboard-layout .sidebar-menu a.active {
+    background: rgba(255, 255, 255, .22);
+    color: #fff;
+}
+
+.project-dashboard-layout .sidebar .quick-actions {
+    display: block;
+    padding: 0 .75rem;
+}
+
+.project-dashboard-layout .sidebar .quick-actions h4 {
+    display: block;
+    margin: 0 0 .75rem;
+    color: #fff;
+}
+
+.project-dashboard-layout .sidebar .action-button.secondary {
+    display: flex;
+    width: 100%;
+    min-height: 2.45rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, .28);
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+}
+
+.project-dashboard-layout .sidebar .action-button.secondary:hover {
+    background: rgba(255, 255, 255, .22);
+    color: #fff;
+}
