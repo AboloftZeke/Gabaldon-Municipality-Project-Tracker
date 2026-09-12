@@ -7,7 +7,10 @@ from django.utils import timezone
 
 from .models import Project, ProjectPublicationRevision
 from .publication_snapshots import build_project_publication_snapshot
-from .permissions import can_review_revision
+from .permissions import (
+    can_review_revision, can_manage_infrastructure,
+    can_manage_non_infrastructure, is_system_admin,
+)
 from .publication_workflow import (
     PublicationStatus,
     validate_publication_transition,
@@ -35,6 +38,16 @@ def _require_admin(actor):
         )
 
 
+def _require_project_manager(project, actor):
+    # Keep the existing internal superuser maintenance exception.
+    allowed = is_system_admin(actor) or {
+        'infrastructure': can_manage_infrastructure,
+        'non_infrastructure': can_manage_non_infrastructure,
+    }.get(project.project_type, lambda user: False)(actor)
+    if not allowed:
+        raise PermissionDenied('Only the responsible office Staff can submit project content.')
+
+
 def _locked_revision(revision):
     revision_id = getattr(revision, 'pk', revision)
     return ProjectPublicationRevision.objects.select_for_update().select_related(
@@ -58,6 +71,7 @@ def create_publication_draft(project, actor):
     _require_authenticated(actor)
     project_id = getattr(project, 'pk', project)
     locked_project = Project.objects.select_for_update().get(pk=project_id)
+    _require_project_manager(locked_project, actor)
 
     if locked_project.publication_revisions.filter(
         status__in=OPEN_REVISION_STATUSES,
@@ -92,6 +106,7 @@ def submit_publication_revision(revision, actor):
     """Refresh a draft from working data and submit it for admin review."""
     _require_authenticated(actor)
     locked_revision = _locked_revision(revision)
+    _require_project_manager(locked_revision.project, actor)
     validate_publication_transition(
         locked_revision.status,
         PublicationStatus.PENDING_REVIEW,
@@ -296,6 +311,7 @@ def submit_project_for_review(project, actor):
     _require_authenticated(actor)
     project_id = getattr(project, 'pk', project)
     locked_project = Project.objects.select_for_update().get(pk=project_id)
+    _require_project_manager(locked_project, actor)
     active = (
         locked_project.publication_revisions.select_for_update()
         .filter(status__in=OPEN_REVISION_STATUSES)

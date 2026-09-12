@@ -207,6 +207,7 @@ class PublicationServiceTests(TestCase):
             username='publication-employee',
             password='password123',
         )
+        UserFlag.objects.create(user=self.employee, department='engineer', role='staff')
         self.admin = User.objects.create_superuser(
             username='publication-admin',
             email='admin@example.com',
