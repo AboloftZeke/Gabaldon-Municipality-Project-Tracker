@@ -1,0 +1,60 @@
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 250px;
+    height: 100vh;
+    padding: 2rem 1.5rem;
+    background: var(--panel-green);
+    color: white;
+    box-sizing: border-box;
+    z-index: 100;
+}
+
+.dashboard-content {
+    margin-left: 250px;
+    min-height: 100vh;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+
+.sidebar-section {
+    margin-bottom: 2rem;
+}
+
+.sidebar-title {
+    margin-bottom: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu li {
+    margin-bottom: 0.4rem;
+}
+
+.sidebar-menu a {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.sidebar-menu a:hover,
+.sidebar-menu a.active {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.quick-actions h4 {
+    margin: 0 0 1rem;
+    color: white;
+}

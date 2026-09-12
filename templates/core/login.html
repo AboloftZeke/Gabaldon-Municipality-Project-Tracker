@@ -59,10 +59,11 @@
                     <label for="password">Password</label>
                     <div class="password-wrapper">
                         <input type="password" id="password" name="password" placeholder="Enter your password" required>
-                        <button type="button" class="toggle-password" id="togglePassword" aria-label="Toggle password visibility" data-view-icon="{% static 'images/view-password.png' %}" data-hide-icon="{% static 'images/hide-password.png' %}">
-                            <img id="passwordToggleIcon" src="{% static 'images/view-password.png' %}" alt="Show password">
+                        <button type="button" class="toggle-password" aria-label="Show password" aria-pressed="false" data-password-toggle="password" data-view-icon="{% static 'images/view-password.png' %}" data-hide-icon="{% static 'images/hide-password.png' %}">
+                            <img src="{% static 'images/view-password.png' %}" alt="Show password">
                         </button>
                     </div>
+                    <a href="{% url 'password_reset' %}" class="forgot-password-link">Forgot Password?</a>
                 </div>
 
                 <button type="submit" class="submit-btn">Log In</button>
@@ -74,4 +75,5 @@
 </section>
 
 <script src="{% static 'js/templates/core/login.js' %}"></script>
+<script src="{% static 'js/password_visibility.js' %}"></script>
 {% endblock %}

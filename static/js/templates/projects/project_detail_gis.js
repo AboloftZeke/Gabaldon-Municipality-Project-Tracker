@@ -162,27 +162,37 @@
     const lightboxCaption = lightbox ? lightbox.querySelector('[data-lightbox-caption]') : null;
     const lightboxCloseButtons = lightbox ? Array.from(lightbox.querySelectorAll('[data-lightbox-close]')) : [];
 
-    function openLightbox(src, caption) {
-        if (!lightbox || !lightboxImage || !lightboxCaption) {
-            return;
-        }
-        lightboxImage.src = src;
-        lightboxImage.alt = caption || 'Project image';
-        lightboxCaption.textContent = caption || '';
-        lightbox.hidden = false;
-        document.body.style.overflow = 'hidden';
+    function openLightbox(src) {
+        const lb = document.getElementById("gis-photo-lightbox");
+        const img = document.getElementById("gis-lightbox-img");
+
+        if (!lb || !img) return;
+
+        img.src = src;
+        lb.hidden = false;
+        lb.setAttribute("aria-hidden", "false");
+
+        document.body.style.overflow = "hidden";
     }
 
     function closeLightbox() {
-        if (!lightbox || !lightboxImage || !lightboxCaption) {
-            return;
+        const lb = document.getElementById("gis-photo-lightbox");
+        const img = document.getElementById("gis-lightbox-img");
+
+        if (!lb) return;
+
+        lb.hidden = true;
+        lb.setAttribute("aria-hidden", "true");
+
+        if (img) {
+            img.src = "";
         }
-        lightbox.hidden = true;
-        lightboxImage.src = '';
-        lightboxCaption.textContent = '';
-        document.body.style.overflow = '';
+
+        document.body.style.overflow = "";
     }
 
+        
+    
     lightboxCloseButtons.forEach((button) => button.addEventListener('click', closeLightbox));
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && lightbox && !lightbox.hidden) {

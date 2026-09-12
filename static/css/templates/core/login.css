@@ -53,7 +53,7 @@
         transform: scale(1.08);
         transition: opacity 700ms ease, transform 4s ease;
         z-index: 0;
-        z-index: 1; 
+        z-index: 1;
     }
 
     .slide-frame img.is-active {
@@ -235,6 +235,11 @@
         box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
     }
 
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear {
+        display: none;
+    }
+
     .password-wrapper {
         position: relative;
         display: flex;
@@ -243,12 +248,27 @@
 
     .password-wrapper input {
         flex: 1;
-        padding-right: 2.5rem;
+        padding-right: 3rem;
+    }
+
+    .forgot-password-link {
+        align-self: flex-end;
+        color: var(--btn);
+        font-size: 0.84rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .forgot-password-link:hover,
+    .forgot-password-link:focus {
+        text-decoration: underline;
     }
 
     .toggle-password {
         position: absolute;
-        right: 0.88rem;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
         background: none;
         border: none;
         cursor: pointer;
@@ -257,8 +277,9 @@
         justify-content: center;
         padding: 0.25rem;
         transition: opacity 180ms ease;
-        width: 24px;
-        height: 24px;
+        width: 28px;
+        height: 28px;
+        flex: 0 0 28px;
     }
 
     .toggle-password:hover {
@@ -272,6 +293,7 @@
     }
 
     .toggle-password img {
+        display: block;
         width: 20px;
         height: 20px;
         object-fit: contain;

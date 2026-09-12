@@ -1,0 +1,16 @@
+{
+  "type": "FeatureCollection",
+  "_notice": "PLACEHOLDER DATA. These are NOT real Gabaldon barangay boundaries. Replace this file with an authoritative export (see docs/05_offline_and_data_sources.md) before using this for any real decision-making.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "SAMPLE BARANGAY 1 (placeholder)", "type": "barangay", "is_placeholder": true },
+      "geometry": { "type": "Polygon", "coordinates": [[[121.150,15.360],[121.160,15.360],[121.160,15.370],[121.150,15.370],[121.150,15.360]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "SAMPLE BARANGAY 2 (placeholder)", "type": "barangay", "is_placeholder": true },
+      "geometry": { "type": "Polygon", "coordinates": [[[121.160,15.360],[121.170,15.360],[121.170,15.370],[121.160,15.370],[121.160,15.360]]] }
+    }
+  ]
+}

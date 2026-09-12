@@ -1,0 +1,52 @@
+{% if publication %}
+<section class="publication-panel" aria-labelledby="publication-panel-title">
+    <div class="publication-panel__heading">
+        <div>
+            <p class="publication-panel__eyebrow">Public Dashboard</p>
+            <h3 id="publication-panel-title">Publication Review</h3>
+        </div>
+        <span class="publication-badge publication-status-{{ publication.status_key }}">
+            {{ publication.status_label }}
+        </span>
+    </div>
+
+    {% if publication.status_key == 'not_submitted' %}
+        <p>This project is saved internally and is not visible on the public dashboard.</p>
+    {% elif publication.status_key == 'pending_review' %}
+        <p>Revision {{ publication.revision_number }} is waiting for administrator review. Your working project can still be edited, but those edits will not change the submitted revision.</p>
+    {% elif publication.status_key == 'needs_revision' %}
+        <p>The administrator returned revision {{ publication.revision_number }} for changes. Edit the project, then resubmit it below.</p>
+    {% elif publication.status_key == 'approved' %}
+        <p>Revision {{ publication.revision_number }} was approved and is waiting for an administrator to publish it.</p>
+    {% elif publication.status_key == 'published' %}
+        <p>Revision {{ publication.revision_number }} is currently visible on the public dashboard.</p>
+    {% elif publication.status_key == 'rejected' %}
+        <p>The latest submission was rejected. You may edit the project and submit a new revision.</p>
+    {% elif publication.status_key == 'archived' %}
+        <p>The published revision was archived and is no longer visible publicly.</p>
+    {% endif %}
+
+    {% if publication.has_current_public_revision and publication.status_key != 'published' %}
+        <p class="publication-panel__public-note">
+            Public revision {{ publication.current_public_revision_number }} remains visible until an administrator publishes the replacement.
+        </p>
+    {% endif %}
+
+    {% if publication.review_notes %}
+        <div class="publication-panel__notes">
+            <strong>Administrator notes</strong>
+            <p>{{ publication.review_notes }}</p>
+        </div>
+    {% endif %}
+
+    {% if publication.can_submit and can_manage_publication %}
+        <form method="post" action="{{ publication_submit_url }}" class="publication-panel__action">
+            {% csrf_token %}
+            <button type="submit" class="publication-submit-button">
+                {{ publication.action_label }}
+            </button>
+            <small>A snapshot of the current project details and images will be sent for confirmation.</small>
+        </form>
+    {% endif %}
+</section>
+{% endif %}

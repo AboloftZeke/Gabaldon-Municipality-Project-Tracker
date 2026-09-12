@@ -1,0 +1,9 @@
+Gabaldon Municipality Project Tracker
+
+Your login verification code is:
+
+{{ code }}
+
+This code expires in {{ expiry_minutes }} minutes and can only be used once.
+
+If you did not attempt to sign in, you can ignore this email.

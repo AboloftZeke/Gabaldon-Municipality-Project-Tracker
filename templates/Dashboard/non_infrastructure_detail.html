@@ -1,0 +1,108 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ public_project.title }} - Gabaldon Transparency Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/infrastructure_detail.css' %}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="site-brand">
+        <img src="{% static 'images/gabaldon-seal.png' %}" alt="Gabaldon Municipality Seal" class="site-seal">
+        <div class="site-brand-text">
+          <p>Republic of the Philippines</p>
+          <h2>Municipality of Gabaldon</h2>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="public-detail">
+    <a href="{% url 'public_dashboard' %}" class="public-detail__back">&larr; Back to Public Dashboard</a>
+
+    <section class="public-detail__hero">
+      <div class="public-detail__heading">
+        <div class="public-detail__hero-media" aria-hidden="true">
+          {% if project_images %}
+            <img src="{{ project_images.0.image_url }}" alt="">
+          {% else %}
+            <img src="{% static 'images/project-placeholder.svg' %}" alt="">
+          {% endif %}
+        </div>
+        <div class="public-detail__hero-overlay"></div>
+        <div class="public-detail__heading-content">
+          <p class="public-detail__eyebrow">Public Non-Infrastructure Program · {{ project_code }}</p>
+          <h1>{{ public_project.title }}</h1>
+          <p>{{ project_category|default:"Uncategorized" }}</p>
+        </div>
+      </div>
+      <div class="public-detail__summary" aria-label="Program summary">
+        <div class="summary-item"><span>Status</span><strong>{{ public_project.status_label|default:"N/A" }}</strong></div>
+        <div class="summary-item"><span>Beneficiaries</span><strong>{{ public_project.beneficiaries|default_if_none:"N/A" }}</strong></div>
+        <div class="summary-item"><span>Event Date</span><strong>{{ public_project.event_date|date:"F j, Y"|default:"N/A" }}</strong></div>
+        <div class="summary-item"><span>Venue</span><strong>{{ public_project.venue_name|default:"N/A" }}</strong></div>
+      </div>
+    </section>
+
+    <section class="public-detail__section">
+      <h2>Program Information</h2>
+      <div class="detail-grid">
+        <div class="detail-item"><span>Proponent</span><strong>{{ public_project.proponent|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Category</span><strong>{{ project_category|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Published By</span><strong>{{ created_by_name|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Last Updated</span><strong>{{ public_project.updated_at|date:"F j, Y"|default:"N/A" }}</strong></div>
+      </div>
+    </section>
+
+    <section class="public-detail__section">
+      <h2>Schedule and Venue</h2>
+      <div class="detail-grid">
+        <div class="detail-item"><span>Event Date</span><strong>{{ public_project.event_date|date:"F j, Y"|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Start Time</span><strong>{{ public_project.start_time|time:"g:i A"|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>End Time</span><strong>{{ public_project.end_time|time:"g:i A"|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Venue</span><strong>{{ public_project.venue_name|default:"N/A" }}</strong></div>
+      </div>
+    </section>
+
+    <section class="public-detail__section">
+      <h2>Location</h2>
+      <div class="detail-grid">
+        <div class="detail-item"><span>Street</span><strong>{{ public_project.address.street|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Barangay</span><strong>{{ public_project.address.barangay|default:"N/A" }}</strong></div>
+        <div class="detail-item"><span>Municipality</span><strong>{{ public_project.address.municipality|default:"Gabaldon" }}</strong></div>
+        <div class="detail-item"><span>Province</span><strong>{{ public_project.address.province|default:"Nueva Ecija" }}</strong></div>
+      </div>
+    </section>
+
+    <section class="public-detail__section">
+      <h2>Description</h2>
+      <p class="public-detail__description">{{ public_project.description|default:"No description provided." }}</p>
+    </section>
+
+    {% if project_images %}
+    <section class="public-detail__section">
+      <h2>Program Images</h2>
+      <div class="public-image-grid">
+        {% for image in project_images %}
+        <figure class="public-image-card">
+          <img src="{{ image.image_url }}" alt="{{ public_project.title }} photo {{ forloop.counter }}" loading="lazy">
+          {% if image.is_cover %}<figcaption>Cover photo</figcaption>{% endif %}
+        </figure>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </main>
+
+  <footer class="site-footer">
+    <p>(c) 2026 Municipality of Gabaldon - Transparent Governance for the Community.</p>
+  </footer>
+</body>
+</html>

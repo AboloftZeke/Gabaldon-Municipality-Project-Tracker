@@ -1,5 +1,11 @@
 # Database Schema Cleanup - Completion Report
 
+> **Historical completion report:** The counts, verification claims, and rollback
+> commands below describe an earlier legacy-table cleanup. They do not establish
+> the state of a current deployment. Publication review is now implemented using
+> revision snapshots; see [publication rollout](PUBLICATION_WORKFLOW_ROLLOUT.md).
+> Do not use the historical rollback commands as a current cleanup procedure.
+
 **Date:** December 2024  
 **Status:** ✅ **COMPLETE**
 

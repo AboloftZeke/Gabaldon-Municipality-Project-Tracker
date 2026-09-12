@@ -16,6 +16,10 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
+# Allow third-party resources such as OpenStreetMap tiles to receive the site
+# origin as the Referer without exposing the full path or query string.
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
 
 # Application definition
 
@@ -112,6 +116,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
+# Media files (user uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Email Configuration
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
@@ -120,6 +128,14 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@gabaldon-municipality.gov.ph')
+EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=10, cast=int)
 
-# Password reset token expiration (in days)
-PASSWORD_RESET_TIMEOUT = 86400  # 24 hours in seconds
+# Password reset token expiration in seconds (24 hours by default).
+PASSWORD_RESET_TIMEOUT = config('PASSWORD_RESET_TIMEOUT', default=86400, cast=int)
+
+# Email OTP controls for the second login step.
+LOGIN_OTP_TIMEOUT = config('LOGIN_OTP_TIMEOUT', default=300, cast=int)
+LOGIN_OTP_MAX_ATTEMPTS = config('LOGIN_OTP_MAX_ATTEMPTS', default=5, cast=int)
+LOGIN_OTP_RESEND_COOLDOWN = config('LOGIN_OTP_RESEND_COOLDOWN', default=60, cast=int)
+LOGIN_OTP_RATE_LIMIT = config('LOGIN_OTP_RATE_LIMIT', default=5, cast=int)
+LOGIN_OTP_RATE_WINDOW = config('LOGIN_OTP_RATE_WINDOW', default=900, cast=int)

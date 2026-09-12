@@ -10,17 +10,6 @@
 <link rel="stylesheet" href="{% static 'css/templates/core/logout.css' %}">
 {% endblock %}
 
-{% block show_header %}
-<header>
-    <nav>
-        <h1>Municipality Project Tracker</h1>
-        <ul>
-            <li><a href="{% url 'login' %}">Back to Login</a></li>
-        </ul>
-    </nav>
-</header>
-{% endblock %}
-
 {% block content %}
 <div class="logout-container">
     <div class="logout-icon">✓</div>
@@ -36,7 +25,7 @@
 
         <div class="logout-actions">
             <a href="{% url 'login' %}" class="btn btn-primary">Return to Login</a>
-            <a href="https://www.gabaldon.gov.ph" class="btn btn-secondary">Visit Municipality Site</a>
+            <a href="http://127.0.0.1:8000/dashboard" class="btn btn-secondary">Visit Municipality Site</a>
         </div>
 
         <div class="logout-info">

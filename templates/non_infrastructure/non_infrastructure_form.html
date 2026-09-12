@@ -8,14 +8,11 @@
 {% endblock %}
 
 {% block content %}
-<!-- Mayor's Office Navigation Breadcrumb -->
-{% if request.resolver_match.namespace == 'mayor_projects' %}
 <div class="breadcrumb-nav">
     <a href="{% url 'mayor_projects:non_infrastructure_project_list' %}">← Back to Programs</a>
     <span>/</span>
     <strong>{{ action }} Program</strong>
 </div>
-{% endif %}
 
 <div class="form-container">
     <div class="form-card">
@@ -27,194 +24,879 @@
             {% endfor %}
         {% endif %}
 
-        <form method="post">
+        <form method="post" enctype="multipart/form-data" novalidate data-infrastructure-wizard>
             {% csrf_token %}
 
-            <div class="fieldset">
-                <legend>Basic Information</legend>
+            <div class="field-requirements-banner" role="note">
+                <span class="field-requirements-icon" aria-hidden="true">i</span>
+                <span>Fields marked <span class="required-marker">*</span> are required. Fields marked <span class="optional-badge">Optional</span> may be left blank.</span>
+            </div>
 
-                <div class="form-group">
-                    <label for="{{ form.title.id_for_label }}">Project Title*</label>
-                    {{ form.title }}
-                    {% if form.title.errors %}
-                        <div class="error-message">{{ form.title.errors.0 }}</div>
-                    {% endif %}
+            <div class="wizard-progress" aria-label="Non-infrastructure form progress">
+                <div class="wizard-progress-summary">
+                    <span data-wizard-progress-text>Step 1 of 5</span>
+                    <span>Complete each step to continue</span>
                 </div>
+                <ol class="wizard-steps">
+                    <li data-wizard-indicator="0"><span>1</span><strong>Basic Info</strong></li>
+                    <li data-wizard-indicator="1"><span>2</span><strong>Program</strong></li>
+                    <li data-wizard-indicator="2"><span>3</span><strong>Schedule</strong></li>
+                    <li data-wizard-indicator="3"><span>4</span><strong>Location</strong></li>
+                    <li data-wizard-indicator="4"><span>5</span><strong>Photos</strong></li>
+                </ol>
+            </div>
 
-                <div class="form-group">
-                    <label for="{{ form.description.id_for_label }}">Project Description</label>
-                    {{ form.description }}
-                    {% if form.description.errors %}
-                        <div class="error-message">{{ form.description.errors.0 }}</div>
-                    {% endif %}
-                </div>
+            <div class="fieldset wizard-panel" data-wizard-step="0">
+                <legend>Basic Project Information</legend>
+                <p class="section-description">Enter the project's title, purpose, category, and current status.</p>
+                <div class="form-grid">
+                    <div class="form-group full-span">
+                        <label for="{{ form.non_infra_name.id_for_label }}">Project Title</label>
+                        {{ form.non_infra_name }}
+                        {% if form.non_infra_name.errors %}
+                            <div class="error-message">{{ form.non_infra_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.location.id_for_label }}">Location*</label>
-                    {{ form.location }}
-                    {% if form.location.errors %}
-                        <div class="error-message">{{ form.location.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                    <div class="form-group full-span">
+                        <label for="{{ form.description.id_for_label }}">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="error-message">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.implementing_office.id_for_label }}">Implementing Office*</label>
-                    {{ form.implementing_office }}
-                    {% if form.implementing_office.errors %}
-                        <div class="error-message">{{ form.implementing_office.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                    <div class="form-group">
+                        <label for="{{ form.non_infra_category.id_for_label }}">Category</label>
+                        {{ form.non_infra_category }}
+                        {% if form.non_infra_category.errors %}
+                            <div class="error-message">{{ form.non_infra_category.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.category.id_for_label }}">Category*</label>
-                    {{ form.category }}
-                    {% if form.category.errors %}
-                        <div class="error-message">{{ form.category.errors.0 }}</div>
+                    <div class="form-group">
+                        <label for="{{ form.status.id_for_label }}">Status</label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <div class="error-message">{{ form.status.errors.0 }}</div>
                     {% endif %}
+                    </div>
+
                 </div>
             </div>
 
-            <div class="fieldset">
-                <legend>Service Details</legend>
+            <div class="fieldset wizard-panel" data-wizard-step="1" hidden>
+                <legend>Program Details</legend>
+                <p class="section-description">Identify the program proponent and intended number of beneficiaries.</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.proponent.id_for_label }}">Proponent</label>
+                        {{ form.proponent }}
+                        {% if form.proponent.errors %}
+                            <div class="error-message">{{ form.proponent.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.service_description.id_for_label }}">What Service is Delivered?</label>
-                    {{ form.service_description }}
-                    {% if form.service_description.errors %}
-                        <div class="error-message">{{ form.service_description.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.beneficiaries_description.id_for_label }}">To Whom is Service Delivered?</label>
-                    {{ form.beneficiaries_description }}
-                    {% if form.beneficiaries_description.errors %}
-                        <div class="error-message">{{ form.beneficiaries_description.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.service_location_details.id_for_label }}">Where is Service Delivered?</label>
-                    {{ form.service_location_details }}
-                    {% if form.service_location_details.errors %}
-                        <div class="error-message">{{ form.service_location_details.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.service_period.id_for_label }}">When? (Schedule/Frequency)</label>
-                    {{ form.service_period }}
-                    {% if form.service_period.errors %}
-                        <div class="error-message">{{ form.service_period.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.service_time.id_for_label }}">Time of Service</label>
-                    {{ form.service_time }}
-                    {% if form.service_time.errors %}
-                        <div class="error-message">{{ form.service_time.errors.0 }}</div>
-                    {% endif %}
+                    <div class="form-group">
+                        <label for="{{ form.beneficiaries.id_for_label }}">Beneficiaries</label>
+                        {{ form.beneficiaries }}
+                        {% if form.beneficiaries.errors %}
+                            <div class="error-message">{{ form.beneficiaries.errors.0 }}</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
-            <div class="fieldset">
-                <legend>Budget & Results</legend>
+            <div class="fieldset wizard-panel" data-wizard-step="2" hidden>
+                <legend>Event Schedule</legend>
+                <p class="section-description">Set when the program or activity will take place.</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.event_date.id_for_label }}">Event Date</label>
+                        {{ form.event_date }}
+                        {% if form.event_date.errors %}
+                            <div class="error-message">{{ form.event_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.budget_cost.id_for_label }}">Budget/Cost (₱)</label>
-                    {{ form.budget_cost }}
-                    {% if form.budget_cost.errors %}
-                        <div class="error-message">{{ form.budget_cost.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                    <div class="form-group">
+                        <label for="{{ form.start_time.id_for_label }}">Start Time</label>
+                        {{ form.start_time }}
+                        {% if form.start_time.errors %}
+                            <div class="error-message">{{ form.start_time.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.results_achieved.id_for_label }}">Results/Outcomes Achieved</label>
-                    {{ form.results_achieved }}
-                    {% if form.results_achieved.errors %}
-                        <div class="error-message">{{ form.results_achieved.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
+                    <div class="form-group">
+                        <label for="{{ form.end_time.id_for_label }}">End Time</label>
+                        {{ form.end_time }}
+                        {% if form.end_time.errors %}
+                            <div class="error-message">{{ form.end_time.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-            <div class="fieldset">
-                <legend>Funding & Timeline</legend>
-
-                <div class="form-group">
-                    <label for="{{ form.source_of_fund.id_for_label }}">Source of Fund</label>
-                    {{ form.source_of_fund }}
-                    {% if form.source_of_fund.errors %}
-                        <div class="error-message">{{ form.source_of_fund.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.planned_start_date.id_for_label }}">Planned Start Date</label>
-                    {{ form.planned_start_date }}
-                    {% if form.planned_start_date.errors %}
-                        <div class="error-message">{{ form.planned_start_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.planned_end_date.id_for_label }}">Planned End Date</label>
-                    {{ form.planned_end_date }}
-                    {% if form.planned_end_date.errors %}
-                        <div class="error-message">{{ form.planned_end_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.actual_start_date.id_for_label }}">Actual Start Date</label>
-                    {{ form.actual_start_date }}
-                    {% if form.actual_start_date.errors %}
-                        <div class="error-message">{{ form.actual_start_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.revised_completion_date.id_for_label }}">Revised Completion Date</label>
-                    {{ form.revised_completion_date }}
-                    {% if form.revised_completion_date.errors %}
-                        <div class="error-message">{{ form.revised_completion_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.latitude.id_for_label }}">Latitude</label>
-                    {{ form.latitude }}
-                    {% if form.latitude.errors %}
-                        <div class="error-message">{{ form.latitude.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.longitude.id_for_label }}">Longitude</label>
-                    {{ form.longitude }}
-                    {% if form.longitude.errors %}
-                        <div class="error-message">{{ form.longitude.errors.0 }}</div>
-                    {% endif %}
                 </div>
             </div>
 
-            <div class="fieldset">
-                <legend>Progress Tracking</legend>
+            <!-- =========================================================
+     LOCATION
+     ========================================================= -->
 
-                <div class="form-group">
-                    <label for="{{ form.overall_progress_percentage.id_for_label }}">Overall Progress (%)</label>
-                    {{ form.overall_progress_percentage }}
-                    {% if form.overall_progress_percentage.errors %}
-                        <div class="error-message">{{ form.overall_progress_percentage.errors.0 }}</div>
-                    {% endif %}
+<div class="fieldset wizard-panel" data-wizard-step="3" hidden>
+
+    <legend>Location</legend>
+    <p class="section-description">Provide the activity location. Municipality and Province are set by the system.</p>
+
+    <div class="form-grid">
+
+        <div class="form-group full-span">
+            <label for="{{ form.venue_name.id_for_label }}">Venue Name</label>
+            {{ form.venue_name }}
+            {% if form.venue_name.errors %}
+                <div class="error-message">{{ form.venue_name.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Street -->
+
+        <div class="form-group full-span">
+
+            <label for="{{ form.street.id_for_label }}">
+                Street
+            </label>
+
+            {{ form.street }}
+
+            {% if form.street.errors %}
+                <div class="error-message">
+                    {{ form.street.errors.0 }}
                 </div>
+            {% endif %}
+
+        </div>
+
+
+        <!-- Barangay -->
+
+        <div class="form-group">
+
+            <label for="{{ form.barangay.id_for_label }}">
+                Barangay
+            </label>
+
+            {{ form.barangay }}
+
+            {% if form.barangay.errors %}
+                <div class="error-message">
+                    {{ form.barangay.errors.0 }}
+                </div>
+            {% endif %}
+
+        </div>
+
+
+        <!-- Municipality -->
+
+        <div class="form-group">
+
+            <label for="{{ form.municipality.id_for_label }}">
+                Municipality
+            </label>
+
+            {{ form.municipality }}
+
+            {% if form.municipality.errors %}
+                <div class="error-message">
+                    {{ form.municipality.errors.0 }}
+                </div>
+            {% endif %}
+
+        </div>
+
+
+        <!-- Province -->
+
+        <div class="form-group">
+
+            <label for="{{ form.province.id_for_label }}">
+                Province
+            </label>
+
+            {{ form.province }}
+
+            {% if form.province.errors %}
+                <div class="error-message">
+                    {{ form.province.errors.0 }}
+                </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     PROJECT IMAGES
+     ========================================================= -->
+
+<div class="fieldset wizard-panel" data-wizard-step="4" hidden>
+
+    <legend>Project Images <span class="optional-badge">Optional</span></legend>
+    <p class="section-description">Upload project photos, preview them, and choose the image shown as the cover.</p>
+
+    <div class="form-group full-span">
+    
+        {{ form.images_to_delete }}
+        {{ form.cover_image_selection }}
+
+
+        <!-- =================================================
+             EXISTING PHOTOS
+             ================================================= -->
+
+        {% if form.existing_images %}
+
+            <div class="existing-images-section">
+
+                <div class="existing-images-header">
+
+                    <div>
+
+                        <h4>
+                            Existing Photos
+                        </h4>
+
+                        <p>
+                            Photos currently attached to this project.
+                        </p>
+
+                    </div>
+
+                    <span class="existing-images-count">
+
+                        {{ form.existing_images|length }}
+
+                        {% if form.existing_images|length == 1 %}
+                            photo
+                        {% else %}
+                            photos
+                        {% endif %}
+
+                    </span>
+
+                </div>
+
+
+                <div class="existing-images-grid">
+
+                    {% for image in form.existing_images %}
+
+                        <div class="existing-image{% if image.is_cover %} is-cover{% endif %}"
+                        data-image-id="{{ image.pk }}"
+                        data-cover-value="existing:{{ image.pk }}"
+                        >
+
+                            <img
+                                src="{{ image.image_url }}"
+                                alt="Project photo {{ forloop.counter }}"
+                            >
+
+                            <div class="existing-image-number">
+                                {{ forloop.counter }}
+                            </div>
+
+                        <span class="cover-photo-badge">Cover</span>
+
+                        <button
+                            type="button"
+                            class="cover-image-select"
+                            data-cover-value="existing:{{ image.pk }}"
+                        >
+                            {% if image.is_cover %}Cover photo{% else %}Set as cover{% endif %}
+                        </button>
+                        
+                        <button
+                            type="button"
+                            class="existing-image-delete"
+                            data-image-id="{{ image.pk }}"
+                            aria-label="Remove project photo {{forloop.counter}}"
+                            title="Remove photo"
+                            >
+                            ×
+                        </button>
+                        </div>
+
+
+                    {% endfor %}
+
+                </div>
+
             </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn btn-submit">{{ action }} Project</button>
-                <a href="{% url 'non_infrastructure:non_infrastructure_project_list' %}" class="btn btn-cancel">Cancel</a>
+        {% endif %}
+
+
+        <!-- =================================================
+             ADD NEW PHOTOS
+             ================================================= -->
+
+        <div
+            class="image-upload-area"
+            id="image-upload-area"
+        >
+
+            <div class="image-upload-content">
+
+
+                <!-- Upload Icon -->
+
+                <div class="image-upload-icon">
+
+                    <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <rect
+                            x="3"
+                            y="3"
+                            width="18"
+                            height="18"
+                            rx="2"
+                        />
+
+                        <circle
+                            cx="8.5"
+                            cy="8.5"
+                            r="1.5"
+                        />
+
+                        <path d="M21 15l-5-5L5 21"/>
+
+                    </svg>
+
+                </div>
+
+
+                <!-- Upload Text -->
+
+                <div class="image-upload-text">
+
+                    <span class="image-upload-title">
+                        Add project photos
+                    </span>
+
+                    <span class="image-upload-subtitle">
+                        Drag and drop images here or
+                    </span>
+
+                </div>
+
+
+                <!-- Browse Button -->
+
+                <label
+                    for="{{ form.project_images.id_for_label }}"
+                    class="image-upload-button"
+                >
+                    Browse Files
+                </label>
+
+
+                <!-- Actual File Input -->
+
+                {{ form.project_images }}
+
             </div>
+
+        </div>
+
+
+        <!-- Upload Errors -->
+
+        {% if form.project_images.errors %}
+
+            <div class="error-message">
+
+                {{ form.project_images.errors.0 }}
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             NEWLY SELECTED PHOTOS
+             ================================================= -->
+
+        <div
+            class="image-preview-container"
+            id="image-preview-container"
+            hidden
+        >
+
+            <div class="image-preview-header">
+
+                <div>
+
+                    <h4>
+                        Selected Photos
+                    </h4>
+
+                    <span
+                        class="image-preview-count"
+                        id="image-preview-count"
+                    >
+                        0 images
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="image-preview-grid"
+                id="image-preview-grid"
+            ></div>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     FORM ACTIONS
+     ========================================================= -->
+
+<div class="form-actions wizard-actions">
+
+    <button
+        type="button"
+        class="btn btn-back"
+        data-wizard-back
+        hidden
+    >
+        Back
+    </button>
+
+
+    <a
+        href="{% url 'mayor_projects:non_infrastructure_project_list' %}"
+        class="btn btn-cancel"
+    >
+        Cancel
+    </a>
+
+    <button type="button" class="btn btn-next" data-wizard-next>Next</button>
+
+    <button type="submit" class="btn btn-submit" data-wizard-submit hidden>
+        {{ action }} Project
+    </button>
+
+</div>
+
         </form>
     </div>
 </div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const projectForm = document.querySelector('.form-card form');
+
+    projectForm.querySelectorAll(
+        '.form-group label[for]:not(.image-upload-button)'
+    ).forEach(function (label) {
+        const field = document.getElementById(label.htmlFor);
+
+        if (!field || label.querySelector('.optional-badge, .required-marker')) {
+            return;
+        }
+
+        const indicator = document.createElement('span');
+        if (field.required) {
+            indicator.className = 'required-marker';
+            indicator.textContent = '*';
+            indicator.setAttribute('aria-label', 'required');
+        } else {
+            indicator.className = 'optional-badge';
+            indicator.textContent = 'Optional';
+        }
+        label.appendChild(indicator);
+    });
+
+    projectForm.querySelectorAll('.error-message').forEach(function (message) {
+        const group = message.closest('.form-group');
+        if (!group) {
+            return;
+        }
+
+        group.classList.add('has-error');
+        group.querySelectorAll('input, select, textarea').forEach(function (field) {
+            if (field.type !== 'hidden') {
+                field.setAttribute('aria-invalid', 'true');
+            }
+        });
+    });
+
+    const startTimeInput = document.getElementById(
+        '{{ form.start_time.id_for_label }}'
+    );
+
+    const endTimeInput = document.getElementById(
+        '{{ form.end_time.id_for_label }}'
+    );
+
+    function enforceTimeOrder() {
+
+        if (!startTimeInput || !endTimeInput) {
+            return;
+        }
+
+        endTimeInput.min = startTimeInput.value;
+
+        if (
+            startTimeInput.value &&
+            endTimeInput.value &&
+            endTimeInput.value <= startTimeInput.value
+        ) {
+            endTimeInput.value = '';
+        }
+    }
+
+    if (startTimeInput && endTimeInput) {
+        startTimeInput.addEventListener('change', enforceTimeOrder);
+        endTimeInput.addEventListener('change', enforceTimeOrder);
+        enforceTimeOrder();
+    }
+
+    const deleteInput = document.getElementById(
+        '{{ form.images_to_delete.id_for_label }}'
+    );
+
+    const coverInput = document.getElementById(
+        '{{ form.cover_image_selection.id_for_label }}'
+    );
+
+    function updateCoverUI() {
+
+        if (!coverInput) {
+            return;
+        }
+
+        document.querySelectorAll('[data-cover-value]').forEach(function (element) {
+            const isCover = element.dataset.coverValue === coverInput.value;
+
+            if (element.classList.contains('existing-image') ||
+                element.classList.contains('image-preview')) {
+                element.classList.toggle('is-cover', isCover);
+            }
+
+            if (element.classList.contains('cover-image-select')) {
+                element.textContent = isCover ? 'Cover photo' : 'Set as cover';
+                element.setAttribute('aria-pressed', isCover ? 'true' : 'false');
+            }
+        });
+    }
+
+    function chooseFallbackCover() {
+
+        if (!coverInput || coverInput.value) {
+            updateCoverUI();
+            return;
+        }
+
+        const firstImage = document.querySelector(
+            '.existing-image[data-cover-value], .image-preview[data-cover-value]'
+        );
+
+        if (firstImage) {
+            coverInput.value = firstImage.dataset.coverValue;
+        }
+
+        updateCoverUI();
+    }
+
+    document.querySelectorAll(
+        '.existing-image .cover-image-select'
+    ).forEach(function (button) {
+        button.addEventListener('click', function () {
+            if (coverInput) {
+                coverInput.value = button.dataset.coverValue;
+                updateCoverUI();
+            }
+        });
+    });
+
+    chooseFallbackCover();
+
+    const deleteButtons = document.querySelectorAll(
+        '.existing-image-delete'
+    );
+
+    const imagesToDelete = new Set();
+
+    deleteButtons.forEach(function (button) {
+
+        button.addEventListener('click', function () {
+
+            const imageId = button.dataset.imageId;
+
+            if (!imageId) {
+                return;
+            }
+
+            const imageCard = button.closest('.existing-image');
+
+            if (!imageCard) {
+                return;
+            }
+
+            const confirmed = window.confirm(
+                'Are you sure you want to remove this photo?'
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            imagesToDelete.add(imageId);
+
+            if (deleteInput) {
+                deleteInput.value = Array.from(imagesToDelete).join(',');
+            }
+
+            imageCard.remove();
+
+            if (coverInput && coverInput.value === `existing:${imageId}`) {
+                coverInput.value = '';
+                chooseFallbackCover();
+            }
+        });
+
+    });
+
+    const input = document.getElementById(
+        '{{ form.project_images.id_for_label }}'
+    );
+
+    const uploadArea = document.getElementById(
+        'image-upload-area'
+    );
+
+    const previewContainer = document.getElementById(
+        'image-preview-container'
+    );
+
+    const previewGrid = document.getElementById(
+        'image-preview-grid'
+    );
+
+    const previewCount = document.getElementById(
+        'image-preview-count'
+    );
+
+    if (!input) {
+        return;
+    }
+
+    let selectedFiles = [];
+    let previewRenderVersion = 0;
+
+    function syncSelectedFiles() {
+
+        const dataTransfer = new DataTransfer();
+
+        selectedFiles.forEach(function (file) {
+            dataTransfer.items.add(file);
+        });
+
+        input.files = dataTransfer.files;
+    }
+
+    function renderSelectedFiles() {
+
+        const renderVersion = ++previewRenderVersion;
+
+        previewGrid.innerHTML = '';
+
+        if (selectedFiles.length === 0) {
+            previewContainer.hidden = true;
+            previewCount.textContent = '0 images';
+            return;
+        }
+
+        previewContainer.hidden = false;
+
+        previewCount.textContent =
+            `${selectedFiles.length} ${selectedFiles.length === 1 ? 'image' : 'images'}`;
+
+        selectedFiles.forEach(function (file, index) {
+
+            const reader = new FileReader();
+
+            const preview = document.createElement('div');
+
+            preview.className = 'image-preview';
+            preview.dataset.coverValue = `new:${index}`;
+
+            preview.innerHTML = `
+                <img alt="Selected image ${index + 1}">
+
+                <div class="image-preview-overlay">
+                    <span>${index + 1}</span>
+                </div>
+
+                <span class="cover-photo-badge">Cover</span>
+
+                <button
+                    type="button"
+                    class="cover-image-select"
+                    data-cover-value="new:${index}"
+                >
+                    Set as cover
+                </button>
+
+                <button
+                    type="button"
+                    class="image-preview-delete"
+                    aria-label="Remove selected image ${index + 1}"
+                    title="Remove photo"
+                >
+                    ×
+                </button>
+            `;
+
+            const removeButton = preview.querySelector(
+                '.image-preview-delete'
+            );
+
+            const coverButton = preview.querySelector(
+                '.cover-image-select'
+            );
+
+            coverButton.addEventListener('click', function () {
+                if (coverInput) {
+                    coverInput.value = `new:${index}`;
+                    updateCoverUI();
+                }
+            });
+
+            removeButton.addEventListener('click', function () {
+                if (coverInput && coverInput.value.startsWith('new:')) {
+                    const coverIndex = Number(
+                        coverInput.value.replace('new:', '')
+                    );
+
+                    if (coverIndex === index) {
+                        coverInput.value = '';
+                    } else if (coverIndex > index) {
+                        coverInput.value = `new:${coverIndex - 1}`;
+                    }
+                }
+
+                selectedFiles.splice(index, 1);
+                syncSelectedFiles();
+                renderSelectedFiles();
+            });
+
+            previewGrid.appendChild(preview);
+
+            reader.onload = function (event) {
+
+                if (renderVersion !== previewRenderVersion) {
+                    return;
+                }
+
+                preview.querySelector('img').src = event.target.result;
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        chooseFallbackCover();
+    }
+
+    input.addEventListener('change', function () {
+
+        if (coverInput && coverInput.value.startsWith('new:')) {
+            coverInput.value = '';
+        }
+
+        selectedFiles = Array.from(input.files).filter(function (file) {
+            return file.type.startsWith('image/');
+        });
+
+        syncSelectedFiles();
+        renderSelectedFiles();
+    });
+
+
+    /*
+     * Drag and drop support
+     */
+    uploadArea.addEventListener('dragover', function (event) {
+
+        event.preventDefault();
+
+        uploadArea.classList.add('is-dragging');
+    });
+
+
+    uploadArea.addEventListener('dragleave', function () {
+
+        uploadArea.classList.remove('is-dragging');
+    });
+
+
+    uploadArea.addEventListener('drop', function (event) {
+
+        event.preventDefault();
+
+        uploadArea.classList.remove('is-dragging');
+
+        const files = event.dataTransfer.files;
+
+        if (!files.length) {
+            return;
+        }
+
+        /*
+         * Transfer the dropped files to the actual file input.
+         */
+        const dataTransfer = new DataTransfer();
+
+        Array.from(files).forEach(function (file) {
+
+            if (file.type.startsWith('image/')) {
+                dataTransfer.items.add(file);
+            }
+
+        });
+
+        input.files = dataTransfer.files;
+
+        input.dispatchEvent(new Event('change'));
+    });
+
+});
+</script>
+<script src="{% static 'js/templates/projects/project_form.js' %}"></script>
+
 {% endblock %}

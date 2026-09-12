@@ -28,7 +28,7 @@
                 <a href="{% url 'user_create' %}" class="btn btn-primary">Return to Form</a>
             {% else %}
                 <div class="warning-box">
-                    <p><strong>⚠ Please review the information below carefully.</strong> Once confirmed, this user account will be created with these settings.</p>
+                    <p><strong>Please review the information below carefully.</strong> Once confirmed, the account will be created and a secure setup link will be emailed to the employee.</p>
                 </div>
 
                 <div class="user-details">
@@ -62,7 +62,7 @@
                 <form method="post" style="margin-bottom: 0;">
                     {% csrf_token %}
                     <div class="confirm-actions">
-                        <button type="submit" class="btn btn-primary">Confirm & Create User</button>
+                        <button type="submit" class="btn btn-primary">Create User &amp; Send Setup Email</button>
                         <a href="{% url 'user_create' %}" class="btn btn-secondary">Go Back & Edit</a>
                     </div>
                 </form>

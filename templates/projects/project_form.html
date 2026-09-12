@@ -4,22 +4,26 @@
 {% block title %}{% if action == 'Create' %}New Project{% else %}Edit Project{% endif %} - Municipality Project Tracker{% endblock %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_form.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}">
 {% endblock %}
 
 {% block content %}
-<!-- Engineering Office Navigation Breadcrumb -->
-{% if request.resolver_match.namespace == 'engineering_projects' %}
 <div class="breadcrumb-nav">
     <a href="{% url 'engineering_projects:project_list' %}">← Back to Projects</a>
     <span>/</span>
     <strong>{{ action }} Project</strong>
 </div>
-{% endif %}
 
 <div class="form-container">
     <div class="form-card">
-        <h2>{{ action }} Infrastructure Project</h2>
+        <div class="form-heading">
+            <div>
+                <p class="form-eyebrow">Engineering Office</p>
+                <h2>{{ action }} Infrastructure Project</h2>
+                <p class="form-intro">Complete the project record using the organized sections below. All information remains on this page.</p>
+            </div>
+        </div>
 
         {% if form.non_field_errors %}
             {% for error in form.non_field_errors %}
@@ -27,178 +31,938 @@
             {% endfor %}
         {% endif %}
 
-        <form method="post">
+        <form method="post" enctype="multipart/form-data" novalidate data-infrastructure-wizard>
             {% csrf_token %}
 
-            <div class="fieldset">
-                <legend>Basic Information</legend>
+            <div class="field-requirements-banner" role="note">
+                <span class="field-requirements-icon" aria-hidden="true">i</span>
+                <span>Fields marked <span class="required-marker">*</span> are required. Fields marked <span class="optional-badge">Optional</span> may be left blank.</span>
+            </div>
 
-                <div class="form-group">
-                    <label for="{{ form.title.id_for_label }}">Project Title*</label>
-                    {{ form.title }}
-                    {% if form.title.errors %}
-                        <div class="error-message">{{ form.title.errors.0 }}</div>
-                    {% endif %}
+            <div class="wizard-progress" aria-label="Infrastructure form progress">
+                <div class="wizard-progress-summary">
+                    <span data-wizard-progress-text>Step 1 of 7</span>
+                    <span>Complete each step to continue</span>
                 </div>
+                <ol class="wizard-steps">
+                    <li data-wizard-indicator="0"><span>1</span><strong>Basic Info</strong></li>
+                    <li data-wizard-indicator="1"><span>2</span><strong>Location</strong></li>
+                    <li data-wizard-indicator="2"><span>3</span><strong>Funding</strong></li>
+                    <li data-wizard-indicator="3"><span>4</span><strong>Schedule</strong></li>
+                    <li data-wizard-indicator="4"><span>5</span><strong>Progress</strong></li>
+                    <li data-wizard-indicator="5"><span>6</span><strong>Inspection</strong></li>
+                    <li data-wizard-indicator="6"><span>7</span><strong>Photos</strong></li>
+                </ol>
+            </div>
 
-                <div class="form-group">
-                    <label for="{{ form.location.id_for_label }}">Location*</label>
-                    {{ form.location }}
-                    {% if form.location.errors %}
-                        <div class="error-message">{{ form.location.errors.0 }}</div>
-                    {% endif %}
+            <div class="fieldset wizard-panel" id="basic-information" data-wizard-step="0">
+                <div class="section-heading">
+                    <span class="section-number">1</span>
+                    <div><h3>Basic Project Information</h3><p>Enter the project's main identifying and responsible-party details.</p></div>
                 </div>
+                <div class="form-grid">
+                    <div class="form-group full-span">
+                        <label for="{{ form.title.id_for_label }}">Project Title</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="error-message">{{ form.title.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.description.id_for_label }}">Project Description</label>
-                    {{ form.description }}
-                    {% if form.description.errors %}
-                        <div class="error-message">{{ form.description.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                    <div class="form-group full-span">
+                        <label for="{{ form.description.id_for_label }}">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="error-message">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.implementing_office.id_for_label }}">Implementing Office*</label>
-                    {{ form.implementing_office }}
-                    {% if form.implementing_office.errors %}
-                        <div class="error-message">{{ form.implementing_office.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                    <div class="form-group">
+                        <label for="{{ form.category.id_for_label }}">
+                            Category
+                        </label>
 
-                <div class="form-group">
-                    <label for="{{ form.category.id_for_label }}">Category*</label>
-                    {{ form.category }}
-                    {% if form.category.errors %}
-                        <div class="error-message">{{ form.category.errors.0 }}</div>
-                    {% endif %}
+                        {{ form.category }}
+
+                        <div id="other-category-container" style="display: none; margin-top: 10px;">
+                            <label for="{{ form.other_category.id_for_label }}">
+                                Other Category <span class="conditional-required">Required when Category is Other</span>
+                            </label>
+
+                            {{ form.other_category }}
+                            {% if form.other_category.errors %}
+                                <div class="error-message">{{ form.other_category.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        {% if form.category.errors %}
+                            <div class="error-message">{{ form.category.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.implementing_office.id_for_label }}">Implementing Office</label>
+                        {{ form.implementing_office }}
+                        {% if form.implementing_office.errors %}
+                            <div class="error-message">{{ form.implementing_office.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
                 </div>
             </div>
 
-            <div class="fieldset">
-                <legend>Contractor & Procurement</legend>
-
-                <div class="form-group">
-                    <label for="{{ form.contractor.id_for_label }}">Contractor</label>
-                    {{ form.contractor }}
-                    {% if form.contractor.errors %}
-                        <div class="error-message">{{ form.contractor.errors.0 }}</div>
-                    {% endif %}
+            <div class="fieldset wizard-panel" id="project-location" data-wizard-step="1" hidden>
+                <div class="section-heading">
+                    <span class="section-number">2</span>
+                    <div><h3>Project Location</h3><p>Provide the project site and geographic reference information.</p></div>
                 </div>
+                <div class="form-grid">
+                    <div class="form-group full-span">
+                        <label for="{{ form.street.id_for_label }}">Street</label>
+                        {{ form.street }}
+                        {% if form.street.errors %}
+                            <div class="error-message">{{ form.street.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.procurement_method.id_for_label }}">Procurement Method*</label>
-                    {{ form.procurement_method }}
-                    {% if form.procurement_method.errors %}
-                        <div class="error-message">{{ form.procurement_method.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
+                    <div class="form-group">
+                        <label for="{{ form.barangay.id_for_label }}">Barangay</label>
+                        {{ form.barangay }}
+                        {% if form.barangay.errors %}
+                            <div class="error-message">{{ form.barangay.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-            <div class="fieldset">
-                <legend>Financial Information</legend>
+                    <div class="form-group">
+                        <label for="{{ form.municipality.id_for_label }}">Municipality</label>
+                        {{ form.municipality }}
+                        {% if form.municipality.errors %}
+                            <div class="error-message">{{ form.municipality.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.abc_amount.id_for_label }}">Approved Budget for Contract (₱)</label>
-                    {{ form.abc_amount }}
-                    {% if form.abc_amount.errors %}
-                        <div class="error-message">{{ form.abc_amount.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                    <div class="form-group">
+                        <label for="{{ form.province.id_for_label }}">Province</label>
+                        {{ form.province }}
+                        {% if form.province.errors %}
+                            <div class="error-message">{{ form.province.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.contract_price.id_for_label }}">Contract Price (₱)</label>
-                    {{ form.contract_price }}
-                    {% if form.contract_price.errors %}
-                        <div class="error-message">{{ form.contract_price.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                    <div class="form-group">
+                        <label for="{{ form.latitude.id_for_label }}">Latitude</label>
+                        {{ form.latitude }}
+                        {% if form.latitude.errors %}
+                            <div class="error-message">{{ form.latitude.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.source_of_fund.id_for_label }}">Source of Fund</label>
-                    {{ form.source_of_fund }}
-                    {% if form.source_of_fund.errors %}
-                        <div class="error-message">{{ form.source_of_fund.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.award_status.id_for_label }}">Award Status*</label>
-                    {{ form.award_status }}
-                    {% if form.award_status.errors %}
-                        <div class="error-message">{{ form.award_status.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="fieldset">
-                <legend>Timeline</legend>
-
-                <div class="form-group">
-                    <label for="{{ form.planned_start_date.id_for_label }}">Planned Start Date</label>
-                    {{ form.planned_start_date }}
-                    {% if form.planned_start_date.errors %}
-                        <div class="error-message">{{ form.planned_start_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.planned_end_date.id_for_label }}">Planned End Date</label>
-                    {{ form.planned_end_date }}
-                    {% if form.planned_end_date.errors %}
-                        <div class="error-message">{{ form.planned_end_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.actual_start_date.id_for_label }}">Actual Start Date</label>
-                    {{ form.actual_start_date }}
-                    {% if form.actual_start_date.errors %}
-                        <div class="error-message">{{ form.actual_start_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.latitude.id_for_label }}">Latitude</label>
-                    {{ form.latitude }}
-                    {% if form.latitude.errors %}
-                        <div class="error-message">{{ form.latitude.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.longitude.id_for_label }}">Longitude</label>
-                    {{ form.longitude }}
-                    {% if form.longitude.errors %}
-                        <div class="error-message">{{ form.longitude.errors.0 }}</div>
-                    {% endif %}
+                    <div class="form-group">
+                        <label for="{{ form.longitude.id_for_label }}">Longitude</label>
+                        {{ form.longitude }}
+                        {% if form.longitude.errors %}
+                            <div class="error-message">{{ form.longitude.errors.0 }}</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
-            <div class="fieldset">
-                <legend>Progress Tracking</legend>
-
-                <div class="form-group">
-                    <label for="{{ form.cost_progress_percentage.id_for_label }}">Cost Progress (%)</label>
-                    {{ form.cost_progress_percentage }}
-                    {% if form.cost_progress_percentage.errors %}
-                        <div class="error-message">{{ form.cost_progress_percentage.errors.0 }}</div>
-                    {% endif %}
+            <div class="fieldset wizard-panel" id="funding-contract" data-wizard-step="2" hidden>
+                <div class="section-heading">
+                    <span class="section-number">3</span>
+                    <div><h3>Funding &amp; Contract</h3><p>Record the contractor, procurement method, approved funding, and expenditure details.</p></div>
                 </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.contractor.id_for_label }}">Contractor</label>
+                        {{ form.contractor }}
+                        {% if form.contractor.errors %}<div class="error-message">{{ form.contractor.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.procurement_method.id_for_label }}">Procurement Method</label>
+                        {{ form.procurement_method }}
+                        {% if form.procurement_method.errors %}
+                            <div class="error-message">{{ form.procurement_method.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-                <div class="form-group">
-                    <label for="{{ form.physical_progress_percentage.id_for_label }}">Physical Progress (%)</label>
-                    {{ form.physical_progress_percentage }}
-                    {% if form.physical_progress_percentage.errors %}
-                        <div class="error-message">{{ form.physical_progress_percentage.errors.0 }}</div>
-                    {% endif %}
+                    <div class="form-group">
+                        <label for="{{ form.abc_amount.id_for_label }}">Approved Budget (₱)</label>
+                        {{ form.abc_amount }}
+                        {% if form.abc_amount.errors %}<div class="error-message">{{ form.abc_amount.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.contract_price.id_for_label }}">Contract Price (₱)</label>
+                        {{ form.contract_price }}
+                        {% if form.contract_price.errors %}<div class="error-message">{{ form.contract_price.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.fund_source.id_for_label }}">Fund Source</label>
+                        {{ form.fund_source }}
+                        {% if form.fund_source.errors %}<div class="error-message">{{ form.fund_source.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.actual_expenditure.id_for_label }}">Actual Expenditure (₱)</label>
+                        {{ form.actual_expenditure }}
+                        {% if form.actual_expenditure.errors %}<div class="error-message">{{ form.actual_expenditure.errors.0 }}</div>{% endif %}
+                    </div>
                 </div>
             </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn btn-submit">{{ action }} Project</button>
-                <a href="{% url 'infrastructure:project_list' %}" class="btn btn-cancel">Cancel</a>
+            <div class="fieldset wizard-panel" id="project-schedule" data-wizard-step="3" hidden>
+                <div class="section-heading">
+                    <span class="section-number">4</span>
+                    <div><h3>Project Schedule</h3><p>Enter procurement milestones and the planned and actual delivery timeline.</p></div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group"><label for="{{ form.posting_date.id_for_label }}">Posting Date</label>{{ form.posting_date }}{% if form.posting_date.errors %}<div class="error-message">{{ form.posting_date.errors.0 }}</div>{% endif %}</div>
+                    <div class="form-group"><label for="{{ form.pre_bid_date.id_for_label }}">Pre-Bid Date</label>{{ form.pre_bid_date }}{% if form.pre_bid_date.errors %}<div class="error-message">{{ form.pre_bid_date.errors.0 }}</div>{% endif %}</div>
+                    <div class="form-group"><label for="{{ form.bidding_date.id_for_label }}">Bidding Date</label>{{ form.bidding_date }}{% if form.bidding_date.errors %}<div class="error-message">{{ form.bidding_date.errors.0 }}</div>{% endif %}</div>
+                    <div class="form-group"><label for="{{ form.notice_award_date.id_for_label }}">Notice of Award</label>{{ form.notice_award_date }}{% if form.notice_award_date.errors %}<div class="error-message">{{ form.notice_award_date.errors.0 }}</div>{% endif %}</div>
+                    <div class="form-group">
+                        <label for="{{ form.notice_to_proceed_date.id_for_label }}">Notice to Proceed</label>
+                        {{ form.notice_to_proceed_date }}
+                        {% if form.notice_to_proceed_date.errors %}
+                            <div class="error-message">{{ form.notice_to_proceed_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.duration_days.id_for_label }}">Duration (days)</label>
+                        {{ form.duration_days }}
+                        {% if form.duration_days.errors %}
+                            <div class="error-message">{{ form.duration_days.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.planned_start_date.id_for_label }}">Planned Start Date</label>
+                        {{ form.planned_start_date }}
+                        {% if form.planned_start_date.errors %}
+                            <div class="error-message">{{ form.planned_start_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.planned_end_date.id_for_label }}">Planned End Date</label>
+                        {{ form.planned_end_date }}
+                        {% if form.planned_end_date.errors %}
+                            <div class="error-message">{{ form.planned_end_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.actual_start_date.id_for_label }}">Actual Start Date</label>
+                        {{ form.actual_start_date }}
+                        {% if form.actual_start_date.errors %}
+                            <div class="error-message">{{ form.actual_start_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.actual_completion_date.id_for_label }}">Actual Completion Date</label>
+                        {{ form.actual_completion_date }}
+                        {% if form.actual_completion_date.errors %}
+                            <div class="error-message">{{ form.actual_completion_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                </div>
             </div>
+
+            <div class="fieldset wizard-panel" id="progress-status" data-wizard-step="4" hidden>
+                <div class="section-heading">
+                    <span class="section-number">5</span>
+                    <div><h3>Progress &amp; Status</h3><p>Record the current award status and completion percentages.</p></div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group full-span">
+                        <label for="{{ form.award_status.id_for_label }}">Award Status</label>
+                        {{ form.award_status }}
+                        {% if form.award_status.errors %}<div class="error-message">{{ form.award_status.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.cost_progress_percentage.id_for_label }}">Cost Progress (%)</label>
+                        {{ form.cost_progress_percentage }}
+                        {% if form.cost_progress_percentage.errors %}
+                            <div class="error-message">{{ form.cost_progress_percentage.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.physical_progress_percentage.id_for_label }}">Physical Progress (%)</label>
+                        {{ form.physical_progress_percentage }}
+                        {% if form.physical_progress_percentage.errors %}
+                            <div class="error-message">{{ form.physical_progress_percentage.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="fieldset wizard-panel" id="inspection-information" data-wizard-step="5" hidden>
+                <div class="section-heading">
+                    <span class="section-number">6</span>
+                    <div><h3>Inspection Information</h3><p>Add inspection details when a site inspection has been completed.</p></div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.inspection_date.id_for_label }}">Inspection Date</label>
+                        {{ form.inspection_date }}
+                        {% if form.inspection_date.errors %}
+                            <div class="error-message">{{ form.inspection_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.inspection_completion_percentage.id_for_label }}">Completion %</label>
+                        {{ form.inspection_completion_percentage }}
+                        {% if form.inspection_completion_percentage.errors %}
+                            <div class="error-message">{{ form.inspection_completion_percentage.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group full-span">
+                        <label for="{{ form.inspection_findings.id_for_label }}">Inspection Findings</label>
+                        {{ form.inspection_findings }}
+                        {% if form.inspection_findings.errors %}
+                            <div class="error-message">{{ form.inspection_findings.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group full-span">
+                        <label for="{{ form.inspection_remarks.id_for_label }}">Remarks</label>
+                        {{ form.inspection_remarks }}
+                        {% if form.inspection_remarks.errors %}
+                            <div class="error-message">{{ form.inspection_remarks.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+<!-- =========================================================
+     PROJECT IMAGES
+     ========================================================= -->
+
+<div class="fieldset wizard-panel" id="project-photos" data-wizard-step="6" hidden>
+
+    <div class="section-heading">
+        <span class="section-number">7</span>
+        <div><h3>Project Photos / Attachments <span class="optional-badge">Optional</span></h3><p>Upload project photos, preview them, and choose the image shown as the cover.</p></div>
+    </div>
+
+    <div class="form-group full-span">
+    
+        {{ form.images_to_delete }}
+        {{ form.cover_image_selection }}
+
+
+        <!-- =================================================
+             EXISTING PHOTOS
+             ================================================= -->
+
+        {% if form.existing_images %}
+
+            <div class="existing-images-section">
+
+                <div class="existing-images-header">
+
+                    <div>
+
+                        <h4>
+                            Existing Photos
+                        </h4>
+
+                        <p>
+                            Photos currently attached to this project.
+                        </p>
+
+                    </div>
+
+                    <span class="existing-images-count">
+
+                        {{ form.existing_images|length }}
+
+                        {% if form.existing_images|length == 1 %}
+                            photo
+                        {% else %}
+                            photos
+                        {% endif %}
+
+                    </span>
+
+                </div>
+
+
+                <div class="existing-images-grid">
+
+                    {% for image in form.existing_images %}
+
+                        <div class="existing-image{% if image.is_cover %} is-cover{% endif %}"
+                        data-image-id="{{ image.pk }}"
+                        data-cover-value="existing:{{ image.pk }}"
+                        >
+
+                            <img
+                                src="{{ image.image_url }}"
+                                alt="Project photo {{ forloop.counter }}"
+                            >
+
+                            <div class="existing-image-number">
+                                {{ forloop.counter }}
+                            </div>
+
+                        <span class="cover-photo-badge">Cover</span>
+
+                        <button
+                            type="button"
+                            class="cover-image-select"
+                            data-cover-value="existing:{{ image.pk }}"
+                        >
+                            {% if image.is_cover %}Cover photo{% else %}Set as cover{% endif %}
+                        </button>
+                        
+                        <button
+                            type="button"
+                            class="existing-image-delete"
+                            data-image-id="{{ image.pk }}"
+                            aria-label="Remove project photo {{forloop.counter}}"
+                            title="Remove photo"
+                            >
+                            ×
+                        </button>
+                        </div>
+
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             ADD NEW PHOTOS
+             ================================================= -->
+
+        <div
+            class="image-upload-area"
+            id="image-upload-area"
+        >
+
+            <div class="image-upload-content">
+
+
+                <!-- Upload Icon -->
+
+                <div class="image-upload-icon">
+
+                    <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <rect
+                            x="3"
+                            y="3"
+                            width="18"
+                            height="18"
+                            rx="2"
+                        />
+
+                        <circle
+                            cx="8.5"
+                            cy="8.5"
+                            r="1.5"
+                        />
+
+                        <path d="M21 15l-5-5L5 21"/>
+
+                    </svg>
+
+                </div>
+
+
+                <!-- Upload Text -->
+
+                <div class="image-upload-text">
+
+                    <span class="image-upload-title">
+                        Add project photos
+                    </span>
+
+                    <span class="image-upload-subtitle">
+                        Drag and drop images here or
+                    </span>
+
+                </div>
+
+
+                <!-- Browse Button -->
+
+                <label
+                    for="{{ form.project_images.id_for_label }}"
+                    class="image-upload-button"
+                >
+                    Browse Files
+                </label>
+
+
+                <!-- Actual File Input -->
+
+                {{ form.project_images }}
+
+            </div>
+
+        </div>
+
+
+        <!-- Upload Errors -->
+
+        {% if form.project_images.errors %}
+
+            <div class="error-message">
+
+                {{ form.project_images.errors.0 }}
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             NEWLY SELECTED PHOTOS
+             ================================================= -->
+
+        <div
+            class="image-preview-container"
+            id="image-preview-container"
+            hidden
+        >
+
+            <div class="image-preview-header">
+
+                <div>
+
+                    <h4>
+                        Selected Photos
+                    </h4>
+
+                    <span
+                        class="image-preview-count"
+                        id="image-preview-count"
+                    >
+                        0 images
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="image-preview-grid"
+                id="image-preview-grid"
+            ></div>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+            <div class="form-actions wizard-actions">
+                <button type="button" class="btn btn-back" data-wizard-back hidden>Back</button>
+                <a href="{% url 'engineering_projects:project_list' %}" class="btn btn-cancel">Cancel</a>
+                <button type="button" class="btn btn-next" data-wizard-next>Next</button>
+                <button type="submit" class="btn btn-submit" data-wizard-submit hidden>{{ action }} Project</button>
+            </div>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const projectForm = document.querySelector('.form-card form');
+                const categorySelect = document.getElementById('id_category');
+                const otherContainer = document.getElementById('other-category-container');
+                const otherInput = document.getElementById('id_other_category');
+
+                projectForm.querySelectorAll(
+                    '.form-group label[for]:not(.image-upload-button)'
+                ).forEach(function (label) {
+                    const field = document.getElementById(label.htmlFor);
+
+                    if (!field || field === otherInput || label.querySelector('.optional-badge, .required-marker, .conditional-required')) {
+                        return;
+                    }
+
+                    const indicator = document.createElement('span');
+                    if (field.required) {
+                        indicator.className = 'required-marker';
+                        indicator.textContent = '*';
+                        indicator.setAttribute('aria-label', 'required');
+                    } else {
+                        indicator.className = 'optional-badge';
+                        indicator.textContent = 'Optional';
+                    }
+                    label.appendChild(indicator);
+                });
+
+                projectForm.querySelectorAll('.error-message').forEach(function (message) {
+                    const group = message.closest('.form-group');
+                    if (!group) {
+                        return;
+                    }
+
+                    group.classList.add('has-error');
+                    group.querySelectorAll('input, select, textarea').forEach(function (field) {
+                        if (field.type !== 'hidden') {
+                            field.setAttribute('aria-invalid', 'true');
+                        }
+                    });
+                });
+
+                function toggleOtherCategory() {
+                    const selectedOption =
+                        categorySelect.options[categorySelect.selectedIndex];
+                    const isOther = selectedOption
+                        && selectedOption.text.trim().toLowerCase() === 'other';
+
+                    if (isOther) {
+                        otherContainer.style.display = 'block';
+                        otherInput.required = true;
+                    } else {
+                        otherContainer.style.display = 'none';
+                        otherInput.required = false;
+                        otherInput.value = '';
+                    }
+                }
+
+                categorySelect.addEventListener('change', toggleOtherCategory);
+
+                // Handles the edit form if "Other" was previously selected.
+                toggleOtherCategory();
+            });
+            </script>
         </form>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const deleteInput = document.getElementById(
+        '{{ form.images_to_delete.id_for_label }}'
+    );
+
+    const coverInput = document.getElementById(
+        '{{ form.cover_image_selection.id_for_label }}'
+    );
+
+    function updateCoverUI() {
+
+        if (!coverInput) {
+            return;
+        }
+
+        document.querySelectorAll('[data-cover-value]').forEach(function (element) {
+            const isCover = element.dataset.coverValue === coverInput.value;
+
+            if (element.classList.contains('existing-image') ||
+                element.classList.contains('image-preview')) {
+                element.classList.toggle('is-cover', isCover);
+            }
+
+            if (element.classList.contains('cover-image-select')) {
+                element.textContent = isCover ? 'Cover photo' : 'Set as cover';
+                element.setAttribute('aria-pressed', isCover ? 'true' : 'false');
+            }
+        });
+    }
+
+    function chooseFallbackCover() {
+
+        if (!coverInput || coverInput.value) {
+            updateCoverUI();
+            return;
+        }
+
+        const firstImage = document.querySelector(
+            '.existing-image[data-cover-value], .image-preview[data-cover-value]'
+        );
+
+        if (firstImage) {
+            coverInput.value = firstImage.dataset.coverValue;
+        }
+
+        updateCoverUI();
+    }
+
+    document.querySelectorAll(
+        '.existing-image .cover-image-select'
+    ).forEach(function (button) {
+        button.addEventListener('click', function () {
+            if (coverInput) {
+                coverInput.value = button.dataset.coverValue;
+                updateCoverUI();
+            }
+        });
+    });
+
+    chooseFallbackCover();
+
+    const deleteButtons = document.querySelectorAll(
+        '.existing-image-delete'
+    );
+
+    const imagesToDelete = new Set();
+
+    deleteButtons.forEach(function (button) {
+
+        button.addEventListener('click', function () {
+
+            const imageId = button.dataset.imageId;
+
+            if (!imageId) {
+                return;
+            }
+
+            const imageCard = button.closest('.existing-image');
+
+            if (!imageCard) {
+                return;
+            }
+
+            const confirmed = window.confirm(
+                'Are you sure you want to remove this photo?'
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            imagesToDelete.add(imageId);
+
+            if (deleteInput) {
+                deleteInput.value = Array.from(imagesToDelete).join(',');
+            }
+
+            imageCard.remove();
+
+            if (coverInput && coverInput.value === `existing:${imageId}`) {
+                coverInput.value = '';
+                chooseFallbackCover();
+            }
+        });
+
+    });
+
+    const input = document.getElementById(
+        '{{ form.project_images.id_for_label }}'
+    );
+
+    const uploadArea = document.getElementById(
+        'image-upload-area'
+    );
+
+    const previewContainer = document.getElementById(
+        'image-preview-container'
+    );
+
+    const previewGrid = document.getElementById(
+        'image-preview-grid'
+    );
+
+    const previewCount = document.getElementById(
+        'image-preview-count'
+    );
+
+    if (!input) {
+        return;
+    }
+
+    let selectedFiles = [];
+    let previewRenderVersion = 0;
+
+    function syncSelectedFiles() {
+
+        const dataTransfer = new DataTransfer();
+
+        selectedFiles.forEach(function (file) {
+            dataTransfer.items.add(file);
+        });
+
+        input.files = dataTransfer.files;
+    }
+
+    function renderSelectedFiles() {
+
+        const renderVersion = ++previewRenderVersion;
+
+        previewGrid.innerHTML = '';
+
+        if (selectedFiles.length === 0) {
+            previewContainer.hidden = true;
+            previewCount.textContent = '0 images';
+            return;
+        }
+
+        previewContainer.hidden = false;
+
+        previewCount.textContent =
+            `${selectedFiles.length} ${selectedFiles.length === 1 ? 'image' : 'images'}`;
+
+        selectedFiles.forEach(function (file, index) {
+
+            const reader = new FileReader();
+
+            const preview = document.createElement('div');
+
+            preview.className = 'image-preview';
+            preview.dataset.coverValue = `new:${index}`;
+
+            preview.innerHTML = `
+                <img alt="Selected image ${index + 1}">
+
+                <div class="image-preview-overlay">
+                    <span>${index + 1}</span>
+                </div>
+
+                <span class="cover-photo-badge">Cover</span>
+
+                <button
+                    type="button"
+                    class="cover-image-select"
+                    data-cover-value="new:${index}"
+                >
+                    Set as cover
+                </button>
+
+                <button
+                    type="button"
+                    class="image-preview-delete"
+                    aria-label="Remove selected image ${index + 1}"
+                    title="Remove photo"
+                >
+                    ×
+                </button>
+            `;
+
+            const removeButton = preview.querySelector(
+                '.image-preview-delete'
+            );
+
+            const coverButton = preview.querySelector(
+                '.cover-image-select'
+            );
+
+            coverButton.addEventListener('click', function () {
+                if (coverInput) {
+                    coverInput.value = `new:${index}`;
+                    updateCoverUI();
+                }
+            });
+
+            removeButton.addEventListener('click', function () {
+                if (coverInput && coverInput.value.startsWith('new:')) {
+                    const coverIndex = Number(
+                        coverInput.value.replace('new:', '')
+                    );
+
+                    if (coverIndex === index) {
+                        coverInput.value = '';
+                    } else if (coverIndex > index) {
+                        coverInput.value = `new:${coverIndex - 1}`;
+                    }
+                }
+
+                selectedFiles.splice(index, 1);
+                syncSelectedFiles();
+                renderSelectedFiles();
+            });
+
+            previewGrid.appendChild(preview);
+
+            reader.onload = function (event) {
+
+                if (renderVersion !== previewRenderVersion) {
+                    return;
+                }
+
+                preview.querySelector('img').src = event.target.result;
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        chooseFallbackCover();
+    }
+
+    input.addEventListener('change', function () {
+
+        if (coverInput && coverInput.value.startsWith('new:')) {
+            coverInput.value = '';
+        }
+
+        selectedFiles = Array.from(input.files).filter(function (file) {
+            return file.type.startsWith('image/');
+        });
+
+        syncSelectedFiles();
+        renderSelectedFiles();
+    });
+
+
+    /*
+     * Drag and drop support
+     */
+    uploadArea.addEventListener('dragover', function (event) {
+
+        event.preventDefault();
+
+        uploadArea.classList.add('is-dragging');
+    });
+
+
+    uploadArea.addEventListener('dragleave', function () {
+
+        uploadArea.classList.remove('is-dragging');
+    });
+
+
+    uploadArea.addEventListener('drop', function (event) {
+
+        event.preventDefault();
+
+        uploadArea.classList.remove('is-dragging');
+
+        const files = event.dataTransfer.files;
+
+        if (!files.length) {
+            return;
+        }
+
+        /*
+         * Transfer the dropped files to the actual file input.
+         */
+        const dataTransfer = new DataTransfer();
+
+        Array.from(files).forEach(function (file) {
+
+            if (file.type.startsWith('image/')) {
+                dataTransfer.items.add(file);
+            }
+
+        });
+
+        input.files = dataTransfer.files;
+
+        input.dispatchEvent(new Event('change'));
+    });
+
+});
+</script>
+<script src="{% static 'js/templates/projects/project_form.js' %}"></script>
 {% endblock %}

@@ -1,0 +1,11 @@
+{
+  "type": "FeatureCollection",
+  "_notice": "PLACEHOLDER DATA. Not a real Gabaldon bridge. Replace before real use.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "SAMPLE BRIDGE (placeholder)", "bridge_type": "unknown", "barangay": "SAMPLE BARANGAY 1 (placeholder)", "condition": "unknown", "is_placeholder": true },
+      "geometry": { "type": "Point", "coordinates": [121.158, 15.365] }
+    }
+  ]
+}

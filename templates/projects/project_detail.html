@@ -1,22 +1,306 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ project.title }} - Infrastructure Projects{% endblock %}
+{% block title %}{{ project_details.title }} - Infrastructure Projects{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/projects/project_detail.css' %}">
-<link rel="stylesheet" href="{% static 'css/templates/projects/project_detail_gis.css' %}">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="project-detail-container project-detail-container--gis">
-    <a href="{% url 'infrastructure:project_list' %}" class="btn btn-back">← Back to Projects</a>
+<div class="project-detail-container">
+    {% if request.user.is_superuser and request.GET.from_review %}
+        <a href="{% url 'publication_revision_detail' request.GET.from_review %}" class="btn btn-back">
+            <span aria-hidden="true">←</span> Back to Publication Review
+        </a>
+    {% else %}
+        <a href="{% url 'engineering_projects:project_list' %}" class="btn btn-back">
+            <span aria-hidden="true">←</span> Back to Projects
+        </a>
+    {% endif %}
+
+    {% if not request.user.is_superuser or not request.GET.from_review %}
+        {% include "includes/publication_workflow_panel.html" %}
+    {% endif %}
+
+    <header class="project-detail-header">
+        <div class="project-detail-hero-image" aria-hidden="true">
+            <img
+                src="{% if project_images %}{{ project_images.0.image_url }}{% else %}{{ project_placeholder_image }}{% endif %}"
+                alt=""
+            >
+        </div>
+        <div class="project-detail-hero-overlay"></div>
+
+        <div class="project-detail-header-content">
+            <div class="project-detail-heading">
+                <div class="project-title-block">
+                    <p class="project-eyebrow">{{ project_type_label }} · {{ project_code }}</p>
+                    <h2>{{ project_details.title }}</h2>
+                    <p class="project-subtitle">
+                        {{ project_details.get_category_display|default:"Uncategorized" }}
+                        {% if project_details.get_barangay_display and project_details.get_barangay_display != "Not specified" %}
+                            <span aria-hidden="true">·</span> Barangay {{ project_details.get_barangay_display }}
+                        {% endif %}
+                    </p>
+                </div>
+                {% if not request.user.is_superuser or not request.GET.from_review %}
+                    <div class="action-buttons action-buttons--detail">
+                        <a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit">Edit Project</a>
+                        <a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete">Delete Project</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="project-meta" aria-label="Project summary">
+                <div class="meta-item">
+                    <span class="meta-label">Status</span>
+                    <span class="status-badge status-{{ project_status_class }}">{{ project_details.get_status_display }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Approved Budget</span>
+                    <span class="meta-value">
+                        {% if project_budget_value is not None %}₱{{ project_budget_value|floatformat:2 }}{% else %}Not recorded{% endif %}
+                    </span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Progress</span>
+                    <span class="meta-value">
+                        {% if project_progress_value is not None %}{{ project_progress_value|floatformat:1 }}%{% else %}Not recorded{% endif %}
+                    </span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Target Completion</span>
+                    <span class="meta-value">{{ project_target_completion_date|date:"M d, Y"|default:"Not assigned" }}</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Project Information Section -->
+    <section class="detail-section">
+        <h3>Project Information</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">Title</span>
+                <span class="detail-value">{{ project_details.title }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Category</span>
+                <span class="detail-value">{{ project_details.get_category_display }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Implementing Office</span>
+                <span class="detail-value">{{ project_details.implementing_office }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Status</span>
+                <span class="detail-value">{{ project_details.get_status_display }}</span>
+            </div>
+            <div class="detail-item full-width">
+                <span class="detail-label">Description</span>
+                <div class="detail-value">{{ project_details.description|default:"No description provided." }}</div>
+            </div>
+        </div>
+    </section>
+
+    {% if project_images %}
+    <section class="detail-section">
+        <h3>Project Images</h3>
+        <div class="project-image-grid">
+            {% for image in project_images %}
+            <figure class="project-image-card">
+                <img src="{{ image.image_url }}" alt="{{ project_details.title }} photo {{ forloop.counter }}" loading="lazy">
+                {% if image.is_cover %}<figcaption>Cover photo</figcaption>{% endif %}
+            </figure>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Location Section -->
+    <section class="detail-section">
+        <h3>Location</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">Street</span>
+                <span class="detail-value">{{ project_details.street|default:"Not specified" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Barangay</span>
+                <span class="detail-value">{{ project_details.get_barangay_display|default:"Not specified" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Municipality</span>
+                <span class="detail-value">{{ project_details.municipality|default:"Not specified" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Province</span>
+                <span class="detail-value">{{ project_details.province|default:"Not specified" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Latitude</span>
+                <span class="detail-value">{{ project_details.latitude|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Longitude</span>
+                <span class="detail-value">{{ project_details.longitude|default:"Not assigned" }}</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contractor & Procurement Section -->
+    <section class="detail-section">
+        <h3>Contractor & Procurement</h3>
+        <div class="detail-grid">
+            <div class="detail-item full-width">
+                <span class="detail-label">Contractor</span>
+                <span class="detail-value">{{ project_details.contractor|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Procurement Method</span>
+                <span class="detail-value">{{ project_details.get_procurement_method_display|default:"Not specified" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Award Status</span>
+                <span class="detail-value">{{ project_details.get_award_status_display|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Posting Date</span>
+                <span class="detail-value">{{ project_details.posting_date|date:"M d, Y"|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Pre-Bid Date</span>
+                <span class="detail-value">{{ project_details.pre_bid_date|date:"M d, Y"|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Bidding Date</span>
+                <span class="detail-value">{{ project_details.bidding_date|date:"M d, Y"|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Notice of Award</span>
+                <span class="detail-value">{{ project_details.notice_award_date|date:"M d, Y"|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Notice to Proceed</span>
+                <span class="detail-value">{{ project_details.notice_to_proceed_date|date:"M d, Y"|default:"Not assigned" }}</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Financial Information Section -->
+    <section class="detail-section">
+        <h3>Financial Information</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">Approved Budget (ABC)</span>
+                <span class="detail-value">{% if project_details.abc_amount %}₱{{ project_details.abc_amount|floatformat:2 }}{% else %}Not assigned{% endif %}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Contract Price</span>
+                <span class="detail-value">{% if project_details.contract_price %}₱{{ project_details.contract_price|floatformat:2 }}{% else %}Not assigned{% endif %}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Actual Expenditure</span>
+                <span class="detail-value">{% if project_details.actual_expenditure %}₱{{ project_details.actual_expenditure|floatformat:2 }}{% else %}Not recorded{% endif %}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Source of Fund</span>
+                <span class="detail-value">{{ project_details.source_of_fund|default:"Not specified" }}</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Schedule & Progress Section -->
+    <section class="detail-section">
+        <h3>Schedule & Progress</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">Planned Start Date</span>
+                <span class="detail-value">{{ project_details.planned_start_date|date:"M d, Y"|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Planned End Date</span>
+                <span class="detail-value">{{ project_details.planned_end_date|date:"M d, Y"|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Actual Start Date</span>
+                <span class="detail-value">{{ project_details.actual_start_date|date:"M d, Y"|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Actual Completion Date</span>
+                <span class="detail-value">{{ project_details.actual_completion_date|date:"M d, Y"|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Duration (days)</span>
+                <span class="detail-value">{{ project_details.duration_days|default:"Not calculated" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Cost Progress</span>
+                <span class="detail-value">{% if project_details.cost_progress_percentage is not None %}{{ project_details.cost_progress_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Physical Progress</span>
+                <span class="detail-value">{% if project_details.physical_progress_percentage is not None %}{{ project_details.physical_progress_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Inspection Records Section -->
+    {% if project_details.inspection_date or project_details.inspection_findings or project_details.inspection_remarks %}
+    <section class="detail-section">
+        <h3>Inspection Records</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">Inspection Date</span>
+                <span class="detail-value">{{ project_details.inspection_date|date:"M d, Y"|default:"Not recorded" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Completion %</span>
+                <span class="detail-value">{% if project_details.inspection_completion_percentage is not None %}{{ project_details.inspection_completion_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
+            </div>
+            <div class="detail-item full-width">
+                <span class="detail-label">Inspection Findings</span>
+                <div class="detail-value">{{ project_details.inspection_findings|default:"No findings recorded." }}</div>
+            </div>
+            <div class="detail-item full-width">
+                <span class="detail-label">Remarks</span>
+                <div class="detail-value">{{ project_details.inspection_remarks|default:"No remarks recorded." }}</div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- GIS & Map Section -->
     {% include "projects/project_detail_gis_section.html" %}
+
+    <!-- Project Metadata Section -->
+    <section class="detail-section">
+        <h3>Project Metadata</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">Created By</span>
+                <span class="detail-value">
+                    {% if project_details.created_by %}
+                        {{ project_details.created_by.get_full_name|default:project_details.created_by.username }}
+                    {% else %}
+                        Unknown
+                    {% endif %}
+                </span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Created At</span>
+                <span class="detail-value">{{ project_details.created_at|date:"M d, Y \a\t H:i" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Last Updated</span>
+                <span class="detail-value">{{ project_details.updated_at|date:"M d, Y \a\t H:i" }}</span>
+            </div>
+        </div>
+    </section>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="{% static 'js/templates/projects/project_detail_gis.js' %}"></script>
 {% endblock %}

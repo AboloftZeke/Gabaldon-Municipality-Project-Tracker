@@ -22,6 +22,7 @@
                 <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
                 {% if user.is_superuser %}
                     <li><a href="{% url 'user_list' %}">User Management</a></li>
+                    <li><a href="{% url 'publication_review_queue' %}">Publication Review</a></li>
                 {% endif %}
                 <li><a href="{% url 'logout' %}">Logout</a></li>
             </ul>
@@ -39,6 +40,7 @@
             {% if user.is_superuser %}
                 <li><a href="{% url 'user_list' %}">User Management</a></li>
                 <li><a href="{% url 'user_create' %}">Create User</a></li>
+                <li><a href="{% url 'publication_review_queue' %}">Publication Review</a></li>
             {% endif %}
             {% if user.profile.department == 'engineer' and not user.is_superuser %}
                 <li><a href="{% url 'engineering_projects:project_dashboard' %}">Projects</a></li>
@@ -99,6 +101,11 @@
             <p class="stat-value">{{ total_staff }}</p>
             <div class="stat-subtitle">Active staff accounts</div>
         </div>
+        <div class="stat-card">
+            <h3>Pending Reviews</h3>
+            <p class="stat-value">{{ pending_publication_reviews }}</p>
+            <div class="stat-subtitle">Projects awaiting confirmation</div>
+        </div>
     </div>
     {% endif %}
 
@@ -116,6 +123,11 @@
                 <div class="action-card-icon">✓</div>
                 <div class="action-card-title">Create New User</div>
                 <div class="action-card-desc">Add a new user account to Engineering Office, Mayor's Office, or Admin</div>
+            </a>
+            <a href="{% url 'publication_review_queue' %}" class="action-card">
+                <div class="action-card-icon">✓</div>
+                <div class="action-card-title">Review Public Projects</div>
+                <div class="action-card-desc">Review, approve, publish, or return submitted project revisions</div>
             </a>
         </div>
     </div>
@@ -169,25 +181,6 @@
     </div>
     {% endif %}
 
-    <!-- Quick Actions Section -->
-    <div class="dashboard-section">
-        <h3><span class="section-icon">■</span>Quick Actions</h3>
-        <div class="quick-actions">
-            <h4>Common Tasks</h4>
-            {% if user.is_superuser %}
-                <a href="{% url 'user_list' %}" class="action-button">Manage Users</a>
-                <a href="{% url 'user_create' %}" class="action-button">Add New User</a>
-            {% endif %}
-            {% if user.profile.department == 'engineer' and not user.is_superuser %}
-                <a href="{% url 'engineering_projects:project_create' %}" class="action-button">Create Project</a>
-                <a href="{% url 'engineering_projects:project_dashboard' %}" class="action-button">Go to Projects</a>
-            {% endif %}
-            {% if user.profile.department == 'mayor' and not user.is_superuser %}
-                <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="action-button">Create Project</a>
-                <a href="{% url 'mayor_projects:non_infrastructure_project_dashboard' %}" class="action-button">Go to Programs</a>
-            {% endif %}
-            <a href="{% url 'logout' %}" class="action-button secondary">Sign Out</a>
-        </div>
-    </div>
+
 </div>
 {% endblock %}

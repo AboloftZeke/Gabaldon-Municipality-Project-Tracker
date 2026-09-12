@@ -1,0 +1,194 @@
+/* =========================================
+   NON-INFRASTRUCTURE SIDEBAR
+   ========================================= */
+
+.sidebar {
+    width: 280px;
+    min-width: 280px;
+    flex-shrink: 0;
+
+    background: #ffffff;
+    border-right: 1px solid #d1d5db;
+
+    min-height: calc(100vh - 80px);
+
+    padding: 2rem 0;
+}
+
+
+/* =========================================
+   SIDEBAR SECTIONS
+   ========================================= */
+
+.sidebar-section {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.sidebar-section:last-child {
+    border-bottom: none;
+}
+
+
+/* =========================================
+   SIDEBAR TITLES
+   ========================================= */
+
+.sidebar-title {
+    margin: 0 0 1rem;
+
+    font-size: 0.75rem;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    color: #6b7280;
+}
+
+
+/* =========================================
+   SIDEBAR MENU
+   ========================================= */
+
+.sidebar-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar-menu li {
+    margin-bottom: 0.5rem;
+}
+
+
+.sidebar-menu a {
+    display: block;
+
+    padding: 0.75rem 1rem;
+
+    border-radius: 8px;
+
+    color: #111827;
+    text-decoration: none;
+
+    font-size: 0.94rem;
+    font-weight: 500;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.sidebar-menu a:hover {
+    background: #f3f4f6;
+    color: #2e6f40;
+
+    transform: translateX(4px);
+}
+
+
+.sidebar-menu a.active {
+    background: #2e6f40;
+    color: #ffffff;
+}
+
+
+/* =========================================
+   ACCOUNT AREA
+   ========================================= */
+
+.quick-actions {
+    padding: 1rem;
+
+    background: #ffffff;
+
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+}
+
+
+.quick-actions h4 {
+    margin: 0 0 1rem;
+
+    font-size: 0.95rem;
+    font-weight: 700;
+
+    color: #111827;
+}
+
+
+/* =========================================
+   SIGN OUT BUTTON
+   ========================================= */
+
+.action-button {
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    padding: 0.7rem 1rem;
+
+    border-radius: 8px;
+
+    text-decoration: none;
+
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.action-button.secondary {
+    background: transparent;
+
+    color: #2e6f40;
+
+    border: 1px solid #2e6f40;
+}
+
+
+.action-button.secondary:hover {
+    background: #f3f4f6;
+
+    transform: translateY(-2px);
+}
+
+
+/* =========================================
+   MOBILE SIDEBAR
+   ========================================= */
+
+@media (max-width: 768px) {
+
+    .sidebar {
+        width: 100%;
+        min-width: 0;
+
+        min-height: auto;
+
+        border-right: none;
+        border-bottom: 1px solid #d1d5db;
+    }
+
+}
+/* =========================================
+   PAGE LAYOUT
+   ========================================= */
+
+.page-layout {
+    display: flex;
+    width: 100%;
+    min-height: calc(100vh - 80px);
+}
+
+.dashboard-container {
+    flex: 1;
+    min-width: 0;
+}

@@ -1,0 +1,11 @@
+{
+  "type": "FeatureCollection",
+  "_notice": "PLACEHOLDER DATA. Road names/paths below are fictitious samples, not real Gabaldon roads. Replace with an OSM extract or LGU dataset before real use.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "SAMPLE ROAD (placeholder)", "road_type": "Municipal Road", "is_placeholder": true },
+      "geometry": { "type": "LineString", "coordinates": [[121.152,15.362],[121.158,15.365],[121.163,15.368]] }
+    }
+  ]
+}

@@ -13,6 +13,8 @@
         office: modal.querySelector('[data-project-modal-field="office"]'),
         location: modal.querySelector('[data-project-modal-field="location"]'),
         category: modal.querySelector('[data-project-modal-field="category"]'),
+        proponent: modal.querySelector('[data-project-modal-field="proponent"]'),
+        venue: modal.querySelector('[data-project-modal-field="venue"]'),
         contractor: modal.querySelector('[data-project-modal-field="contractor"]'),
         procurement_method: modal.querySelector('[data-project-modal-field="procurement_method"]'),
         award_status: modal.querySelector('[data-project-modal-field="award_status"]'),
@@ -45,6 +47,8 @@
         office: modal.querySelector('[data-project-modal-group="office"]'),
         location: modal.querySelector('[data-project-modal-group="location"]'),
         category: modal.querySelector('[data-project-modal-group="category"]'),
+        proponent: modal.querySelector('[data-project-modal-group="proponent"]'),
+        venue: modal.querySelector('[data-project-modal-group="venue"]'),
         contractor: modal.querySelector('[data-project-modal-group="contractor"]'),
         procurement_method: modal.querySelector('[data-project-modal-group="procurement_method"]'),
         award_status: modal.querySelector('[data-project-modal-group="award_status"]'),
@@ -106,6 +110,8 @@
         setField('office', trigger.dataset.projectOffice || trigger.dataset.projectImplementingOffice);
         setField('location', trigger.dataset.projectLocation);
         setField('category', trigger.dataset.projectCategory);
+        setField('proponent', trigger.dataset.projectProponent);
+        setField('venue', trigger.dataset.projectVenue);
         setField('contractor', trigger.dataset.projectContractor);
         setField('procurement_method', trigger.dataset.projectProcurementMethod);
         setField('award_status', trigger.dataset.projectStatusLabel || trigger.dataset.projectAwardStatus);
@@ -133,7 +139,14 @@
         setField('description', trigger.dataset.projectDescription);
 
         if (detailLink) {
-            detailLink.href = trigger.dataset.projectDetailUrl || '#';
+            const detailUrl = (trigger.dataset.projectDetailUrl || '').trim();
+            detailLink.hidden = detailUrl.length === 0;
+
+            if (detailUrl) {
+                detailLink.href = detailUrl;
+            } else {
+                detailLink.removeAttribute('href');
+            }
         }
 
         const statusLabel = trigger.dataset.projectStatusLabel || trigger.dataset.projectAwardStatusLabel || trigger.dataset.projectAwardStatus || '';
@@ -157,15 +170,21 @@
     }
 
     document.addEventListener('click', function (event) {
-        const trigger = event.target.closest('[data-project-modal-trigger]');
-        if (trigger) {
+        const closeButton = event.target.closest('[data-project-modal-close]');
+
+        if (closeButton) {
             event.preventDefault();
-            openModal(trigger);
+            event.stopPropagation();
+            closeModal();
             return;
         }
 
-        if (event.target.closest('[data-project-modal-close]')) {
-            closeModal();
+        const trigger = event.target.closest('[data-project-modal-trigger]');
+
+        if (trigger) {
+            event.preventDefault();
+            event.stopPropagation();
+            openModal(trigger);
         }
     });
 

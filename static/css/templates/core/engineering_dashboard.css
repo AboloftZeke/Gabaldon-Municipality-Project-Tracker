@@ -1,18 +1,18 @@
 :root {
-        --panel-blue: #1d4ed8;
+        --panel-blue: #1a5a3a;
         --panel-overlay: rgba(6, 18, 34, 0.5);
         --panel-card: rgba(8, 22, 40, 0.58);
         --white: #ffffff;
         --ink-900: #111827;
         --ink-600: #4b5563;
         --line: #d1d5db;
-        --focus: #1d4ed8;
-        --btn: #1d4ed8;
-        --btn-hover: #1e40af;
+        --focus:#1a5a3a;
+        --btn: #1a5a3a;
+        --btn-hover: #1a5a3a;
         --success-bg: #ecfdf5;
         --success-text: #065f46;
         --bg-light: #f9fafb;
-        --accent-blue: #0284c7;
+        --accent-blue: #3b82f6;
     }
 
     * {
@@ -475,3 +475,8 @@
             height: 80px;
         }
     }
+
+.welcome_user { display: flex;
+    align-items: center;
+    gap: 1rem;  
+}

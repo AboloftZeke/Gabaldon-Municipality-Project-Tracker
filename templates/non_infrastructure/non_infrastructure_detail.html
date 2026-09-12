@@ -1,23 +1,289 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ project.title }} - Non-Infrastructure Projects{% endblock %}
+{% block title %}{{ project_name }} - Non-Infrastructure Projects{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_detail.css' %}">
-<link rel="stylesheet" href="{% static 'css/templates/projects/project_detail_gis.css' %}">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="project-detail-container project-detail-container--gis">
-    <a href="{% url 'non_infrastructure:non_infrastructure_project_list' %}" class="btn btn-back">← Back to Projects</a>
-    {% include "projects/project_detail_gis_section.html" %}
+
+<div class="project-detail-container">
+
+    <!-- Back Button -->
+    {% if request.user.is_superuser and request.GET.from_review %}
+        <a href="{% url 'publication_revision_detail' request.GET.from_review %}" class="btn btn-back">
+            ← Back to Publication Review
+        </a>
+    {% else %}
+        <a href="{% url 'mayor_dashboard' %}" class="btn btn-back">
+            ← Back to Dashboard
+        </a>
+    {% endif %}
+
+    {% if not request.user.is_superuser or not request.GET.from_review %}
+        {% include "includes/publication_workflow_panel.html" %}
+    {% endif %}
+
+
+    <!-- Project Header -->
+    <div class="project-detail-header">
+
+        <div class="project-detail-header-media" aria-hidden="true">
+            {% if project_images %}
+                <img src="{{ project_images.0.image_url }}" alt="">
+            {% else %}
+                <img src="{% static 'images/project-placeholder.svg' %}" alt="">
+            {% endif %}
+        </div>
+        <div class="project-detail-header-overlay"></div>
+
+        <div class="project-detail-header-content">
+            <h2>{{ project_name }}</h2>
+
+            <div class="project-meta">
+
+                <!-- Project Code -->
+                <div class="meta-item">
+                    <div class="meta-label">Project Code</div>
+                    <div class="meta-value">
+                        {{ project_code }}
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="meta-item">
+                    <div class="meta-label">Status</div>
+                    <div class="meta-value">
+                        {{ project_status }}
+                    </div>
+                </div>
+
+                <!-- Category -->
+                <div class="meta-item">
+                    <div class="meta-label">Category</div>
+                    <div class="meta-value">
+                        {{ project_category|default:"N/A" }}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- Project Information -->
+    <div class="project-section">
+
+        <h3>Project Information</h3>
+
+        <div class="section-content">
+
+            <!-- Proponent -->
+            <div class="content-item">
+                <div class="content-label">Proponent</div>
+                <div class="content-value">
+                    {{ project_proponent|default:"N/A" }}
+                </div>
+            </div>
+
+            <!-- Beneficiaries -->
+            <div class="content-item">
+                <div class="content-label">Beneficiaries</div>
+                <div class="content-value">
+                    {% if project_beneficiaries %}
+                        {{ project_beneficiaries }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Project Manager -->
+            <div class="content-item">
+                <div class="content-label">Project Manager</div>
+                <div class="content-value">
+                    {{ project_manager }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Schedule -->
+    <div class="project-section">
+
+        <h3>Schedule</h3>
+
+        <div class="section-content">
+
+            <!-- Event Date -->
+            <div class="content-item">
+                <div class="content-label">Event Date</div>
+                <div class="content-value">
+                    {% if project_event_date %}
+                        {{ project_event_date|date:"F d, Y" }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Start Time -->
+            <div class="content-item">
+                <div class="content-label">Start Time</div>
+                <div class="content-value">
+                    {% if project_start_time %}
+                        {{ project_start_time|time:"g:i A" }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- End Time -->
+            <div class="content-item">
+                <div class="content-label">End Time</div>
+                <div class="content-value">
+                    {% if project_end_time %}
+                        {{ project_end_time|time:"g:i A" }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Venue -->
+            <div class="content-item">
+                <div class="content-label">Venue</div>
+                <div class="content-value">
+                    {{ project_venue|default:"N/A" }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Location -->
+    <div class="project-section">
+
+        <h3>Location</h3>
+
+        {% if project_address %}
+
+            <div class="section-content">
+
+                {% if project_address.street %}
+                    <div class="content-item">
+                        <div class="content-label">Street</div>
+                        <div class="content-value">
+                            {{ project_address.street }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if project_address.barangay %}
+                    <div class="content-item">
+                        <div class="content-label">Barangay</div>
+                        <div class="content-value">
+                            {{ project_address.barangay }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="content-item">
+                    <div class="content-label">Municipality</div>
+                    <div class="content-value">
+                        {{ project_address.municipality|default:"Gabaldon" }}
+                    </div>
+                </div>
+
+                <div class="content-item">
+                    <div class="content-label">Province</div>
+                    <div class="content-value">
+                        {{ project_address.province|default:"Nueva Ecija" }}
+                    </div>
+                </div>
+
+            </div>
+
+        {% else %}
+
+            <div class="section-content">
+                <div class="content-item">
+                    <div class="content-value">
+                        No location assigned.
+                    </div>
+                </div>
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- Description -->
+    <div class="project-section">
+
+        <h3>Description</h3>
+
+        <div class="section-content">
+
+            <div class="content-item">
+
+                <div class="content-value">
+                    {% if project_description %}
+                        {{ project_description }}
+                    {% else %}
+                        No description provided.
+                    {% endif %}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Project Images -->
+    {% if project_images %}
+
+        <div class="project-section">
+
+            <h3>Project Images</h3>
+
+            <div class="section-content">
+
+                {% for image in project_images %}
+
+                    <div class="project-image">
+                        <img
+                            src="{{ image.image_url }}"
+                            alt="{{ project_name }}"
+                            style="width: 100%; height: auto; border-radius: 8px;"
+                        >
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    {% endif %}
+
+
 </div>
+
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="{% static 'js/templates/projects/project_detail_gis.js' %}"></script>
 {% endblock %}
-
