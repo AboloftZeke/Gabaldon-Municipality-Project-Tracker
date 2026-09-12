@@ -19,17 +19,11 @@ from apps.system.publication_service import (
 )
 
 
-from apps.system.models import UserFlag
-
-def _department_for_user(user):
-    if not user or not user.is_authenticated:
-        return None
-
-    if user.is_superuser:
-        return "admin"
-
-    flag = UserFlag.objects.filter(user=user).only("department").first()
-    return flag.department if flag and flag.department else None
+from apps.system.permissions import (
+    can_manage_infrastructure,
+    department_for_user as _department_for_user,
+    is_system_admin,
+)
 
 
 class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -38,7 +32,7 @@ class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     raise_exception = True
 
     def test_func(self):
-        if self.request.user.is_superuser:
+        if is_system_admin(self.request.user):
             return True
         department = _department_for_user(self.request.user)
         return department == 'engineer'
@@ -50,11 +44,7 @@ class EngineerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
     raise_exception = True
 
     def test_func(self):
-        # Explicitly exclude superusers/admins
-        if self.request.user.is_superuser:
-            return False
-        department = _department_for_user(self.request.user)
-        return department == 'engineer'
+        return can_manage_infrastructure(self.request.user)
 
     def get_namespaced_url(self, url_name, *args, **kwargs):
         """
@@ -652,7 +642,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
                 'engineering_projects:project_submit_for_review',
                 args=[project.pk],
             )
-            context['can_manage_publication'] = not self.request.user.is_superuser
+            context['can_manage_publication'] = can_manage_infrastructure(self.request.user)
 
         return context
 

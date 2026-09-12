@@ -19,17 +19,11 @@ from apps.system.publication_service import (
 )
 
 
-from apps.system.models import UserFlag
-
-def _department_for_user(user):
-    if not user or not user.is_authenticated:
-        return None
-
-    if user.is_superuser:
-        return "admin"
-
-    flag = UserFlag.objects.filter(user=user).only("department").first()
-    return flag.department if flag and flag.department else None
+from apps.system.permissions import (
+    can_manage_non_infrastructure,
+    department_for_user as _department_for_user,
+    is_system_admin,
+)
 
 
 class MayorsOfficeOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -38,11 +32,7 @@ class MayorsOfficeOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
     raise_exception = True
 
     def test_func(self):
-        # Explicitly exclude superusers/admins
-        if self.request.user.is_superuser:
-            return False
-        department = _department_for_user(self.request.user)
-        return department == 'mayor'
+        return can_manage_non_infrastructure(self.request.user)
 
 
 class MayorsOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -51,7 +41,7 @@ class MayorsOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     raise_exception = True
 
     def test_func(self):
-        if self.request.user.is_superuser:
+        if is_system_admin(self.request.user):
             return True
         department = _department_for_user(self.request.user)
         return department == 'mayor'
@@ -63,12 +53,10 @@ class MayorsOfficeEditMixin(LoginRequiredMixin, UserPassesTestMixin):
     raise_exception = True
 
     def test_func(self):
-        # Allow admins
-        if self.request.user.is_superuser:
-            return True
-        # Allow Mayor's office only, deny engineering office
-        department = _department_for_user(self.request.user)
-        return department == 'mayor'
+        return (
+            is_system_admin(self.request.user)
+            or can_manage_non_infrastructure(self.request.user)
+        )
 
     def get_namespaced_url(self, url_name, *args, **kwargs):
         """
@@ -290,7 +278,7 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
                 'mayor_projects:non_infrastructure_project_submit_for_review',
                 args=[compat_project.pk],
             )
-            context['can_manage_publication'] = not self.request.user.is_superuser
+            context['can_manage_publication'] = can_manage_non_infrastructure(self.request.user)
 
         return context
 
