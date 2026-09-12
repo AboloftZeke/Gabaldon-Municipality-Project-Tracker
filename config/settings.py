@@ -16,6 +16,10 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
+# Allow third-party resources such as OpenStreetMap tiles to receive the site
+# origin as the Referer without exposing the full path or query string.
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
 
 # Application definition
 
