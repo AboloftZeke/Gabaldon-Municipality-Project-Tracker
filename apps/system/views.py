@@ -75,7 +75,7 @@ class AdminRequiredMixin(StaffRequiredMixin):
 class LoginView(View):
     """
     Handle user login with Django's authentication system.
-    Valid credentials proceed to email OTP verification before the user's
+    When enabled, valid credentials proceed to email OTP verification before the user's
     role-specific dashboard is opened.
     """
     template_name = 'core/login.html'
@@ -95,6 +95,11 @@ class LoginView(View):
                     self.template_name,
                     {'error': 'Your account does not have access to this module.'}
                 )
+            if not settings.LOGIN_OTP_ENABLED:
+                request.session.pop(PENDING_LOGIN_OTP_SESSION_KEY, None)
+                login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
+                request.session.set_expiry(None)
+                return _redirect_authenticated_user(user)
             if not user.email:
                 return render(
                     request,

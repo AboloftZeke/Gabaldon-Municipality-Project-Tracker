@@ -135,6 +135,7 @@ EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=10, cast=int)
 PASSWORD_RESET_TIMEOUT = config('PASSWORD_RESET_TIMEOUT', default=86400, cast=int)
 
 # Email OTP controls for the second login step.
+LOGIN_OTP_ENABLED = config('LOGIN_OTP_ENABLED', default=True, cast=bool)
 LOGIN_OTP_TIMEOUT = config('LOGIN_OTP_TIMEOUT', default=300, cast=int)
 LOGIN_OTP_MAX_ATTEMPTS = config('LOGIN_OTP_MAX_ATTEMPTS', default=5, cast=int)
 LOGIN_OTP_RESEND_COOLDOWN = config('LOGIN_OTP_RESEND_COOLDOWN', default=60, cast=int)

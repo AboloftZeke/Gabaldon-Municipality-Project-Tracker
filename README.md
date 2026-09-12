@@ -202,6 +202,14 @@ replaced. Resends have a 60-second cooldown and are limited to five codes per
 15-minute window. These limits can be adjusted using the `LOGIN_OTP_*`
 variables documented in `.env.example`.
 
+For testing, set `LOGIN_OTP_ENABLED=False` in your `.env` file or deployment
+environment variables and restart the application. Valid username/password
+credentials then sign staff users in directly to their role-specific dashboard,
+without requiring an email address or sending a login code. Password and account
+access checks still apply. Account setup and password-reset emails are unchanged.
+Set `LOGIN_OTP_ENABLED=True` (the default), or remove the override and restart,
+to restore login verification. Keep it enabled in production.
+
 ## Security Notes
 
 ⚠️ **Development Only Settings**

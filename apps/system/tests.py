@@ -1726,6 +1726,7 @@ class UserCreateConfirmViewTests(TestCase):
 
 @override_settings(
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    LOGIN_OTP_ENABLED=True,
     LOGIN_OTP_TIMEOUT=300,
     LOGIN_OTP_MAX_ATTEMPTS=5,
     LOGIN_OTP_RESEND_COOLDOWN=60,
@@ -2079,6 +2080,7 @@ class PublicPasswordResetTests(TestCase):
 
 @override_settings(
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    LOGIN_OTP_ENABLED=True,
     LOGIN_OTP_TIMEOUT=300,
     LOGIN_OTP_MAX_ATTEMPTS=5,
     LOGIN_OTP_RESEND_COOLDOWN=60,
@@ -2108,6 +2110,42 @@ class LoginOTPTests(TestCase):
         match = re.search(r'\b(\d{6})\b', mail.outbox[index].body)
         self.assertIsNotNone(match)
         return match.group(1)
+
+    @override_settings(LOGIN_OTP_ENABLED=False)
+    def test_disabled_otp_logs_in_without_email_and_clears_pending_challenge(self):
+        self.user.email = ''
+        self.user.save(update_fields=['email'])
+        session = self.client.session
+        session['pending_login_otp_challenge'] = 'stale-challenge'
+        session.save()
+
+        response = self._start_login()
+
+        self.assertRedirects(response, reverse('engineering_dashboard'),
+                             fetch_redirect_response=False)
+        self.assertEqual(int(self.client.session['_auth_user_id']), self.user.pk)
+        self.assertNotIn('pending_login_otp_challenge', self.client.session)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertFalse(LoginOTPChallenge.objects.exists())
+
+    @override_settings(LOGIN_OTP_ENABLED=False)
+    def test_disabled_otp_still_rejects_invalid_or_unauthorized_accounts(self):
+        for changes in ({'password': 'wrong'}, {'is_active': False}, {'is_staff': False}):
+            with self.subTest(changes=changes):
+                self.user.set_password('ValidLoginPass!2026')
+                self.user.is_active = True
+                self.user.is_staff = True
+                for key, value in changes.items():
+                    if key == 'password':
+                        self.user.set_password(value)
+                    else:
+                        setattr(self.user, key, value)
+                self.user.save()
+                response = self._start_login()
+                self.assertEqual(response.status_code, 200)
+                self.assertNotIn('_auth_user_id', self.client.session)
+                self.assertEqual(len(mail.outbox), 0)
+                self.assertFalse(LoginOTPChallenge.objects.exists())
 
     def test_valid_credentials_send_hashed_otp_without_authenticating(self):
         response = self._start_login()
