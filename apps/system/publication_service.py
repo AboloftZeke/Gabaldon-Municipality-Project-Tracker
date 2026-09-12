@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from .models import Project, ProjectPublicationRevision
 from .publication_snapshots import build_project_publication_snapshot
+from .permissions import can_review_revision
 from .publication_workflow import (
     PublicationStatus,
     validate_publication_transition,
@@ -30,7 +31,7 @@ def _require_admin(actor):
     _require_authenticated(actor)
     if not actor.is_superuser:
         raise PermissionDenied(
-            'Only an administrator can review or publish revisions.',
+            'Only an administrator can publish or archive revisions.',
         )
 
 
@@ -122,8 +123,10 @@ def submit_publication_revision(revision, actor):
 
 @transaction.atomic
 def review_publication_revision(revision, reviewer, decision, notes=''):
-    """Record an administrator's approval or return/rejection decision."""
-    _require_admin(reviewer)
+    """Record the responsible office Head's review, excluding self-review."""
+    locked_revision = _locked_revision(revision)
+    if not can_review_revision(reviewer, locked_revision):
+        raise PermissionDenied('You cannot review this publication submission.')
     allowed_decisions = {
         PublicationStatus.APPROVED,
         PublicationStatus.NEEDS_REVISION,
@@ -148,7 +151,6 @@ def review_publication_revision(revision, reviewer, decision, notes=''):
             'Review notes are required when returning or rejecting a revision.',
         )
 
-    locked_revision = _locked_revision(revision)
     validate_publication_transition(
         locked_revision.status,
         normalized_decision,

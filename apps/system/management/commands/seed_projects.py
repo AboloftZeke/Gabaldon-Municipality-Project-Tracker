@@ -270,6 +270,7 @@ class Command(BaseCommand):
         department,
         is_superuser=False,
         is_staff=False,
+        role=None,
     ):
         user, created = User.objects.get_or_create(
             username=username,
@@ -303,6 +304,7 @@ class Command(BaseCommand):
             user=user,
             defaults={
                 'department': department,
+                'role': role or ('admin' if department == 'admin' else 'staff'),
             },
         )
         return user
@@ -533,10 +535,16 @@ class Command(BaseCommand):
         return project
 
     def _publish_project(self, project, *, employee, admin):
+        department = 'engineer' if project.project_type == 'infrastructure' else 'mayor'
+        head = self._seed_user(
+            username=f'seed_projects_{department}_head',
+            first_name='Seed', last_name='Office Head',
+            department=department, role='head', is_staff=True,
+        )
         revision = submit_project_for_review(project, employee)
         revision = review_publication_revision(
             revision,
-            admin,
+            head,
             PublicationStatus.APPROVED,
             notes='Automatically approved by seed_projects for test data.',
         )

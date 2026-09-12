@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -20,6 +20,10 @@ from .publication_service import (
     review_publication_revision,
 )
 from .publication_workflow import PublicationStatus
+from .permissions import (
+    can_access_publication_review, can_review_revision,
+    is_system_admin, review_project_type,
+)
 
 
 class SuperuserRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -28,6 +32,14 @@ class SuperuserRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
     def test_func(self):
         return self.request.user.is_superuser
+
+
+class OfficeHeadRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    login_url = 'login'
+    raise_exception = True
+
+    def test_func(self):
+        return review_project_type(self.request.user) is not None
 
 
 def _revision_preview(revision):
@@ -51,7 +63,7 @@ def _revision_preview(revision):
     return project_type, data
 
 
-class PublicationReviewQueueView(SuperuserRequiredMixin, ListView):
+class PublicationReviewQueueView(OfficeHeadRequiredMixin, ListView):
     model = ProjectPublicationRevision
     template_name = 'core/publication_review_queue.html'
     context_object_name = 'revisions'
@@ -64,7 +76,10 @@ class PublicationReviewQueueView(SuperuserRequiredMixin, ListView):
             requested_status = PublicationStatus.PENDING_REVIEW
         self.selected_status = requested_status
         return (
-            ProjectPublicationRevision.objects.filter(status=requested_status)
+            ProjectPublicationRevision.objects.filter(
+                status=requested_status,
+                project__project_type=review_project_type(self.request.user),
+            )
             .select_related('project', 'submitted_by', 'reviewed_by')
             .order_by('-submitted_at', '-created_at')
         )
@@ -81,7 +96,9 @@ class PublicationReviewQueueView(SuperuserRequiredMixin, ListView):
             })
         counts = {
             item['status']: item['total']
-            for item in ProjectPublicationRevision.objects.values('status')
+            for item in ProjectPublicationRevision.objects.filter(
+                project__project_type=review_project_type(self.request.user),
+            ).values('status')
             .annotate(total=Count('pk'))
         }
         context.update({
@@ -102,11 +119,23 @@ class PublicationReviewQueueView(SuperuserRequiredMixin, ListView):
         return context
 
 
-class PublicationRevisionDetailView(SuperuserRequiredMixin, DetailView):
+class PublicationRevisionDetailView(LoginRequiredMixin, DetailView):
+    login_url = 'login'
+    raise_exception = True
     model = ProjectPublicationRevision
     pk_url_kwarg = 'revision_id'
     template_name = 'core/publication_revision_detail.html'
     context_object_name = 'revision'
+
+    def get_object(self, queryset=None):
+        revision = super().get_object(queryset)
+        # Keep the existing publisher's lifecycle page without granting review.
+        publisher_record = is_system_admin(self.request.user) and revision.status in {
+            PublicationStatus.APPROVED, PublicationStatus.PUBLISHED, PublicationStatus.ARCHIVED,
+        }
+        if not publisher_record and not can_access_publication_review(self.request.user, revision):
+            raise PermissionDenied('This submission belongs to another review office.')
+        return revision
 
     def get_queryset(self):
         return ProjectPublicationRevision.objects.select_related(
@@ -125,22 +154,31 @@ class PublicationRevisionDetailView(SuperuserRequiredMixin, DetailView):
             'preview': preview,
             'review_form': PublicationReviewForm(),
             'comparison': revision_comparison(self.object),
-            'can_review': self.object.status == PublicationStatus.PENDING_REVIEW,
-            'can_publish': self.object.status == PublicationStatus.APPROVED,
+            'can_review': (
+                self.object.status == PublicationStatus.PENDING_REVIEW
+                and can_review_revision(self.request.user, self.object)
+            ),
+            'can_publish': (
+                self.object.status == PublicationStatus.APPROVED
+                and is_system_admin(self.request.user)
+            ),
             'can_archive': (
                 self.object.status == PublicationStatus.PUBLISHED
                 and self.object.is_current_public_revision
+                and is_system_admin(self.request.user)
             ),
         })
         return context
 
 
-class PublicationRevisionReviewView(SuperuserRequiredMixin, View):
+class PublicationRevisionReviewView(OfficeHeadRequiredMixin, View):
     def post(self, request, revision_id):
         revision = get_object_or_404(
             ProjectPublicationRevision,
             pk=revision_id,
         )
+        if not can_review_revision(request.user, revision):
+            raise PermissionDenied('You cannot review this publication submission.')
         form = PublicationReviewForm(request.POST)
         if not form.is_valid():
             project_type, preview = _revision_preview(revision)

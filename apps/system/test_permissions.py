@@ -86,7 +86,7 @@ class ProjectCapabilityTests(TestCase):
         self.assertEqual(self.client.get(urls['update']).status_code, 200)
         self.assertEqual(self.client.post(urls['update'], {}).status_code, 200)
         self.assertEqual(self.client.post(urls['delete']).status_code, 302)
-        self.assertEqual(self.client.get(reverse('publication_review_queue')).status_code, 200)
+        self.assertEqual(self.client.get(reverse('publication_review_queue')).status_code, 403)
 
     def test_missing_flag_and_compatibility_profile_do_not_grant_management(self):
         user = User.objects.create_user('missing', is_staff=True)
@@ -121,7 +121,7 @@ class ProjectCapabilityTests(TestCase):
         user.is_active = False
         self.assertFalse(can_manage_infrastructure(user))
 
-    def test_heads_remain_without_publication_review_access(self):
+    def test_heads_can_access_their_publication_review_queue(self):
         for department in ['engineer', 'mayor']:
             self.client.force_login(self.accounts[department, 'head'])
-            self.assertEqual(self.client.get(reverse('publication_review_queue')).status_code, 403)
+            self.assertEqual(self.client.get(reverse('publication_review_queue')).status_code, 200)

@@ -201,6 +201,8 @@ class ProjectPublicationRevisionModelTests(TestCase):
 
 class PublicationServiceTests(TestCase):
     def setUp(self):
+        self.head = User.objects.create_user(username='review-head', is_staff=True)
+        UserFlag.objects.create(user=self.head, department='engineer', role='head')
         self.employee = User.objects.create_user(
             username='publication-employee',
             password='password123',
@@ -225,7 +227,7 @@ class PublicationServiceTests(TestCase):
         submitted = submit_publication_revision(revision, self.employee)
         approved = review_publication_revision(
             submitted,
-            self.admin,
+            self.head,
             PublicationStatus.APPROVED,
         )
         return publish_publication_revision(approved, self.admin)
@@ -238,7 +240,7 @@ class PublicationServiceTests(TestCase):
         submitted = submit_publication_revision(draft, self.employee)
         approved = review_publication_revision(
             submitted,
-            self.admin,
+            self.head,
             PublicationStatus.APPROVED,
         )
         published = publish_publication_revision(approved, self.admin)
@@ -292,13 +294,13 @@ class PublicationServiceTests(TestCase):
         with self.assertRaisesMessage(ValidationError, 'Review notes'):
             review_publication_revision(
                 submitted,
-                self.admin,
+                self.head,
                 PublicationStatus.NEEDS_REVISION,
             )
 
         returned = review_publication_revision(
             submitted,
-            self.admin,
+            self.head,
             PublicationStatus.NEEDS_REVISION,
             notes='Clarify the public project title.',
         )
@@ -338,6 +340,8 @@ class PublicationServiceTests(TestCase):
 
 class EmployeePublicationWorkflowViewTests(TestCase):
     def setUp(self):
+        self.head = User.objects.create_user(username='review-head', is_staff=True)
+        UserFlag.objects.create(user=self.head, department='engineer', role='head')
         self.engineer = User.objects.create_user(
             username='workflow-engineer',
             password='password123',
@@ -413,7 +417,7 @@ class EmployeePublicationWorkflowViewTests(TestCase):
 
         returned = review_publication_revision(
             revision,
-            self.admin,
+            self.head,
             PublicationStatus.NEEDS_REVISION,
             notes='Please clarify the project description.',
         )
@@ -475,8 +479,10 @@ class EmployeePublicationWorkflowViewTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
-class AdminPublicationReviewViewTests(TestCase):
+class OfficeHeadPublicationReviewViewTests(TestCase):
     def setUp(self):
+        self.head = User.objects.create_user(username='review-head', is_staff=True)
+        UserFlag.objects.create(user=self.head, department='engineer', role='head')
         self.employee = User.objects.create_user(
             username='review-queue-employee',
             password='password123',
@@ -505,13 +511,15 @@ class AdminPublicationReviewViewTests(TestCase):
         )
         self.revision = submit_project_for_review(project, self.employee)
 
-    def test_admin_queue_and_detail_show_submitted_snapshot(self):
+    def test_head_queue_and_detail_show_submitted_snapshot(self):
         self.infrastructure.infrastructure_title = 'Later Working Copy Edit'
         self.infrastructure.save(update_fields=['infrastructure_title'])
-        self.client.force_login(self.admin)
+        self.client.force_login(self.head)
 
         queue = self.client.get(reverse('publication_review_queue'))
+        self.client.force_login(self.admin)
         dashboard = self.client.get(reverse('admin_dashboard'))
+        self.client.force_login(self.head)
         detail = self.client.get(reverse(
             'publication_revision_detail',
             args=[self.revision.pk],
@@ -541,8 +549,8 @@ class AdminPublicationReviewViewTests(TestCase):
             '/static/css/components/publication_workflow.css?v=20260821-1',
         )
 
-    def test_admin_can_return_from_working_project_without_role_403(self):
-        self.client.force_login(self.admin)
+    def test_head_can_open_working_project_without_management_access(self):
+        self.client.force_login(self.head)
         review_url = reverse(
             'publication_revision_detail',
             args=[self.revision.pk],
@@ -567,14 +575,12 @@ class AdminPublicationReviewViewTests(TestCase):
             f'{working_url}?from_review={self.revision.pk}',
         )
         self.assertEqual(working.status_code, 200)
-        self.assertContains(working, 'Back to Publication Review')
-        self.assertContains(working, f'href="{review_url}"')
-        self.assertNotContains(working, 'Edit Project')
-        self.assertNotContains(working, 'Delete Project')
+        self.assertContains(working, 'Back to Projects')
+        self.assertEqual(self.client.post(reverse('engineering_projects:project_update', args=[self.infrastructure.pk]), {}).status_code, 403)
         self.assertEqual(project_list.status_code, 200)
         self.assertEqual(dashboard.status_code, 200)
 
-    def test_review_workspace_and_actions_are_admin_only(self):
+    def test_staff_cannot_access_review_actions(self):
         self.client.force_login(self.employee)
 
         self.assertEqual(
@@ -593,7 +599,7 @@ class AdminPublicationReviewViewTests(TestCase):
         )
 
     def test_return_and_reject_decisions_require_notes(self):
-        self.client.force_login(self.admin)
+        self.client.force_login(self.head)
         response = self.client.post(
             reverse('publication_revision_review', args=[self.revision.pk]),
             {
@@ -614,8 +620,8 @@ class AdminPublicationReviewViewTests(TestCase):
             PublicationStatus.PENDING_REVIEW,
         )
 
-    def test_admin_approves_publishes_and_archives_separately(self):
-        self.client.force_login(self.admin)
+    def test_head_approves_admin_publishes_and_archives_separately(self):
+        self.client.force_login(self.head)
         review_url = reverse(
             'publication_revision_review',
             args=[self.revision.pk],
@@ -639,6 +645,7 @@ class AdminPublicationReviewViewTests(TestCase):
         )
         self.revision.refresh_from_db()
         self.assertEqual(self.revision.status, PublicationStatus.APPROVED)
+        self.client.force_login(self.admin)
         self.assertEqual(self.client.get(publish_url).status_code, 405)
 
         self.client.post(publish_url)

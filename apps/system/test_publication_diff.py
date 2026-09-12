@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from .publication_diff import compare_snapshots, revision_comparison
-from .models import Project, ProjectPublicationRevision
+from .models import Project, ProjectPublicationRevision, UserFlag
 from .publication_workflow import PublicationStatus
 
 
@@ -94,7 +94,9 @@ class PublicationComparisonViewTests(TestCase):
             'infrastructure': {'id': 1, 'title': 'Published title', 'description': 'Old description', 'code': 'INF-1'},
             'images': [{'id': 1, 'url': '/media/old.jpg', 'is_cover': True}],
         }
-        self.client.force_login(self.admin)
+        self.head = User.objects.create_user('diff-head', is_staff=True)
+        UserFlag.objects.create(user=self.head, department='engineer', role='head')
+        self.client.force_login(self.head)
 
     def revision(self, number, status, snapshot=None, **kwargs):
         return ProjectPublicationRevision.objects.create(
@@ -157,6 +159,7 @@ class PublicationComparisonViewTests(TestCase):
         self.assertNotContains(response, 'snapshot-change--')
 
     def test_non_infrastructure_comparison_and_html_escaping(self):
+        UserFlag.objects.filter(user=self.head).update(department='mayor')
         self.project.project_type = 'non_infrastructure'
         self.project.save(update_fields=['project_type'])
         old = {'project': {'type': 'non_infrastructure'}, 'non_infrastructure': {'id': 1, 'title': 'Program', 'beneficiaries': 20, 'address': {'street': 'Old street'}}}

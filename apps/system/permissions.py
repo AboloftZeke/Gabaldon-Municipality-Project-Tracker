@@ -2,7 +2,7 @@
 
 Management helpers describe office Staff only. Existing Admin exceptions remain
 explicit at their call sites because create and edit permissions differ today.
-Head predicates do not grant publication-review access.
+Review capabilities are scoped to the Head's office, never to superuser status.
 """
 
 from .models import UserFlag
@@ -53,3 +53,35 @@ def is_engineering_head(user):
 
 def is_mayor_head(user):
     return not is_system_admin(user) and _assignment(user) == ('mayor', 'head')
+
+
+def can_review_infrastructure(user):
+    return is_engineering_head(user)
+
+
+def can_review_non_infrastructure(user):
+    return is_mayor_head(user)
+
+
+def review_project_type(user):
+    if can_review_infrastructure(user):
+        return 'infrastructure'
+    if can_review_non_infrastructure(user):
+        return 'non_infrastructure'
+    return None
+
+
+def can_access_publication_review(user, revision):
+    project_type = review_project_type(user)
+    return project_type is not None and revision.project.project_type == project_type
+
+
+def can_review_revision(user, revision):
+    if not can_access_publication_review(user, revision):
+        return False
+    creator = ((revision.snapshot_data or {}).get('project') or {}).get('creator') or {}
+    return user.pk not in {
+        revision.submitted_by_id,
+        revision.project.created_by_user_id,
+        creator.get('id'),
+    }
