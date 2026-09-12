@@ -623,3 +623,14 @@
         grid-template-columns: 1fr;
     }
 }
+
+
+/* Engineering now uses the same shared site header as Project Dashboard. */
+.site-header nav .header-brand {
+    gap: 1rem;
+}
+
+.site-header .header-logo {
+    width: 40px;
+    height: 40px;
+}
