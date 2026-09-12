@@ -195,15 +195,19 @@
 
     .filter-form {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        align-items: flex-end;
+        grid-template-columns: minmax(0, 30rem) auto;
+        gap: 0.875rem;
+        align-items: end;
+        justify-content: start;
     }
 
+    .filter-form > p,
     .filter-form > div {
         display: flex;
+        min-width: 0;
         flex-direction: column;
         gap: 0.5rem;
+        margin: 0;
     }
 
     .filter-form label {
@@ -230,7 +234,9 @@
     }
 
     .filter-form button {
-        padding: 0.75rem 1.5rem;
+        min-width: 9.5rem;
+        min-height: 2.65rem;
+        padding: 0.65rem 1rem;
         background: var(--btn);
         color: var(--white);
         border: none;
@@ -238,6 +244,7 @@
         font-weight: 600;
         cursor: pointer;
         transition: background 180ms ease;
+        white-space: nowrap;
     }
 
     .filter-form button:hover {
@@ -547,6 +554,10 @@
 
         .filter-form {
             grid-template-columns: 1fr;
+        }
+
+        .filter-form button {
+            justify-self: start;
         }
     }
 
