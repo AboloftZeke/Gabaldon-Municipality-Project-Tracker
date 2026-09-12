@@ -334,6 +334,7 @@
       })
       .catch(() => {
         mapUnavailable = true;
+        mapTiles?.setOpacity(0);
         if (mapCount) mapCount.textContent = 'Map temporarily unavailable';
         showMapState(
           'Map temporarily unavailable',
@@ -347,7 +348,10 @@
     tileErrorCount = 0;
     mapUnavailable = false;
     hideMapState();
-    if (mapTiles) mapTiles.redraw();
+    if (mapTiles) {
+      mapTiles.setOpacity(1);
+      mapTiles.redraw();
+    }
     loadMapData();
   }
 
@@ -367,8 +371,11 @@
     projectMap = L.map(mapHost, { scrollWheelZoom: false })
       .setView([15.45, 121.34], 12);
     mapTiles = L.tileLayer(
-      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      { maxZoom: 19, attribution: '© OpenStreetMap contributors' },
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxZoom: 19,
+        attribution: 'Tiles © Esri — Source: Esri, TomTom, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors',
+      },
     ).addTo(projectMap);
     mapTiles.on('tileerror', () => {
       tileErrorCount += 1;
