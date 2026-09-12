@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.utils import timezone
 import uuid
@@ -254,6 +255,11 @@ class UserFlag(models.Model):
         ('admin', 'Administration'),
     ]
 
+    class Role(models.TextChoices):
+        STAFF = 'staff', 'Staff'
+        HEAD = 'head', 'Head'
+        ADMIN = 'admin', 'Admin'
+
     id = models.BigAutoField(primary_key=True)
     user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='flags')
     department = models.CharField(
@@ -262,10 +268,61 @@ class UserFlag(models.Model):
         default='admin',
         blank=True,
     )
+    role = models.CharField(
+        max_length=10,
+        choices=Role.choices,
+        default='',
+        blank=True,
+        help_text='Office responsibility; currently not used for authorization.',
+    )
+
+    def clean(self):
+        super().clean()
+        # Existing callers supply only department. Empty is an input default,
+        # never a persisted role (also enforced by the database constraint).
+        if not self.role:
+            self.role = self.Role.ADMIN if self.department == 'admin' else self.Role.STAFF
+        valid = (
+            (self.department == 'admin' and self.role == self.Role.ADMIN)
+            or (self.department in {'engineer', 'mayor'} and self.role in {self.Role.STAFF, self.Role.HEAD})
+            # Preserve the pre-existing blank department without granting access.
+            or (self.department == '' and self.role == self.Role.STAFF)
+        )
+        if not valid:
+            raise ValidationError({'role': 'Select a role valid for this department.'})
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None and not update_fields:
+            return
+        writes_department = update_fields is None or 'department' in update_fields
+        if self.pk and writes_department:
+            previous = type(self).objects.using(kwargs.get('using') or self._state.db).filter(pk=self.pk).values('department', 'role').first()
+            if (
+                previous and previous['department'] != self.department
+                and previous['role'] == self.role
+                and ('admin' in {previous['department'], self.department})
+            ):
+                # Preserve department-only account edits until forms expose roles.
+                self.role = self.Role.ADMIN if self.department == 'admin' else self.Role.STAFF
+        self.clean()
+        if update_fields is not None and writes_department:
+            kwargs['update_fields'] = set(update_fields) | {'role'}
+        return super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'User Flag'
         verbose_name_plural = 'User Flags'
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(department='admin', role='admin')
+                    | models.Q(department__in=['engineer', 'mayor'], role__in=['staff', 'head'])
+                    | models.Q(department='', role='staff')
+                ),
+                name='userflag_valid_department_role',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.user.username} flags'
