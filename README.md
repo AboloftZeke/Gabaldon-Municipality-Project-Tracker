@@ -1,5 +1,16 @@
 # Municipality Project Tracker - System Access Module (Setup Phase)
 
+> **Branch status (Database-redesign):** This README retains the original setup-phase
+> description below. The branch now includes working Infrastructure and
+> Non-Infrastructure workflows, role-based dashboards, user management, email
+> login verification, password reset, publication review, and GIS. References to
+> `apps/core`, placeholder views, user deletion, and future implementation are
+> historical; current routes are defined in `apps/system/urls.py` and the two
+> project-app URL modules. The migration-error advice below is also historical:
+> inspect the migration plan and database state before considering fake migrations.
+> See [publication rollout](PUBLICATION_WORKFLOW_ROLLOUT.md) and
+> [review comparison](PUBLICATION_REVIEW_COMPARISON.md) for publication behavior.
+
 ## Project Overview
 
 This is a Django-based project for tracking municipality projects. This setup implements **Process 1: System Access Module** with the following components:

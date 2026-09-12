@@ -1,5 +1,11 @@
 # Gabaldon Municipality Project Tracker — Migration Plan
 
+> **Historical planning document:** This records an earlier schema audit, not the
+> current database or deployment state. Later committed migrations implement
+> normalized models, publication revisions, and authentication changes. Preserve
+> the migration history; verify the target database against the committed
+> migration graph before following this plan.
+
 ## Status
 
 - Audit complete
