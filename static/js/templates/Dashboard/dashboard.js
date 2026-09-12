@@ -54,7 +54,6 @@
   }
 
   function showMapState(title, message, canRetry = false) {
-    mapUnavailable = true;
     if (mapEmpty) mapEmpty.hidden = false;
     if (mapStateTitle) mapStateTitle.textContent = title;
     if (mapStateMessage) mapStateMessage.textContent = message;
@@ -334,6 +333,7 @@
         requestAnimationFrame(() => projectMap?.invalidateSize({ pan: false }));
       })
       .catch(() => {
+        mapUnavailable = true;
         if (mapCount) mapCount.textContent = 'Map temporarily unavailable';
         showMapState(
           'Map temporarily unavailable',
@@ -354,6 +354,7 @@
   function initMap() {
     if (!mapHost) return;
     if (!window.L) {
+      mapUnavailable = true;
       if (mapCount) mapCount.textContent = 'Map temporarily unavailable';
       showMapState(
         'Map temporarily unavailable',
@@ -372,6 +373,7 @@
     mapTiles.on('tileerror', () => {
       tileErrorCount += 1;
       if (tileErrorCount >= 3 && !mapUnavailable) {
+        mapUnavailable = true;
         if (mapCount) mapCount.textContent = 'Map temporarily unavailable';
         showMapState(
           'Map temporarily unavailable',
