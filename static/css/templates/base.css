@@ -316,3 +316,88 @@
                 height: 70px;
             }
         }
+
+
+/* Compact municipal footer. */
+footer {
+    padding: 2.25rem clamp(1.25rem, 4vw, 3rem) 0;
+    background: #165c39 !important;
+}
+
+.footer-container {
+    max-width: 72rem;
+}
+
+.footer-content {
+    gap: clamp(1.5rem, 4vw, 3.25rem);
+    margin-bottom: 1.35rem;
+    padding: 0;
+}
+
+.footer-section h3 {
+    margin-bottom: .8rem;
+    color: #fff !important;
+    font-size: .78rem;
+    letter-spacing: .055em;
+}
+
+.footer-section li {
+    margin-bottom: .48rem;
+}
+
+.footer-section a {
+    color: rgba(255, 255, 255, .82) !important;
+    font-size: .88rem;
+    line-height: 1.45;
+}
+
+.footer-section a:hover,
+.footer-section a:focus-visible {
+    color: #d5e68a !important;
+}
+
+.footer-middle {
+    margin: .25rem 0 1rem;
+    padding: 0;
+}
+
+.footer-seal {
+    width: 3.8rem;
+    height: 3.8rem;
+    padding: .18rem;
+    border: 1px solid rgba(255, 255, 255, .3);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .09);
+}
+
+.footer-bottom {
+    padding: 1rem 0 1.1rem;
+    border-top-color: rgba(255, 255, 255, .18);
+    color: rgba(255, 255, 255, .88) !important;
+    font-size: .84rem;
+}
+
+.footer-accent {
+    height: 3px;
+    background: #b9d765;
+}
+
+@media (max-width: 768px) {
+    footer {
+        padding-top: 1.75rem;
+    }
+
+    .footer-content {
+        gap: 1.5rem 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer-content {
+        gap: 1.25rem;
+    }
+
+    .footer-middle {
+        margin-top: .5rem;
+    }
+}
