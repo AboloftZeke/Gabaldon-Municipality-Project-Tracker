@@ -7,26 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/templates/core/engineering_dashboard.css' %}?v=20260913-1">
+<link rel="stylesheet" href="{% static 'css/templates/core/engineering_dashboard.css' %}?v=20260913-2">
 {% endblock %}
 
-{% block show_header %}
-<header>
-    <nav>
-        <div class="header-brand">
-            <img src="{% static 'images/gabaldon-seal.png' %}" alt="Gabaldon Seal" class="header-seal">
-            <h1>Municipality Project Tracker</h1>
-        </div>
-        {% if user.is_authenticated %}
-            <ul>
-                <li><a href="{% url 'engineering_dashboard' %}">Dashboard</a></li>
-                <li><a href="{% url 'logout' %}">Logout</a></li>
-                <li class="welcome_user">Welcome, {{ request.user.username }}</li>
-            </ul>
-        {% endif %}
-    </nav>
-</header>
-{% endblock %}
+{% block show_header %}{{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="sidebar">
