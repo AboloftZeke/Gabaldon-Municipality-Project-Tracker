@@ -237,6 +237,7 @@ body {
 
 .gis-panel__map-wrap {
   min-height: 28.75rem;
+  overflow: hidden;
   border-radius: .65rem;
   background: #eff4f0;
 }
@@ -247,9 +248,9 @@ body {
 }
 
 .gis-panel__empty {
-  z-index: 500;
+  z-index: 1200;
   padding: 1.5rem;
-  background: rgba(247, 250, 247, .96);
+  background: #f7faf7;
   color: var(--dashboard-muted);
 }
 
