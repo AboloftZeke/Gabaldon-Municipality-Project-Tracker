@@ -941,3 +941,110 @@ th {
 .gis-legend__dot--planned { background: #64748b; }.gis-legend__dot--ongoing { background: #d97706; }.gis-legend__dot--awarded { background: #2563eb; }.gis-legend__dot--completed { background: #15803d; }.gis-legend__dot--cancelled { background: #b91c1c; }.gis-legend__dot--rebid { background: #9333ea; }
 .gis-popup h3 { margin: 0 0 .3rem; font-size: 1rem; }.gis-popup p { margin: .3rem 0; }.gis-popup__meta { color: var(--ink-600); }.gis-popup__image { width: 100%; max-height: 130px; margin-bottom: .65rem; border-radius: 4px; object-fit: cover; }.gis-popup__action { margin-top: .65rem; }
 @media (max-width: 760px) { .gis-panel { padding: .85rem; }.gis-panel__head { align-items: flex-start; flex-direction: column; }.gis-panel__head .live-badge { width: 100%; }.project-gis-map { height: 360px; }.gis-legend { gap: .55rem .75rem; } }
+
+
+/* CSS refinement pass: consistent surfaces, controls, and touch-friendly states. */
+.metric-card,
+.gis-panel,
+.project-card,
+.toolbar,
+.table-wrap {
+  border-radius: var(--radius-md);
+}
+
+.metric-card {
+  box-shadow: var(--shadow-sm);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.gis-panel {
+  box-shadow: var(--shadow-sm);
+}
+
+.toolbar {
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+
+.table-wrap {
+  margin-top: .75rem;
+  border-top: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+
+.toolbar-primary {
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+#project-search,
+#category-filter,
+#location-filter {
+  min-height: 2.7rem;
+  border-radius: var(--radius-sm);
+}
+
+.dashboard-search__label,
+.view-switcher__label {
+  color: var(--color-muted);
+}
+
+.view-switcher {
+  border: 1px solid #d1dfd4;
+  border-radius: var(--radius-sm);
+}
+
+.view-btn {
+  border-radius: var(--radius-sm);
+}
+
+.project-card {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.project-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.project-card__image {
+  background: #edf3ee;
+}
+
+.status-chip {
+  letter-spacing: .025em;
+}
+
+.row-link {
+  border-radius: var(--radius-sm);
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.gis-panel__map-wrap {
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 760px) {
+  .metric-card:hover,
+  .project-card:hover {
+    transform: none;
+  }
+
+  .tab-btn,
+  .status-btn {
+    min-height: 2.65rem;
+  }
+
+  .project-card__content {
+    padding: var(--space-4);
+  }
+}
