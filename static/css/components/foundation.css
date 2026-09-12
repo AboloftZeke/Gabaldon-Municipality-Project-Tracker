@@ -16,6 +16,13 @@
   --color-border: #dbe4dc;
   --color-danger: #b42318;
   --color-success: #157347;
+  --color-warning: #a15c00;
+  --color-warning-soft: #fff4dc;
+  --color-info: #1d5f8f;
+  --color-info-soft: #e9f4fb;
+
+  --app-header-height: 4.5rem;
+  --app-sidebar-width: 15.625rem;
 
   --space-1: .25rem;
   --space-2: .5rem;
@@ -47,6 +54,17 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+input,
+select,
+textarea {
+  color: var(--color-text);
+}
+
+textarea {
+  min-height: 7rem;
+  resize: vertical;
 }
 
 button,
