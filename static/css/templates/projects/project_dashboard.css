@@ -743,3 +743,139 @@
         flex: 1;
     }
 }
+
+
+/* Align the Project Dashboard shell with the Engineering Office dashboard. */
+.project-dashboard-layout {
+    grid-template-columns: 280px minmax(0, 1fr);
+    min-height: calc(100vh - 80px);
+}
+
+.project-dashboard-layout .sidebar {
+    width: auto;
+    padding: 2rem 0;
+    border-right: 1px solid var(--color-border);
+    background: #fff;
+    color: var(--color-text);
+}
+
+.project-dashboard-layout .sidebar-section {
+    margin: 0;
+    padding: 1rem 1.5rem;
+    border: 0;
+}
+
+.project-dashboard-layout .sidebar-section + .sidebar-section {
+    margin-top: .75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.project-dashboard-layout .sidebar-title {
+    margin: 0 0 1rem;
+    padding: 0;
+    color: var(--color-muted);
+    font-size: .75rem;
+    letter-spacing: .05em;
+}
+
+.project-dashboard-layout .sidebar-menu li {
+    margin-bottom: .5rem;
+}
+
+.project-dashboard-layout .sidebar-menu a {
+    padding: .75rem 1rem;
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+}
+
+.project-dashboard-layout .sidebar-menu a:hover {
+    background: #f1f6f2;
+    color: var(--color-primary-800);
+}
+
+.project-dashboard-layout .sidebar-menu a.active {
+    background: var(--color-primary-700);
+    color: #fff;
+}
+
+.project-dashboard-layout .sidebar .quick-actions {
+    display: block;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: #fff;
+}
+
+.project-dashboard-layout .sidebar .quick-actions h4 {
+    margin: 0 0 1rem;
+    color: var(--color-primary-900);
+    font-size: .95rem;
+}
+
+.project-dashboard-layout .sidebar .action-button.secondary {
+    width: 100%;
+    border: 1px solid #a9c4b0;
+    background: #fff;
+    color: var(--color-primary-800);
+}
+
+.project-dashboard-layout .sidebar .action-button.secondary:hover {
+    border-color: var(--color-primary-700);
+    background: #eff7f0;
+    color: var(--color-primary-900);
+}
+
+.project-dashboard-layout .dashboard-container {
+    margin: 1.25rem auto 1.75rem;
+}
+
+.project-dashboard-layout .dashboard-title {
+    margin-bottom: 1.25rem;
+    color: var(--color-primary-900);
+    font-size: clamp(1.65rem, 2.5vw, 2rem);
+    letter-spacing: -.025em;
+}
+
+.project-dashboard-layout .btn-edit {
+    border: 1px solid #a9c4b0;
+    background: #eff7f0;
+    color: var(--color-primary-800);
+}
+
+.project-dashboard-layout .btn-edit:hover {
+    border-color: var(--color-primary-700);
+    background: var(--color-primary-700);
+    color: #fff;
+}
+
+@media (max-width: 900px) {
+    .project-dashboard-layout {
+        grid-template-columns: 220px minmax(0, 1fr);
+    }
+
+    .project-dashboard-layout .sidebar {
+        width: auto;
+    }
+}
+
+@media (max-width: 700px) {
+    .project-dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .project-dashboard-layout .sidebar {
+        width: 100%;
+        padding: 1rem 0;
+        border-right: 0;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .project-dashboard-layout .sidebar-section {
+        padding: .75rem 1rem;
+    }
+
+    .project-dashboard-layout .sidebar-section + .sidebar-section {
+        margin-top: .5rem;
+    }
+}
