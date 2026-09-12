@@ -42,7 +42,7 @@
         <p class="sidebar-title">Account</p>
         <div class="quick-actions">
             <h4>{{ user.username }}</h4>
-            <a href="{% url 'logout' %}" class="action-button secondary" style="display: block; text-align: center; margin-right: 0;">Sign Out</a>
+            <a href="{% url 'logout' %}" class="action-button secondary account-signout">Sign Out</a>
         </div>
     </div>
 </div>
@@ -54,7 +54,7 @@
             <div class="user-avatar">{{ user.username|first|upper }}</div>
             <div>
                 <div class="user-name">{{ user.username }}</div>
-                <div style="font-size: 0.8rem; color: var(--ink-600);">Engineering Office Staff</div>
+                <div class="user-role-text">Engineering Office Staff</div>
             </div>
         </div>
     </div>
