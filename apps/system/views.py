@@ -48,14 +48,8 @@ def _department_for_user(user):
 
 
 def _redirect_authenticated_user(user):
-    if user.is_superuser:
-        return redirect('admin_dashboard')
-    department = _department_for_user(user)
-    if department == 'engineer':
-        return redirect('engineering_dashboard')
-    if department == 'mayor':
-        return redirect('mayor_dashboard')
-    return redirect('admin_dashboard')
+    from .navigation import dashboard_name
+    return redirect(dashboard_name(user))
 
 
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -374,11 +368,6 @@ class AdminDashboardView(StaffRequiredMixin, TemplateView):
         context['total_users'] = User.objects.count()
         context['total_admins'] = User.objects.filter(is_superuser=True).count()
         context['total_staff'] = User.objects.filter(is_staff=True, is_superuser=False).count()
-        context['pending_publication_reviews'] = (
-            ProjectPublicationRevision.objects.filter(
-                status=PublicationStatus.PENDING_REVIEW,
-            ).count()
-        )
         context['approved_publication_revisions'] = (
             ProjectPublicationRevision.objects.filter(
                 status=PublicationStatus.APPROVED,
@@ -392,6 +381,12 @@ class EngineeringDashboardView(StaffRequiredMixin, TemplateView):
     Engineering Office dashboard.
     """
     template_name = 'core/engineering_dashboard.html'
+
+    def get(self, request, *args, **kwargs):
+        from .navigation import dashboard_name
+        if dashboard_name(request.user) == 'engineering_head_dashboard':
+            return redirect('engineering_head_dashboard')
+        return super().get(request, *args, **kwargs)
 
     def test_func(self):
         if self.request.user.is_superuser:
@@ -417,6 +412,12 @@ class MayorDashboardView(StaffRequiredMixin, TemplateView):
     Mayor's Office dashboard.
     """
     template_name = 'core/mayor_dashboard.html'
+
+    def get(self, request, *args, **kwargs):
+        from .navigation import dashboard_name
+        if dashboard_name(request.user) == 'mayor_head_dashboard':
+            return redirect('mayor_head_dashboard')
+        return super().get(request, *args, **kwargs)
 
     def test_func(self):
         if self.request.user.is_superuser:

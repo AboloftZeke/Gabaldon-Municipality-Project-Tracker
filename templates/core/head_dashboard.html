@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ account_navigation.label }} Dashboard{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}">{% endblock %}
+{% block content %}
+<div class="review-workspace">
+<header class="review-header"><div><p class="review-eyebrow">Publication Review</p><h1>{{ account_navigation.label }} Dashboard</h1><p>Review your office's submitted project revisions.</p></div></header>
+<nav class="review-filters" aria-label="Office review status">
+{% for card in status_cards %}<a href="{% url 'publication_review_queue' %}?status={{ card.status }}">{{ card.label }} <span>{{ card.count }}</span></a>{% endfor %}
+</nav>
+<section class="review-list"><h2>Recently reviewed submissions</h2>
+{% for revision in recent_revisions %}
+
+<article class="revision-header"><div class="review-card__body"><a href="{% url 'publication_revision_detail' revision.pk %}">{% firstof revision.snapshot_data.infrastructure.title revision.snapshot_data.non_infrastructure.title "Project" %} · Revision {{ revision.revision_number }}</a><p>{{ revision.get_status_display }} · {{ revision.reviewed_at }}</p></div></article>
+
+{% empty %}<p>No reviewed submissions yet.</p>{% endfor %}
+</section></div>
+{% endblock %}

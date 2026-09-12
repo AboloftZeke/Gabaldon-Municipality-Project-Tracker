@@ -23,23 +23,12 @@
         {% if user.is_authenticated %}
             <ul>
 
-                <!-- ROLE-BASED DASHBOARD -->
-                {% if user.is_superuser %}
-                    <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
-
-                {% elif user.profile.department == "engineer" %}
-                    <li><a href="{% url 'engineering_dashboard' %}">Dashboard</a></li>
-
-                {% elif user.profile.department == "mayor" %}
-                    <li><a href="{% url 'mayor_dashboard' %}">Dashboard</a></li>
-
-                {% else %}
-                    <li><a href="{% url 'engineering_dashboard' %}">Dashboard</a></li>
-                {% endif %}
-
+                <li><a href="{% url account_navigation.dashboard %}">Dashboard</a></li>
                 {% if user.is_superuser %}
                     <li><a href="{% url 'user_list' %}">Users</a></li>
+                {% elif account_navigation.is_head %}
                     <li><a href="{% url 'publication_review_queue' %}">Publication Review</a></li>
+                    <li><a href="{% url 'password_change' %}">Account / Password</a></li>
                 {% endif %}
 
                 <li><a href="{% url 'logout' %}">Logout</a></li>
@@ -76,6 +65,7 @@
     {% block extra_scripts %}{% endblock %}
 
     {% block show_footer %}
+    {% if not account_navigation.is_head %}
     <footer>
         <div class="footer-container">
             <div class="footer-content">
@@ -137,6 +127,7 @@
 
         <div class="footer-accent"></div>
     </footer>
+    {% endif %}
     {% endblock %}
 </body>
 </html>

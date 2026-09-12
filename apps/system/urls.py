@@ -4,7 +4,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import reverse_lazy
 from . import views
 from . import gis_views
-from . import publication_views
+from . import publication_views, dashboard_views
 
 urlpatterns = [
     path('', lambda request: redirect('login')),
@@ -81,12 +81,16 @@ urlpatterns = [
         name='account_setup_complete',
     ),
 
-    # Administrator publication review
+    # Publication routes (legacy URLs retained for compatibility)
     path('admin-dashboard/publications/', publication_views.PublicationReviewQueueView.as_view(), name='publication_review_queue'),
     path('admin-dashboard/publications/<int:revision_id>/', publication_views.PublicationRevisionDetailView.as_view(), name='publication_revision_detail'),
     path('admin-dashboard/publications/<int:revision_id>/review/', publication_views.PublicationRevisionReviewView.as_view(), name='publication_revision_review'),
     path('admin-dashboard/publications/<int:revision_id>/publish/', publication_views.PublicationRevisionPublishView.as_view(), name='publication_revision_publish'),
     path('admin-dashboard/publications/<int:revision_id>/archive/', publication_views.PublicationRevisionArchiveView.as_view(), name='publication_revision_archive'),
+
+    path('engineering/head/dashboard/', dashboard_views.HeadDashboardView.as_view(project_type='infrastructure'), name='engineering_head_dashboard'),
+    path('mayor/head/dashboard/', dashboard_views.HeadDashboardView.as_view(project_type='non_infrastructure'), name='mayor_head_dashboard'),
+    path('admin-dashboard/publication-lifecycle/', dashboard_views.PublicationLifecycleView.as_view(), name='publication_lifecycle'),
 
     # Role-specific dashboards
     # Use a non-conflicting path so Django's admin site (mounted at /admin/) isn't intercepted.

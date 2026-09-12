@@ -527,10 +527,10 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
 
         self.assertContains(queue, 'Submitted Admin Preview Project')
         self.assertContains(queue, 'Pending Review')
-        self.assertContains(dashboard, 'Review Public Projects')
+        self.assertContains(dashboard, 'Publication Lifecycle')
         self.assertEqual(
-            dashboard.context['pending_publication_reviews'],
-            1,
+            dashboard.context['approved_publication_revisions'],
+            0,
         )
         self.assertContains(detail, 'Submitted Admin Preview Project')
         self.assertNotContains(detail, 'Later Working Copy Edit')
@@ -575,10 +575,12 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
             f'{working_url}?from_review={self.revision.pk}',
         )
         self.assertEqual(working.status_code, 200)
-        self.assertContains(working, 'Back to Projects')
+        self.assertContains(working, 'Back to Publication Review')
+        self.assertNotContains(working, 'Edit Project')
+        self.assertNotContains(working, 'Delete Project')
         self.assertEqual(self.client.post(reverse('engineering_projects:project_update', args=[self.infrastructure.pk]), {}).status_code, 403)
         self.assertEqual(project_list.status_code, 200)
-        self.assertEqual(dashboard.status_code, 200)
+        self.assertRedirects(dashboard, reverse('engineering_head_dashboard'))
 
     def test_staff_cannot_access_review_actions(self):
         self.client.force_login(self.employee)

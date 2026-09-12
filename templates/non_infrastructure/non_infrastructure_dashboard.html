@@ -22,6 +22,12 @@
 
             <p class="sidebar-title">Navigation</p>
 
+            {% if account_navigation.is_head %}
+            <ul class="sidebar-menu">
+                <li><a href="{% url account_navigation.dashboard %}">Dashboard</a></li>
+                <li><a href="{% url 'publication_review_queue' %}">Publication Review</a></li>
+            </ul>
+            {% else %}
             <ul class="sidebar-menu">
 
                 <li>
@@ -37,6 +43,7 @@
                     </a>
                </li>
             </ul>
+            {% endif %}
 
         </div>
 
@@ -157,10 +164,10 @@
                             View All Programs
                         </a>
 
-                        <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}"
+                        {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_create' %}"
                            class="btn-small btn-primary">
                             + New Program
-                        </a>
+                        </a>{% endif %}
 
                     </div>
 
@@ -195,11 +202,11 @@
                                     View
                                 </a>
 
-                                <a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}"
+                                {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}"
                                    class="btn-small"
                                    style="background: #6b7280; color: white;">
                                     Edit
-                                </a>
+                                </a>{% endif %}
 
                             </div>
 

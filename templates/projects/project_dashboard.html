@@ -19,6 +19,12 @@
         <div class="sidebar-section">
             <p class="sidebar-title">Navigation</p>
 
+            {% if account_navigation.is_head %}
+            <ul class="sidebar-menu">
+                <li><a href="{% url account_navigation.dashboard %}">Dashboard</a></li>
+                <li><a href="{% url 'publication_review_queue' %}">Publication Review</a></li>
+            </ul>
+            {% else %}
             <ul class="sidebar-menu">
                 <li>
                     <a href="{% url 'engineering_dashboard' %}">
@@ -33,6 +39,7 @@
                     </a>
                 </li>
             </ul>
+            {% endif %}
         </div>
 
 
@@ -154,10 +161,10 @@
                         View All Projects
                     </a>
 
-                    <a href="{% url 'engineering_projects:project_create' %}"
+                    {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_create' %}"
                        class="btn-small btn-primary">
                         + New Project
-                    </a>
+                    </a>{% endif %}
                 </div>
 
             </div>
@@ -215,12 +222,12 @@
                         </a>
 
 
-                        <a
+                        {% if not account_navigation.is_head %}<a
                             href="{% url 'engineering_projects:project_update' project.pk %}"
                             class="btn-small btn-edit"
                         >
                             Edit
-                        </a>
+                        </a>{% endif %}
 
                     </div>
 
@@ -238,12 +245,12 @@
                         No projects yet. Create your first infrastructure project.
                     </p>
 
-                    <a
+                    {% if not account_navigation.is_head %}<a
                         href="{% url 'engineering_projects:project_create' %}"
                         class="btn-small btn-primary"
                     >
                         Create Project
-                    </a>
+                    </a>{% endif %}
 
                 </div>
 

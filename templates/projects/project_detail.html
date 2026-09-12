@@ -10,7 +10,7 @@
 
 {% block content %}
 <div class="project-detail-container">
-    {% if request.user.is_superuser and request.GET.from_review %}
+    {% if request.user.is_superuser and request.GET.from_review or account_navigation.is_head and request.GET.from_review %}
         <a href="{% url 'publication_revision_detail' request.GET.from_review %}" class="btn btn-back">
             <span aria-hidden="true">←</span> Back to Publication Review
         </a>
@@ -21,7 +21,7 @@
     {% endif %}
 
     {% if not request.user.is_superuser or not request.GET.from_review %}
-        {% include "includes/publication_workflow_panel.html" %}
+        {% if not account_navigation.is_head %}{% include "includes/publication_workflow_panel.html" %}{% endif %}
     {% endif %}
 
     <header class="project-detail-header">
@@ -47,8 +47,8 @@
                 </div>
                 {% if not request.user.is_superuser or not request.GET.from_review %}
                     <div class="action-buttons action-buttons--detail">
-                        <a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit">Edit Project</a>
-                        <a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete">Delete Project</a>
+                        {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit">Edit Project</a>{% endif %}
+                        {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete">Delete Project</a>{% endif %}
                     </div>
                 {% endif %}
             </div>

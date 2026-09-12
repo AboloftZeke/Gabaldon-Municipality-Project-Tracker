@@ -13,7 +13,7 @@
 <div class="project-detail-container">
 
     <!-- Back Button -->
-    {% if request.user.is_superuser and request.GET.from_review %}
+    {% if request.user.is_superuser and request.GET.from_review or account_navigation.is_head and request.GET.from_review %}
         <a href="{% url 'publication_revision_detail' request.GET.from_review %}" class="btn btn-back">
             ← Back to Publication Review
         </a>
@@ -24,7 +24,7 @@
     {% endif %}
 
     {% if not request.user.is_superuser or not request.GET.from_review %}
-        {% include "includes/publication_workflow_panel.html" %}
+        {% if not account_navigation.is_head %}{% include "includes/publication_workflow_panel.html" %}{% endif %}
     {% endif %}
 
 

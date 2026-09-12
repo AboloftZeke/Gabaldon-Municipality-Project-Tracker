@@ -11,7 +11,11 @@
 {% block content %}
 <main class="review-workspace">
     <nav class="review-breadcrumb" aria-label="Breadcrumb">
+        {% if user.is_superuser %}
+        <a href="{% url 'publication_lifecycle' %}">Publication Lifecycle</a>
+        {% else %}
         <a href="{% url 'publication_review_queue' %}?status={{ revision.status }}">Publication Review</a>
+        {% endif %}
         <span>/</span>
         <strong>Revision {{ revision.revision_number }}</strong>
     </nav>

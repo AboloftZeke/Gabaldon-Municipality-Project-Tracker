@@ -11,14 +11,14 @@
 {% block content %}
 <main class="review-workspace">
     <nav class="review-breadcrumb" aria-label="Breadcrumb">
-        <a href="{% url 'admin_dashboard' %}">Administrative Dashboard</a>
+        <a href="{% url account_navigation.dashboard %}">{{ account_navigation.label }} Dashboard</a>
         <span>/</span>
         <strong>Publication Review</strong>
     </nav>
 
     <header class="review-header">
         <div>
-            <p class="review-eyebrow">Administrator Workspace</p>
+            <p class="review-eyebrow">{{ account_navigation.label }} Workspace</p>
             <h1>Publication Review</h1>
             <p>Confirm exactly what residents will see before a project reaches the public dashboard.</p>
         </div>

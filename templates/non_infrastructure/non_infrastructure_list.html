@@ -22,7 +22,7 @@
 <div class="projects-container">
     <div class="projects-header">
         <h2>Non-Infrastructure Projects</h2>
-        <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create">+ New Project</a>
+        {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create">+ New Project</a>{% endif %}
     </div>
 
     {% if projects %}
@@ -60,7 +60,7 @@
 
                         <div class="project-actions">
                             <a href="{% url 'mayor_projects:non_infrastructure_project_detail' project.pk %}" class="btn-small btn-view">View</a>
-                            <a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}" class="btn-small btn-edit">Edit</a>
+                            {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}" class="btn-small btn-edit">Edit</a>{% endif %}
                         </div>
                     </div>
                 </div>
@@ -69,7 +69,7 @@
     {% else %}
         <div class="empty-state">
             <p>No non-infrastructure projects yet.</p>
-            <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create">Create the first project</a>
+            {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create">Create the first project</a>{% endif %}
         </div>
     {% endif %}
 </div>
