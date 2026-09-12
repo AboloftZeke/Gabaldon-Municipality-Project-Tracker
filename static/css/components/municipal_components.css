@@ -464,3 +464,73 @@
     min-height: 20rem;
   }
 }
+
+
+.account-signout {
+  display: block;
+  margin-right: 0;
+  text-align: center;
+}
+
+.user-role-text {
+  color: var(--color-muted);
+  font-size: .8rem;
+}
+
+.project-budget-value {
+  margin-bottom: var(--space-4);
+  color: var(--color-primary-700);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.other-category-container {
+  display: none;
+  margin-top: var(--space-3);
+}
+
+.project-gallery-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.recent-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.recent-section-title {
+  margin: 0;
+}
+
+.recent-section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.btn-neutral {
+  background: #5f6b63;
+  color: #fff;
+}
+
+.btn-neutral:hover {
+  background: #47534b;
+}
+
+@media (max-width: 560px) {
+  .recent-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .recent-section-actions {
+    width: 100%;
+  }
+}
