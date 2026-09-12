@@ -1,6 +1,12 @@
-from django.test import SimpleTestCase
+from copy import deepcopy
 
-from .publication_diff import compare_snapshots
+from django.contrib.auth.models import User
+from django.test import SimpleTestCase, TestCase
+from django.urls import reverse
+
+from .publication_diff import compare_snapshots, revision_comparison
+from .models import Project, ProjectPublicationRevision
+from .publication_workflow import PublicationStatus
 
 
 class SnapshotDiffTests(SimpleTestCase):
@@ -61,3 +67,112 @@ class SnapshotDiffTests(SimpleTestCase):
         old = {'images': [{'url': '/1', 'created_at': 'old'}, {'id': 2, 'url': '/2'}]}
         new = {'images': [{'id': 2, 'url': '/2'}, {'url': '/1', 'created_at': 'new'}]}
         self.assertEqual(compare_snapshots(new, old)['change_count'], 0)
+
+    def test_changed_display_label_is_visible_even_when_code_is_unchanged(self):
+        rows = self.rows({'status': 'planned', 'status_label': 'Planned'}, {'status': 'planned', 'status_label': 'Scheduled'}, 'non_infrastructure')
+        self.assertEqual(rows['status']['state'], 'modified')
+        self.assertEqual(rows['status']['before'], 'Planned')
+        self.assertEqual(rows['status']['after'], 'Scheduled')
+
+    def test_financial_and_schedule_sections_include_cleared_values(self):
+        result = compare_snapshots(
+            {'financial': {'approved_budget': '0'}, 'schedule': None},
+            {'financial': {'approved_budget': '1000.00'}, 'schedule': {'posting_date': '2026-09-01'}},
+        )
+        funding, schedule = result['sections']
+        self.assertEqual(funding['fields'][0]['after'], '₱0.00')
+        self.assertEqual(schedule['fields'][0]['state'], 'removed')
+        self.assertEqual(schedule['fields'][0]['before'], 'Sep 01, 2026')
+
+
+class PublicationComparisonViewTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser('diff-admin', 'diff@example.com', 'password')
+        self.project = Project.objects.create(project_type='infrastructure', created_by_user=self.admin)
+        self.snapshot = {
+            'project': {'id': self.project.pk, 'type': 'infrastructure'},
+            'infrastructure': {'id': 1, 'title': 'Published title', 'description': 'Old description', 'code': 'INF-1'},
+            'images': [{'id': 1, 'url': '/media/old.jpg', 'is_cover': True}],
+        }
+        self.client.force_login(self.admin)
+
+    def revision(self, number, status, snapshot=None, **kwargs):
+        return ProjectPublicationRevision.objects.create(
+            project=self.project, revision_number=number, status=status,
+            snapshot_data=deepcopy(snapshot if snapshot is not None else self.snapshot), **kwargs,
+        )
+
+    def detail(self, revision):
+        return self.client.get(reverse('publication_revision_detail', args=[revision.pk]))
+
+    def test_first_submission_is_initial_even_after_rejected_submission(self):
+        self.revision(1, PublicationStatus.REJECTED)
+        pending = self.revision(2, PublicationStatus.PENDING_REVIEW)
+        response = self.detail(pending)
+        self.assertContains(response, 'Initial Publication Submission')
+        self.assertNotContains(response, 'Previously published')
+        self.assertEqual(response.context['comparison']['change_count'], 0)
+
+    def test_baseline_is_current_public_not_supersedes_or_latest_revision(self):
+        archived = self.revision(1, PublicationStatus.ARCHIVED)
+        current_snapshot = deepcopy(self.snapshot)
+        current_snapshot['infrastructure']['title'] = 'Actual current public title'
+        current = self.revision(2, PublicationStatus.PUBLISHED, current_snapshot, is_current_public_revision=True)
+        pending = self.revision(3, PublicationStatus.PENDING_REVIEW, supersedes_revision=archived)
+        self.revision(4, PublicationStatus.REJECTED)
+        comparison = revision_comparison(pending)
+        self.assertEqual(comparison['baseline'], current)
+        response = self.detail(pending)
+        self.assertContains(response, 'Actual current public title')
+        self.assertContains(response, 'Previously published')
+        self.assertContains(response, 'Newly submitted')
+        self.assertContains(response, 'snapshot-change--modified')
+
+    def test_removed_added_images_and_values_survive_invalid_review_form(self):
+        self.revision(1, PublicationStatus.PUBLISHED, is_current_public_revision=True)
+        submitted = deepcopy(self.snapshot)
+        submitted['infrastructure'].update(description='', contractor={'id': 1, 'name': 'New contractor'})
+        submitted['images'] = [{'id': 2, 'url': '/media/new.jpg', 'is_cover': True}]
+        pending = self.revision(2, PublicationStatus.PENDING_REVIEW, submitted)
+        response = self.client.post(reverse('publication_revision_review', args=[pending.pk]), {'decision': 'needs_revision', 'notes': ''})
+        for text in ('snapshot-change--added', 'snapshot-change--removed', 'Cleared', '/media/old.jpg', '/media/new.jpg', 'New contractor'):
+            self.assertContains(response, text, status_code=400)
+        pending.refresh_from_db()
+        self.assertEqual(pending.status, PublicationStatus.PENDING_REVIEW)
+
+    def test_no_current_baseline_after_archive_is_not_initial(self):
+        self.revision(1, PublicationStatus.ARCHIVED)
+        pending = self.revision(2, PublicationStatus.PENDING_REVIEW)
+        response = self.detail(pending)
+        self.assertContains(response, 'No Current Published Revision')
+        self.assertNotContains(response, 'Initial Publication Submission')
+        self.assertEqual(response.context['comparison']['change_count'], 0)
+
+    def test_current_revision_and_unchanged_submission_have_no_highlights(self):
+        current = self.revision(1, PublicationStatus.PUBLISHED, is_current_public_revision=True)
+        self.assertContains(self.detail(current), 'Current Published Revision')
+        pending = self.revision(2, PublicationStatus.PENDING_REVIEW)
+        response = self.detail(pending)
+        self.assertContains(response, 'No changes from the current published version.')
+        self.assertNotContains(response, 'snapshot-change--')
+
+    def test_non_infrastructure_comparison_and_html_escaping(self):
+        self.project.project_type = 'non_infrastructure'
+        self.project.save(update_fields=['project_type'])
+        old = {'project': {'type': 'non_infrastructure'}, 'non_infrastructure': {'id': 1, 'title': 'Program', 'beneficiaries': 20, 'address': {'street': 'Old street'}}}
+        self.revision(1, PublicationStatus.PUBLISHED, old, is_current_public_revision=True)
+        new = deepcopy(old)
+        new['non_infrastructure'].update(beneficiaries=0, title='<script>alert(1)</script>', address=None)
+        pending = self.revision(2, PublicationStatus.PENDING_REVIEW, new)
+        response = self.detail(pending)
+        self.assertContains(response, 'Program Information')
+        self.assertContains(response, 'Old street')
+        self.assertContains(response, '&lt;script&gt;')
+        self.assertNotContains(response, '<script>alert(1)</script>')
+        self.assertEqual(response.context['comparison']['change_count'], 3)
+
+    def test_employee_cannot_read_comparison(self):
+        employee = User.objects.create_user('diff-employee', password='password', is_staff=True)
+        pending = self.revision(1, PublicationStatus.PENDING_REVIEW)
+        self.client.force_login(employee)
+        self.assertEqual(self.detail(pending).status_code, 403)

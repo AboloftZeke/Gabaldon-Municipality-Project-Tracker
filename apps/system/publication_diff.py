@@ -4,6 +4,7 @@ Database IDs and capture timestamps are metadata, not project changes. Missing,
 null and empty strings represent the same cleared value; zero remains a value.
 """
 
+from datetime import date, time
 from decimal import Decimal, InvalidOperation
 
 
@@ -83,6 +84,18 @@ def _display(value, key):
             pass
     if key.endswith('percentage') or key == 'percentage':
         return f'{value}%'
+    if key.endswith('_date'):
+        try:
+            return date.fromisoformat(value).strftime('%b %d, %Y')
+        except (TypeError, ValueError):
+            pass
+    if key.endswith('_time'):
+        try:
+            return time.fromisoformat(value).strftime('%I:%M %p')
+        except (TypeError, ValueError):
+            pass
+    if key == 'type':
+        return str(value).replace('_', ' ').title()
     return str(value)
 
 
@@ -100,7 +113,9 @@ def _fields(before, after, prefix='', compare=True):
             rows.extend(_fields(old or {}, new or {}, path, compare))
             continue
         state = 'unchanged'
-        if compare and _normalized(old, key) != _normalized(new, key):
+        values_differ = _normalized(old, key) != _normalized(new, key)
+        labels_differ = before.get(f'{key}_label', old) != after.get(f'{key}_label', new)
+        if compare and (values_differ or (f'{key}_label' in before and f'{key}_label' in after and labels_differ)):
             state = 'added' if _empty(old) else 'removed' if _empty(new) else 'modified'
         rows.append({
             'path': path,
