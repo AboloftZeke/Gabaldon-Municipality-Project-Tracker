@@ -104,6 +104,59 @@ class HeadDashboardTests(TestCase):
                 self.client.force_login(user)
                 self.assertEqual(self.client.get(reverse('publication_lifecycle')).status_code, 403)
 
+    def test_head_dashboard_surfaces_only_its_operational_replacements(self):
+        operational = {}
+        for office, project_type in [
+            ('engineer', 'infrastructure'),
+            ('mayor', 'non_infrastructure'),
+        ]:
+            project = Project.objects.create(project_type=project_type)
+            current = ProjectPublicationRevision.objects.create(
+                project=project,
+                revision_number=1,
+                status='published',
+                is_current_public_revision=True,
+                snapshot_data={'project': {'type': project_type}},
+            )
+            head = self.users[office, 'head'][0]
+            operational[office] = ProjectPublicationRevision.objects.create(
+                project=project,
+                revision_number=2,
+                status='approved',
+                supersedes_revision=current,
+                submitted_by=head,
+                reviewed_by=head,
+                reviewed_at=timezone.now(),
+                snapshot_data={
+                    'project': {'type': project_type},
+                    project_type: {
+                        'id': 20,
+                        'title': f'{office} operational update',
+                    },
+                },
+            )
+
+        for office, destination in [
+            ('engineer', 'engineering_head_dashboard'),
+            ('mayor', 'mayor_head_dashboard'),
+        ]:
+            self.client.force_login(self.users[office, 'head'][0])
+            response = self.client.get(reverse(destination))
+            self.assertEqual(
+                list(response.context['operational_revisions']),
+                [operational[office]],
+            )
+            self.assertEqual(response.context['operational_revision_count'], 1)
+            self.assertContains(
+                response,
+                f'{office} operational update',
+            )
+            other = 'mayor' if office == 'engineer' else 'engineer'
+            self.assertNotContains(
+                response,
+                f'{other} operational update',
+            )
+
     def test_missing_assignment_does_not_use_compatibility_profile(self):
         user = User.objects.create_user('unassigned', is_staff=True)
         self.assertEqual(dashboard_name(user), 'public_dashboard')

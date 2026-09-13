@@ -1,5 +1,5 @@
 """Office review dashboards and the existing publisher's lifecycle index."""
-from django.db.models import Count
+from django.db.models import Count, F
 from django.views.generic import TemplateView, ListView
 
 from .models import ProjectPublicationRevision
@@ -25,6 +25,17 @@ class HeadDashboardView(OfficeHeadRequiredMixin, TemplateView):
                                   ('approved', 'Approved awaiting publication')]
         ]
         context['recent_revisions'] = revisions.filter(reviewed_at__isnull=False).order_by('-reviewed_at', '-pk')[:10]
+        operational_revisions = (
+            revisions.filter(
+                status='approved',
+                supersedes_revision__isnull=False,
+                submitted_by=F('reviewed_by'),
+            )
+            .select_related('supersedes_revision')
+            .order_by('-reviewed_at', '-pk')
+        )
+        context['operational_revisions'] = operational_revisions[:5]
+        context['operational_revision_count'] = operational_revisions.count()
         return context
 
 

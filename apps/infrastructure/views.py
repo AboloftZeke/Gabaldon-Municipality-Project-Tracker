@@ -673,6 +673,9 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
             context['can_update_operations'] = (
                 can_update_infrastructure_operations(self.request.user)
             )
+            context['can_manage_project'] = can_manage_infrastructure(
+                self.request.user,
+            )
             context['publication'] = publication_state(infra.project)
             context['publication_submit_url'] = reverse(
                 'engineering_projects:project_submit_for_review',
@@ -761,7 +764,7 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
 
 
 class ProjectSubmitForReviewView(EngineerOnlyMixin, View):
-    """Submit an infrastructure working copy to the administrator."""
+    """Submit an infrastructure working copy for office Head review."""
 
     def post(self, request, pk):
         infrastructure = get_object_or_404(
@@ -843,7 +846,8 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
                 messages.error(
                     self.request,
                     'A project with publication history cannot be deleted. '
-                    'Contact an administrator to archive it instead.',
+                    'Its publication revisions must remain available as '
+                    'historical records.',
                 )
                 return redirect(
                     'engineering_projects:project_detail',

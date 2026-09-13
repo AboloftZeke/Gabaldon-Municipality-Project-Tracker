@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Review Revision {{ revision.revision_number }} - Municipality Project Tracker{% endblock %}
+{% block title %}Publication Revision {{ revision.revision_number }} - Municipality Project Tracker{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}?v=20260912-1">
@@ -33,8 +33,22 @@
     </header>
 
     <section class="revision-notice">
-        <strong>You are reviewing the submitted version.</strong>
-        <p>Later employee edits are not included here. Publishing will expose this exact snapshot and preserve the previous public revision in history.</p>
+        {% if revision.status == 'pending_review' %}
+            <strong>Review this submitted snapshot.</strong>
+            <p>Later Staff edits are not included here. Record a decision based on this retained version.</p>
+        {% elif revision.status == 'approved' %}
+            <strong>Preview the approved snapshot before publishing.</strong>
+            <p>Publishing will expose this exact snapshot and archive the previous public revision automatically.</p>
+        {% elif comparison.is_current %}
+            <strong>This is the current public snapshot.</strong>
+            <p>The public dashboard and project detail pages read from this retained version.</p>
+        {% elif revision.status == 'archived' %}
+            <strong>This is a historical publication revision.</strong>
+            <p>It was archived automatically when replaced. Archival does not mean the project was cancelled or completed.</p>
+        {% else %}
+            <strong>View this retained publication snapshot.</strong>
+            <p>Its status and review record appear beside the submitted values.</p>
+        {% endif %}
         {% if preview.working_detail_url %}<a href="{{ preview.working_detail_url }}?from_review={{ revision.pk }}">View current working project</a>{% endif %}
     </section>
 

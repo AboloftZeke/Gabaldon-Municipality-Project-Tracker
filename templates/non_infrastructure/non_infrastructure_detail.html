@@ -43,7 +43,11 @@
         <div class="project-detail-header-content">
             <h2>{{ project_name }}</h2>
             {% if can_update_operations %}
-                <a href="{% url 'mayor_projects:non_infrastructure_project_operations' project.pk %}" class="btn btn-edit">Update Status &amp; Progress</a>
+                <a href="{% url 'mayor_projects:non_infrastructure_project_operations' project.pk %}" class="btn btn-edit">Update Project Status</a>
+            {% endif %}
+            {% if can_manage_project %}
+                <a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}" class="btn btn-edit">Edit Project</a>
+                <a href="{% url 'mayor_projects:non_infrastructure_project_delete' project.pk %}" class="btn btn-delete">Delete Project</a>
             {% endif %}
 
             <div class="project-meta">

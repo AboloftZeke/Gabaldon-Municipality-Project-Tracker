@@ -36,6 +36,12 @@ class OfficeReviewPermissionTests(TestCase):
             self.client.force_login(head)
             self.assertEqual(can_review_infrastructure(head), office == 'engineer')
             self.assertEqual(can_review_non_infrastructure(head), office == 'mayor')
+            detail = self.client.get(reverse(
+                'publication_revision_detail',
+                args=[revision.pk],
+            ))
+            self.assertContains(detail, 'Record Decision')
+            self.assertNotContains(detail, 'Publish to Public Dashboard')
             snapshot = deepcopy(revision.snapshot_data)
             for decision in ['approved', 'rejected', 'needs_revision']:
                 with self.subTest(office=office, decision=decision):
@@ -50,6 +56,19 @@ class OfficeReviewPermissionTests(TestCase):
                     self.assertEqual(revision.review_notes, 'Office review notes')
                     self.assertEqual(revision.snapshot_data, snapshot)
                     self.assertFalse(revision.is_current_public_revision)
+                    if decision == 'approved':
+                        detail = self.client.get(reverse(
+                            'publication_revision_detail',
+                            args=[revision.pk],
+                        ))
+                        self.assertContains(
+                            detail,
+                            'Publish to Public Dashboard',
+                        )
+                        self.assertNotContains(
+                            detail,
+                            'Publish Update to Public Dashboard',
+                        )
 
     def test_queue_rows_and_counts_are_scoped_for_each_status(self):
         other = self.revisions['mayor']

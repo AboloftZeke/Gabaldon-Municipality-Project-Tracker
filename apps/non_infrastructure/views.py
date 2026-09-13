@@ -280,6 +280,10 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
         context['can_update_operations'] = (
             can_update_non_infrastructure_operations(self.request.user)
         )
+        context['can_manage_project'] = (
+            is_system_admin(self.request.user)
+            or can_manage_non_infrastructure(self.request.user)
+        )
 
         context['project_placeholder_image'] = static(
             'images/project-placeholder.svg'
@@ -338,7 +342,7 @@ class NonInfrastructureProjectSubmitForReviewView(
     MayorsOfficeOnlyMixin,
     View,
 ):
-    """Submit a non-infrastructure working copy to the administrator."""
+    """Submit a non-infrastructure working copy for office Head review."""
 
     def post(self, request, pk):
         non_infrastructure = get_object_or_404(
@@ -418,7 +422,8 @@ class NonInfrastructureProjectDeleteView(MayorsOfficeEditMixin, DeleteView):
                 messages.error(
                     self.request,
                     'A project with publication history cannot be deleted. '
-                    'Contact an administrator to archive it instead.',
+                    'Its publication revisions must remain available as '
+                    'historical records.',
                 )
                 return redirect(
                     'mayor_projects:non_infrastructure_project_detail',

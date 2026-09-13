@@ -48,8 +48,8 @@
                 {% if not request.user.is_superuser or not request.GET.from_review %}
                     <div class="action-buttons action-buttons--detail">
                         {% if can_update_operations %}<a href="{% url 'engineering_projects:project_operations' project_details.pk %}" class="btn btn-edit">Update Status &amp; Progress</a>{% endif %}
-                        {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit">Edit Project</a>{% endif %}
-                        {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete">Delete Project</a>{% endif %}
+                        {% if can_manage_project %}<a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit">Edit Project</a>{% endif %}
+                        {% if can_manage_project %}<a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete">Delete Project</a>{% endif %}
                     </div>
                 {% endif %}
             </div>
@@ -238,23 +238,26 @@
                 <span class="detail-value">{{ project_details.duration_days|default:"Not calculated" }}</span>
             </div>
             <div class="detail-item">
-                <span class="detail-label">Cost Progress</span>
+                <span class="detail-label">Entered Cost Progress</span>
                 <span class="detail-value">{% if project_details.cost_progress_percentage is not None %}{{ project_details.cost_progress_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
             </div>
             <div class="detail-item">
-                <span class="detail-label">Physical Progress</span>
+                <span class="detail-label">Actual Physical Progress</span>
                 <span class="detail-value">{% if project_details.physical_progress_percentage is not None %}{{ project_details.physical_progress_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
             </div>
-            <div class="detail-item">
+            <div class="detail-item detail-item--derived">
                 <span class="detail-label">Expected / Scheduled Progress</span>
+                <span class="detail-reference-badge">Calculated reference</span>
                 <span class="detail-value">{% if project_details.expected_progress_percentage is not None %}{{ project_details.expected_progress_percentage|floatformat:1 }}%{% else %}Not available{% endif %}</span>
             </div>
-            <div class="detail-item">
-                <span class="detail-label">Physical Progress Variance</span>
+            <div class="detail-item detail-item--derived">
+                <span class="detail-label">Variance (Actual vs Scheduled)</span>
+                <span class="detail-reference-badge">Calculated reference</span>
                 <span class="detail-value">{% if project_details.progress_variance_percentage is not None %}{{ project_details.progress_variance_percentage|floatformat:1 }} percentage points{% else %}Not available{% endif %}</span>
             </div>
-            <div class="detail-item">
+            <div class="detail-item detail-item--derived">
                 <span class="detail-label">Calculated Cost Progress</span>
+                <span class="detail-reference-badge">Calculated reference</span>
                 <span class="detail-value">{% if project_details.derived_cost_progress_percentage is not None %}{{ project_details.derived_cost_progress_percentage|floatformat:1 }}%{% else %}Not available{% endif %}</span>
             </div>
         </div>
@@ -270,7 +273,7 @@
                 <span class="detail-value">{{ project_details.inspection_date|date:"M d, Y"|default:"Not recorded" }}</span>
             </div>
             <div class="detail-item">
-                <span class="detail-label">Completion %</span>
+                <span class="detail-label">Inspection Completion</span>
                 <span class="detail-value">{% if project_details.inspection_completion_percentage is not None %}{{ project_details.inspection_completion_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
             </div>
             <div class="detail-item full-width">

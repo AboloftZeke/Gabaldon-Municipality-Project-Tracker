@@ -12,6 +12,8 @@
 
     {% if publication.status_key == 'not_submitted' %}
         <p>This project is saved internally and is not visible on the public dashboard.</p>
+    {% elif publication.status_key == 'draft' %}
+        <p>Revision {{ publication.revision_number }} is saved as a draft and has not been submitted for office Head review.</p>
     {% elif publication.status_key == 'pending_review' %}
         <p>Revision {{ publication.revision_number }} is waiting for office Head review. Your working project can still be edited, but those edits will not change the submitted revision.</p>
     {% elif publication.status_key == 'needs_revision' %}
@@ -23,7 +25,7 @@
     {% elif publication.status_key == 'rejected' %}
         <p>The latest submission was rejected. You may edit the project and submit a new revision.</p>
     {% elif publication.status_key == 'archived' %}
-        <p>The published revision was archived and is no longer visible publicly.</p>
+        <p>This historical publication revision was archived automatically when it was replaced. The project record remains available.</p>
     {% endif %}
 
     {% if publication.has_current_public_revision and publication.status_key != 'published' %}
@@ -34,7 +36,7 @@
 
     {% if publication.review_notes %}
         <div class="publication-panel__notes">
-            <strong>Administrator notes</strong>
+            <strong>Office Head notes</strong>
             <p>{{ publication.review_notes }}</p>
         </div>
     {% endif %}

@@ -235,6 +235,24 @@ div.detail-item {
     min-width: 0;
 }
 
+div.detail-item--derived {
+    background: #f3f4f6;
+    border-style: dashed;
+}
+
+.detail-reference-badge {
+    align-self: flex-start;
+    margin: -0.2rem 0 0.55rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    background: #e5e7eb;
+    color: #4b5563;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
 div.detail-item.full-width {
     grid-column: 1 / -1;
 }

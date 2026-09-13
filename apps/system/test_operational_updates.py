@@ -137,7 +137,17 @@ class HeadOperationalUpdateTests(TestCase):
             'engineering_projects:project_detail',
             args=[self.infrastructure.pk],
         ))
+        self.assertContains(detail, 'Update Status &amp; Progress')
         self.assertContains(detail, self.infra_url())
+        self.assertNotContains(detail, 'Edit Project')
+        self.assertNotContains(detail, 'Delete Project')
+        self.assertContains(detail, 'Expected / Scheduled Progress')
+        self.assertContains(detail, 'Actual Physical Progress')
+        self.assertContains(detail, 'Variance (Actual vs Scheduled)')
+        self.assertContains(detail, 'Entered Cost Progress')
+        self.assertContains(detail, 'Calculated Cost Progress')
+        self.assertContains(detail, 'Inspection Completion')
+        self.assertContains(detail, 'Calculated reference', count=3)
         response = self.client.get(self.infra_url())
         self.assertContains(response, 'Expected Progress:')
         self.assertContains(response, 'Variance:')
@@ -147,12 +157,22 @@ class HeadOperationalUpdateTests(TestCase):
             'calculated_cost_progress', 'infrastructure_title',
         ]:
             self.assertNotContains(response, f'name="{field}"')
+        ProjectPublicationRevision.objects.filter(
+            pk=self.public_revision.pk,
+        ).update(review_notes='Retained review note')
         self.client.force_login(self.users['engineer', 'staff'])
         detail = self.client.get(reverse(
             'engineering_projects:project_detail',
             args=[self.infrastructure.pk],
         ))
         self.assertNotContains(detail, self.infra_url())
+        self.assertNotContains(detail, 'Update Status &amp; Progress')
+        self.assertContains(detail, 'Edit Project')
+        self.assertContains(detail, 'Submit Updated Version')
+        self.assertContains(detail, 'Office Head notes')
+        self.assertNotContains(detail, 'Administrator notes')
+        self.assertNotContains(detail, 'Record Decision')
+        self.assertNotContains(detail, 'Publish to Public Dashboard')
 
     def test_wrong_roles_are_denied_without_mutation(self):
         before = (
@@ -250,6 +270,13 @@ class HeadOperationalUpdateTests(TestCase):
             self.client.force_login(user)
             self.assertEqual(self.client.post(url, {'status': 'completed'}).status_code, 403)
         self.client.force_login(self.users['mayor', 'head'])
+        detail = self.client.get(reverse(
+            'mayor_projects:non_infrastructure_project_detail',
+            args=[self.non_infrastructure.pk],
+        ))
+        self.assertContains(detail, 'Update Project Status')
+        self.assertNotContains(detail, 'Edit Project')
+        self.assertNotContains(detail, 'Delete Project')
         self.assertEqual(self.client.post(url, {
             'status': 'completed', 'non_infra_name': 'Crafted change',
         }).status_code, 302)
@@ -257,3 +284,14 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertEqual(self.non_infrastructure.status, 'completed')
         self.assertEqual(self.non_infrastructure.non_infra_name, 'Community Program')
         self.assertEqual(self.non_infrastructure.project.publication_revisions.count(), 0)
+        self.client.force_login(self.users['mayor', 'staff'])
+        detail = self.client.get(reverse(
+            'mayor_projects:non_infrastructure_project_detail',
+            args=[self.non_infrastructure.pk],
+        ))
+        self.assertNotContains(detail, 'Update Project Status')
+        self.assertContains(detail, 'Edit Project')
+        self.assertContains(detail, 'Delete Project')
+        self.assertContains(detail, 'Submit for Public Review')
+        self.assertNotContains(detail, 'Record Decision')
+        self.assertNotContains(detail, 'Publish to Public Dashboard')

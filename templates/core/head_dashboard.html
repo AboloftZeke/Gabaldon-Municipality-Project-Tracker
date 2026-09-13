@@ -4,10 +4,15 @@
 {% block extra_head %}<link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}">{% endblock %}
 {% block content %}
 <div class="review-workspace">
-<header class="review-header"><div><p class="review-eyebrow">Publication Review</p><h1>{{ account_navigation.label }} Dashboard</h1><p>Review your office's submitted project revisions.</p></div></header>
+<header class="review-header"><div><p class="review-eyebrow">Publication Review</p><h1>{{ account_navigation.label }} Dashboard</h1><p>Review submissions, preview approved revisions, and publish your office's updates.</p></div></header>
 <nav class="review-filters" aria-label="Office review status">
 {% for card in status_cards %}<a href="{% url 'publication_review_queue' %}?status={{ card.status }}">{{ card.label }} <span>{{ card.count }}</span></a>{% endfor %}
 </nav>
+<section class="review-list"><h2>Operational updates waiting for publication <span class="publication-badge publication-status-approved">{{ operational_revision_count }}</span></h2>
+{% for revision in operational_revisions %}
+<article class="revision-header"><div class="review-card__body"><a href="{% url 'publication_revision_detail' revision.pk %}">{% firstof revision.snapshot_data.infrastructure.title revision.snapshot_data.non_infrastructure.title "Project" %} · Revision {{ revision.revision_number }}</a><p>Approved operational update · replaces public revision {{ revision.supersedes_revision.revision_number }}</p></div></article>
+{% empty %}<p>No operational updates are waiting for publication.</p>{% endfor %}
+</section>
 <section class="review-list"><h2>Recently reviewed submissions</h2>
 {% for revision in recent_revisions %}
 
