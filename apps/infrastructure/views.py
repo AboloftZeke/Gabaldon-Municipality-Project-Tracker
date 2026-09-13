@@ -561,6 +561,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
         scheduled_progress = expected_progress(
             planned_start_date,
             planned_end_date,
+            revised_end_date=getattr(schedule, 'contract_expiry_date', None),
         )
         schedule_variance = progress_variance(
             physical_progress,
