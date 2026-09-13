@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy, reverse, NoReverseMatch
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q, Sum
 from django.templatetags.static import static
 from django.utils import timezone
@@ -14,6 +14,7 @@ from .forms import NonInfrastructureOperationalForm, NonInfrastructureProjectFor
 from apps.system.models import NonInfrastructureProject as SystemNonInfrastructureProject
 from apps.system.models import Non_Infrastructure_Project, Project, Project_Image
 from apps.system.publication_service import (
+    create_head_operational_revision,
     publication_state,
     submit_project_for_review,
 )
@@ -310,8 +311,27 @@ class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):
         )
 
     def form_valid(self, form):
+        try:
+            with transaction.atomic():
+                Project.objects.select_for_update().get(
+                    pk=form.instance.project_id,
+                )
+                response = super().form_valid(form)
+                revision = create_head_operational_revision(
+                    self.object.project,
+                    self.request.user,
+                )
+        except ValidationError as exc:
+            form.instance.refresh_from_db()
+            form.add_error(None, '; '.join(exc.messages))
+            return self.form_invalid(form)
         messages.success(self.request, 'Official project status updated.')
-        return super().form_valid(form)
+        if revision is not None:
+            messages.info(
+                self.request,
+                f'Revision {revision.revision_number} is approved and awaiting publication.',
+            )
+        return response
 
 
 class NonInfrastructureProjectSubmitForReviewView(

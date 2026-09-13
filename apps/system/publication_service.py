@@ -9,7 +9,8 @@ from .models import Project, ProjectPublicationRevision
 from .publication_snapshots import build_project_publication_snapshot
 from .permissions import (
     can_review_revision, can_publish_revision, can_manage_infrastructure,
-    can_manage_non_infrastructure, is_system_admin,
+    can_manage_non_infrastructure, can_update_infrastructure_operations,
+    can_update_non_infrastructure_operations, is_system_admin,
 )
 from .publication_workflow import (
     PublicationStatus,
@@ -38,6 +39,17 @@ def _require_project_manager(project, actor):
     }.get(project.project_type, lambda user: False)(actor)
     if not allowed:
         raise PermissionDenied('Only the responsible office Staff can submit project content.')
+
+
+def _require_head_operational_authority(project, actor):
+    allowed = {
+        'infrastructure': can_update_infrastructure_operations,
+        'non_infrastructure': can_update_non_infrastructure_operations,
+    }.get(project.project_type, lambda user: False)(actor)
+    if not allowed:
+        raise PermissionDenied(
+            'Only the responsible office Head can authorize an operational update.',
+        )
 
 
 def _locked_revision(revision):
@@ -299,3 +311,51 @@ def submit_project_for_review(project, actor):
         )
     revision = active or create_publication_draft(locked_project, actor)
     return submit_publication_revision(revision, actor)
+
+
+@transaction.atomic
+def create_head_operational_revision(project, actor):
+    """Snapshot a Head update for later publication when a public version exists."""
+    project_id = getattr(project, 'pk', project)
+    locked_project = Project.objects.select_for_update().get(pk=project_id)
+    _require_head_operational_authority(locked_project, actor)
+
+    current_public = (
+        locked_project.publication_revisions.select_for_update()
+        .filter(
+            status=PublicationStatus.PUBLISHED,
+            is_current_public_revision=True,
+        )
+        .first()
+    )
+    if current_public is None:
+        return None
+
+    if locked_project.publication_revisions.select_for_update().filter(
+        status__in=OPEN_REVISION_STATUSES,
+    ).exists():
+        raise ValidationError(
+            'This project already has an active unpublished revision. '
+            'The operational update was not saved.',
+        )
+
+    latest_number = (
+        locked_project.publication_revisions.aggregate(
+            highest=Max('revision_number'),
+        )['highest']
+        or 0
+    )
+    now = timezone.now()
+    return ProjectPublicationRevision.objects.create(
+        project=locked_project,
+        revision_number=latest_number + 1,
+        status=PublicationStatus.APPROVED,
+        snapshot_data=build_project_publication_snapshot(locked_project),
+        source_updated_at=locked_project.updated_at,
+        supersedes_revision=current_public,
+        submitted_by=actor,
+        submitted_at=now,
+        reviewed_by=actor,
+        reviewed_at=now,
+        review_notes='Operational update authorized by the responsible office Head.',
+    )

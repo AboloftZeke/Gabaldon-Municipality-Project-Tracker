@@ -6,14 +6,17 @@ from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse, NoReverseMatch
 from django.db.models import Sum
+from django.db import transaction
 from django.templatetags.static import static
 from .forms import InfrastructureOperationalForm, InfrastructureProjectForm
 from apps.system.models import InfrastructureProject as SystemInfrastructureProject
 from apps.system.models import (
     InfrastructureCategory,
     Infrastructure_Project,
+    Project,
 )
 from apps.system.publication_service import (
+    create_head_operational_revision,
     publication_state,
     submit_project_for_review,
 )
@@ -734,8 +737,26 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
         )
         if not form.is_valid():
             return self.render_form(request, infrastructure, form, status=400)
-        form.save()
+        try:
+            with transaction.atomic():
+                Project.objects.select_for_update().get(
+                    pk=infrastructure.project_id,
+                )
+                form.save()
+                revision = create_head_operational_revision(
+                    infrastructure.project,
+                    request.user,
+                )
+        except ValidationError as exc:
+            infrastructure.refresh_from_db()
+            form.add_error(None, '; '.join(exc.messages))
+            return self.render_form(request, infrastructure, form, status=409)
         messages.success(request, 'Status and operational progress updated.')
+        if revision is not None:
+            messages.info(
+                request,
+                f'Revision {revision.revision_number} is approved and awaiting publication.',
+            )
         return redirect('engineering_projects:project_detail', pk=pk)
 
 

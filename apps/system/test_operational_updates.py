@@ -113,7 +113,17 @@ class HeadOperationalUpdateTests(TestCase):
             ),
             before_expected,
         )
-        self.assertEqual(self.infrastructure.project.publication_revisions.count(), 1)
+        self.assertEqual(self.infrastructure.project.publication_revisions.count(), 2)
+        operational_revision = (
+            self.infrastructure.project.publication_revisions
+            .exclude(pk=self.public_revision.pk)
+            .get()
+        )
+        self.assertEqual(operational_revision.status, 'approved')
+        self.assertEqual(
+            operational_revision.supersedes_revision,
+            self.public_revision,
+        )
         self.public_revision.refresh_from_db()
         self.assertEqual(
             self.public_revision.snapshot_data,
