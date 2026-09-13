@@ -1093,3 +1093,337 @@
     font-size: .875rem;
     line-height: 1.2;
 }
+
+
+/* Shared office-dashboard presentation for Engineering and Mayor overview pages. */
+.site-header nav .header-brand {
+    gap: 1rem;
+}
+
+.site-header .header-logo {
+    width: 40px;
+    height: 40px;
+}
+
+.staff-dashboard-content .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.15rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.staff-dashboard-content .dashboard-header h2 {
+    margin: 0;
+    color: var(--color-primary-900);
+    font-size: clamp(1.55rem, 2.5vw, 2.1rem);
+    letter-spacing: -.025em;
+}
+
+.staff-dashboard-content .dashboard-header .user-info {
+    padding: .55rem .75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+}
+
+.staff-dashboard-content .welcome-section {
+    display: flex;
+    min-height: 0;
+    align-items: center;
+    gap: 1.1rem;
+    margin-bottom: 1.25rem;
+    padding: clamp(1.1rem, 3vw, 1.6rem);
+    border: 1px solid #cfe0d2;
+    border-left: 4px solid var(--color-primary-700);
+    border-radius: var(--radius-lg);
+    background: #edf5ee;
+    box-shadow: none;
+}
+
+.staff-dashboard-content .welcome-seal {
+    width: 4.25rem;
+    height: 4.25rem;
+    flex: 0 0 auto;
+}
+
+.staff-dashboard-content .welcome-seal img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.staff-dashboard-content .welcome-text h3 {
+    margin-bottom: .35rem;
+    color: var(--color-primary-900);
+    font-size: 1.2rem;
+}
+
+.staff-dashboard-content .welcome-text p {
+    max-width: 48rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+}
+
+.staff-dashboard-content .dashboard-stats {
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.staff-dashboard-content .dashboard-stats .stat-card {
+    min-height: 8rem;
+    padding: 1.1rem;
+}
+
+.staff-dashboard-content .dashboard-stats .stat-card h3 {
+    color: var(--color-muted);
+    font-size: .82rem;
+    letter-spacing: .01em;
+    text-transform: none;
+}
+
+.staff-dashboard-content .dashboard-stats .stat-value {
+    margin: .45rem 0;
+    color: var(--color-primary-800);
+    font-size: clamp(1.8rem, 3vw, 2.35rem);
+    line-height: 1.1;
+}
+
+.staff-dashboard-content .dashboard-stats .stat-subtitle {
+    color: var(--color-muted);
+    font-size: .82rem;
+}
+
+.staff-dashboard-content .dashboard-section {
+    margin-bottom: 1.5rem;
+    border-radius: var(--radius-lg);
+}
+
+.staff-dashboard-content .action-grid {
+    gap: 1rem;
+}
+
+.staff-dashboard-content .action-card {
+    min-height: 11rem;
+    padding: 1.2rem;
+}
+
+.staff-dashboard-content .action-card-title {
+    color: var(--color-primary-900);
+}
+
+.staff-dashboard-content .action-card-desc {
+    color: var(--color-muted);
+    line-height: 1.5;
+}
+
+/* Mayor's Non-Infrastructure Program Dashboard uses the same staff shell. */
+.staff-program-dashboard {
+    display: grid;
+    grid-template-columns: var(--app-sidebar-width) minmax(0, 1fr);
+    min-height: calc(100vh - var(--app-header-height));
+}
+
+.staff-program-dashboard .staff-sidebar {
+    width: auto;
+    min-width: 0;
+}
+
+.staff-program-dashboard .staff-dashboard-content {
+    width: min(100%, 62rem);
+    margin-inline: auto;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.staff-program-dashboard .staff-dashboard-content .dashboard-container {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+
+.staff-program-dashboard .stats-grid {
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.staff-program-dashboard .stat-card {
+    min-height: 6.4rem;
+    padding: 1rem;
+    border-color: var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.staff-program-dashboard .stat-label {
+    color: var(--color-muted);
+    font-size: .78rem;
+    letter-spacing: .015em;
+}
+
+.staff-program-dashboard .stat-value {
+    margin: .35rem 0 0;
+    color: var(--color-primary-800);
+    font-size: clamp(1.8rem, 2.6vw, 2.2rem);
+    line-height: 1.1;
+}
+
+.staff-program-dashboard .recent-section {
+    padding: clamp(1rem, 2.5vw, 1.5rem);
+    border-color: var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.staff-program-dashboard .recent-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.staff-program-dashboard .section-title {
+    margin: 0;
+    color: var(--color-primary-900);
+    font-size: 1.15rem;
+    letter-spacing: -.01em;
+}
+
+.staff-program-dashboard .recent-section-actions,
+.staff-program-dashboard .btn-group {
+    display: flex;
+    gap: .5rem;
+}
+
+.staff-program-dashboard .btn-small {
+    display: inline-flex;
+    min-height: 2.35rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+}
+
+.staff-program-dashboard .btn-primary {
+    background: var(--color-primary-700);
+    color: #fff;
+}
+
+.staff-program-dashboard .btn-primary:hover {
+    background: var(--color-primary-800);
+    color: #fff;
+}
+
+.staff-program-dashboard .btn-edit {
+    border: 1px solid #a9c4b0;
+    background: #eff7f0;
+    color: var(--color-primary-800);
+}
+
+.staff-program-dashboard .btn-edit:hover {
+    border-color: var(--color-primary-700);
+    background: var(--color-primary-700);
+    color: #fff;
+}
+
+.staff-program-dashboard .project-item {
+    gap: .85rem;
+    padding: .9rem 0;
+}
+
+.staff-program-dashboard .project-item:hover {
+    background: #f7faf7;
+}
+
+.staff-program-dashboard .project-name {
+    color: var(--color-primary-900);
+    font-weight: 750;
+    line-height: 1.35;
+}
+
+.staff-program-dashboard .project-meta {
+    color: var(--color-muted);
+    line-height: 1.45;
+}
+
+@media (max-width: 768px) {
+    .staff-dashboard-content .dashboard-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .staff-dashboard-content .dashboard-header .user-info {
+        width: 100%;
+    }
+
+    .staff-dashboard-content .welcome-section {
+        align-items: flex-start;
+    }
+
+    .staff-dashboard-content .dashboard-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .staff-program-dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    .staff-program-dashboard .staff-sidebar {
+        width: 100%;
+        padding: 1rem 0;
+        border-right: 0;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .staff-program-dashboard .staff-dashboard-content {
+        width: 100%;
+        padding: 1rem;
+    }
+
+    .staff-program-dashboard .recent-section-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .staff-program-dashboard .recent-section-actions {
+        width: 100%;
+    }
+
+    .staff-program-dashboard .recent-section-actions .btn-small {
+        flex: 1;
+    }
+
+    .staff-program-dashboard .project-item {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .staff-program-dashboard .project-item .btn-group {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .staff-dashboard-content .welcome-section {
+        flex-direction: column;
+    }
+
+    .staff-dashboard-content .dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .staff-program-dashboard .recent-section-actions,
+    .staff-program-dashboard .project-item .btn-group {
+        flex-direction: column;
+    }
+
+    .staff-program-dashboard .recent-section-actions .btn-small,
+    .staff-program-dashboard .project-item .btn-small {
+        width: 100%;
+    }
+}
