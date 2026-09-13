@@ -171,7 +171,12 @@ class OfficeReviewPermissionTests(TestCase):
         from .models import Infrastructure_Project
 
         project = Project.objects.create(project_type='infrastructure', created_by_user=self.users['engineer', 'staff'])
-        Infrastructure_Project.objects.create(project=project, infrastructure_title='Seed verification')
+        Infrastructure_Project.objects.create(
+            project=project,
+            infrastructure_title='Seed verification',
+            award_status='ongoing_bidding',
+            physical_progress_percentage=0,
+        )
         Command()._publish_project(project, employee=self.users['engineer', 'staff'], admin=self.admin)
         revision = project.publication_revisions.get()
         self.assertEqual(revision.status, 'published')

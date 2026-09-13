@@ -5,13 +5,34 @@ from django.test import TestCase
 from django.urls import reverse
 from .models import ProjectPublicationRevision
 from .permissions import can_publish_revision
-from .publication_service import publish_publication_revision, archive_publication_revision
+from .publication_service import (
+    OPERATIONAL_CONFIRMATION_KEY,
+    archive_publication_revision,
+    publish_publication_revision,
+)
 
 
 class HeadPublishTests(TestCase):
     def setUp(self):
         from .test_publication_review_permissions import OfficeReviewPermissionTests
         OfficeReviewPermissionTests.setUp(self)
+
+    def make_first_publication_ready(self, revision, head):
+        snapshot = deepcopy(revision.snapshot_data)
+        project_type = revision.project.project_type
+        if project_type == 'infrastructure':
+            snapshot.setdefault('infrastructure', {}).update({
+                'award_status': 'planned',
+                'physical_progress_percentage': '0.00',
+            })
+        else:
+            snapshot.setdefault('non_infrastructure', {})['status'] = 'planned'
+        snapshot[OPERATIONAL_CONFIRMATION_KEY] = {
+            'project_type': project_type,
+            'confirmed_by_user_id': head.pk,
+        }
+        revision.snapshot_data = snapshot
+        revision.save(update_fields=['snapshot_data'])
 
     def test_publish_matrix_at_view_and_service(self):
         for office, revision in self.revisions.items():
@@ -39,6 +60,7 @@ class HeadPublishTests(TestCase):
                 revision.refresh_from_db()
                 self.assertEqual(revision.status, 'approved')
             head = self.users[office, 'head']
+            self.make_first_publication_ready(revision, head)
             self.client.force_login(head)
             self.assertContains(self.client.get(reverse('publication_revision_detail', args=[revision.pk])), 'Publish to Public Dashboard')
             snapshot = deepcopy(revision.snapshot_data)
@@ -66,6 +88,8 @@ class HeadPublishTests(TestCase):
         revision = self.revisions['engineer']
         ProjectPublicationRevision.objects.filter(pk=revision.pk).update(status='approved')
         head = self.users['engineer', 'head']
+        revision.refresh_from_db()
+        self.make_first_publication_ready(revision, head)
         first = publish_publication_revision(revision, head)
         second = ProjectPublicationRevision.objects.create(
             project=first.project,

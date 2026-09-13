@@ -64,6 +64,32 @@ class OfficePublicationIntegrationTests(TestCase):
                     self.assertEqual(self.client.post(submit_url).status_code, 302)
                     revision = record.project.publication_revisions.order_by('-revision_number').first()
                     self.client.force_login(head)
+                if previous is None:
+                    if office == 'engineer':
+                        operational_url = reverse(
+                            'engineering_projects:project_operations',
+                            args=[record.pk],
+                        )
+                        operational_payload = {
+                            'award_status': 'ongoing_bidding',
+                            'physical_progress_percentage': '0',
+                            'cost_progress_percentage': '',
+                            'inspection_completion_percentage': '0',
+                        }
+                    else:
+                        operational_url = reverse(
+                            'mayor_projects:non_infrastructure_project_operations',
+                            args=[record.pk],
+                        )
+                        operational_payload = {'status': 'planned'}
+                    self.assertEqual(
+                        self.client.post(
+                            operational_url,
+                            operational_payload,
+                        ).status_code,
+                        302,
+                    )
+                    revision.refresh_from_db()
                 snapshot = deepcopy(revision.snapshot_data)
                 self.client.post(reverse('publication_revision_review', args=[revision.pk]), {'decision': 'approved'})
                 self.client.force_login(publisher)

@@ -1,5 +1,7 @@
 """Atomic application services for the project publication workflow."""
 
+from copy import deepcopy
+
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Max
@@ -24,6 +26,110 @@ OPEN_REVISION_STATUSES = (
     PublicationStatus.NEEDS_REVISION,
     PublicationStatus.APPROVED,
 )
+OPERATIONAL_CONFIRMATION_KEY = '_head_operational_confirmation'
+
+
+def _operational_confirmation(project, actor):
+    return {
+        'project_type': project.project_type,
+        'confirmed_by_user_id': actor.pk,
+        'confirmed_at': timezone.now().isoformat(),
+    }
+
+
+def _synchronize_head_operational_snapshot(revision, project, actor):
+    """Copy only Head-owned values into an existing submitted snapshot."""
+    snapshot = deepcopy(revision.snapshot_data or {})
+    current = build_project_publication_snapshot(project)
+
+    if project.project_type == 'infrastructure':
+        submitted = snapshot.setdefault('infrastructure', {})
+        operational = current.get('infrastructure') or {}
+        for key in (
+            'award_status',
+            'award_status_label',
+            'physical_progress_percentage',
+            'cost_progress_percentage',
+        ):
+            submitted[key] = operational.get(key)
+
+        current_inspection = current.get('inspection')
+        if current_inspection is None:
+            snapshot['inspection'] = None
+        else:
+            submitted_inspection = snapshot.get('inspection')
+            if not isinstance(submitted_inspection, dict):
+                submitted_inspection = {}
+                snapshot['inspection'] = submitted_inspection
+            submitted_inspection['completion_percentage'] = (
+                current_inspection.get('completion_percentage')
+            )
+    elif project.project_type == 'non_infrastructure':
+        submitted = snapshot.setdefault('non_infrastructure', {})
+        operational = current.get('non_infrastructure') or {}
+        submitted['status'] = operational.get('status')
+        submitted['status_label'] = operational.get('status_label')
+
+    snapshot[OPERATIONAL_CONFIRMATION_KEY] = _operational_confirmation(
+        project,
+        actor,
+    )
+    revision.snapshot_data = snapshot
+    return revision
+
+
+def _missing_first_publication_requirements(revision):
+    snapshot = revision.snapshot_data or {}
+    confirmation = snapshot.get(OPERATIONAL_CONFIRMATION_KEY) or {}
+    confirmed = (
+        confirmation.get('project_type') == revision.project.project_type
+        and confirmation.get('confirmed_by_user_id') is not None
+    )
+    missing = []
+
+    if revision.project.project_type == 'infrastructure':
+        infrastructure = snapshot.get('infrastructure') or {}
+        if not confirmed:
+            missing.append(
+                'Engineering Head must explicitly confirm the official status',
+            )
+        if not infrastructure.get('award_status'):
+            missing.append('official status is required')
+        if infrastructure.get('physical_progress_percentage') in (None, ''):
+            missing.append('actual physical progress is required')
+        inspection = snapshot.get('inspection')
+        if (
+            inspection is not None
+            and inspection.get('completion_percentage') in (None, '')
+        ):
+            missing.append(
+                'inspection completion percentage is required',
+            )
+    elif revision.project.project_type == 'non_infrastructure':
+        non_infrastructure = snapshot.get('non_infrastructure') or {}
+        if not confirmed:
+            missing.append(
+                "Mayor's Office Head must explicitly confirm the official status",
+            )
+        if not non_infrastructure.get('status'):
+            missing.append('official status is required')
+
+    return missing
+
+
+def validate_publication_readiness(revision):
+    """Require Head-confirmed operational values for a first publication."""
+    was_previously_published = revision.project.publication_revisions.filter(
+        status__in=[PublicationStatus.PUBLISHED, PublicationStatus.ARCHIVED],
+    ).exclude(pk=revision.pk).exists()
+    if was_previously_published:
+        return
+
+    missing = _missing_first_publication_requirements(revision)
+    if missing:
+        raise ValidationError(
+            'Publication is not ready: ' + '; '.join(missing) + '.',
+        )
 
 
 def _require_authenticated(actor):
@@ -219,6 +325,8 @@ def publish_publication_revision(revision, publisher):
             'This revision cannot replace it.',
         )
 
+    validate_publication_readiness(locked_revision)
+
     now = timezone.now()
     if current_public is not None:
         current_public.status = PublicationStatus.ARCHIVED
@@ -342,6 +450,19 @@ def create_head_operational_revision(project, actor):
         .first()
     )
     if current_public is None:
+        active_revision = (
+            locked_project.publication_revisions.select_for_update()
+            .filter(status__in=OPEN_REVISION_STATUSES)
+            .order_by('-revision_number')
+            .first()
+        )
+        if active_revision is not None:
+            _synchronize_head_operational_snapshot(
+                active_revision,
+                locked_project,
+                actor,
+            )
+            active_revision.save(update_fields=['snapshot_data', 'updated_at'])
         return None
 
     if locked_project.publication_revisions.select_for_update().filter(
@@ -359,11 +480,16 @@ def create_head_operational_revision(project, actor):
         or 0
     )
     now = timezone.now()
+    snapshot = build_project_publication_snapshot(locked_project)
+    snapshot[OPERATIONAL_CONFIRMATION_KEY] = _operational_confirmation(
+        locked_project,
+        actor,
+    )
     return ProjectPublicationRevision.objects.create(
         project=locked_project,
         revision_number=latest_number + 1,
         status=PublicationStatus.APPROVED,
-        snapshot_data=build_project_publication_snapshot(locked_project),
+        snapshot_data=snapshot,
         source_updated_at=locked_project.updated_at,
         supersedes_revision=current_public,
         submitted_by=actor,

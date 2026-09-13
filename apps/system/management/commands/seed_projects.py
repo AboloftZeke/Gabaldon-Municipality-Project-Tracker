@@ -20,6 +20,7 @@ from apps.system.models import (
     UserFlag,
 )
 from apps.system.publication_service import (
+    create_head_operational_revision,
     publish_publication_revision,
     review_publication_revision,
     submit_project_for_review,
@@ -548,6 +549,7 @@ class Command(BaseCommand):
             PublicationStatus.APPROVED,
             notes='Automatically approved by seed_projects for test data.',
         )
+        create_head_operational_revision(project, head)
         publish_publication_revision(revision, head)
 
     def _clear_seed_data(self):
