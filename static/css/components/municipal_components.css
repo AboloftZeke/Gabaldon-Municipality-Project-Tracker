@@ -1085,3 +1085,11 @@
 .project-dashboard-layout .staff-sidebar .action-button.secondary {
     margin: 0;
 }
+
+
+/* Use one explicit Sign Out label size instead of each page's inherited action-button size. */
+.staff-sidebar .action-button.secondary,
+.project-dashboard-layout .staff-sidebar .action-button.secondary {
+    font-size: .875rem;
+    line-height: 1.2;
+}
