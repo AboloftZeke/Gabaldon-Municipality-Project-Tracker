@@ -333,3 +333,5 @@ class PublicationOperationalUITests(TestCase):
             'mayor_projects:non_infrastructure_project_operations',
             args=[self.non_infrastructure.pk],
         ))
+        self.assertNotContains(response, 'percentage')
+        self.assertNotContains(response, 'Edit Project')

@@ -1,29 +1,183 @@
 {% extends "base.html" %}
 {% load static %}
+
 {% block title %}{{ account_navigation.label }} Dashboard{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}">{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}?v=20260821-1">
+<link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
+{% endblock %}
+
 {% block content %}
-<div class="review-workspace">
-<header class="review-header"><div><p class="review-eyebrow">Publication Review</p><h1>{{ account_navigation.label }} Dashboard</h1><p>Review submissions, preview approved revisions, and publish your office's updates.</p></div></header>
-<nav class="review-filters" aria-label="Office review status">
-{% for card in status_cards %}<a href="{% url 'publication_review_queue' %}?status={{ card.status }}">{{ card.label }} <span>{{ card.count }}</span></a>{% endfor %}
-</nav>
-<section class="review-list"><h2>Published project operational information</h2>
-{% for project in published_operational_projects %}
-<article class="revision-header"><div class="review-card__body"><strong>{{ project.title }}</strong><p>{{ project.status }}</p><a class="review-primary-link" href="{{ project.update_url }}">{{ operational_action_label }}</a></div></article>
-{% empty %}<p>No published projects are available for an operational update.</p>{% endfor %}
-<a class="review-primary-link" href="{{ project_list_url }}">View all office projects</a>
-</section>
-<section class="review-list"><h2>Operational updates waiting for publication <span class="publication-badge publication-status-approved">{{ operational_revision_count }}</span></h2>
-{% for revision in operational_revisions %}
-<article class="revision-header"><div class="review-card__body"><a href="{% url 'publication_revision_detail' revision.pk %}">{% firstof revision.snapshot_data.infrastructure.title revision.snapshot_data.non_infrastructure.title "Project" %} · Revision {{ revision.revision_number }}</a><p>Approved operational update · replaces public revision {{ revision.supersedes_revision.revision_number }}</p></div></article>
-{% empty %}<p>No operational updates are waiting for publication.</p>{% endfor %}
-</section>
-<section class="review-list"><h2>Recently reviewed submissions</h2>
-{% for revision in recent_revisions %}
+<div class="head-dashboard">
+    <header class="head-dashboard__header">
+        <div>
+            <p class="head-dashboard__eyebrow">Publication Review</p>
+            <h1>{{ account_navigation.label }} Dashboard</h1>
+            <p>Review submissions, complete required operational information, and publish approved updates for your office.</p>
+        </div>
+    </header>
 
-<article class="revision-header"><div class="review-card__body"><a href="{% url 'publication_revision_detail' revision.pk %}">{% firstof revision.snapshot_data.infrastructure.title revision.snapshot_data.non_infrastructure.title "Project" %} · Revision {{ revision.revision_number }}</a><p>{{ revision.get_status_display }} · {{ revision.reviewed_at }}</p></div></article>
+    <nav class="head-summary" aria-label="Publication workload summary">
+        {% for card in status_cards %}
+            <a class="head-summary__card" href="{{ card.href }}">
+                <strong>{{ card.count }}</strong>
+                <span>{{ card.label }}</span>
+            </a>
+        {% endfor %}
+    </nav>
 
-{% empty %}<p>No reviewed submissions yet.</p>{% endfor %}
-</section></div>
+    <section class="head-section head-section--attention" aria-labelledby="attention-heading">
+        <div class="head-section__heading">
+            <div>
+                <p class="head-section__eyebrow">Action queue</p>
+                <h2 id="attention-heading">Needs Your Attention</h2>
+                <p>Complete these publication tasks to keep your office's public project information current.</p>
+            </div>
+        </div>
+
+        {% if pending_review_items %}
+            <div class="attention-group" id="pending-reviews">
+                <h3>Pending Reviews <span>{{ pending_review_items|length }}</span></h3>
+                <div class="attention-grid">
+                    {% for item in pending_review_items %}
+                        <article class="attention-card">
+                            <div class="attention-card__topline">
+                                <span class="publication-badge publication-status-pending_review">Pending Review</span>
+                                <span>Revision {{ item.revision.revision_number }}</span>
+                            </div>
+                            <h4>{{ item.title }}</h4>
+                            <p>Review the submitted snapshot and record your decision.</p>
+                            <a class="head-button head-button--primary" href="{{ item.detail_url }}">Review Submission</a>
+                        </article>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if needs_operational_items %}
+            <div class="attention-group" id="needs-operational-information">
+                <h3>Operational Information Required <span>{{ needs_operational_items|length }}</span></h3>
+                <div class="attention-grid">
+                    {% for item in needs_operational_items %}
+                        <article class="attention-card attention-card--required">
+                            <div class="attention-card__topline">
+                                <span class="attention-badge attention-badge--warning">Action Required</span>
+                                <span>Revision {{ item.revision.revision_number }}</span>
+                            </div>
+                            <h4>{{ item.title }}</h4>
+                            <p>This approved first publication still needs the required office Head confirmation.</p>
+                            <a class="head-button head-button--primary" href="{{ item.detail_url }}">Complete Operational Information</a>
+                        </article>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if ready_to_publish_items %}
+            <div class="attention-group" id="ready-to-publish">
+                <h3>Ready to Publish <span>{{ ready_to_publish_items|length }}</span></h3>
+                <div class="attention-grid">
+                    {% for item in ready_to_publish_items %}
+                        <article class="attention-card attention-card--ready">
+                            <div class="attention-card__topline">
+                                <span class="attention-badge attention-badge--ready">Ready</span>
+                                <span>Revision {{ item.revision.revision_number }}</span>
+                            </div>
+                            <h4>{{ item.title }}</h4>
+                            <p>Operational information is complete. Preview the approved snapshot before publishing.</p>
+                            <a class="head-button head-button--primary" href="{{ item.detail_url }}">Preview &amp; Publish</a>
+                        </article>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if operational_update_items %}
+            <div class="attention-group" id="updates-waiting-to-publish">
+                <h3>Operational Updates Waiting to Publish <span>{{ operational_update_items|length }}</span></h3>
+                <div class="attention-grid">
+                    {% for item in operational_update_items %}
+                        <article class="attention-card attention-card--update">
+                            <div class="attention-card__topline">
+                                <span class="attention-badge attention-badge--update">Operational Update</span>
+                                <span>Revision {{ item.revision.revision_number }}</span>
+                            </div>
+                            <h4>{{ item.title }}</h4>
+                            <p>Approved operational changes are waiting for an explicit publication decision.</p>
+                            <a class="head-button head-button--primary" href="{{ item.detail_url }}">Preview &amp; Publish Update</a>
+                        </article>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if not pending_review_items and not needs_operational_items and not ready_to_publish_items and not operational_update_items %}
+            <div class="head-empty head-empty--attention">
+                <strong>No publication tasks need attention.</strong>
+                <p>New submissions and approved updates will appear here.</p>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="head-section" aria-labelledby="published-heading">
+        <div class="head-section__heading head-section__heading--with-action">
+            <div>
+                <p class="head-section__eyebrow">Current public information</p>
+                <h2 id="published-heading">Published Projects</h2>
+                <p>Update the official operational information for projects currently visible to the public.</p>
+            </div>
+            <a class="head-button head-button--secondary" href="{{ project_list_url }}">View All Office Projects</a>
+        </div>
+
+        {% if published_operational_projects %}
+            <div class="published-grid">
+                {% for project in published_operational_projects %}
+                    <article class="published-card">
+                        <div>
+                            <span class="publication-badge publication-status-published">Published</span>
+                            <h3>{{ project.title }}</h3>
+                            <dl><dt>Official Status</dt><dd>{{ project.status }}</dd></dl>
+                        </div>
+                        <a class="head-button head-button--secondary" href="{{ project.update_url }}">{{ operational_action_label }}</a>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="head-empty">
+                <strong>No published projects yet.</strong>
+                <p>Projects will appear here after their first publication.</p>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="head-section head-section--activity" aria-labelledby="activity-heading">
+        <div class="head-section__heading">
+            <div>
+                <p class="head-section__eyebrow">History</p>
+                <h2 id="activity-heading">Recent Activity</h2>
+                <p>Recently reviewed or published revisions from your office.</p>
+            </div>
+        </div>
+
+        {% if recent_activity_items %}
+            <div class="activity-list">
+                {% for item in recent_activity_items %}
+                    <article class="activity-row">
+                        <div>
+                            <strong>{{ item.title }}</strong>
+                            <span>Revision {{ item.revision.revision_number }}</span>
+                        </div>
+                        <div class="activity-row__meta">
+                            <span class="publication-badge publication-status-{{ item.revision.status }}">{{ item.status }}</span>
+                            <time>{{ item.activity_at|date:"M d, Y · g:i A" }}</time>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="head-empty"><p>No recent review activity.</p></div>
+        {% endif %}
+    </section>
+</div>
 {% endblock %}

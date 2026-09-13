@@ -55,11 +55,22 @@ class HeadDashboardTests(TestCase):
                 with self.subTest(office=office, assignment=assignment):
                     self.assertEqual(response.status_code, 200 if allowed else 403)
                     if allowed:
-                        self.assertEqual(list(response.context['recent_revisions']), [self.revisions[office]])
-                        self.assertEqual([card['count'] for card in response.context['status_cards']], [0, 0, 1])
+                        self.assertEqual(list(response.context['recent_revisions']), [])
+                        self.assertEqual(
+                            [card['count'] for card in response.context['status_cards']],
+                            [0, 1, 0, 0],
+                        )
                         self.assertContains(response, reverse('publication_review_queue') + '?status=pending_review')
                         self.assertContains(response, reverse('password_change'))
                         self.assertNotContains(response, 'project_create')
+                        self.assertNotContains(response, 'Edit Project')
+                        self.assertContains(response, 'Needs Your Attention')
+                        self.assertContains(
+                            response,
+                            'Complete Operational Information',
+                        )
+                        self.assertContains(response, 'Published Projects')
+                        self.assertContains(response, 'Recent Activity')
                         own_list = reverse(
                             'engineering_projects:project_list'
                             if office == 'engineer'
@@ -161,11 +172,46 @@ class HeadDashboardTests(TestCase):
                 response,
                 f'{office} operational update',
             )
+            self.assertContains(response, 'Preview &amp; Publish Update')
+            self.assertContains(
+                response,
+                'Operational Updates Waiting to Publish',
+            )
             other = 'mayor' if office == 'engineer' else 'engineer'
             self.assertNotContains(
                 response,
                 f'{other} operational update',
             )
+
+    def test_complete_initial_revision_is_ready_to_publish(self):
+        revision = self.revisions['engineer']
+        revision.snapshot_data = {
+            'project': {'type': 'infrastructure'},
+            'infrastructure': {
+                'id': 1,
+                'title': 'Ready Infrastructure Project',
+                'award_status': 'awarded',
+                'award_status_label': 'Awarded',
+                'physical_progress_percentage': '0.00',
+            },
+            '_head_operational_confirmation': {
+                'project_type': 'infrastructure',
+                'confirmed_by_user_id': self.users['engineer', 'head'][0].pk,
+            },
+        }
+        revision.save(update_fields=['snapshot_data'])
+        self.client.force_login(self.users['engineer', 'head'][0])
+
+        response = self.client.get(reverse('engineering_head_dashboard'))
+
+        self.assertEqual(response.context['needs_operational_items'], [])
+        self.assertEqual(
+            len(response.context['ready_to_publish_items']),
+            1,
+        )
+        self.assertContains(response, 'Ready Infrastructure Project')
+        self.assertContains(response, 'Preview &amp; Publish')
+        self.assertNotContains(response, 'Complete Operational Information')
 
     def test_missing_assignment_does_not_use_compatibility_profile(self):
         user = User.objects.create_user('unassigned', is_staff=True)
