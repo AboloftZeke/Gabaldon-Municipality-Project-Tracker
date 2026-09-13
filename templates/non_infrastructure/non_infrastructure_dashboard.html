@@ -4,19 +4,19 @@
 {% block title %}Project Dashboard - Non-Infrastructure Projects{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_sidebar.css' %}">
-<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_sidebar.css' %}?v=20260913-1">
+<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_dashboard.css' %}?v=20260913-1">
 {% endblock %}
 
 
 {% block content %}
 
-<div class="non-infrastructure-layout">
+<div class="non-infrastructure-layout staff-program-dashboard">
 
     <!-- ==============================
          SIDEBAR
     =============================== -->
-    <aside class="sidebar">
+    <aside class="sidebar staff-sidebar">
 
         <div class="sidebar-section">
 
@@ -67,7 +67,7 @@
          MAIN DASHBOARD
     =============================== -->
 
-    <main class="dashboard-content">
+    <main class="dashboard-content staff-dashboard-content">
 
         <div class="dashboard-container">
 
@@ -84,7 +84,7 @@
 
                 <div class="stat-card">
                     <div class="stat-label">
-                        Total Projects
+                        Total Programs
                     </div>
 
                     <div class="stat-value">
@@ -186,8 +186,7 @@
                                 </a>
 
                                 <a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}"
-                                   class="btn-small"
-                                   style="background: #6b7280; color: white;">
+                                   class="btn-small btn-edit">
                                     Edit
                                 </a>
 
