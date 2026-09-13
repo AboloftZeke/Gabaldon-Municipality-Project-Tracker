@@ -24,6 +24,11 @@ from apps.system.permissions import (
     department_for_user as _department_for_user,
     is_system_admin,
 )
+from apps.system.progress import (
+    derived_cost_progress,
+    expected_progress,
+    progress_variance,
+)
 
 
 class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -553,6 +558,18 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
             ).first()
             if infra and infra.project else None
         )
+        scheduled_progress = expected_progress(
+            planned_start_date,
+            planned_end_date,
+        )
+        schedule_variance = progress_variance(
+            physical_progress,
+            scheduled_progress,
+        )
+        calculated_cost_progress = derived_cost_progress(
+            actual_expenditure,
+            contract_value,
+        )
 
         context['project_details'] = {
             'pk': project.pk,
@@ -611,6 +628,9 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
             'duration_days': getattr(schedule, 'duration_days', None),
             'cost_progress_percentage': cost_progress,
             'physical_progress_percentage': physical_progress,
+            'expected_progress_percentage': scheduled_progress,
+            'progress_variance_percentage': schedule_variance,
+            'derived_cost_progress_percentage': calculated_cost_progress,
             'inspection_date': getattr(
                 inspection,
                 'inspection_date',
@@ -741,4 +761,3 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
             compat_project.delete()
 
         return redirect(success_url)
-

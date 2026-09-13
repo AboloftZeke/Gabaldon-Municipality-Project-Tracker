@@ -244,6 +244,18 @@
                 <span class="detail-label">Physical Progress</span>
                 <span class="detail-value">{% if project_details.physical_progress_percentage is not None %}{{ project_details.physical_progress_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
             </div>
+            <div class="detail-item">
+                <span class="detail-label">Expected / Scheduled Progress</span>
+                <span class="detail-value">{% if project_details.expected_progress_percentage is not None %}{{ project_details.expected_progress_percentage|floatformat:1 }}%{% else %}Not available{% endif %}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Physical Progress Variance</span>
+                <span class="detail-value">{% if project_details.progress_variance_percentage is not None %}{{ project_details.progress_variance_percentage|floatformat:1 }} percentage points{% else %}Not available{% endif %}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Calculated Cost Progress</span>
+                <span class="detail-value">{% if project_details.derived_cost_progress_percentage is not None %}{{ project_details.derived_cost_progress_percentage|floatformat:1 }}%{% else %}Not available{% endif %}</span>
+            </div>
         </div>
     </section>
 
