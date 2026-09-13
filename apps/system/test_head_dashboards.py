@@ -60,8 +60,18 @@ class HeadDashboardTests(TestCase):
                         self.assertContains(response, reverse('publication_review_queue') + '?status=pending_review')
                         self.assertContains(response, reverse('password_change'))
                         self.assertNotContains(response, 'project_create')
-                        self.assertNotContains(response, '/infrastructure/')
-                        self.assertNotContains(response, '/non-infrastructure/')
+                        own_list = reverse(
+                            'engineering_projects:project_list'
+                            if office == 'engineer'
+                            else 'mayor_projects:non_infrastructure_project_list'
+                        )
+                        other_list = reverse(
+                            'mayor_projects:non_infrastructure_project_list'
+                            if office == 'engineer'
+                            else 'engineering_projects:project_list'
+                        )
+                        self.assertContains(response, own_list)
+                        self.assertNotContains(response, other_list)
             self.client.logout()
             self.assertEqual(self.client.get(reverse(destination)).status_code, 403)
 

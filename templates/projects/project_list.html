@@ -78,6 +78,7 @@
 
                         <div class="project-actions">
                             <a href="{% url 'engineering_projects:project_detail' project.pk %}" class="btn-small btn-view">View</a>
+                            {% if can_update_operations %}<a href="{% url 'engineering_projects:project_operations' project.pk %}" class="btn-small btn-edit">Update Status &amp; Progress</a>{% endif %}
                             {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_update' project.pk %}" class="btn-small btn-edit">Edit</a>{% endif %}
                         </div>
                     </div>

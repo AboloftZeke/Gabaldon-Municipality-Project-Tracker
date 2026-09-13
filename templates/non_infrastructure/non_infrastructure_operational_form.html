@@ -4,11 +4,12 @@
 {% block extra_head %}<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_form.css' %}">{% endblock %}
 {% block content %}
 <div class="form-container">
-    <a href="{% url 'mayor_projects:non_infrastructure_project_detail' object.pk %}" class="btn btn-secondary">Back to Project</a>
+    {% if return_revision_id %}<a href="{% url 'publication_revision_detail' return_revision_id %}" class="btn btn-secondary">Back to Publication Review</a>{% else %}<a href="{% url 'mayor_projects:non_infrastructure_project_detail' object.pk %}" class="btn btn-secondary">Back to Project</a>{% endif %}
     <h2>Update Project Status</h2>
     <p>No operational percentage is stored for Non-Infrastructure projects. The Mayor's Office Head controls the official status.</p>
     <form method="post">
         {% csrf_token %}
+        {% if return_revision_id %}<input type="hidden" name="from_review" value="{{ return_revision_id }}">{% endif %}
         {{ form.as_p }}
         <button type="submit" class="btn btn-primary">Save Status</button>
     </form>

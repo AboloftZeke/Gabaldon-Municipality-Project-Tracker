@@ -63,6 +63,43 @@
                 <div><span>{{ preview.code }}</span><h2>{{ preview.title }}</h2><p>{{ preview.description|default:"No description provided." }}</p></div>
             </section>
 
+            {% if operational.update_url %}
+            <section class="revision-section operational-readiness {% if operational.is_complete %}operational-readiness--complete{% else %}operational-readiness--incomplete{% endif %}">
+                <div class="operational-readiness__header">
+                    <div>
+                        <p class="review-eyebrow">Head-owned publication information</p>
+                        <h2>Operational Information: {% if operational.is_complete %}Complete{% else %}Incomplete{% endif %}</h2>
+                    </div>
+                    <span class="operational-readiness__status">{% if operational.is_complete %}Ready{% else %}Action required{% endif %}</span>
+                </div>
+                {% if not operational.is_complete %}
+                    <p>Complete the required operational information before this first publication can be published.</p>
+                    <ul class="operational-readiness__missing">
+                        {% for item in operational.missing %}<li>{{ item|capfirst }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+
+                <h3>Official and actual values</h3>
+                <p class="operational-readiness__help">These values are set and confirmed by the responsible office Head.</p>
+                <dl class="operational-readiness__grid">
+                    {% for field in operational.controlled_fields %}
+                    <div><dt>{{ field.label }}</dt><dd>{% if field.value == None or field.value == '' %}Not set{% elif field.is_percentage %}{{ field.value|floatformat:2 }}%{% else %}{{ field.value }}{% endif %}</dd></div>
+                    {% endfor %}
+                </dl>
+
+                {% if operational.reference_fields %}
+                    <h3>Calculated reference values</h3>
+                    <p class="operational-readiness__help">These values are calculated for context and do not replace actual progress.</p>
+                    <dl class="operational-readiness__grid operational-readiness__grid--reference">
+                        {% for field in operational.reference_fields %}
+                        <div><dt>{{ field.label }}</dt><dd>{% if field.value == None %}Not available{% elif field.is_percentage %}{{ field.value|floatformat:2 }}%{% else %}{{ field.value }}{% endif %}</dd></div>
+                        {% endfor %}
+                    </dl>
+                {% endif %}
+                <a class="review-primary-link" href="{{ operational.update_url }}?from_review={{ revision.pk }}">{{ operational.update_label }}</a>
+            </section>
+            {% endif %}
+
             {% include "includes/publication_comparison.html" %}
         </div>
 
@@ -100,6 +137,12 @@
                         {% csrf_token %}
                         <button type="submit" class="review-button review-button--primary">{% if comparison.baseline %}Publish Update to Public Dashboard{% else %}Publish to Public Dashboard{% endif %}</button>
                     </form>
+                </section>
+            {% elif revision.status == 'approved' and operational.update_url and not operational.is_complete %}
+                <section class="publish-blocked">
+                    <h2>Operational Information Required</h2>
+                    <p>This first publication cannot be published until the office Head completes the required operational information.</p>
+                    <a class="review-button review-button--primary" href="{{ operational.update_url }}?from_review={{ revision.pk }}">{{ operational.update_label }}</a>
                 </section>
             {% endif %}
         </aside>

@@ -4,11 +4,12 @@
 {% block extra_head %}<link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}">{% endblock %}
 {% block content %}
 <div class="form-container">
-    <a href="{% url 'engineering_projects:project_detail' project.pk %}" class="btn btn-secondary">Back to Project</a>
+    {% if return_revision_id %}<a href="{% url 'publication_revision_detail' return_revision_id %}" class="btn btn-secondary">Back to Publication Review</a>{% else %}<a href="{% url 'engineering_projects:project_detail' project.pk %}" class="btn btn-secondary">Back to Project</a>{% endif %}
     <h2>Update Status &amp; Progress</h2>
     <p>{{ project.infrastructure_title }}</p>
     <form method="post">
         {% csrf_token %}
+        {% if return_revision_id %}<input type="hidden" name="from_review" value="{{ return_revision_id }}">{% endif %}
         {{ form.non_field_errors }}
         <div class="form-grid">
             {% for field in form %}

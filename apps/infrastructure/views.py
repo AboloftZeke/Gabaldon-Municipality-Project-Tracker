@@ -176,6 +176,9 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
             is_active=True
         ).order_by('category_name')
         context['statuses'] = Infrastructure_Project.AWARD_STATUS_CHOICES
+        context['can_update_operations'] = (
+            can_update_infrastructure_operations(self.request.user)
+        )
         return context
 
 
@@ -717,10 +720,25 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
             ),
         }
 
+    def return_revision_id(self, request, infrastructure):
+        revision_id = (
+            request.POST.get('from_review')
+            or request.GET.get('from_review')
+        )
+        if revision_id and infrastructure.project.publication_revisions.filter(
+            pk=revision_id,
+        ).exists():
+            return revision_id
+        return None
+
     def render_form(self, request, infrastructure, form, status=200):
         return render(request, self.template_name, {
             'project': infrastructure,
             'form': form,
+            'return_revision_id': self.return_revision_id(
+                request,
+                infrastructure,
+            ),
             **self.reference_values(infrastructure),
         }, status=status)
 
@@ -759,6 +777,15 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
             messages.info(
                 request,
                 f'Revision {revision.revision_number} is approved and awaiting publication.',
+            )
+        return_revision_id = self.return_revision_id(
+            request,
+            infrastructure,
+        )
+        if return_revision_id:
+            return redirect(
+                'publication_revision_detail',
+                revision_id=return_revision_id,
             )
         return redirect('engineering_projects:project_detail', pk=pk)
 

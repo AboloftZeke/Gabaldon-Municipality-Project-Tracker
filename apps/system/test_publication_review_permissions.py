@@ -61,10 +61,8 @@ class OfficeReviewPermissionTests(TestCase):
                             'publication_revision_detail',
                             args=[revision.pk],
                         ))
-                        self.assertContains(
-                            detail,
-                            'Publish to Public Dashboard',
-                        )
+                        self.assertContains(detail, 'Operational Information Required')
+                        self.assertNotContains(detail, 'Publish to Public Dashboard')
                         self.assertNotContains(
                             detail,
                             'Publish Update to Public Dashboard',
@@ -154,7 +152,20 @@ class OfficeReviewPermissionTests(TestCase):
             review_publication_revision(revision, creator, 'approved')
 
     def test_heads_can_publish_but_admin_detail_is_read_only(self):
-        revision = review_publication_revision(self.revisions['engineer'], self.users['engineer', 'head'], 'approved')
+        revision = self.revisions['engineer']
+        snapshot = deepcopy(revision.snapshot_data)
+        snapshot['infrastructure'].update({
+            'award_status': 'awarded',
+            'award_status_label': 'Awarded',
+            'physical_progress_percentage': '20.00',
+        })
+        snapshot['_head_operational_confirmation'] = {
+            'project_type': 'infrastructure',
+            'confirmed_by_user_id': self.users['engineer', 'head'].pk,
+        }
+        revision.snapshot_data = snapshot
+        revision.save(update_fields=['snapshot_data'])
+        revision = review_publication_revision(revision, self.users['engineer', 'head'], 'approved')
         self.client.force_login(self.users['engineer', 'head'])
         detail = self.client.get(reverse('publication_revision_detail', args=[revision.pk]))
         self.assertTrue(detail.context['can_publish'])

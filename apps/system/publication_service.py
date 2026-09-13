@@ -117,18 +117,37 @@ def _missing_first_publication_requirements(revision):
     return missing
 
 
-def validate_publication_readiness(revision):
-    """Require Head-confirmed operational values for a first publication."""
+def publication_readiness(revision):
+    """Return the same first-publication readiness used by publishing."""
     was_previously_published = revision.project.publication_revisions.filter(
         status__in=[PublicationStatus.PUBLISHED, PublicationStatus.ARCHIVED],
     ).exclude(pk=revision.pk).exists()
-    if was_previously_published:
-        return
+    is_first_publication = not was_previously_published
+    snapshot = revision.snapshot_data or {}
+    confirmation = snapshot.get(OPERATIONAL_CONFIRMATION_KEY) or {}
+    is_confirmed = (
+        confirmation.get('project_type') == revision.project.project_type
+        and confirmation.get('confirmed_by_user_id') is not None
+    )
+    missing = (
+        _missing_first_publication_requirements(revision)
+        if is_first_publication else []
+    )
+    return {
+        'is_first_publication': is_first_publication,
+        'is_confirmed': is_confirmed,
+        'is_complete': not missing,
+        'missing': missing,
+    }
 
-    missing = _missing_first_publication_requirements(revision)
-    if missing:
+
+def validate_publication_readiness(revision):
+    """Require Head-confirmed operational values for a first publication."""
+    readiness = publication_readiness(revision)
+    if not readiness['is_complete']:
         raise ValidationError(
-            'Publication is not ready: ' + '; '.join(missing) + '.',
+            'Publication is not ready: '
+            + '; '.join(readiness['missing']) + '.',
         )
 
 

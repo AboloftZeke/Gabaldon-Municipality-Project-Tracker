@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -15,13 +17,21 @@ from .publication_public import (
     non_infrastructure_public_data,
 )
 from .publication_service import (
+    publication_readiness,
     publish_publication_revision,
     revision_targets_current_public,
     review_publication_revision,
 )
+from .progress import (
+    derived_cost_progress,
+    expected_progress,
+    progress_variance,
+)
 from .publication_workflow import PublicationStatus
 from .permissions import (
     can_access_publication_review, can_review_revision, can_publish_revision,
+    can_update_infrastructure_operations,
+    can_update_non_infrastructure_operations,
     is_system_admin, review_project_type,
 )
 
@@ -61,6 +71,143 @@ def _revision_preview(revision):
             args=[data['record_id']],
         )
     return project_type, data
+
+
+def _snapshot_date(value):
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _operational_information(revision, project_type, preview, user):
+    """Build display data from the retained snapshot and shared readiness."""
+    snapshot = revision.snapshot_data or {}
+    readiness = publication_readiness(revision)
+    controlled = []
+    reference = []
+
+    if project_type == 'infrastructure':
+        infrastructure = snapshot.get('infrastructure') or {}
+        inspection = snapshot.get('inspection')
+        financial = snapshot.get('financial') or {}
+        schedule = snapshot.get('schedule') or {}
+        actual = infrastructure.get('physical_progress_percentage')
+        scheduled = expected_progress(
+            _snapshot_date(infrastructure.get('planned_start_date')),
+            _snapshot_date(infrastructure.get('planned_end_date')),
+            revised_end_date=_snapshot_date(
+                schedule.get('contract_expiry_date'),
+            ),
+        )
+        controlled.extend([
+            {
+                'label': 'Official Status',
+                'value': infrastructure.get('award_status_label'),
+                'is_percentage': False,
+            },
+            {
+                'label': 'Actual Physical Progress',
+                'value': actual,
+                'is_percentage': True,
+            },
+        ])
+        if inspection is not None:
+            controlled.append({
+                'label': 'Inspection Completion',
+                'value': inspection.get('completion_percentage'),
+                'is_percentage': True,
+            })
+        if infrastructure.get('cost_progress_percentage') not in (None, ''):
+            controlled.append({
+                'label': 'Entered Cost Progress',
+                'value': infrastructure.get('cost_progress_percentage'),
+                'is_percentage': True,
+            })
+        reference.extend([
+            {
+                'label': 'Expected / Scheduled Progress',
+                'value': scheduled,
+                'is_percentage': True,
+            },
+            {
+                'label': 'Variance',
+                'value': progress_variance(actual, scheduled),
+                'is_percentage': True,
+            },
+            {
+                'label': 'Calculated Cost Progress',
+                'value': derived_cost_progress(
+                    financial.get('actual_expenditure'),
+                    financial.get('contract_price'),
+                ),
+                'is_percentage': True,
+            },
+        ])
+        can_update = can_update_infrastructure_operations(user)
+        update_url_name = 'engineering_projects:project_operations'
+        set_label = 'Set Status & Progress'
+        update_label = 'Update Status & Progress'
+    else:
+        non_infrastructure = snapshot.get('non_infrastructure') or {}
+        controlled.append({
+            'label': 'Official Status',
+            'value': non_infrastructure.get('status_label'),
+            'is_percentage': False,
+        })
+        can_update = can_update_non_infrastructure_operations(user)
+        update_url_name = (
+            'mayor_projects:non_infrastructure_project_operations'
+        )
+        set_label = 'Set Project Status'
+        update_label = 'Update Project Status'
+
+    update_url = None
+    if can_update and preview and preview.get('record_id'):
+        update_url = reverse(update_url_name, args=[preview['record_id']])
+    return {
+        **readiness,
+        'controlled_fields': controlled,
+        'reference_fields': reference,
+        'update_url': update_url,
+        'update_label': (
+            update_label
+            if readiness['is_confirmed'] or not readiness['is_first_publication']
+            else set_label
+        ),
+    }
+
+
+def _revision_page_context(revision, user, review_form=None):
+    project_type, preview = _revision_preview(revision)
+    comparison = revision_comparison(revision)
+    operational = _operational_information(
+        revision,
+        project_type,
+        preview,
+        user,
+    )
+    return {
+        'project_type': project_type,
+        'preview': preview,
+        'review_form': (
+            review_form if review_form is not None else PublicationReviewForm()
+        ),
+        'comparison': comparison,
+        'operational': operational,
+        'can_review': (
+            revision.status == PublicationStatus.PENDING_REVIEW
+            and can_review_revision(user, revision)
+        ),
+        'can_publish': (
+            operational['is_complete']
+            and can_publish_revision(user, revision)
+            and revision_targets_current_public(revision, comparison['baseline'])
+        ),
+        'can_archive': False,
+    }
 
 
 class PublicationReviewQueueView(OfficeHeadRequiredMixin, ListView):
@@ -148,26 +295,7 @@ class PublicationRevisionDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        project_type, preview = _revision_preview(self.object)
-        comparison = revision_comparison(self.object)
-        context.update({
-            'project_type': project_type,
-            'preview': preview,
-            'review_form': PublicationReviewForm(),
-            'comparison': comparison,
-            'can_review': (
-                self.object.status == PublicationStatus.PENDING_REVIEW
-                and can_review_revision(self.request.user, self.object)
-            ),
-            'can_publish': (
-                can_publish_revision(self.request.user, self.object)
-                and revision_targets_current_public(
-                    self.object,
-                    comparison['baseline'],
-                )
-            ),
-            'can_archive': False,
-        })
+        context.update(_revision_page_context(self.object, self.request.user))
         return context
 
 
@@ -181,21 +309,16 @@ class PublicationRevisionReviewView(OfficeHeadRequiredMixin, View):
             raise PermissionDenied('You cannot review this publication submission.')
         form = PublicationReviewForm(request.POST)
         if not form.is_valid():
-            project_type, preview = _revision_preview(revision)
             return render(
                 request,
                 'core/publication_revision_detail.html',
                 {
                     'revision': revision,
-                    'project_type': project_type,
-                    'preview': preview,
-                    'review_form': form,
-                    'comparison': revision_comparison(revision),
-                    'can_review': (
-                        revision.status == PublicationStatus.PENDING_REVIEW
+                    **_revision_page_context(
+                        revision,
+                        request.user,
+                        review_form=form,
                     ),
-                    'can_publish': False,
-                    'can_archive': False,
                 },
                 status=400,
             )

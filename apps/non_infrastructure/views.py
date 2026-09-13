@@ -146,6 +146,9 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
             )
         context['locations'] = getattr(SystemNonInfrastructureProject, 'LOCATION_CHOICES', [])
         context['categories'] = getattr(SystemNonInfrastructureProject, 'PROJECT_CATEGORY_CHOICES', [])
+        context['can_update_operations'] = (
+            can_update_non_infrastructure_operations(self.request.user)
+        )
         return context
 
 
@@ -308,7 +311,29 @@ class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):
     def get_queryset(self):
         return Non_Infrastructure_Project.objects.all()
 
+    def return_revision_id(self):
+        revision_id = (
+            self.request.POST.get('from_review')
+            or self.request.GET.get('from_review')
+        )
+        if revision_id and self.object.project.publication_revisions.filter(
+            pk=revision_id,
+        ).exists():
+            return revision_id
+        return None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['return_revision_id'] = self.return_revision_id()
+        return context
+
     def get_success_url(self):
+        return_revision_id = self.return_revision_id()
+        if return_revision_id:
+            return reverse(
+                'publication_revision_detail',
+                args=[return_revision_id],
+            )
         return reverse(
             'mayor_projects:non_infrastructure_project_detail',
             args=[self.object.pk],

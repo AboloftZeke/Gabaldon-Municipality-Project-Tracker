@@ -1,8 +1,13 @@
 """Office review dashboards and the existing publisher's lifecycle index."""
 from django.db.models import Count, F
+from django.urls import reverse
 from django.views.generic import TemplateView, ListView
 
-from .models import ProjectPublicationRevision
+from .models import (
+    Infrastructure_Project,
+    Non_Infrastructure_Project,
+    ProjectPublicationRevision,
+)
 from .permissions import review_project_type
 from .publication_views import OfficeHeadRequiredMixin, SuperuserRequiredMixin
 
@@ -36,6 +41,47 @@ class HeadDashboardView(OfficeHeadRequiredMixin, TemplateView):
         )
         context['operational_revisions'] = operational_revisions[:5]
         context['operational_revision_count'] = operational_revisions.count()
+        if self.project_type == 'infrastructure':
+            projects = Infrastructure_Project.objects.filter(
+                project__publication_revisions__status='published',
+                project__publication_revisions__is_current_public_revision=True,
+            ).distinct().order_by('-updated_at')[:5]
+            context['published_operational_projects'] = [
+                {
+                    'title': project.infrastructure_title,
+                    'status': project.get_award_status_display()
+                    or 'Status not set',
+                    'update_url': reverse(
+                        'engineering_projects:project_operations',
+                        args=[project.pk],
+                    ),
+                }
+                for project in projects
+            ]
+            context['operational_action_label'] = 'Update Status & Progress'
+            context['project_list_url'] = reverse(
+                'engineering_projects:project_list',
+            )
+        else:
+            projects = Non_Infrastructure_Project.objects.filter(
+                project__publication_revisions__status='published',
+                project__publication_revisions__is_current_public_revision=True,
+            ).distinct().order_by('-updated_at')[:5]
+            context['published_operational_projects'] = [
+                {
+                    'title': project.non_infra_name,
+                    'status': project.get_status_display(),
+                    'update_url': reverse(
+                        'mayor_projects:non_infrastructure_project_operations',
+                        args=[project.pk],
+                    ),
+                }
+                for project in projects
+            ]
+            context['operational_action_label'] = 'Update Status'
+            context['project_list_url'] = reverse(
+                'mayor_projects:non_infrastructure_project_list',
+            )
         return context
 
 
