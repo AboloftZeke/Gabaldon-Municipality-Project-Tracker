@@ -118,8 +118,20 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(response, 'Calculated Cost Progress')
         self.assertContains(response, 'Set Status &amp; Progress')
         self.assertContains(response, 'Operational Information Required')
+        self.assertContains(
+            response,
+            'Complete operational information before publishing.',
+        )
         self.assertNotContains(response, 'Publish to Public Dashboard')
         self.assertNotContains(response, 'Edit Project')
+
+        queue = self.client.get(
+            reverse('publication_review_queue'),
+            {'status': 'approved'},
+        )
+        self.assertContains(queue, 'Complete Operational Information')
+        self.assertNotContains(queue, 'Preview &amp; Publish')
+        self.assertContains(queue, 'Approved submissions')
 
     def test_completed_infrastructure_readiness_enables_publish(self):
         self.client.force_login(self.users['engineer', 'head'])
@@ -152,6 +164,12 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(response, 'Entered Cost Progress')
         self.assertContains(response, 'Update Status &amp; Progress')
         self.assertContains(response, 'Publish to Public Dashboard')
+        queue = self.client.get(
+            reverse('publication_review_queue'),
+            {'status': 'approved'},
+        )
+        self.assertContains(queue, 'Preview &amp; Publish')
+        self.assertNotContains(queue, 'Complete Operational Information')
 
     def test_mayor_head_gets_status_only_readiness_workflow(self):
         self.client.force_login(self.users['mayor', 'head'])

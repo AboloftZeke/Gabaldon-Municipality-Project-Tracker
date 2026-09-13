@@ -44,6 +44,7 @@ from .publication_snapshots import build_project_publication_snapshot
 from .publication_images import retire_project_images
 from .publication_service import (
     archive_publication_revision,
+    create_head_operational_revision,
     create_publication_draft,
     publish_publication_revision,
     review_publication_revision,
@@ -226,6 +227,13 @@ class PublicationServiceTests(TestCase):
 
     def _approve_and_publish(self, revision):
         submitted = submit_publication_revision(revision, self.employee)
+        if not self.project.publication_revisions.filter(
+            status__in=[
+                PublicationStatus.PUBLISHED,
+                PublicationStatus.ARCHIVED,
+            ],
+        ).exists():
+            self._confirm_initial_operations()
         approved = review_publication_revision(
             submitted,
             self.head,
@@ -233,12 +241,20 @@ class PublicationServiceTests(TestCase):
         )
         return publish_publication_revision(approved, self.head)
 
+    def _confirm_initial_operations(self):
+        self.infrastructure.physical_progress_percentage = Decimal('0')
+        self.infrastructure.save(update_fields=[
+            'physical_progress_percentage',
+        ])
+        create_head_operational_revision(self.project, self.head)
+
     def test_full_workflow_publishes_submitted_snapshot(self):
         draft = create_publication_draft(self.project, self.employee)
         self.infrastructure.infrastructure_title = 'Submitted Project Title'
         self.infrastructure.save(update_fields=['infrastructure_title'])
 
         submitted = submit_publication_revision(draft, self.employee)
+        self._confirm_initial_operations()
         approved = review_publication_revision(
             submitted,
             self.head,
@@ -632,6 +648,26 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
         archive_url = reverse(
             'publication_revision_archive',
             args=[self.revision.pk],
+        )
+
+        operational_response = self.client.post(
+            reverse(
+                'engineering_projects:project_operations',
+                args=[self.infrastructure.pk],
+            ),
+            {
+                'award_status': 'awarded',
+                'physical_progress_percentage': '0',
+                'cost_progress_percentage': '',
+                'from_review': str(self.revision.pk),
+            },
+        )
+        self.assertRedirects(
+            operational_response,
+            reverse(
+                'publication_revision_detail',
+                args=[self.revision.pk],
+            ),
         )
 
         approved_response = self.client.post(review_url, {

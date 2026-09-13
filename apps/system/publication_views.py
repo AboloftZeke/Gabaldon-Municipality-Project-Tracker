@@ -240,6 +240,7 @@ class PublicationReviewQueueView(OfficeHeadRequiredMixin, ListView):
                 'revision': revision,
                 'project_type': project_type,
                 'preview': preview,
+                'readiness': publication_readiness(revision),
             })
         counts = {
             item['status']: item['total']

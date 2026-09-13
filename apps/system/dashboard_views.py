@@ -27,7 +27,7 @@ class HeadDashboardView(OfficeHeadRequiredMixin, TemplateView):
             {'status': status, 'label': label, 'count': counts.get(status, 0)}
             for status, label in [('pending_review', 'Pending reviews'),
                                   ('needs_revision', 'Needs revision'),
-                                  ('approved', 'Approved awaiting publication')]
+                                  ('approved', 'Approved submissions')]
         ]
         context['recent_revisions'] = revisions.filter(reviewed_at__isnull=False).order_by('-reviewed_at', '-pk')[:10]
         operational_revisions = (

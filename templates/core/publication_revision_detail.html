@@ -36,6 +36,9 @@
         {% if revision.status == 'pending_review' %}
             <strong>Review this submitted snapshot.</strong>
             <p>Later Staff edits are not included here. Record a decision based on this retained version.</p>
+        {% elif revision.status == 'approved' and operational.update_url and not operational.is_complete %}
+            <strong>Complete operational information before publishing.</strong>
+            <p>This approved snapshot still needs the required office Head confirmation. Approval and publication remain separate actions.</p>
         {% elif revision.status == 'approved' %}
             <strong>Preview the approved snapshot before publishing.</strong>
             <p>Publishing will expose this exact snapshot and archive the previous public revision automatically.</p>
