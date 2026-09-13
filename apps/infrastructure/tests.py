@@ -316,7 +316,7 @@ class InfrastructureProjectFormTests(TestCase):
         self.assertIsNone(schedule.actual_start_date)
         self.assertEqual(financial.actual_expenditure, Decimal('0'))
 
-    def test_validation_rejects_invalid_ranges_and_date_order(self):
+    def test_staff_form_excludes_head_fields_and_validates_date_order(self):
         form = InfrastructureProjectForm(
             data=self.valid_data(
                 physical_progress_percentage='101',
@@ -332,9 +332,9 @@ class InfrastructureProjectFormTests(TestCase):
         )
 
         self.assertFalse(form.is_valid())
-        self.assertIn('physical_progress_percentage', form.errors)
-        self.assertIn('cost_progress_percentage', form.errors)
-        self.assertIn('inspection_completion_percentage', form.errors)
+        self.assertNotIn('physical_progress_percentage', form.fields)
+        self.assertNotIn('cost_progress_percentage', form.fields)
+        self.assertNotIn('inspection_completion_percentage', form.fields)
         self.assertIn('planned_end_date', form.errors)
         self.assertIn('pre_bid_date', form.errors)
         self.assertIn('actual_completion_date', form.errors)
@@ -350,13 +350,14 @@ class InfrastructureProjectFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('inspection_date', form.errors)
 
-    def test_edit_updates_latest_inspection_without_creating_duplicate(self):
+    def test_staff_edit_preserves_latest_inspection_completion(self):
         infra = self.create_project(
             inspection_date='2026-06-01',
             inspection_completion_percentage='40',
             inspection_findings='Initial findings',
         )
         self.assertEqual(infra.project.inspections.count(), 1)
+        infra.project.inspections.update(completion_percentage=Decimal('40'))
 
         edit_form = InfrastructureProjectForm(
             data=self.valid_data(
@@ -374,7 +375,7 @@ class InfrastructureProjectFormTests(TestCase):
         self.assertEqual(inspection.findings, 'Updated findings')
         self.assertEqual(
             inspection.completion_percentage,
-            Decimal('50'),
+            Decimal('40'),
         )
 
     def test_image_edit_deletes_selected_image_and_changes_cover(self):

@@ -54,12 +54,6 @@ class NonInfrastructureProjectForm(forms.Form):
         empty_label='Select Category',
     )
 
-    status = forms.ChoiceField(
-        required=True,
-        choices=[('', 'Select Status')] + list(Non_Infrastructure_Project.STATUS_CHOICES),
-        widget=forms.Select,
-    )
-
     proponent = forms.CharField(required=True, max_length=255)
     beneficiaries = forms.IntegerField(required=True, min_value=0)
     event_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
@@ -128,7 +122,6 @@ class NonInfrastructureProjectForm(forms.Form):
                 self.fields['non_infra_name'].initial = normalized.non_infra_name
                 self.fields['description'].initial = normalized.description
                 self.fields['non_infra_category'].initial = normalized.non_infra_category_id
-                self.fields['status'].initial = normalized.status
                 self.fields['proponent'].initial = normalized.proponent
                 self.fields['beneficiaries'].initial = normalized.beneficiaries
                 self.fields['event_date'].initial = normalized.event_date
@@ -287,7 +280,6 @@ class NonInfrastructureProjectForm(forms.Form):
         non.non_infra_name = data.get('non_infra_name') or non.non_infra_name
         non.description = data.get('description') or ''
         non.non_infra_category = data.get('non_infra_category')
-        non.status = data.get('status') or non.status
         non.proponent = data.get('proponent') or ''
         non.beneficiaries = data.get('beneficiaries')
         non.event_date = data.get('event_date')
@@ -322,3 +314,9 @@ class NonInfrastructureProjectForm(forms.Form):
         non.save()
         self._save_images(project)
         return non
+
+
+class NonInfrastructureOperationalForm(forms.ModelForm):
+    class Meta:
+        model = Non_Infrastructure_Project
+        fields = ['status']

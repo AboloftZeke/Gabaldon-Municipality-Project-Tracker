@@ -9,6 +9,7 @@ urlpatterns = [
     path('create/', views.NonInfrastructureProjectCreateView.as_view(), name='non_infrastructure_project_create'),
     path('<int:pk>/', views.NonInfrastructureProjectDetailView.as_view(), name='non_infrastructure_project_detail'),
     path('<int:pk>/edit/', views.NonInfrastructureProjectEditView.as_view(), name='non_infrastructure_project_update'),
+    path('<int:pk>/operations/', views.NonInfrastructureOperationalUpdateView.as_view(), name='non_infrastructure_project_operations'),
     path('<int:pk>/submit-for-review/', views.NonInfrastructureProjectSubmitForReviewView.as_view(), name='non_infrastructure_project_submit_for_review'),
     path('<int:pk>/delete/', views.NonInfrastructureProjectDeleteView.as_view(), name='non_infrastructure_project_delete'),
 ]

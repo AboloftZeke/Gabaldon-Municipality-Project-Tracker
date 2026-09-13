@@ -47,6 +47,7 @@
                 </div>
                 {% if not request.user.is_superuser or not request.GET.from_review %}
                     <div class="action-buttons action-buttons--detail">
+                        {% if can_update_operations %}<a href="{% url 'engineering_projects:project_operations' project_details.pk %}" class="btn btn-edit">Update Status &amp; Progress</a>{% endif %}
                         {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit">Edit Project</a>{% endif %}
                         {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete">Delete Project</a>{% endif %}
                     </div>

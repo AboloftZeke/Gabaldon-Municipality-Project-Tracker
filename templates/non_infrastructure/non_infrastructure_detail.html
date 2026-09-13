@@ -42,6 +42,9 @@
 
         <div class="project-detail-header-content">
             <h2>{{ project_name }}</h2>
+            {% if can_update_operations %}
+                <a href="{% url 'mayor_projects:non_infrastructure_project_operations' project.pk %}" class="btn btn-edit">Update Status &amp; Progress</a>
+            {% endif %}
 
             <div class="project-meta">
 

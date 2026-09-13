@@ -2,6 +2,7 @@ from django.db import IntegrityError, transaction
 from django.utils.text import slugify
 
 from django import forms
+from django.db import transaction
 from django.core.files.storage import default_storage
 import os
 
@@ -202,11 +203,6 @@ class InfrastructureProjectForm(forms.Form):
         choices=[('', 'Select Procurement Method')] + list(Infrastructure_Project.PROCUREMENT_METHOD_CHOICES),
         widget=forms.Select,
     )
-    award_status = forms.ChoiceField(
-        required=True,
-        choices=[('', 'Select Award Status')] + list(Infrastructure_Project.AWARD_STATUS_CHOICES),
-        widget=forms.Select,
-    )
     abc_amount = forms.DecimalField(
         required=True,
         max_digits=15,
@@ -234,20 +230,6 @@ class InfrastructureProjectForm(forms.Form):
     actual_completion_date = forms.DateField(
         required=False,
         widget=forms.DateInput(attrs={'type': 'date'}),
-    )
-    cost_progress_percentage = forms.DecimalField(
-        required=False,
-        max_digits=5,
-        decimal_places=2,
-        min_value=0,
-        max_value=100,
-    )
-    physical_progress_percentage = forms.DecimalField(
-        required=False,
-        max_digits=5,
-        decimal_places=2,
-        min_value=0,
-        max_value=100,
     )
     posting_date = forms.DateField(
         required=True,
@@ -288,13 +270,6 @@ class InfrastructureProjectForm(forms.Form):
     inspection_date = forms.DateField(
         required=False,
         widget=forms.DateInput(attrs={'type': 'date'}),
-    )
-    inspection_completion_percentage = forms.DecimalField(
-        required=False,
-        max_digits=5,
-        decimal_places=2,
-        min_value=0,
-        max_value=100,
     )
     inspection_findings = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={'rows': 3}))
     inspection_remarks = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={'rows': 3}))
@@ -406,11 +381,8 @@ class InfrastructureProjectForm(forms.Form):
         )
 
         self.initial.setdefault('procurement_method', infra.procurement_method)
-        self.initial.setdefault('award_status', infra.award_status)
         self.initial.setdefault('planned_start_date', infra.planned_start_date)
         self.initial.setdefault('planned_end_date', infra.planned_end_date)
-        self.initial.setdefault('cost_progress_percentage', infra.cost_progress_percentage)
-        self.initial.setdefault('physical_progress_percentage', infra.physical_progress_percentage)
 
         if infra.address:
             self.initial.setdefault('street', infra.address.street)
@@ -452,10 +424,6 @@ class InfrastructureProjectForm(forms.Form):
                     latest_inspection.inspection_date,
                 )
                 self.initial.setdefault(
-                    'inspection_completion_percentage',
-                    latest_inspection.completion_percentage,
-                )
-                self.initial.setdefault(
                     'inspection_findings',
                     latest_inspection.findings,
                 )
@@ -481,8 +449,7 @@ class InfrastructureProjectForm(forms.Form):
 
         inspection_date = cleaned_data.get('inspection_date')
         inspection_details = (
-            cleaned_data.get('inspection_completion_percentage') is not None
-            or bool((cleaned_data.get('inspection_findings') or '').strip())
+            bool((cleaned_data.get('inspection_findings') or '').strip())
             or bool((cleaned_data.get('inspection_remarks') or '').strip())
         )
         if inspection_details and not inspection_date:
@@ -725,11 +692,8 @@ class InfrastructureProjectForm(forms.Form):
         infra.contractor = contractor_obj
         infra.implementing_office = implementing_office_obj
         infra.procurement_method = data.get('procurement_method')
-        infra.award_status = data.get('award_status')
         infra.planned_start_date = data.get('planned_start_date')
         infra.planned_end_date = data.get('planned_end_date')
-        infra.cost_progress_percentage = data.get('cost_progress_percentage')
-        infra.physical_progress_percentage = data.get('physical_progress_percentage')
         infra.save()
 
         posting = data.get('posting_date')
@@ -789,10 +753,9 @@ class InfrastructureProjectForm(forms.Form):
             fin.save()
 
         insp_date = data.get('inspection_date')
-        insp_pct = data.get('inspection_completion_percentage')
         insp_findings = data.get('inspection_findings')
         insp_remarks = data.get('inspection_remarks')
-        if insp_date or insp_pct is not None or insp_findings or insp_remarks:
+        if insp_date or insp_findings or insp_remarks:
             inspection = None
             if instance is not None:
                 inspection = proj.inspections.order_by(
@@ -805,12 +768,61 @@ class InfrastructureProjectForm(forms.Form):
 
             inspection.inspection_date = insp_date
             inspection.inspected_by_user = user
-            inspection.completion_percentage = (
-                insp_pct if insp_pct is not None else 0
-            )
+            if inspection.pk is None:
+                inspection.completion_percentage = 0
             inspection.findings = insp_findings or ''
             inspection.remarks = insp_remarks or ''
             inspection.save()
 
         self._save_images(proj)
         return infra
+
+
+class InfrastructureOperationalForm(forms.Form):
+    award_status = forms.ChoiceField(
+        label='Status',
+        choices=Infrastructure_Project.AWARD_STATUS_CHOICES,
+    )
+    physical_progress_percentage = forms.DecimalField(
+        label='Physical Progress', max_digits=5, decimal_places=2,
+        min_value=0, max_value=100, required=False,
+    )
+    cost_progress_percentage = forms.DecimalField(
+        label='Entered Cost Progress', max_digits=5, decimal_places=2,
+        min_value=0, max_value=100, required=False,
+    )
+    inspection_completion_percentage = forms.DecimalField(
+        label='Inspection Completion', max_digits=5, decimal_places=2,
+        min_value=0, max_value=100, required=True,
+    )
+
+    def __init__(self, *args, instance, **kwargs):
+        self.instance = instance
+        self.inspection = instance.project.inspections.order_by(
+            '-inspection_date', '-created_at',
+        ).first()
+        initial = kwargs.setdefault('initial', {})
+        initial.update({
+            'award_status': instance.award_status,
+            'physical_progress_percentage': instance.physical_progress_percentage,
+            'cost_progress_percentage': instance.cost_progress_percentage,
+        })
+        if self.inspection:
+            initial['inspection_completion_percentage'] = self.inspection.completion_percentage
+        super().__init__(*args, **kwargs)
+        if not self.inspection:
+            self.fields.pop('inspection_completion_percentage')
+
+    @transaction.atomic
+    def save(self):
+        self.instance.award_status = self.cleaned_data['award_status']
+        self.instance.physical_progress_percentage = self.cleaned_data['physical_progress_percentage']
+        self.instance.cost_progress_percentage = self.cleaned_data['cost_progress_percentage']
+        self.instance.save(update_fields=[
+            'award_status', 'physical_progress_percentage',
+            'cost_progress_percentage', 'updated_at',
+        ])
+        if self.inspection:
+            self.inspection.completion_percentage = self.cleaned_data['inspection_completion_percentage']
+            self.inspection.save(update_fields=['completion_percentage'])
+        return self.instance

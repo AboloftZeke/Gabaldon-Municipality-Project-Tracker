@@ -271,29 +271,7 @@
             <div class="fieldset wizard-panel" id="progress-status" data-wizard-step="4" hidden>
                 <div class="section-heading">
                     <span class="section-number">5</span>
-                    <div><h3>Progress &amp; Status</h3><p>Record the current award status and completion percentages.</p></div>
-                </div>
-                <div class="form-grid">
-                    <div class="form-group full-span">
-                        <label for="{{ form.award_status.id_for_label }}">Award Status</label>
-                        {{ form.award_status }}
-                        {% if form.award_status.errors %}<div class="error-message">{{ form.award_status.errors.0 }}</div>{% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label for="{{ form.cost_progress_percentage.id_for_label }}">Cost Progress (%)</label>
-                        {{ form.cost_progress_percentage }}
-                        {% if form.cost_progress_percentage.errors %}
-                            <div class="error-message">{{ form.cost_progress_percentage.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group">
-                        <label for="{{ form.physical_progress_percentage.id_for_label }}">Physical Progress (%)</label>
-                        {{ form.physical_progress_percentage }}
-                        {% if form.physical_progress_percentage.errors %}
-                            <div class="error-message">{{ form.physical_progress_percentage.errors.0 }}</div>
-                        {% endif %}
-                    </div>
+                    <div><h3>Progress &amp; Status</h3><p>Official status and operational percentages are maintained by the Engineering Head.</p></div>
                 </div>
             </div>
 
@@ -308,14 +286,6 @@
                         {{ form.inspection_date }}
                         {% if form.inspection_date.errors %}
                             <div class="error-message">{{ form.inspection_date.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group">
-                        <label for="{{ form.inspection_completion_percentage.id_for_label }}">Completion %</label>
-                        {{ form.inspection_completion_percentage }}
-                        {% if form.inspection_completion_percentage.errors %}
-                            <div class="error-message">{{ form.inspection_completion_percentage.errors.0 }}</div>
                         {% endif %}
                     </div>
 

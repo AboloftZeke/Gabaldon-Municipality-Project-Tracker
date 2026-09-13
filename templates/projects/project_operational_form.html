@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Update Status &amp; Progress{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}">{% endblock %}
+{% block content %}
+<div class="form-container">
+    <a href="{% url 'engineering_projects:project_detail' project.pk %}" class="btn btn-secondary">Back to Project</a>
+    <h2>Update Status &amp; Progress</h2>
+    <p>{{ project.infrastructure_title }}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="form-grid">
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        <section>
+            <h3>Calculated Reference</h3>
+            <p>Expected Progress: {% if expected_progress is not None %}{{ expected_progress|floatformat:1 }}%{% else %}Not available{% endif %}</p>
+            <p>Variance: {% if progress_variance is not None %}{{ progress_variance|floatformat:1 }} percentage points{% else %}Not available{% endif %}</p>
+            <p>Calculated Cost Progress: {% if calculated_cost_progress is not None %}{{ calculated_cost_progress|floatformat:1 }}%{% else %}Not available{% endif %}</p>
+        </section>
+        <button type="submit" class="btn btn-primary">Save Status &amp; Progress</button>
+    </form>
+</div>
+{% endblock %}

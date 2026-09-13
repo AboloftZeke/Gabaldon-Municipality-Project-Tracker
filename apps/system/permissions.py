@@ -55,6 +55,14 @@ def is_mayor_head(user):
     return not is_system_admin(user) and _assignment(user) == ('mayor', 'head')
 
 
+def can_update_infrastructure_operations(user):
+    return is_engineering_head(user)
+
+
+def can_update_non_infrastructure_operations(user):
+    return is_mayor_head(user)
+
+
 def can_review_infrastructure(user):
     return is_engineering_head(user)
 

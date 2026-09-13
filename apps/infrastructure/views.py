@@ -1,4 +1,4 @@
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import ValidationError
@@ -7,7 +7,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.urls import reverse, NoReverseMatch
 from django.db.models import Sum
 from django.templatetags.static import static
-from .forms import InfrastructureProjectForm
+from .forms import InfrastructureOperationalForm, InfrastructureProjectForm
 from apps.system.models import InfrastructureProject as SystemInfrastructureProject
 from apps.system.models import (
     InfrastructureCategory,
@@ -21,6 +21,7 @@ from apps.system.publication_service import (
 
 from apps.system.permissions import (
     can_manage_infrastructure,
+    can_update_infrastructure_operations,
     department_for_user as _department_for_user,
     is_system_admin,
 )
@@ -66,6 +67,14 @@ class EngineerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
             return reverse(url_name, args=args, kwargs=kwargs)
         except NoReverseMatch:
             return "/"
+
+
+class EngineeringHeadOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
+    login_url = 'login'
+    raise_exception = True
+
+    def test_func(self):
+        return can_update_infrastructure_operations(self.request.user)
 
 
 class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
@@ -658,6 +667,9 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
         }
 
         if infra and infra.project:
+            context['can_update_operations'] = (
+                can_update_infrastructure_operations(self.request.user)
+            )
             context['publication'] = publication_state(infra.project)
             context['publication_submit_url'] = reverse(
                 'engineering_projects:project_submit_for_review',
@@ -666,6 +678,65 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
             context['can_manage_publication'] = can_manage_infrastructure(self.request.user)
 
         return context
+
+
+class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
+    template_name = 'projects/project_operational_form.html'
+
+    def get_object(self, pk):
+        return get_object_or_404(
+            Infrastructure_Project.objects.select_related('project'),
+            pk=pk,
+        )
+
+    def reference_values(self, infrastructure):
+        financial = infrastructure.financial_records.order_by(
+            '-financial_id',
+        ).first()
+        schedule = infrastructure.schedules.order_by('-schedule_id').first()
+        scheduled = expected_progress(
+            infrastructure.planned_start_date,
+            infrastructure.planned_end_date,
+            revised_end_date=getattr(schedule, 'contract_expiry_date', None),
+        )
+        return {
+            'expected_progress': scheduled,
+            'progress_variance': progress_variance(
+                infrastructure.physical_progress_percentage,
+                scheduled,
+            ),
+            'calculated_cost_progress': derived_cost_progress(
+                getattr(financial, 'actual_expenditure', None),
+                getattr(financial, 'bid_amount', None),
+            ),
+        }
+
+    def render_form(self, request, infrastructure, form, status=200):
+        return render(request, self.template_name, {
+            'project': infrastructure,
+            'form': form,
+            **self.reference_values(infrastructure),
+        }, status=status)
+
+    def get(self, request, pk):
+        infrastructure = self.get_object(pk)
+        return self.render_form(
+            request,
+            infrastructure,
+            InfrastructureOperationalForm(instance=infrastructure),
+        )
+
+    def post(self, request, pk):
+        infrastructure = self.get_object(pk)
+        form = InfrastructureOperationalForm(
+            request.POST,
+            instance=infrastructure,
+        )
+        if not form.is_valid():
+            return self.render_form(request, infrastructure, form, status=400)
+        form.save()
+        messages.success(request, 'Status and operational progress updated.')
+        return redirect('engineering_projects:project_detail', pk=pk)
 
 
 class ProjectSubmitForReviewView(EngineerOnlyMixin, View):

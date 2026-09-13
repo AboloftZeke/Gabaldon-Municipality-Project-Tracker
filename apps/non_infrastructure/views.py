@@ -10,7 +10,7 @@ from django.db import models
 from django.db.models import Q, Sum
 from django.templatetags.static import static
 from django.utils import timezone
-from .forms import NonInfrastructureProjectForm
+from .forms import NonInfrastructureOperationalForm, NonInfrastructureProjectForm
 from apps.system.models import NonInfrastructureProject as SystemNonInfrastructureProject
 from apps.system.models import Non_Infrastructure_Project, Project, Project_Image
 from apps.system.publication_service import (
@@ -21,6 +21,7 @@ from apps.system.publication_service import (
 
 from apps.system.permissions import (
     can_manage_non_infrastructure,
+    can_update_non_infrastructure_operations,
     department_for_user as _department_for_user,
     is_system_admin,
 )
@@ -33,6 +34,14 @@ class MayorsOfficeOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
 
     def test_func(self):
         return can_manage_non_infrastructure(self.request.user)
+
+
+class MayorHeadOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
+    login_url = 'login'
+    raise_exception = True
+
+    def test_func(self):
+        return can_update_non_infrastructure_operations(self.request.user)
 
 
 class MayorsOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -267,6 +276,9 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
         )
 
         context['project_images'] = project_images
+        context['can_update_operations'] = (
+            can_update_non_infrastructure_operations(self.request.user)
+        )
 
         context['project_placeholder_image'] = static(
             'images/project-placeholder.svg'
@@ -281,6 +293,25 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
             context['can_manage_publication'] = can_manage_non_infrastructure(self.request.user)
 
         return context
+
+
+class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):
+    model = Non_Infrastructure_Project
+    form_class = NonInfrastructureOperationalForm
+    template_name = 'non_infrastructure/non_infrastructure_operational_form.html'
+
+    def get_queryset(self):
+        return Non_Infrastructure_Project.objects.all()
+
+    def get_success_url(self):
+        return reverse(
+            'mayor_projects:non_infrastructure_project_detail',
+            args=[self.object.pk],
+        )
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Official project status updated.')
+        return super().form_valid(form)
 
 
 class NonInfrastructureProjectSubmitForReviewView(
