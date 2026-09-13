@@ -231,7 +231,7 @@ class PublicationServiceTests(TestCase):
             self.head,
             PublicationStatus.APPROVED,
         )
-        return publish_publication_revision(approved, self.admin)
+        return publish_publication_revision(approved, self.head)
 
     def test_full_workflow_publishes_submitted_snapshot(self):
         draft = create_publication_draft(self.project, self.employee)
@@ -244,11 +244,11 @@ class PublicationServiceTests(TestCase):
             self.head,
             PublicationStatus.APPROVED,
         )
-        published = publish_publication_revision(approved, self.admin)
+        published = publish_publication_revision(approved, self.head)
 
         self.assertEqual(published.status, PublicationStatus.PUBLISHED)
         self.assertTrue(published.is_current_public_revision)
-        self.assertEqual(published.published_by, self.admin)
+        self.assertEqual(published.published_by, self.head)
         self.assertEqual(
             published.snapshot_data['infrastructure']['title'],
             'Submitted Project Title',
@@ -325,18 +325,14 @@ class PublicationServiceTests(TestCase):
         ):
             create_publication_draft(self.project, self.employee)
 
-    def test_archiving_current_revision_removes_project_from_publication(self):
-        published = self._approve_and_publish(
-            create_publication_draft(self.project, self.employee),
-        )
+    def test_manual_archiving_current_revision_is_denied(self):
+        from django.core.exceptions import PermissionDenied
+        published = self._approve_and_publish(create_publication_draft(self.project, self.employee))
+        with self.assertRaises(PermissionDenied):
+            archive_publication_revision(published, self.admin)
+        published.refresh_from_db()
+        self.assertTrue(published.is_current_public_revision)
 
-        archived = archive_publication_revision(published, self.admin)
-
-        self.assertEqual(archived.status, PublicationStatus.ARCHIVED)
-        self.assertFalse(archived.is_current_public_revision)
-        self.project.refresh_from_db()
-        self.assertFalse(self.project.is_published)
-        self.assertFalse(self.project.is_visible_to_public)
 
 
 class EmployeePublicationWorkflowViewTests(TestCase):
@@ -623,7 +619,7 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
             PublicationStatus.PENDING_REVIEW,
         )
 
-    def test_head_approves_admin_publishes_and_archives_separately(self):
+    def test_head_approves_and_publishes_without_manual_archival(self):
         self.client.force_login(self.head)
         review_url = reverse(
             'publication_revision_review',
@@ -648,7 +644,7 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
         )
         self.revision.refresh_from_db()
         self.assertEqual(self.revision.status, PublicationStatus.APPROVED)
-        self.client.force_login(self.admin)
+        self.client.force_login(self.head)
         self.assertEqual(self.client.get(publish_url).status_code, 405)
 
         self.client.post(publish_url)
@@ -658,12 +654,12 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
         public = self.client.get(reverse('public_dashboard'))
         self.assertContains(public, 'Submitted Admin Preview Project')
 
-        self.client.post(archive_url)
+        self.assertEqual(self.client.post(archive_url).status_code, 403)
         self.revision.refresh_from_db()
-        self.assertEqual(self.revision.status, PublicationStatus.ARCHIVED)
-        self.assertFalse(self.revision.is_current_public_revision)
+        self.assertEqual(self.revision.status, PublicationStatus.PUBLISHED)
+        self.assertTrue(self.revision.is_current_public_revision)
         public = self.client.get(reverse('public_dashboard'))
-        self.assertNotContains(public, 'Submitted Admin Preview Project')
+        self.assertContains(public, 'Submitted Admin Preview Project')
 
 
 class RoleDashboardAccessTests(TestCase):

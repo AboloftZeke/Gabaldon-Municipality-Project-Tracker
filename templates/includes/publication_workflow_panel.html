@@ -17,7 +17,7 @@
     {% elif publication.status_key == 'needs_revision' %}
         <p>The office Head returned revision {{ publication.revision_number }} for changes. Edit the project, then resubmit it below.</p>
     {% elif publication.status_key == 'approved' %}
-        <p>Revision {{ publication.revision_number }} was approved and is waiting for an administrator to publish it.</p>
+        <p>Revision {{ publication.revision_number }} was approved and is waiting for the office Head to publish it.</p>
     {% elif publication.status_key == 'published' %}
         <p>Revision {{ publication.revision_number }} is currently visible on the public dashboard.</p>
     {% elif publication.status_key == 'rejected' %}
@@ -28,7 +28,7 @@
 
     {% if publication.has_current_public_revision and publication.status_key != 'published' %}
         <p class="publication-panel__public-note">
-            Public revision {{ publication.current_public_revision_number }} remains visible until an administrator publishes the replacement.
+            Public revision {{ publication.current_public_revision_number }} remains visible until the office Head publishes the replacement.
         </p>
     {% endif %}
 

@@ -86,15 +86,6 @@
                         <button type="submit" class="review-button review-button--primary">Publish to Public Dashboard</button>
                     </form>
                 </section>
-            {% elif can_archive %}
-                <section>
-                    <h2>Public Revision</h2>
-                    <p>This is the version residents currently see.</p>
-                    <form method="post" action="{% url 'publication_revision_archive' revision.pk %}">
-                        {% csrf_token %}
-                        <button type="submit" class="review-button review-button--danger">Archive and Remove from Public</button>
-                    </form>
-                </section>
             {% endif %}
         </aside>
     </div>

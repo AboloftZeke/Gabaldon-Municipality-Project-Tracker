@@ -134,20 +134,20 @@ class OfficeReviewPermissionTests(TestCase):
         with self.assertRaises(PermissionDenied):
             review_publication_revision(revision, creator, 'approved')
 
-    def test_heads_cannot_publish_or_archive_and_admin_cannot_review_approved_record(self):
+    def test_heads_can_publish_but_admin_detail_is_read_only(self):
         revision = review_publication_revision(self.revisions['engineer'], self.users['engineer', 'head'], 'approved')
         self.client.force_login(self.users['engineer', 'head'])
         detail = self.client.get(reverse('publication_revision_detail', args=[revision.pk]))
-        self.assertFalse(detail.context['can_publish'])
-        for action in ['publish', 'archive']:
+        self.assertTrue(detail.context['can_publish'])
+        for action in ['archive']:
             self.assertEqual(self.client.post(reverse(f'publication_revision_{action}', args=[revision.pk])).status_code, 403)
         self.client.force_login(self.admin)
         detail = self.client.get(reverse('publication_revision_detail', args=[revision.pk]))
-        self.assertTrue(detail.context['can_publish'])
+        self.assertFalse(detail.context['can_publish'])
         self.assertFalse(detail.context['can_review'])
         self.assertEqual(self.client.post(reverse('publication_revision_review', args=[revision.pk]), {'decision': 'approved'}).status_code, 403)
 
-    def test_seed_publish_uses_head_approval_and_admin_publication(self):
+    def test_seed_publish_uses_head_approval_and_publication(self):
         from .management.commands.seed_projects import Command
         from .models import Infrastructure_Project
 
@@ -157,4 +157,4 @@ class OfficeReviewPermissionTests(TestCase):
         revision = project.publication_revisions.get()
         self.assertEqual(revision.status, 'published')
         self.assertEqual(revision.reviewed_by.flags.role, 'head')
-        self.assertEqual(revision.published_by, self.admin)
+        self.assertEqual(revision.published_by, revision.reviewed_by)

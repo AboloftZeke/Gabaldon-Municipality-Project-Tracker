@@ -15,13 +15,12 @@ from .publication_public import (
     non_infrastructure_public_data,
 )
 from .publication_service import (
-    archive_publication_revision,
     publish_publication_revision,
     review_publication_revision,
 )
 from .publication_workflow import PublicationStatus
 from .permissions import (
-    can_access_publication_review, can_review_revision,
+    can_access_publication_review, can_review_revision, can_publish_revision,
     is_system_admin, review_project_type,
 )
 
@@ -158,15 +157,8 @@ class PublicationRevisionDetailView(LoginRequiredMixin, DetailView):
                 self.object.status == PublicationStatus.PENDING_REVIEW
                 and can_review_revision(self.request.user, self.object)
             ),
-            'can_publish': (
-                self.object.status == PublicationStatus.APPROVED
-                and is_system_admin(self.request.user)
-            ),
-            'can_archive': (
-                self.object.status == PublicationStatus.PUBLISHED
-                and self.object.is_current_public_revision
-                and is_system_admin(self.request.user)
-            ),
+            'can_publish': can_publish_revision(self.request.user, self.object),
+            'can_archive': False,
         })
         return context
 
@@ -220,12 +212,14 @@ class PublicationRevisionReviewView(OfficeHeadRequiredMixin, View):
         )
 
 
-class PublicationRevisionPublishView(SuperuserRequiredMixin, View):
+class PublicationRevisionPublishView(OfficeHeadRequiredMixin, View):
     def post(self, request, revision_id):
         revision = get_object_or_404(
             ProjectPublicationRevision,
             pk=revision_id,
         )
+        if not can_publish_revision(request.user, revision):
+            raise PermissionDenied('You cannot publish this revision.')
         try:
             published = publish_publication_revision(revision, request.user)
         except ValidationError as exc:
@@ -241,23 +235,6 @@ class PublicationRevisionPublishView(SuperuserRequiredMixin, View):
         )
 
 
-class PublicationRevisionArchiveView(SuperuserRequiredMixin, View):
-    def post(self, request, revision_id):
-        revision = get_object_or_404(
-            ProjectPublicationRevision,
-            pk=revision_id,
-        )
-        try:
-            archived = archive_publication_revision(revision, request.user)
-        except ValidationError as exc:
-            messages.error(request, '; '.join(exc.messages))
-        else:
-            messages.success(
-                request,
-                f'Revision {archived.revision_number} was removed from the '
-                'public dashboard.',
-            )
-        return redirect(
-            'publication_revision_detail',
-            revision_id=revision_id,
-        )
+class PublicationRevisionArchiveView(View):
+    def dispatch(self, request, *args, **kwargs):
+        raise PermissionDenied('Manual publication archival is disabled.')

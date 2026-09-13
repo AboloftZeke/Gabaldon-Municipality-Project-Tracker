@@ -68,6 +68,7 @@ class OfficePublicationIntegrationTests(TestCase):
                 self.client.post(reverse('publication_revision_review', args=[revision.pk]), {'decision': 'approved'})
                 self.client.force_login(publisher)
                 self.assertContains(self.client.get(reverse('publication_lifecycle')), reverse('publication_revision_detail', args=[revision.pk]))
+                self.client.force_login(head)
                 self.assertEqual(self.client.post(reverse('publication_revision_publish', args=[revision.pk])).status_code, 302)
                 revision.refresh_from_db()
                 self.assertEqual(revision.snapshot_data, snapshot)

@@ -85,3 +85,20 @@ def can_review_revision(user, revision):
         revision.project.created_by_user_id,
         creator.get('id'),
     }
+
+
+def can_publish_infrastructure(user):
+    return is_engineering_head(user)
+
+
+def can_publish_non_infrastructure(user):
+    return is_mayor_head(user)
+
+
+def can_publish_revision(user, revision):
+    if revision.status != 'approved':
+        return False
+    return {
+        'infrastructure': can_publish_infrastructure,
+        'non_infrastructure': can_publish_non_infrastructure,
+    }.get(revision.project.project_type, lambda user: False)(user)

@@ -8,7 +8,7 @@ from django.utils import timezone
 from .models import Project, ProjectPublicationRevision
 from .publication_snapshots import build_project_publication_snapshot
 from .permissions import (
-    can_review_revision, can_manage_infrastructure,
+    can_review_revision, can_publish_revision, can_manage_infrastructure,
     can_manage_non_infrastructure, is_system_admin,
 )
 from .publication_workflow import (
@@ -28,14 +28,6 @@ OPEN_REVISION_STATUSES = (
 def _require_authenticated(actor):
     if actor is None or not actor.is_authenticated:
         raise PermissionDenied('An authenticated user is required.')
-
-
-def _require_admin(actor):
-    _require_authenticated(actor)
-    if not actor.is_superuser:
-        raise PermissionDenied(
-            'Only an administrator can publish or archive revisions.',
-        )
 
 
 def _require_project_manager(project, actor):
@@ -187,8 +179,9 @@ def review_publication_revision(revision, reviewer, decision, notes=''):
 @transaction.atomic
 def publish_publication_revision(revision, publisher):
     """Atomically replace the project's current public revision."""
-    _require_admin(publisher)
     locked_revision = _locked_project_revision(revision)
+    if not can_publish_revision(publisher, locked_revision):
+        raise PermissionDenied("Only the responsible office Head can publish an approved revision.")
     validate_publication_transition(
         locked_revision.status,
         PublicationStatus.PUBLISHED,
@@ -229,30 +222,9 @@ def publish_publication_revision(revision, publisher):
     return locked_revision
 
 
-@transaction.atomic
 def archive_publication_revision(revision, actor):
-    """Remove a current published revision from all public read paths."""
-    _require_admin(actor)
-    locked_revision = _locked_project_revision(revision)
-    validate_publication_transition(
-        locked_revision.status,
-        PublicationStatus.ARCHIVED,
-    )
-    if not locked_revision.is_current_public_revision:
-        raise ValidationError('Only the current public revision can be archived.')
-
-    locked_revision.status = PublicationStatus.ARCHIVED
-    locked_revision.is_current_public_revision = False
-    locked_revision.save(update_fields=[
-        'status',
-        'is_current_public_revision',
-        'updated_at',
-    ])
-    Project.objects.filter(pk=locked_revision.project_id).update(
-        is_published=False,
-        is_visible_to_public=False,
-    )
-    return locked_revision
+    """Legacy entry point: manual archival is no longer available."""
+    raise PermissionDenied('Manual publication archival is disabled.')
 
 
 def publication_state(project):

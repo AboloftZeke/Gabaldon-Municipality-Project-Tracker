@@ -548,7 +548,7 @@ class Command(BaseCommand):
             PublicationStatus.APPROVED,
             notes='Automatically approved by seed_projects for test data.',
         )
-        publish_publication_revision(revision, admin)
+        publish_publication_revision(revision, head)
 
     def _clear_seed_data(self):
         seed_users = User.objects.filter(username__in=SEED_USERNAMES.values())
