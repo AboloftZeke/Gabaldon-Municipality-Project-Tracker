@@ -102,6 +102,10 @@ class HeadOperationalRevisionTests(TestCase):
         revision = self.infrastructure.project.publication_revisions.get(
             status=PublicationStatus.APPROVED,
         )
+        self.assertRedirects(
+            response,
+            reverse('publication_revision_detail', args=[revision.pk]),
+        )
         self.assertEqual(revision.revision_number, 2)
         self.assertEqual(revision.supersedes_revision, self.infrastructure_public)
         self.assertEqual(revision.submitted_by, self.users['engineer', 'head'])
@@ -201,6 +205,10 @@ class HeadOperationalRevisionTests(TestCase):
 
         revision = self.non_infrastructure.project.publication_revisions.get(
             status=PublicationStatus.APPROVED,
+        )
+        self.assertRedirects(
+            response,
+            reverse('publication_revision_detail', args=[revision.pk]),
         )
         self.assertEqual(revision.supersedes_revision, self.non_infrastructure_public)
         self.assertEqual(

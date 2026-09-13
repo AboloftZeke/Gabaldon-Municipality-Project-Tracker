@@ -311,24 +311,38 @@ class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):
     def get_queryset(self):
         return Non_Infrastructure_Project.objects.all()
 
-    def return_revision_id(self):
+    def return_revision(self):
         revision_id = (
             self.request.POST.get('from_review')
             or self.request.GET.get('from_review')
         )
-        if revision_id and self.object.project.publication_revisions.filter(
+        if not revision_id:
+            return None
+        return self.object.project.publication_revisions.filter(
             pk=revision_id,
-        ).exists():
-            return revision_id
-        return None
+        ).first()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['return_revision_id'] = self.return_revision_id()
+        return_revision = self.return_revision()
+        revision_snapshot = (
+            (return_revision.snapshot_data or {}).get(
+                'non_infrastructure',
+            ) or {}
+            if return_revision else {}
+        )
+        context['operational_display_title'] = (
+            revision_snapshot.get('title') or self.object.non_infra_name
+        )
+        context['return_revision_id'] = getattr(
+            return_revision,
+            'pk',
+            None,
+        )
         return context
 
     def get_success_url(self):
-        return_revision_id = self.return_revision_id()
+        return_revision_id = getattr(self.return_revision(), 'pk', None)
         if return_revision_id:
             return reverse(
                 'publication_revision_detail',
@@ -359,6 +373,10 @@ class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):
             messages.info(
                 self.request,
                 f'Revision {revision.revision_number} is approved and awaiting publication.',
+            )
+            return redirect(
+                'publication_revision_detail',
+                revision_id=revision.pk,
             )
         return response
 

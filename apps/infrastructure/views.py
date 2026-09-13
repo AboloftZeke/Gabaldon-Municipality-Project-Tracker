@@ -720,25 +720,31 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
             ),
         }
 
-    def return_revision_id(self, request, infrastructure):
+    def return_revision(self, request, infrastructure):
         revision_id = (
             request.POST.get('from_review')
             or request.GET.get('from_review')
         )
-        if revision_id and infrastructure.project.publication_revisions.filter(
+        if not revision_id:
+            return None
+        return infrastructure.project.publication_revisions.filter(
             pk=revision_id,
-        ).exists():
-            return revision_id
-        return None
+        ).first()
 
     def render_form(self, request, infrastructure, form, status=200):
+        return_revision = self.return_revision(request, infrastructure)
+        revision_snapshot = (
+            (return_revision.snapshot_data or {}).get('infrastructure') or {}
+            if return_revision else {}
+        )
         return render(request, self.template_name, {
             'project': infrastructure,
             'form': form,
-            'return_revision_id': self.return_revision_id(
-                request,
-                infrastructure,
+            'operational_display_title': (
+                revision_snapshot.get('title')
+                or infrastructure.infrastructure_title
             ),
+            'return_revision_id': getattr(return_revision, 'pk', None),
             **self.reference_values(infrastructure),
         }, status=status)
 
@@ -778,10 +784,12 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
                 request,
                 f'Revision {revision.revision_number} is approved and awaiting publication.',
             )
-        return_revision_id = self.return_revision_id(
-            request,
-            infrastructure,
-        )
+            return redirect(
+                'publication_revision_detail',
+                revision_id=revision.pk,
+            )
+        return_revision = self.return_revision(request, infrastructure)
+        return_revision_id = getattr(return_revision, 'pk', None)
         if return_revision_id:
             return redirect(
                 'publication_revision_detail',

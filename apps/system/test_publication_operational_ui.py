@@ -232,6 +232,27 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(response, 'Update Status')
         self.assertNotContains(response, '>Edit<', html=True)
 
+    def test_review_linked_forms_use_retained_revision_titles(self):
+        self.infrastructure.infrastructure_title = 'Newer Staff Infra Title'
+        self.infrastructure.save(update_fields=['infrastructure_title'])
+        self.client.force_login(self.users['engineer', 'head'])
+        response = self.client.get(reverse(
+            'engineering_projects:project_operations',
+            args=[self.infrastructure.pk],
+        ), {'from_review': self.infrastructure_revision.pk})
+        self.assertContains(response, 'Municipal Hall Rehabilitation')
+        self.assertNotContains(response, 'Newer Staff Infra Title')
+
+        self.non_infrastructure.non_infra_name = 'Newer Staff Program Title'
+        self.non_infrastructure.save(update_fields=['non_infra_name'])
+        self.client.force_login(self.users['mayor', 'head'])
+        response = self.client.get(reverse(
+            'mayor_projects:non_infrastructure_project_operations',
+            args=[self.non_infrastructure.pk],
+        ), {'from_review': self.non_infrastructure_revision.pk})
+        self.assertContains(response, 'Community Wellness Program')
+        self.assertNotContains(response, 'Newer Staff Program Title')
+
     def test_head_dashboard_surfaces_published_project_update(self):
         self.infrastructure_revision.status = 'published'
         self.infrastructure_revision.is_current_public_revision = True
@@ -239,14 +260,50 @@ class PublicationOperationalUITests(TestCase):
             'status',
             'is_current_public_revision',
         ])
+        self.infrastructure.infrastructure_title = 'Unpublished Staff Title'
+        self.infrastructure.award_status = 'completed'
+        self.infrastructure.save(update_fields=[
+            'infrastructure_title',
+            'award_status',
+        ])
         self.client.force_login(self.users['engineer', 'head'])
 
         response = self.client.get(reverse('engineering_head_dashboard'))
 
         self.assertContains(response, 'Municipal Hall Rehabilitation')
+        self.assertContains(response, 'Awarded')
+        self.assertNotContains(response, 'Unpublished Staff Title')
+        self.assertNotContains(response, 'Completed')
         self.assertContains(response, 'Update Status &amp; Progress')
         self.assertContains(response, reverse(
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
         ))
         self.assertNotContains(response, 'Edit Project')
+
+    def test_mayor_dashboard_uses_current_public_snapshot(self):
+        self.non_infrastructure_revision.status = 'published'
+        self.non_infrastructure_revision.is_current_public_revision = True
+        self.non_infrastructure_revision.save(update_fields=[
+            'status',
+            'is_current_public_revision',
+        ])
+        self.non_infrastructure.non_infra_name = 'Unpublished Mayor Title'
+        self.non_infrastructure.status = 'completed'
+        self.non_infrastructure.save(update_fields=[
+            'non_infra_name',
+            'status',
+        ])
+        self.client.force_login(self.users['mayor', 'head'])
+
+        response = self.client.get(reverse('mayor_head_dashboard'))
+
+        self.assertContains(response, 'Community Wellness Program')
+        self.assertContains(response, 'Planned')
+        self.assertNotContains(response, 'Unpublished Mayor Title')
+        self.assertNotContains(response, 'Completed')
+        self.assertContains(response, 'Update Status')
+        self.assertContains(response, reverse(
+            'mayor_projects:non_infrastructure_project_operations',
+            args=[self.non_infrastructure.pk],
+        ))

@@ -6,6 +6,7 @@
 <div class="form-container">
     {% if return_revision_id %}<a href="{% url 'publication_revision_detail' return_revision_id %}" class="btn btn-secondary">Back to Publication Review</a>{% else %}<a href="{% url 'mayor_projects:non_infrastructure_project_detail' object.pk %}" class="btn btn-secondary">Back to Project</a>{% endif %}
     <h2>Update Project Status</h2>
+    <p>{{ operational_display_title }}</p>
     <p>No operational percentage is stored for Non-Infrastructure projects. The Mayor's Office Head controls the official status.</p>
     <form method="post">
         {% csrf_token %}
