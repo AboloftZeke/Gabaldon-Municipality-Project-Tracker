@@ -499,21 +499,25 @@ def create_head_operational_revision(project, actor):
         or 0
     )
     now = timezone.now()
-    snapshot = build_project_publication_snapshot(locked_project)
-    snapshot[OPERATIONAL_CONFIRMATION_KEY] = _operational_confirmation(
-        locked_project,
-        actor,
-    )
-    return ProjectPublicationRevision.objects.create(
+    operational_revision = ProjectPublicationRevision(
         project=locked_project,
         revision_number=latest_number + 1,
         status=PublicationStatus.APPROVED,
-        snapshot_data=snapshot,
+        snapshot_data=deepcopy(current_public.snapshot_data or {}),
         source_updated_at=locked_project.updated_at,
         supersedes_revision=current_public,
         submitted_by=actor,
         submitted_at=now,
         reviewed_by=actor,
         reviewed_at=now,
-        review_notes='Operational update authorized by the responsible office Head.',
+        review_notes=(
+            'Operational update authorized by the responsible office Head.'
+        ),
     )
+    _synchronize_head_operational_snapshot(
+        operational_revision,
+        locked_project,
+        actor,
+    )
+    operational_revision.save()
+    return operational_revision

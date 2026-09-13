@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -14,6 +16,7 @@ from apps.system.models import (
     InfrastructureCategory,
     Infrastructure_Project,
     Project,
+    ProjectPublicationRevision,
 )
 from apps.system.publication_service import (
     create_head_operational_revision,
@@ -698,7 +701,43 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
             pk=pk,
         )
 
-    def reference_values(self, infrastructure):
+    @staticmethod
+    def snapshot_date(value):
+        if not value:
+            return None
+        try:
+            return date.fromisoformat(value)
+        except (TypeError, ValueError):
+            return None
+
+    def reference_values(self, infrastructure, reference_revision=None):
+        if reference_revision is not None:
+            snapshot = reference_revision.snapshot_data or {}
+            project_data = snapshot.get('infrastructure') or {}
+            financial_data = snapshot.get('financial') or {}
+            schedule_data = snapshot.get('schedule') or {}
+            scheduled = expected_progress(
+                self.snapshot_date(project_data.get('planned_start_date')),
+                self.snapshot_date(project_data.get('planned_end_date')),
+                revised_end_date=self.snapshot_date(
+                    schedule_data.get('contract_expiry_date'),
+                ),
+            )
+            actual_progress = project_data.get(
+                'physical_progress_percentage',
+            )
+            return {
+                'expected_progress': scheduled,
+                'progress_variance': progress_variance(
+                    actual_progress,
+                    scheduled,
+                ),
+                'calculated_cost_progress': derived_cost_progress(
+                    financial_data.get('actual_expenditure'),
+                    financial_data.get('contract_price'),
+                ),
+            }
+
         financial = infrastructure.financial_records.order_by(
             '-financial_id',
         ).first()
@@ -733,6 +772,13 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
 
     def render_form(self, request, infrastructure, form, status=200):
         return_revision = self.return_revision(request, infrastructure)
+        reference_revision = return_revision or (
+            ProjectPublicationRevision.objects.filter(
+                project=infrastructure.project,
+                status='published',
+                is_current_public_revision=True,
+            ).first()
+        )
         revision_snapshot = (
             (return_revision.snapshot_data or {}).get('infrastructure') or {}
             if return_revision else {}
@@ -745,7 +791,7 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
                 or infrastructure.infrastructure_title
             ),
             'return_revision_id': getattr(return_revision, 'pk', None),
-            **self.reference_values(infrastructure),
+            **self.reference_values(infrastructure, reference_revision),
         }, status=status)
 
     def get(self, request, pk):

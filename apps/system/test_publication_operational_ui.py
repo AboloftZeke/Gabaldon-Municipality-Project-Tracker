@@ -134,7 +134,29 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(queue, 'Approved submissions')
 
     def test_completed_infrastructure_readiness_enables_publish(self):
+        self.infrastructure_revision.status = 'pending_review'
+        self.infrastructure_revision.submitted_by = self.users[
+            'engineer', 'staff'
+        ]
+        self.infrastructure_revision.save(update_fields=[
+            'status',
+            'submitted_by',
+        ])
         self.client.force_login(self.users['engineer', 'head'])
+        response = self.client.post(reverse(
+            'publication_revision_review',
+            args=[self.infrastructure_revision.pk],
+        ), {'decision': 'approved'})
+        self.assertRedirects(
+            response,
+            self.revision_url(self.infrastructure_revision),
+        )
+        response = self.client.get(self.revision_url(
+            self.infrastructure_revision,
+        ))
+        self.assertFalse(response.context['can_publish'])
+        self.assertNotContains(response, 'Publish to Public Dashboard')
+
         response = self.client.post(reverse(
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
@@ -170,6 +192,67 @@ class PublicationOperationalUITests(TestCase):
         )
         self.assertContains(queue, 'Preview &amp; Publish')
         self.assertNotContains(queue, 'Complete Operational Information')
+
+        response = self.client.post(reverse(
+            'publication_revision_publish',
+            args=[self.infrastructure_revision.pk],
+        ))
+        self.assertEqual(response.status_code, 302)
+        self.infrastructure_revision.refresh_from_db()
+        self.assertEqual(self.infrastructure_revision.status, 'published')
+        self.assertTrue(
+            self.infrastructure_revision.is_current_public_revision,
+        )
+
+    def test_calculated_cost_progress_uses_retained_submission_values(self):
+        snapshot = deepcopy(self.infrastructure_revision.snapshot_data)
+        snapshot['financial'] = {
+            'contract_price': '2350000.00',
+            'actual_expenditure': '940000.00',
+        }
+        self.infrastructure_revision.snapshot_data = snapshot
+        self.infrastructure_revision.save(update_fields=['snapshot_data'])
+        self.client.force_login(self.users['engineer', 'head'])
+        operational_url = reverse(
+            'engineering_projects:project_operations',
+            args=[self.infrastructure.pk],
+        )
+
+        response = self.client.get(operational_url, {
+            'from_review': self.infrastructure_revision.pk,
+        })
+
+        self.assertEqual(response.context['calculated_cost_progress'], Decimal('40.00'))
+        self.assertContains(response, '40.00%')
+        self.assertNotContains(response, 'name="calculated_cost_progress"')
+
+        response = self.client.post(operational_url, {
+            'award_status': 'awarded',
+            'physical_progress_percentage': '45',
+            'cost_progress_percentage': '',
+            'inspection_completion_percentage': '50',
+            'from_review': str(self.infrastructure_revision.pk),
+        })
+        self.assertRedirects(response, self.revision_url(
+            self.infrastructure_revision,
+        ))
+        self.infrastructure_revision.refresh_from_db()
+        self.assertEqual(
+            self.infrastructure_revision.snapshot_data['financial'],
+            snapshot['financial'],
+        )
+        preview = self.client.get(self.revision_url(
+            self.infrastructure_revision,
+        ))
+        calculated = {
+            field['label']: field['value']
+            for field in preview.context['operational']['reference_fields']
+        }
+        self.assertEqual(
+            calculated['Calculated Cost Progress'],
+            Decimal('40.00'),
+        )
+        self.assertContains(preview, '40.00%')
 
     def test_mayor_head_gets_status_only_readiness_workflow(self):
         self.client.force_login(self.users['mayor', 'head'])

@@ -85,7 +85,7 @@
                 </div>
                 <div>
                     <dt>Calculated Cost Progress</dt>
-                    <dd>{% if calculated_cost_progress is not None %}{{ calculated_cost_progress|floatformat:1 }}%{% else %}Not available{% endif %}</dd>
+                    <dd>{% if calculated_cost_progress is not None %}{{ calculated_cost_progress|floatformat:2 }}%{% else %}Not available{% endif %}</dd>
                 </div>
             </dl>
         </section>

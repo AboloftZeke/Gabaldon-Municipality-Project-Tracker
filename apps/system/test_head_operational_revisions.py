@@ -194,6 +194,79 @@ class HeadOperationalRevisionTests(TestCase):
             Decimal('70.00'),
         )
 
+    def test_operational_revision_retains_public_financial_snapshot(self):
+        published_snapshot = deepcopy(self.infrastructure_public.snapshot_data)
+        published_snapshot['financial']['contract_price'] = '2350000.00'
+        published_snapshot['financial']['actual_expenditure'] = '940000.00'
+        self.infrastructure_public.snapshot_data = published_snapshot
+        self.infrastructure_public.save(update_fields=['snapshot_data'])
+        financial = self.infrastructure.financial_records.get()
+        financial.bid_amount = Decimal('1000000.00')
+        financial.actual_expenditure = Decimal('900000.00')
+        financial.save(update_fields=['bid_amount', 'actual_expenditure'])
+        self.infrastructure.infrastructure_title = 'Unpublished Staff Title'
+        self.infrastructure.save(update_fields=['infrastructure_title'])
+        self.client.force_login(self.users['engineer', 'head'])
+        operational_url = reverse(
+            'engineering_projects:project_operations',
+            args=[self.infrastructure.pk],
+        )
+
+        form = self.client.get(operational_url)
+        self.assertEqual(
+            form.context['calculated_cost_progress'],
+            Decimal('40.00'),
+        )
+        self.assertContains(form, '40.00%')
+
+        response = self.client.post(operational_url, {
+            'award_status': 'completed',
+            'physical_progress_percentage': '60',
+            'cost_progress_percentage': '',
+            'inspection_completion_percentage': '70',
+        })
+        revision = self.infrastructure.project.publication_revisions.get(
+            status=PublicationStatus.APPROVED,
+        )
+        self.assertRedirects(
+            response,
+            reverse('publication_revision_detail', args=[revision.pk]),
+        )
+        self.assertEqual(
+            revision.snapshot_data['financial'],
+            published_snapshot['financial'],
+        )
+        self.assertEqual(
+            revision.snapshot_data['infrastructure']['title'],
+            published_snapshot['infrastructure']['title'],
+        )
+        preview = self.client.get(reverse(
+            'publication_revision_detail',
+            args=[revision.pk],
+        ))
+        self.assertContains(preview, '40.00%')
+        self.assertContains(preview, 'Publish Update to Public Dashboard')
+        self.assertFalse(revision.is_current_public_revision)
+        self.infrastructure_public.refresh_from_db()
+        self.assertTrue(self.infrastructure_public.is_current_public_revision)
+
+        response = self.client.post(reverse(
+            'publication_revision_publish',
+            args=[revision.pk],
+        ))
+        self.assertEqual(response.status_code, 302)
+        revision.refresh_from_db()
+        self.infrastructure_public.refresh_from_db()
+        self.assertTrue(revision.is_current_public_revision)
+        self.assertEqual(
+            revision.snapshot_data['financial'],
+            published_snapshot['financial'],
+        )
+        self.assertEqual(
+            self.infrastructure_public.status,
+            PublicationStatus.ARCHIVED,
+        )
+
     def test_non_infrastructure_update_creates_approved_snapshot_without_republishing(self):
         previous_snapshot = deepcopy(self.non_infrastructure_public.snapshot_data)
         self.client.force_login(self.users['mayor', 'head'])
