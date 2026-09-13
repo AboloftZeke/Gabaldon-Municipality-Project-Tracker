@@ -138,6 +138,58 @@ class HeadOperationalRevisionTests(TestCase):
         self.assertEqual(public_project['award_status'], 'awarded')
         self.assertEqual(public_project['physical_progress_percentage'], Decimal('25.00'))
 
+        preview = self.client.get(reverse(
+            'publication_revision_detail',
+            args=[revision.pk],
+        ))
+        self.assertEqual(preview.status_code, 200)
+        self.assertEqual(preview.context['comparison']['baseline'], self.infrastructure_public)
+        changed = {
+            (section['label'], field['path'])
+            for section in preview.context['comparison']['sections']
+            for field in section['fields']
+            if field['changed']
+        }
+        self.assertIn(('Project Information', 'award_status'), changed)
+        self.assertIn(
+            ('Project Information', 'physical_progress_percentage'),
+            changed,
+        )
+        self.assertIn(
+            ('Project Information', 'cost_progress_percentage'),
+            changed,
+        )
+        self.assertIn(('Latest Inspection', 'completion_percentage'), changed)
+        self.assertContains(preview, 'Replaces public revision')
+        self.assertContains(preview, 'Publish Update to Public Dashboard')
+
+        publish_response = self.client.post(reverse(
+            'publication_revision_publish',
+            args=[revision.pk],
+        ))
+        self.assertEqual(publish_response.status_code, 302)
+        revision.refresh_from_db()
+        self.infrastructure_public.refresh_from_db()
+        self.assertEqual(revision.status, PublicationStatus.PUBLISHED)
+        self.assertTrue(revision.is_current_public_revision)
+        self.assertEqual(
+            self.infrastructure_public.status,
+            PublicationStatus.ARCHIVED,
+        )
+        self.assertFalse(self.infrastructure_public.is_current_public_revision)
+        public_response = self.client.get(reverse(
+            'public_infrastructure_project_detail',
+            args=[self.infrastructure.pk],
+        ))
+        public_project = public_response.context['public_project']
+        self.assertEqual(public_project['award_status'], 'completed')
+        self.assertEqual(public_project['physical_progress_percentage'], Decimal('60.00'))
+        self.assertEqual(public_project['cost_progress_percentage'], Decimal('55.00'))
+        self.assertEqual(
+            public_project['inspection']['completion_percentage'],
+            Decimal('70.00'),
+        )
+
     def test_non_infrastructure_update_creates_approved_snapshot_without_republishing(self):
         previous_snapshot = deepcopy(self.non_infrastructure_public.snapshot_data)
         self.client.force_login(self.users['mayor', 'head'])
@@ -165,6 +217,39 @@ class HeadOperationalRevisionTests(TestCase):
         ))
         self.assertEqual(public_response.status_code, 200)
         self.assertEqual(public_response.context['public_project']['status'], 'planned')
+
+        preview = self.client.get(reverse(
+            'publication_revision_detail',
+            args=[revision.pk],
+        ))
+        self.assertEqual(preview.context['comparison']['baseline'], self.non_infrastructure_public)
+        changed = {
+            (section['label'], field['path'])
+            for section in preview.context['comparison']['sections']
+            for field in section['fields']
+            if field['changed']
+        }
+        self.assertIn(('Program Information', 'status'), changed)
+        self.assertContains(preview, 'Publish Update to Public Dashboard')
+        self.assertEqual(self.client.post(reverse(
+            'publication_revision_publish',
+            args=[revision.pk],
+        )).status_code, 302)
+        revision.refresh_from_db()
+        self.non_infrastructure_public.refresh_from_db()
+        self.assertTrue(revision.is_current_public_revision)
+        self.assertEqual(
+            self.non_infrastructure_public.status,
+            PublicationStatus.ARCHIVED,
+        )
+        public_response = self.client.get(reverse(
+            'public_non_infrastructure_project_detail',
+            args=[self.non_infrastructure.pk],
+        ))
+        self.assertEqual(
+            public_response.context['public_project']['status'],
+            'completed',
+        )
 
     def test_never_published_update_changes_working_data_without_revision(self):
         project = Project.objects.create(project_type='non_infrastructure')

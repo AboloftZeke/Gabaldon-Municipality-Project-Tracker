@@ -69,6 +69,11 @@ def _locked_project_revision(revision):
     return _locked_revision(revision_id)
 
 
+def revision_targets_current_public(revision, current_public):
+    """Return whether a revision still replaces the public version it captured."""
+    return revision.supersedes_revision_id == getattr(current_public, 'pk', None)
+
+
 @transaction.atomic
 def create_publication_draft(project, actor):
     """Capture a new draft without changing the current public revision."""
@@ -199,18 +204,26 @@ def publish_publication_revision(revision, publisher):
         PublicationStatus.PUBLISHED,
     )
 
-    previous_public = list(
+    current_public = (
         ProjectPublicationRevision.objects.select_for_update().filter(
             project_id=locked_revision.project_id,
             status=PublicationStatus.PUBLISHED,
             is_current_public_revision=True,
-        ).exclude(pk=locked_revision.pk)
+        )
+        .exclude(pk=locked_revision.pk)
+        .first()
     )
+    if not revision_targets_current_public(locked_revision, current_public):
+        raise ValidationError(
+            'The current public revision changed after this update was created. '
+            'This revision cannot replace it.',
+        )
+
     now = timezone.now()
-    for previous in previous_public:
-        previous.status = PublicationStatus.ARCHIVED
-        previous.is_current_public_revision = False
-        previous.save(update_fields=[
+    if current_public is not None:
+        current_public.status = PublicationStatus.ARCHIVED
+        current_public.is_current_public_revision = False
+        current_public.save(update_fields=[
             'status',
             'is_current_public_revision',
             'updated_at',

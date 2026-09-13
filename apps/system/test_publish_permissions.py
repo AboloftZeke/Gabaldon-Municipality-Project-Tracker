@@ -1,6 +1,6 @@
 from copy import deepcopy
 from django.contrib.auth.models import AnonymousUser
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.test import TestCase
 from django.urls import reverse
 from .models import ProjectPublicationRevision
@@ -24,7 +24,16 @@ class HeadPublishTests(TestCase):
                 if user.is_authenticated:
                     self.client.force_login(user)
                 self.assertFalse(can_publish_revision(user, revision))
-                self.assertEqual(self.client.post(reverse('publication_revision_publish', args=[revision.pk])).status_code, 403)
+                response = self.client.post(reverse(
+                    'publication_revision_publish',
+                    args=[revision.pk],
+                ))
+                self.assertEqual(
+                    response.status_code,
+                    403 if user.is_authenticated else 302,
+                )
+                if not user.is_authenticated:
+                    self.assertIn(reverse('login'), response.url)
                 with self.assertRaises(PermissionDenied):
                     publish_publication_revision(revision, user)
                 revision.refresh_from_db()
@@ -58,7 +67,13 @@ class HeadPublishTests(TestCase):
         ProjectPublicationRevision.objects.filter(pk=revision.pk).update(status='approved')
         head = self.users['engineer', 'head']
         first = publish_publication_revision(revision, head)
-        second = ProjectPublicationRevision.objects.create(project=first.project, revision_number=2, status='approved', snapshot_data=first.snapshot_data)
+        second = ProjectPublicationRevision.objects.create(
+            project=first.project,
+            revision_number=2,
+            status='approved',
+            snapshot_data=first.snapshot_data,
+            supersedes_revision=first,
+        )
         second = publish_publication_revision(second, head)
         first.refresh_from_db()
         self.assertEqual(first.status, 'archived')
@@ -72,5 +87,47 @@ class HeadPublishTests(TestCase):
         self.client.force_login(self.admin)
         detail = self.client.get(reverse('publication_revision_detail', args=[second.pk]))
         self.assertNotContains(detail, 'Publish to Public Dashboard')
+        self.assertNotContains(detail, 'Publish Update to Public Dashboard')
         self.assertNotContains(detail, 'Archive and Remove')
         self.assertContains(self.client.get(reverse('publication_lifecycle')), 'Read-only publication history')
+
+    def test_stale_replacement_is_rejected_without_changing_public_history(self):
+        stale = self.revisions['engineer']
+        ProjectPublicationRevision.objects.filter(pk=stale.pk).update(
+            status='approved',
+        )
+        current = ProjectPublicationRevision.objects.create(
+            project=stale.project,
+            revision_number=2,
+            status='published',
+            snapshot_data=stale.snapshot_data,
+            is_current_public_revision=True,
+        )
+        stale.refresh_from_db()
+        head = self.users['engineer', 'head']
+
+        with self.assertRaises(ValidationError):
+            publish_publication_revision(stale, head)
+        stale.refresh_from_db()
+        current.refresh_from_db()
+        self.assertEqual(stale.status, 'approved')
+        self.assertEqual(current.status, 'published')
+        self.assertTrue(current.is_current_public_revision)
+
+        self.client.force_login(head)
+        detail = self.client.get(reverse(
+            'publication_revision_detail',
+            args=[stale.pk],
+        ))
+        self.assertFalse(detail.context['can_publish'])
+        self.assertNotContains(detail, 'Publish Update to Public Dashboard')
+        response = self.client.post(reverse(
+            'publication_revision_publish',
+            args=[stale.pk],
+        ))
+        self.assertEqual(response.status_code, 302)
+        stale.refresh_from_db()
+        current.refresh_from_db()
+        self.assertEqual(stale.status, 'approved')
+        self.assertEqual(current.status, 'published')
+        self.assertTrue(current.is_current_public_revision)

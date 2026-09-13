@@ -58,6 +58,7 @@
                 <dl>
                     <div><dt>Submitted by</dt><dd>{% if revision.submitted_by %}{{ revision.submitted_by.get_full_name|default:revision.submitted_by.username }}{% else %}Unknown{% endif %}</dd></div>
                     <div><dt>Submitted</dt><dd>{{ revision.submitted_at|date:"M d, Y g:i A"|default:"N/A" }}</dd></div>
+                    {% if comparison.baseline and not comparison.is_current %}<div><dt>Replaces public revision</dt><dd>Revision {{ comparison.baseline.revision_number }}</dd></div>{% endif %}
                     {% if revision.reviewed_at %}<div><dt>Reviewed</dt><dd>{{ revision.reviewed_at|date:"M d, Y g:i A" }}</dd></div>{% endif %}
                     {% if revision.published_at %}<div><dt>Published</dt><dd>{{ revision.published_at|date:"M d, Y g:i A" }}</dd></div>{% endif %}
                 </dl>
@@ -83,7 +84,7 @@
                     <p>Publishing replaces the current public version immediately. This submitted snapshot cannot be changed afterward.</p>
                     <form method="post" action="{% url 'publication_revision_publish' revision.pk %}">
                         {% csrf_token %}
-                        <button type="submit" class="review-button review-button--primary">Publish to Public Dashboard</button>
+                        <button type="submit" class="review-button review-button--primary">{% if comparison.baseline %}Publish Update to Public Dashboard{% else %}Publish to Public Dashboard{% endif %}</button>
                     </form>
                 </section>
             {% endif %}

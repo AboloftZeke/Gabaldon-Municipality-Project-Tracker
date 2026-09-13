@@ -16,6 +16,7 @@ from .publication_public import (
 )
 from .publication_service import (
     publish_publication_revision,
+    revision_targets_current_public,
     review_publication_revision,
 )
 from .publication_workflow import PublicationStatus
@@ -148,16 +149,23 @@ class PublicationRevisionDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         project_type, preview = _revision_preview(self.object)
+        comparison = revision_comparison(self.object)
         context.update({
             'project_type': project_type,
             'preview': preview,
             'review_form': PublicationReviewForm(),
-            'comparison': revision_comparison(self.object),
+            'comparison': comparison,
             'can_review': (
                 self.object.status == PublicationStatus.PENDING_REVIEW
                 and can_review_revision(self.request.user, self.object)
             ),
-            'can_publish': can_publish_revision(self.request.user, self.object),
+            'can_publish': (
+                can_publish_revision(self.request.user, self.object)
+                and revision_targets_current_public(
+                    self.object,
+                    comparison['baseline'],
+                )
+            ),
             'can_archive': False,
         })
         return context
@@ -213,6 +221,13 @@ class PublicationRevisionReviewView(OfficeHeadRequiredMixin, View):
 
 
 class PublicationRevisionPublishView(OfficeHeadRequiredMixin, View):
+    raise_exception = False
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            raise PermissionDenied('You cannot publish this revision.')
+        return super().handle_no_permission()
+
     def post(self, request, revision_id):
         revision = get_object_or_404(
             ProjectPublicationRevision,
