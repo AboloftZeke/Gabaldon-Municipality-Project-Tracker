@@ -1,32 +1,98 @@
 {% extends "base.html" %}
 {% load static %}
+
 {% block title %}Update Status &amp; Progress{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}">{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/core/operational_update.css' %}?v=20260913-1">
+{% endblock %}
+
 {% block content %}
-<div class="form-container">
-    {% if return_revision_id %}<a href="{% url 'publication_revision_detail' return_revision_id %}" class="btn btn-secondary">Back to Publication Review</a>{% else %}<a href="{% url 'engineering_projects:project_detail' project.pk %}" class="btn btn-secondary">Back to Project</a>{% endif %}
-    <h2>Update Status &amp; Progress</h2>
-    <p>{{ operational_display_title }}</p>
-    <form method="post">
+<div class="operational-workspace">
+    <nav class="operational-back" aria-label="Back navigation">
+        {% if return_revision_id %}
+            <a href="{% url 'publication_revision_detail' return_revision_id %}">← Back to Publication Review</a>
+        {% else %}
+            <a href="{% url 'engineering_projects:project_detail' project.pk %}">← Back to Project</a>
+        {% endif %}
+    </nav>
+
+    <header class="operational-header">
+        <p class="operational-eyebrow">Engineering Head · Operational Update</p>
+        <h1>Update Status &amp; Progress</h1>
+        <p class="operational-project-title">{{ operational_display_title }}</p>
+        <p class="operational-intro">Set the official status and actual operational values used in this project's publication record.</p>
+    </header>
+
+    <form method="post" class="operational-form">
         {% csrf_token %}
         {% if return_revision_id %}<input type="hidden" name="from_review" value="{{ return_revision_id }}">{% endif %}
-        {{ form.non_field_errors }}
-        <div class="form-grid">
-            {% for field in form %}
-                <div class="form-group">
-                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {{ field }}
-                    {% for error in field.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
+
+        {% if form.non_field_errors %}
+            <div class="operational-alert" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <section class="operational-card" aria-labelledby="operational-information-heading">
+            <div class="operational-section-heading">
+                <span class="operational-section-number">01</span>
+                <div>
+                    <h2 id="operational-information-heading">Operational Information</h2>
+                    <p>Official and actual values maintained by the Engineering Head.</p>
                 </div>
-            {% endfor %}
-        </div>
-        <section>
-            <h3>Calculated Reference</h3>
-            <p>Expected Progress: {% if expected_progress is not None %}{{ expected_progress|floatformat:1 }}%{% else %}Not available{% endif %}</p>
-            <p>Variance: {% if progress_variance is not None %}{{ progress_variance|floatformat:1 }} percentage points{% else %}Not available{% endif %}</p>
-            <p>Calculated Cost Progress: {% if calculated_cost_progress is not None %}{{ calculated_cost_progress|floatformat:1 }}%{% else %}Not available{% endif %}</p>
+            </div>
+
+            <div class="operational-field-grid">
+                {% for field in form %}
+                    <div class="operational-field">
+                        <label for="{{ field.id_for_label }}">
+                            {% if field.name == 'award_status' %}Official Status{% elif field.name == 'physical_progress_percentage' %}Actual Physical Progress{% else %}{{ field.label }}{% endif %}
+                            {% if field.name == 'cost_progress_percentage' %}<span class="operational-optional">Optional</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.name == 'physical_progress_percentage' %}
+                            <p class="operational-help">Enter the actual completed work from 0% to 100%.</p>
+                        {% elif field.name == 'cost_progress_percentage' %}
+                            <p class="operational-help">Enter a manually confirmed cost percentage only when available.</p>
+                        {% elif field.name == 'inspection_completion_percentage' %}
+                            <p class="operational-help">Required because this project has an inspection record.</p>
+                        {% endif %}
+                        {% for error in field.errors %}<p class="operational-error">{{ error }}</p>{% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
         </section>
-        <button type="submit" class="btn btn-primary">Save Status &amp; Progress</button>
+
+        <section class="operational-card operational-card--reference" aria-labelledby="calculated-reference-heading">
+            <div class="operational-section-heading">
+                <span class="operational-section-number operational-section-number--muted">02</span>
+                <div>
+                    <div class="operational-heading-line">
+                        <h2 id="calculated-reference-heading">Calculated Reference</h2>
+                        <span class="operational-readonly-badge">Read-only</span>
+                    </div>
+                    <p>Calculated values provide context and cannot be edited here.</p>
+                </div>
+            </div>
+
+            <dl class="operational-reference-grid">
+                <div>
+                    <dt>Expected / Scheduled Progress</dt>
+                    <dd>{% if expected_progress is not None %}{{ expected_progress|floatformat:1 }}%{% else %}Not available{% endif %}</dd>
+                </div>
+                <div>
+                    <dt>Variance</dt>
+                    <dd>{% if progress_variance is not None %}{{ progress_variance|floatformat:1 }} percentage points{% else %}Not available{% endif %}</dd>
+                </div>
+                <div>
+                    <dt>Calculated Cost Progress</dt>
+                    <dd>{% if calculated_cost_progress is not None %}{{ calculated_cost_progress|floatformat:1 }}%{% else %}Not available{% endif %}</dd>
+                </div>
+            </dl>
+        </section>
+
+        <div class="operational-actions">
+            <button type="submit" class="operational-button operational-button--primary">Save Status &amp; Progress</button>
+        </div>
     </form>
 </div>
 {% endblock %}

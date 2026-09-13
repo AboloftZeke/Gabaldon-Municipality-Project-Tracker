@@ -149,9 +149,10 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertContains(detail, 'Inspection Completion')
         self.assertContains(detail, 'Calculated reference', count=3)
         response = self.client.get(self.infra_url())
-        self.assertContains(response, 'Expected Progress:')
-        self.assertContains(response, 'Variance:')
-        self.assertContains(response, 'Calculated Cost Progress:')
+        self.assertContains(response, 'Expected / Scheduled Progress')
+        self.assertContains(response, 'Variance')
+        self.assertContains(response, 'Calculated Cost Progress')
+        self.assertContains(response, 'Read-only')
         for field in [
             'expected_progress', 'progress_variance',
             'calculated_cost_progress', 'infrastructure_title',

@@ -1,0 +1,338 @@
+:root {
+    --operational-green: #1a5a3a;
+    --operational-green-dark: #12432b;
+    --operational-green-soft: #edf6f0;
+    --operational-border: #d9e2dc;
+    --operational-text: #17251d;
+    --operational-muted: #66766d;
+    --operational-surface: #f6f9f7;
+}
+
+.operational-workspace {
+    width: min(960px, calc(100% - 3rem));
+    margin: 0 auto;
+    padding: 2.25rem 0 4rem;
+    color: var(--operational-text);
+}
+
+.operational-workspace--compact {
+    width: min(760px, calc(100% - 3rem));
+}
+
+.operational-back {
+    margin-bottom: 1rem;
+}
+
+.operational-back a {
+    color: var(--operational-green);
+    font-size: 0.9rem;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.operational-back a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.operational-header {
+    margin-bottom: 1.25rem;
+    padding: 1.7rem 1.85rem;
+    border: 1px solid var(--operational-border);
+    border-radius: 16px;
+    background: linear-gradient(135deg, #fff 0%, #f4f9f6 100%);
+    box-shadow: 0 14px 38px rgba(15, 23, 42, 0.07);
+}
+
+.operational-eyebrow {
+    margin: 0 0 0.45rem;
+    color: var(--operational-green);
+    font-size: 0.74rem;
+    font-weight: 850;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.operational-header h1 {
+    margin: 0;
+    color: #102a1d;
+    font-size: clamp(1.85rem, 4vw, 2.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.035em;
+}
+
+.operational-project-title {
+    margin: 0.65rem 0 0;
+    color: #244536;
+    font-size: 1.05rem;
+    font-weight: 750;
+}
+
+.operational-intro {
+    max-width: 720px;
+    margin: 0.4rem 0 0;
+    color: var(--operational-muted);
+    font-size: 0.94rem;
+    line-height: 1.55;
+}
+
+.operational-form {
+    display: grid;
+    gap: 1.2rem;
+}
+
+.operational-card {
+    padding: 1.5rem;
+    border: 1px solid var(--operational-border);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.055);
+}
+
+.operational-card--reference {
+    background: var(--operational-surface);
+}
+
+.operational-section-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e2e9e4;
+}
+
+.operational-section-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.15rem;
+    height: 2.15rem;
+    flex: 0 0 2.15rem;
+    border-radius: 10px;
+    background: var(--operational-green);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 850;
+    box-shadow: 0 4px 10px rgba(26, 90, 58, 0.16);
+}
+
+.operational-section-number--muted {
+    background: #64756b;
+    box-shadow: none;
+}
+
+.operational-section-heading h2 {
+    margin: 0 0 0.25rem;
+    color: #173d2a;
+    font-size: 1.12rem;
+    line-height: 1.3;
+}
+
+.operational-section-heading p {
+    margin: 0;
+    color: var(--operational-muted);
+    font-size: 0.86rem;
+    line-height: 1.5;
+}
+
+.operational-heading-line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.operational-heading-line h2 {
+    margin-bottom: 0;
+}
+
+.operational-readonly-badge,
+.operational-optional {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.16rem 0.5rem;
+    border: 1px solid #cad8d0;
+    border-radius: 999px;
+    background: #e8efeb;
+    color: #52635a;
+    font-size: 0.67rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.operational-optional {
+    margin-left: 0.35rem;
+    vertical-align: middle;
+}
+
+.operational-field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.15rem 1.25rem;
+}
+
+.operational-field-grid--single {
+    grid-template-columns: minmax(0, 460px);
+}
+
+.operational-field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--operational-text);
+    font-size: 0.9rem;
+    font-weight: 750;
+}
+
+.operational-field input,
+.operational-field select,
+.operational-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 46px;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid #cfd9d2;
+    border-radius: 9px;
+    background: #fff;
+    color: #111827;
+    font: inherit;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.operational-field input:hover,
+.operational-field select:hover,
+.operational-field textarea:hover {
+    border-color: #9eb9a9;
+}
+
+.operational-field input:focus,
+.operational-field select:focus,
+.operational-field textarea:focus {
+    outline: none;
+    border-color: var(--operational-green);
+    box-shadow: 0 0 0 3px rgba(26, 90, 58, 0.13);
+}
+
+.operational-help {
+    margin: 0.4rem 0 0;
+    color: var(--operational-muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.operational-error,
+.operational-alert .errorlist {
+    color: #a51d2d;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.operational-error {
+    margin: 0.4rem 0 0;
+}
+
+.operational-alert {
+    padding: 0.9rem 1rem;
+    border: 1px solid #e6b6bc;
+    border-left: 4px solid #a51d2d;
+    border-radius: 10px;
+    background: #fff2f3;
+}
+
+.operational-alert .errorlist {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.operational-reference-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin: 0;
+}
+
+.operational-reference-grid div {
+    padding: 0.95rem;
+    border: 1px solid #dce5df;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.operational-reference-grid dt {
+    color: var(--operational-muted);
+    font-size: 0.72rem;
+    font-weight: 750;
+    line-height: 1.35;
+    text-transform: uppercase;
+}
+
+.operational-reference-grid dd {
+    margin: 0.35rem 0 0;
+    color: #244536;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.operational-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.7rem;
+    padding-top: 0.15rem;
+}
+
+.operational-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 0.7rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 750;
+    text-decoration: none;
+    transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.operational-button--primary {
+    background: var(--operational-green);
+    color: #fff;
+}
+
+.operational-button--primary:hover {
+    background: var(--operational-green-dark);
+    box-shadow: 0 6px 14px rgba(18, 67, 43, 0.17);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 720px) {
+    .operational-workspace,
+    .operational-workspace--compact {
+        width: min(100% - 1.25rem, 960px);
+        padding-top: 1.25rem;
+    }
+
+    .operational-header,
+    .operational-card {
+        padding: 1.2rem;
+    }
+
+    .operational-field-grid,
+    .operational-field-grid--single,
+    .operational-reference-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .operational-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .operational-button {
+        width: 100%;
+    }
+}

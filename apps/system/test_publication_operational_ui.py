@@ -242,6 +242,19 @@ class PublicationOperationalUITests(TestCase):
         ), {'from_review': self.infrastructure_revision.pk})
         self.assertContains(response, 'Municipal Hall Rehabilitation')
         self.assertNotContains(response, 'Newer Staff Infra Title')
+        self.assertContains(response, 'Operational Information')
+        self.assertContains(response, 'Official Status')
+        self.assertContains(response, 'Actual Physical Progress')
+        self.assertContains(response, 'Entered Cost Progress')
+        self.assertContains(response, 'Inspection Completion')
+        self.assertContains(response, 'Calculated Reference')
+        self.assertContains(response, 'Expected / Scheduled Progress')
+        self.assertContains(response, 'Read-only')
+        self.assertContains(response, 'Save Status &amp; Progress')
+        self.assertContains(
+            response,
+            '/static/css/templates/core/operational_update.css?v=20260913-1',
+        )
 
         self.non_infrastructure.non_infra_name = 'Newer Staff Program Title'
         self.non_infrastructure.save(update_fields=['non_infra_name'])
@@ -252,6 +265,19 @@ class PublicationOperationalUITests(TestCase):
         ), {'from_review': self.non_infrastructure_revision.pk})
         self.assertContains(response, 'Community Wellness Program')
         self.assertNotContains(response, 'Newer Staff Program Title')
+        self.assertContains(response, 'Operational Information')
+        self.assertContains(response, 'Official Status')
+        self.assertContains(response, 'Save Status')
+        self.assertContains(response, 'Back to Publication Review')
+        self.assertNotContains(response, 'Calculated Reference')
+        self.assertNotContains(
+            response,
+            'No operational percentage is stored for Non-Infrastructure projects.',
+        )
+        self.assertContains(
+            response,
+            '/static/css/templates/core/operational_update.css?v=20260913-1',
+        )
 
     def test_head_dashboard_surfaces_published_project_update(self):
         self.infrastructure_revision.status = 'published'
