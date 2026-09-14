@@ -10,6 +10,7 @@ from .models import (
     ImplementingOffice,
     FundSource,
     Infrastructure_Project,
+    InfrastructureProgressUpdate,
     Non_Infrastructure_Project,
     Infrastructure_Schedule,
     Financial,
@@ -91,6 +92,21 @@ class FundSourceAdmin(ProjectDataAdmin):
 class InfrastructureProjectAdmin(ProjectDataAdmin):
     list_display = ('infrastructure_id', 'infrastructure_title', 'category', 'contractor', 'implementing_office', 'project')
     search_fields = ('infrastructure_title', 'infrastructure_code', 'category__category_name')
+
+
+@admin.register(InfrastructureProgressUpdate)
+class InfrastructureProgressUpdateAdmin(ProjectDataAdmin):
+    list_display = (
+        'progress_update_id',
+        'infrastructure',
+        'previous_official_status',
+        'new_official_status',
+        'previous_physical_progress',
+        'new_physical_progress',
+        'updated_by',
+        'created_at',
+    )
+    search_fields = ('infrastructure__infrastructure_title', 'head_remarks')
 
 
 @admin.register(Non_Infrastructure_Project)

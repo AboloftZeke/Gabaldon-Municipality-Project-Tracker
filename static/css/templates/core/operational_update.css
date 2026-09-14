@@ -177,6 +177,10 @@
     grid-template-columns: minmax(0, 460px);
 }
 
+.operational-field--wide {
+    grid-column: 1 / -1;
+}
+
 .operational-field label {
     display: block;
     margin-bottom: 0.5rem;

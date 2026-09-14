@@ -399,3 +399,4 @@ class HeadOperationalRevisionTests(TestCase):
         self.assertEqual(self.inspection.completion_percentage, Decimal('30'))
         self.assertEqual(pending.snapshot_data, before_snapshot)
         self.assertEqual(self.infrastructure.project.publication_revisions.count(), 2)
+        self.assertFalse(self.infrastructure.progress_updates.exists())

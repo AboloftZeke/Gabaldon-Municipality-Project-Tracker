@@ -854,6 +854,12 @@ class InfrastructureOperationalForm(forms.Form):
         label='Entered Cost Progress', max_digits=5, decimal_places=2,
         min_value=0, max_value=100, required=False,
     )
+    head_remarks = forms.CharField(
+        label='Head Remarks',
+        required=False,
+        max_length=2000,
+        widget=forms.Textarea(attrs={'rows': 3}),
+    )
     inspection_completion_percentage = forms.DecimalField(
         label='Inspection Completion', max_digits=5, decimal_places=2,
         min_value=0, max_value=100, required=True,

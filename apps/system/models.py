@@ -559,6 +559,56 @@ class Infrastructure_Project(models.Model):
         return fin and fin.bid_amount or None
 
 
+class InfrastructureProgressUpdate(models.Model):
+    progress_update_id = models.BigAutoField(primary_key=True)
+    infrastructure = models.ForeignKey(
+        Infrastructure_Project,
+        on_delete=models.CASCADE,
+        related_name='progress_updates',
+    )
+    previous_official_status = models.CharField(
+        max_length=50,
+        choices=Infrastructure_Project.AWARD_STATUS_CHOICES,
+        blank=True,
+        default='',
+    )
+    new_official_status = models.CharField(
+        max_length=50,
+        choices=Infrastructure_Project.AWARD_STATUS_CHOICES,
+        blank=True,
+        default='',
+    )
+    previous_physical_progress = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    new_physical_progress = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    head_remarks = models.TextField(blank=True, default='')
+    updated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='infrastructure_progress_updates',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Infrastructure Progress Update'
+        verbose_name_plural = 'Infrastructure Progress Updates'
+        ordering = ('-created_at', '-progress_update_id')
+
+    def __str__(self):
+        return f'{self.infrastructure} progress update {self.progress_update_id}'
+
+
 class Non_Infrastructure_Project(models.Model):
     """Normalized non-infrastructure project details linked to the base Project model."""
     non_infra_id = models.BigAutoField(primary_key=True)

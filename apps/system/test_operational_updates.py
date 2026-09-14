@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from .models import (
     Financial,
+    InfrastructureProgressUpdate,
     NonInfrastructureCategory,
     Non_Infrastructure_Project,
     Project,
@@ -95,6 +96,7 @@ class HeadOperationalUpdateTests(TestCase):
             'physical_progress_percentage': '60',
             'cost_progress_percentage': '55',
             'inspection_completion_percentage': '70',
+            'head_remarks': 'Verified against the latest field report.',
             'infrastructure_title': 'Crafted ordinary-field change',
             'expected_progress_percentage': '1',
         })
@@ -130,6 +132,95 @@ class HeadOperationalUpdateTests(TestCase):
             {'infrastructure': {'title': 'Published version'}},
         )
         self.assertTrue(self.public_revision.is_current_public_revision)
+        progress_update = InfrastructureProgressUpdate.objects.get()
+        self.assertEqual(progress_update.infrastructure, self.infrastructure)
+        self.assertEqual(progress_update.previous_official_status, 'awarded')
+        self.assertEqual(progress_update.new_official_status, 'completed')
+        self.assertEqual(
+            progress_update.previous_physical_progress,
+            Decimal('25'),
+        )
+        self.assertEqual(
+            progress_update.new_physical_progress,
+            Decimal('60'),
+        )
+        self.assertEqual(
+            progress_update.head_remarks,
+            'Verified against the latest field report.',
+        )
+        self.assertEqual(
+            progress_update.updated_by,
+            self.users['engineer', 'head'],
+        )
+        self.assertIsNotNone(progress_update.created_at)
+
+    def test_unchanged_status_and_progress_do_not_create_history(self):
+        self.client.force_login(self.users['engineer', 'head'])
+
+        response = self.client.post(self.infra_url(), {
+            'award_status': 'awarded',
+            'physical_progress_percentage': '25',
+            'cost_progress_percentage': '35',
+            'inspection_completion_percentage': '45',
+            'head_remarks': 'No official change.',
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(InfrastructureProgressUpdate.objects.exists())
+        self.infrastructure.refresh_from_db()
+        self.inspection.refresh_from_db()
+        self.assertEqual(
+            self.infrastructure.physical_progress_percentage,
+            Decimal('25'),
+        )
+        self.assertEqual(
+            self.infrastructure.cost_progress_percentage,
+            Decimal('35'),
+        )
+        self.assertEqual(
+            self.inspection.completion_percentage,
+            Decimal('45'),
+        )
+
+    def test_progress_history_is_read_only_for_staff_and_head(self):
+        older = InfrastructureProgressUpdate.objects.create(
+            infrastructure=self.infrastructure,
+            previous_official_status='ongoing_bidding',
+            new_official_status='awarded',
+            previous_physical_progress=Decimal('10'),
+            new_physical_progress=Decimal('25'),
+            head_remarks='Earlier decision',
+            updated_by=self.users['engineer', 'head'],
+        )
+        newest = InfrastructureProgressUpdate.objects.create(
+            infrastructure=self.infrastructure,
+            previous_official_status='awarded',
+            new_official_status='completed',
+            previous_physical_progress=Decimal('25'),
+            new_physical_progress=Decimal('100'),
+            head_remarks='Final decision',
+            updated_by=self.users['engineer', 'head'],
+        )
+        detail_url = reverse(
+            'engineering_projects:project_detail',
+            args=[self.infrastructure.pk],
+        )
+
+        for user in [
+            self.users['engineer', 'staff'],
+            self.users['engineer', 'head'],
+        ]:
+            with self.subTest(user=user.username):
+                self.client.force_login(user)
+                response = self.client.get(detail_url)
+                history = list(response.context['progress_update_history'])
+                self.assertEqual(history, [newest, older])
+                self.assertContains(response, 'Progress Update History')
+                self.assertContains(response, 'Earlier decision')
+                self.assertContains(response, 'Final decision')
+                self.assertContains(response, '25.00%')
+                self.assertContains(response, '100.00%')
+                self.assertNotContains(response, 'Edit Progress Update')
 
     def test_operational_form_shows_derived_values_as_read_only(self):
         self.client.force_login(self.users['engineer', 'head'])

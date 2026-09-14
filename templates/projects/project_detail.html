@@ -263,6 +263,38 @@
         </div>
     </section>
 
+    <section class="detail-section">
+        <h3>Progress Update History</h3>
+        {% for update in progress_update_history %}
+            <article class="detail-grid inspection-history-item">
+                <div class="detail-item">
+                    <span class="detail-label">Official Status</span>
+                    <span class="detail-value">{{ update.get_previous_official_status_display|default:"Not set" }} → {{ update.get_new_official_status_display|default:"Not set" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Actual Physical Progress</span>
+                    <span class="detail-value">{% if update.previous_physical_progress is not None %}{{ update.previous_physical_progress|floatformat:2 }}%{% else %}Not set{% endif %} → {% if update.new_physical_progress is not None %}{{ update.new_physical_progress|floatformat:2 }}%{% else %}Not set{% endif %}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Updated By</span>
+                    <span class="detail-value">{% if update.updated_by %}{{ update.updated_by.get_full_name|default:update.updated_by.username }}{% else %}Unknown{% endif %}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Updated At</span>
+                    <span class="detail-value">{{ update.created_at|date:"M d, Y g:i A" }}</span>
+                </div>
+                {% if update.head_remarks %}
+                    <div class="detail-item full-width">
+                        <span class="detail-label">Head Remarks</span>
+                        <div class="detail-value">{{ update.head_remarks }}</div>
+                    </div>
+                {% endif %}
+            </article>
+        {% empty %}
+            <p>No official status or physical progress updates have been recorded.</p>
+        {% endfor %}
+    </section>
+
     <!-- Inspection History Section -->
     <section class="detail-section">
         <div class="detail-section-heading">

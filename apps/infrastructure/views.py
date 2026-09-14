@@ -16,6 +16,7 @@ from .forms import (
     InfrastructureProjectForm,
 )
 from .inspection_evidence import update_inspection_evidence
+from .progress_history import record_progress_update
 from apps.system.models import InfrastructureProject as SystemInfrastructureProject
 from apps.system.models import (
     InfrastructureCategory,
@@ -709,6 +710,9 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
                 'engineering_projects:inspection_create',
                 args=[infra.pk],
             )
+            context['progress_update_history'] = (
+                infra.progress_updates.select_related('updated_by').all()
+            )
 
         return context
 
@@ -836,7 +840,18 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
                 Project.objects.select_for_update().get(
                     pk=infrastructure.project_id,
                 )
+                previous_status = infrastructure.award_status
+                previous_physical_progress = (
+                    infrastructure.physical_progress_percentage
+                )
                 form.save()
+                record_progress_update(
+                    infrastructure,
+                    request.user,
+                    previous_status=previous_status,
+                    previous_physical_progress=previous_physical_progress,
+                    remarks=form.cleaned_data['head_remarks'],
+                )
                 revision = create_head_operational_revision(
                     infrastructure.project,
                     request.user,

@@ -43,10 +43,10 @@
 
             <div class="operational-field-grid">
                 {% for field in form %}
-                    <div class="operational-field">
+                    <div class="operational-field {% if field.name == 'head_remarks' %}operational-field--wide{% endif %}">
                         <label for="{{ field.id_for_label }}">
                             {% if field.name == 'award_status' %}Official Status{% elif field.name == 'physical_progress_percentage' %}Actual Physical Progress{% else %}{{ field.label }}{% endif %}
-                            {% if field.name == 'cost_progress_percentage' %}<span class="operational-optional">Optional</span>{% endif %}
+                            {% if field.name == 'cost_progress_percentage' or field.name == 'head_remarks' %}<span class="operational-optional">Optional</span>{% endif %}
                         </label>
                         {{ field }}
                         {% if field.name == 'physical_progress_percentage' %}
@@ -55,6 +55,8 @@
                             <p class="operational-help">Enter a manually confirmed cost percentage only when available.</p>
                         {% elif field.name == 'inspection_completion_percentage' %}
                             <p class="operational-help">Required because this project has an inspection record.</p>
+                        {% elif field.name == 'head_remarks' %}
+                            <p class="operational-help">Add context for this official status or physical progress decision.</p>
                         {% endif %}
                         {% for error in field.errors %}<p class="operational-error">{{ error }}</p>{% endfor %}
                     </div>
