@@ -15,6 +15,7 @@ from .forms import (
     InfrastructureOperationalForm,
     InfrastructureProjectForm,
 )
+from .inspection_evidence import update_inspection_evidence
 from apps.system.models import InfrastructureProject as SystemInfrastructureProject
 from apps.system.models import (
     InfrastructureCategory,
@@ -692,12 +693,14 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
                 args=[project.pk],
             )
             context['can_manage_publication'] = can_manage_infrastructure(self.request.user)
-            context['inspection_history'] = infra.project.inspections.select_related(
-                'inspected_by_user',
-            ).order_by(
-                '-inspection_date',
-                '-created_at',
-                '-inspection_id',
+            context['inspection_history'] = (
+                infra.project.inspections.select_related(
+                    'inspected_by_user',
+                ).prefetch_related('evidence').order_by(
+                    '-inspection_date',
+                    '-created_at',
+                    '-inspection_id',
+                )
             )
             context['can_manage_inspections'] = can_manage_infrastructure(
                 self.request.user,
@@ -881,7 +884,7 @@ class InfrastructureInspectionCreateView(EngineerOnlyMixin, View):
 
     def post(self, request, pk):
         infrastructure = self.get_project(pk)
-        form = InfrastructureInspectionForm(request.POST)
+        form = InfrastructureInspectionForm(request.POST, request.FILES)
         if not form.is_valid():
             return render(request, self.template_name, {
                 'infrastructure': infrastructure,
@@ -892,6 +895,12 @@ class InfrastructureInspectionCreateView(EngineerOnlyMixin, View):
         inspection.project = infrastructure.project
         inspection.inspected_by_user = request.user
         inspection.save()
+        update_inspection_evidence(
+            inspection,
+            request.user,
+            photos=form.cleaned_data['inspection_photos'],
+            documents=form.cleaned_data['inspection_documents'],
+        )
         messages.success(request, 'Inspection added to project history.')
         return redirect(
             'engineering_projects:project_detail',
@@ -932,6 +941,7 @@ class InfrastructureInspectionUpdateView(EngineerOnlyMixin, View):
         )
         form = InfrastructureInspectionForm(
             request.POST,
+            request.FILES,
             instance=inspection,
         )
         if not form.is_valid():
@@ -942,6 +952,13 @@ class InfrastructureInspectionUpdateView(EngineerOnlyMixin, View):
                 'action': 'Edit',
             }, status=400)
         form.save()
+        update_inspection_evidence(
+            inspection,
+            request.user,
+            photos=form.cleaned_data['inspection_photos'],
+            documents=form.cleaned_data['inspection_documents'],
+            remove_ids=form.cleaned_data.get('evidence_to_remove', ()),
+        )
         messages.success(request, 'Inspection record updated.')
         return redirect(
             'engineering_projects:project_detail',

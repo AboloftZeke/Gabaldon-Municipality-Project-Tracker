@@ -720,6 +720,20 @@ class InfrastructureProjectForm(forms.Form):
 
 
 class InfrastructureInspectionForm(forms.ModelForm):
+    IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+    IMAGE_CONTENT_TYPES = {
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+    }
+    DOCUMENT_EXTENSIONS = {'.pdf'}
+    DOCUMENT_CONTENT_TYPES = {'application/pdf'}
+    MAX_EVIDENCE_SIZE = 10 * 1024 * 1024
+
+    inspection_type = forms.ChoiceField(
+        label='Inspection Type',
+        choices=Project_Inspection.INSPECTION_TYPE_CHOICES,
+        required=False,
+        initial='routine',
+    )
     completion_percentage = forms.DecimalField(
         label='Observed Completion',
         max_digits=5,
@@ -728,20 +742,103 @@ class InfrastructureInspectionForm(forms.ModelForm):
         max_value=100,
         widget=forms.NumberInput(attrs={'step': '0.01'}),
     )
+    inspection_photos = MultipleFileField(
+        label='Inspection Photos',
+        required=False,
+        widget=MultipleFileInput(attrs={
+            'accept': '.jpg,.jpeg,.png,.gif,.webp,image/*',
+        }),
+    )
+    inspection_documents = MultipleFileField(
+        label='Supporting Documents',
+        required=False,
+        widget=MultipleFileInput(attrs={
+            'accept': '.pdf,application/pdf',
+        }),
+    )
+    evidence_to_remove = forms.MultipleChoiceField(
+        label='Remove Existing Evidence',
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
 
     class Meta:
         model = Project_Inspection
         fields = (
+            'inspection_type',
             'inspection_date',
             'completion_percentage',
             'findings',
             'remarks',
+            'inspection_photos',
+            'inspection_documents',
+            'evidence_to_remove',
         )
         widgets = {
             'inspection_date': forms.DateInput(attrs={'type': 'date'}),
             'findings': forms.Textarea(attrs={'rows': 4}),
             'remarks': forms.Textarea(attrs={'rows': 4}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        evidence = (
+            self.instance.evidence.all()
+            if self.instance and self.instance.pk
+            else []
+        )
+        removal_choices = [
+            (str(item.pk), item.original_name)
+            for item in evidence
+        ]
+        if removal_choices:
+            self.fields['evidence_to_remove'].choices = removal_choices
+        else:
+            self.fields.pop('evidence_to_remove')
+
+    def _validate_uploads(
+        self,
+        uploads,
+        *,
+        extensions,
+        content_types,
+        label,
+    ):
+        for upload in uploads:
+            extension = os.path.splitext(upload.name)[1].lower()
+            content_type = (getattr(upload, 'content_type', '') or '').lower()
+            if extension not in extensions or content_type not in content_types:
+                raise forms.ValidationError(
+                    f'{label} contains an unsupported file type.',
+                )
+            if upload.size > self.MAX_EVIDENCE_SIZE:
+                raise forms.ValidationError(
+                    f'Each {label.lower()} file must be 10 MB or smaller.',
+                )
+        return uploads
+
+    def clean_inspection_photos(self):
+        return self._validate_uploads(
+            self.cleaned_data['inspection_photos'],
+            extensions=self.IMAGE_EXTENSIONS,
+            content_types=self.IMAGE_CONTENT_TYPES,
+            label='Inspection photos',
+        )
+
+    def clean_inspection_type(self):
+        return (
+            self.cleaned_data.get('inspection_type')
+            or getattr(self.instance, 'inspection_type', None)
+            or 'routine'
+        )
+
+    def clean_inspection_documents(self):
+        return self._validate_uploads(
+            self.cleaned_data['inspection_documents'],
+            extensions=self.DOCUMENT_EXTENSIONS,
+            content_types=self.DOCUMENT_CONTENT_TYPES,
+            label='Supporting documents',
+        )
 
 
 class InfrastructureOperationalForm(forms.Form):

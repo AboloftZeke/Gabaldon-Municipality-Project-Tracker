@@ -13,6 +13,7 @@ from .models import (
     Non_Infrastructure_Project,
     Infrastructure_Schedule,
     Financial,
+    InspectionEvidence,
     Project_Inspection,
 )
 
@@ -112,5 +113,19 @@ class FinancialAdmin(ProjectDataAdmin):
 
 @admin.register(Project_Inspection)
 class ProjectInspectionAdmin(ProjectDataAdmin):
-    list_display = ('inspection_id', 'project', 'inspection_date', 'completion_percentage', 'inspected_by_user')
+    list_display = ('inspection_id', 'project', 'inspection_type', 'inspection_date', 'completion_percentage', 'inspected_by_user')
     search_fields = ('project__project_id', 'remarks', 'findings')
+
+
+@admin.register(InspectionEvidence)
+class InspectionEvidenceAdmin(ProjectDataAdmin):
+    list_display = (
+        'inspection_evidence_id',
+        'inspection',
+        'evidence_type',
+        'original_name',
+        'uploaded_by_user',
+        'created_at',
+    )
+    list_filter = ('evidence_type',)
+    search_fields = ('original_name', 'inspection__project__project_id')

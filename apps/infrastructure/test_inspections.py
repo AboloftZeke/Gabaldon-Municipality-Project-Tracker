@@ -1,14 +1,24 @@
+import shutil
+import tempfile
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from apps.system.models import Project_Inspection, UserFlag
+from apps.system.models import InspectionEvidence, Project_Inspection, UserFlag
 
 
 class InfrastructureInspectionHistoryTests(TestCase):
     def setUp(self):
+        self.media_root = tempfile.mkdtemp()
+        self.media_override = override_settings(MEDIA_ROOT=self.media_root)
+        self.media_override.enable()
+        self.addCleanup(self.media_override.disable)
+        self.addCleanup(shutil.rmtree, self.media_root, True)
+
         from apps.infrastructure.tests import InfrastructureProjectFormTests
 
         fixture = InfrastructureProjectFormTests()
@@ -211,3 +221,169 @@ class InfrastructureInspectionHistoryTests(TestCase):
             (inspection.inspection_date, inspection.completion_percentage),
             original,
         )
+
+    def test_multiple_photos_and_pdf_belong_to_one_inspection(self):
+        self.client.force_login(self.staff)
+        response = self.client.post(self.create_url, {
+            'inspection_type': 'progress',
+            'inspection_date': '2026-07-01',
+            'completion_percentage': '60.00',
+            'findings': 'Evidence recorded',
+            'remarks': '',
+            'inspection_photos': [
+                SimpleUploadedFile(
+                    'north.jpg',
+                    b'north-photo',
+                    content_type='image/jpeg',
+                ),
+                SimpleUploadedFile(
+                    'south.png',
+                    b'south-photo',
+                    content_type='image/png',
+                ),
+            ],
+            'inspection_documents': [SimpleUploadedFile(
+                'inspection-report.pdf',
+                b'%PDF-1.4 inspection report',
+                content_type='application/pdf',
+            )],
+        })
+
+        self.assertRedirects(response, self.detail_url)
+        inspection = self.infrastructure.project.inspections.get()
+        self.assertEqual(inspection.inspection_type, 'progress')
+        self.assertEqual(inspection.evidence.count(), 3)
+        self.assertEqual(
+            inspection.evidence.filter(evidence_type='image').count(),
+            2,
+        )
+        self.assertEqual(
+            inspection.evidence.filter(evidence_type='document').count(),
+            1,
+        )
+        self.assertTrue(all(
+            item.uploaded_by_user == self.staff
+            for item in inspection.evidence.all()
+        ))
+        self.assertTrue(all(
+            default_storage.exists(item.storage_name)
+            for item in inspection.evidence.all()
+        ))
+
+        self.client.force_login(self.head)
+        detail = self.client.get(self.detail_url)
+        self.assertContains(detail, 'Progress')
+        self.assertContains(detail, 'north.jpg')
+        self.assertContains(detail, 'south.png')
+        self.assertContains(detail, 'inspection-report.pdf')
+        self.assertContains(detail, 'Supporting Evidence')
+        self.assertNotContains(detail, 'Remove Existing Evidence')
+
+    def test_staff_can_remove_and_add_evidence_while_editing(self):
+        inspection = Project_Inspection.objects.create(
+            project=self.infrastructure.project,
+            inspection_type='routine',
+            inspection_date='2026-07-01',
+            inspected_by_user=self.staff,
+            completion_percentage=Decimal('60.00'),
+        )
+        first = InspectionEvidence.objects.create(
+            inspection=inspection,
+            evidence_type='image',
+            original_name='remove.jpg',
+            storage_name=default_storage.save(
+                'inspections/test/remove.jpg',
+                SimpleUploadedFile('remove.jpg', b'remove'),
+            ),
+            file_url='/media/inspections/test/remove.jpg',
+            content_type='image/jpeg',
+            uploaded_by_user=self.staff,
+        )
+        retained = InspectionEvidence.objects.create(
+            inspection=inspection,
+            evidence_type='document',
+            original_name='retain.pdf',
+            storage_name=default_storage.save(
+                'inspections/test/retain.pdf',
+                SimpleUploadedFile('retain.pdf', b'retain'),
+            ),
+            file_url='/media/inspections/test/retain.pdf',
+            content_type='application/pdf',
+            uploaded_by_user=self.staff,
+        )
+        removed_storage_name = first.storage_name
+        update_url = reverse(
+            'engineering_projects:inspection_update',
+            args=[self.infrastructure.pk, inspection.pk],
+        )
+        self.client.force_login(self.staff)
+
+        response = self.client.post(update_url, {
+            'inspection_type': 'routine',
+            'inspection_date': '2026-07-01',
+            'completion_percentage': '60.00',
+            'findings': '',
+            'remarks': '',
+            'evidence_to_remove': [str(first.pk)],
+            'inspection_photos': [SimpleUploadedFile(
+                'replacement.webp',
+                b'replacement',
+                content_type='image/webp',
+            )],
+        })
+
+        self.assertRedirects(response, self.detail_url)
+        self.assertFalse(
+            InspectionEvidence.objects.filter(pk=first.pk).exists(),
+        )
+        self.assertFalse(default_storage.exists(removed_storage_name))
+        self.assertTrue(
+            InspectionEvidence.objects.filter(pk=retained.pk).exists(),
+        )
+        self.assertTrue(inspection.evidence.filter(
+            original_name='replacement.webp',
+        ).exists())
+
+    def test_invalid_evidence_types_are_rejected(self):
+        self.client.force_login(self.staff)
+        response = self.client.post(self.create_url, {
+            'inspection_type': 'routine',
+            'inspection_date': '2026-07-01',
+            'completion_percentage': '60.00',
+            'findings': '',
+            'remarks': '',
+            'inspection_photos': [SimpleUploadedFile(
+                'malware.exe',
+                b'not-an-image',
+                content_type='application/octet-stream',
+            )],
+            'inspection_documents': [SimpleUploadedFile(
+                'notes.txt',
+                b'not-a-pdf',
+                content_type='text/plain',
+            )],
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(
+            response,
+            'unsupported file type',
+            count=2,
+            status_code=400,
+        )
+        self.assertFalse(self.infrastructure.project.inspections.exists())
+
+    def test_existing_inspection_without_evidence_displays_normally(self):
+        inspection = Project_Inspection.objects.create(
+            project=self.infrastructure.project,
+            inspection_date='2026-07-01',
+            inspected_by_user=self.staff,
+            completion_percentage=Decimal('60.00'),
+        )
+        self.assertEqual(inspection.inspection_type, 'routine')
+        self.client.force_login(self.head)
+
+        response = self.client.get(self.detail_url)
+
+        self.assertContains(response, 'Routine')
+        self.assertContains(response, 'No supporting evidence attached.')

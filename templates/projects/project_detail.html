@@ -276,6 +276,10 @@
                     <span class="detail-value">{{ inspection.inspection_date|date:"M d, Y" }}</span>
                 </div>
                 <div class="detail-item">
+                    <span class="detail-label">Inspection Type</span>
+                    <span class="detail-value">{{ inspection.get_inspection_type_display }}</span>
+                </div>
+                <div class="detail-item">
                     <span class="detail-label">Inspector</span>
                     <span class="detail-value">{% if inspection.inspected_by_user %}{{ inspection.inspected_by_user.get_full_name|default:inspection.inspected_by_user.username }}{% else %}Not recorded{% endif %}</span>
                 </div>
@@ -290,6 +294,25 @@
                 <div class="detail-item full-width">
                     <span class="detail-label">Remarks</span>
                     <div class="detail-value">{{ inspection.remarks|default:"No remarks recorded." }}</div>
+                </div>
+                <div class="detail-item full-width">
+                    <span class="detail-label">Supporting Evidence</span>
+                    {% if inspection.evidence.all %}
+                        <div class="inspection-evidence-list">
+                            {% for item in inspection.evidence.all %}
+                                {% if item.evidence_type == 'image' %}
+                                    <a class="inspection-evidence-photo" href="{{ item.file_url }}" target="_blank" rel="noopener">
+                                        <img src="{{ item.file_url }}" alt="{{ item.original_name }}" loading="lazy">
+                                        <span>{{ item.original_name }}</span>
+                                    </a>
+                                {% else %}
+                                    <a href="{{ item.file_url }}" target="_blank" rel="noopener">{{ item.original_name }}</a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="detail-value">No supporting evidence attached.</div>
+                    {% endif %}
                 </div>
                 {% if can_manage_inspections %}
                     <div class="detail-item full-width">

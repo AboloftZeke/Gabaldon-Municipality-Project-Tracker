@@ -255,6 +255,31 @@ section.detail-section .detail-section-heading h3 {
     border-top: 1px solid #e5e7eb;
 }
 
+.inspection-evidence-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.inspection-evidence-photo {
+    display: grid;
+    width: 150px;
+    gap: 0.35rem;
+}
+
+.inspection-evidence-photo img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+.inspection-evidence-photo span {
+    overflow-wrap: anywhere;
+    font-size: 0.78rem;
+}
+
 div.detail-item--derived {
     background: #f3f4f6;
     border-style: dashed;

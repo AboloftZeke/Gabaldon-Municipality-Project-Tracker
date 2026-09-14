@@ -670,6 +670,13 @@ class Financial(models.Model):
 
 class Project_Inspection(models.Model):
     """Normalized inspection/progress records for project entities."""
+    INSPECTION_TYPE_CHOICES = [
+        ('progress', 'Progress'),
+        ('routine', 'Routine'),
+        ('final', 'Final'),
+        ('special', 'Special'),
+    ]
+
     inspection_id = models.BigAutoField(primary_key=True)
     project = models.ForeignKey(
         Project,
@@ -677,6 +684,11 @@ class Project_Inspection(models.Model):
         related_name='inspections'
     )
     inspection_date = models.DateField()
+    inspection_type = models.CharField(
+        max_length=20,
+        choices=INSPECTION_TYPE_CHOICES,
+        default='routine',
+    )
     inspected_by_user = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -695,6 +707,44 @@ class Project_Inspection(models.Model):
 
     def __str__(self):
         return f'Inspection {self.inspection_id}'
+
+
+class InspectionEvidence(models.Model):
+    EVIDENCE_TYPE_CHOICES = [
+        ('image', 'Photo'),
+        ('document', 'Document'),
+    ]
+
+    inspection_evidence_id = models.BigAutoField(primary_key=True)
+    inspection = models.ForeignKey(
+        Project_Inspection,
+        on_delete=models.CASCADE,
+        related_name='evidence',
+    )
+    evidence_type = models.CharField(
+        max_length=20,
+        choices=EVIDENCE_TYPE_CHOICES,
+    )
+    original_name = models.CharField(max_length=255)
+    storage_name = models.CharField(max_length=500)
+    file_url = models.URLField(max_length=500)
+    content_type = models.CharField(max_length=100, blank=True, default='')
+    uploaded_by_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='inspection_evidence_uploaded',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Inspection Evidence'
+        verbose_name_plural = 'Inspection Evidence'
+        ordering = ('created_at', 'inspection_evidence_id')
+
+    def __str__(self):
+        return self.original_name
 
 
 class ActiveProjectImageManager(models.Manager):

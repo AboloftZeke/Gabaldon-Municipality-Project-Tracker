@@ -25,7 +25,7 @@
             </div>
         </div>
 
-        <form method="post" novalidate>
+        <form method="post" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
             {% if form.non_field_errors %}
                 {% for error in form.non_field_errors %}<div class="error-message">{{ error }}</div>{% endfor %}
@@ -40,10 +40,25 @@
                         <div class="form-group {% if field.name == 'findings' or field.name == 'remarks' %}full-span{% endif %}">
                             <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                             {{ field }}
+                            {% if field.name == 'inspection_photos' %}<small class="helper-text">Upload one or more JPG, PNG, GIF, or WebP photos. Maximum 10 MB each.</small>{% endif %}
+                            {% if field.name == 'inspection_documents' %}<small class="helper-text">Optional PDF inspection reports, up to 10 MB each.</small>{% endif %}
                             {% for error in field.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
                         </div>
                     {% endfor %}
                 </div>
+                {% if inspection and inspection.evidence.exists %}
+                    <div class="existing-images-section">
+                        <h4>Current Evidence</h4>
+                        <div class="existing-images-grid">
+                            {% for item in inspection.evidence.all %}
+                                <div class="existing-image-card">
+                                    {% if item.evidence_type == 'image' %}<img src="{{ item.file_url }}" alt="{{ item.original_name }}">{% endif %}
+                                    <a href="{{ item.file_url }}" target="_blank" rel="noopener">{{ item.original_name }}</a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
             </div>
             <div class="form-actions">
                 <a class="btn btn-cancel" href="{% url 'engineering_projects:project_detail' infrastructure.pk %}">Cancel</a>
