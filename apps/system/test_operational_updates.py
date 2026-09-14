@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
@@ -16,6 +17,7 @@ from .models import (
     UserFlag,
 )
 from .progress import expected_progress
+from apps.infrastructure.progress_history import record_progress_update
 
 
 class HeadOperationalUpdateTests(TestCase):
@@ -182,6 +184,97 @@ class HeadOperationalUpdateTests(TestCase):
             Decimal('45'),
         )
 
+    def test_head_can_link_multiple_project_inspections_without_copying_progress(self):
+        earlier_inspection = Project_Inspection.objects.create(
+            project=self.infrastructure.project,
+            inspection_date=date.today() - timedelta(days=2),
+            inspection_type='progress',
+            completion_percentage=Decimal('82'),
+            inspected_by_user=self.users['engineer', 'staff'],
+        )
+        self.client.force_login(self.users['engineer', 'head'])
+
+        response = self.client.post(self.infra_url(), {
+            'award_status': 'completed',
+            'physical_progress_percentage': '61',
+            'cost_progress_percentage': '55',
+            'inspection_completion_percentage': '70',
+            'head_remarks': 'Supported by two field inspections.',
+            'supporting_inspections': [
+                str(self.inspection.pk), str(earlier_inspection.pk),
+            ],
+        })
+
+        self.assertEqual(response.status_code, 302)
+        update = InfrastructureProgressUpdate.objects.get()
+        self.assertCountEqual(
+            update.supporting_inspections.values_list('pk', flat=True),
+            [self.inspection.pk, earlier_inspection.pk],
+        )
+        self.infrastructure.refresh_from_db()
+        self.assertEqual(
+            self.infrastructure.physical_progress_percentage,
+            Decimal('61'),
+        )
+        self.assertNotEqual(
+            self.infrastructure.physical_progress_percentage,
+            earlier_inspection.completion_percentage,
+        )
+
+    def test_operational_form_rejects_inspection_from_another_project(self):
+        other_project = Project.objects.create(project_type='infrastructure')
+        other_inspection = Project_Inspection.objects.create(
+            project=other_project,
+            inspection_date=date.today(),
+            inspection_type='special',
+            completion_percentage=Decimal('95'),
+        )
+        self.client.force_login(self.users['engineer', 'head'])
+
+        get_response = self.client.get(self.infra_url())
+        self.assertContains(get_response, 'Supporting Inspections')
+        self.assertContains(get_response, '30.00% observed')
+        available = get_response.context['form'].fields[
+            'supporting_inspections'
+        ].queryset
+        self.assertIn(self.inspection, available)
+        self.assertNotIn(other_inspection, available)
+
+        response = self.client.post(self.infra_url(), {
+            'award_status': 'completed',
+            'physical_progress_percentage': '61',
+            'cost_progress_percentage': '55',
+            'inspection_completion_percentage': '70',
+            'supporting_inspections': [str(other_inspection.pk)],
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            'Select a valid choice.',
+            response.context['form'].errors['supporting_inspections'][0],
+        )
+        self.assertFalse(InfrastructureProgressUpdate.objects.exists())
+        self.infrastructure.refresh_from_db()
+        self.assertEqual(self.infrastructure.award_status, 'awarded')
+        self.assertEqual(
+            self.infrastructure.physical_progress_percentage,
+            Decimal('25'),
+        )
+
+        self.infrastructure.award_status = 'completed'
+        with self.assertRaisesMessage(
+            ValidationError,
+            'Supporting inspections must belong to this Infrastructure project.',
+        ):
+            record_progress_update(
+                self.infrastructure,
+                self.users['engineer', 'head'],
+                previous_status='awarded',
+                previous_physical_progress=Decimal('25'),
+                supporting_inspections=[other_inspection],
+            )
+        self.assertFalse(InfrastructureProgressUpdate.objects.exists())
+
     def test_progress_history_is_read_only_for_staff_and_head(self):
         older = InfrastructureProgressUpdate.objects.create(
             infrastructure=self.infrastructure,
@@ -201,6 +294,7 @@ class HeadOperationalUpdateTests(TestCase):
             head_remarks='Final decision',
             updated_by=self.users['engineer', 'head'],
         )
+        newest.supporting_inspections.add(self.inspection)
         detail_url = reverse(
             'engineering_projects:project_detail',
             args=[self.infrastructure.pk],
@@ -218,6 +312,8 @@ class HeadOperationalUpdateTests(TestCase):
                 self.assertContains(response, 'Progress Update History')
                 self.assertContains(response, 'Earlier decision')
                 self.assertContains(response, 'Final decision')
+                self.assertContains(response, 'Supporting Inspections')
+                self.assertContains(response, '30.00% observed completion')
                 self.assertContains(response, '25.00%')
                 self.assertContains(response, '100.00%')
                 self.assertNotContains(response, 'Edit Progress Update')

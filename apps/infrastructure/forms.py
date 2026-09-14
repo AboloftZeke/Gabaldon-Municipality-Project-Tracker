@@ -841,6 +841,20 @@ class InfrastructureInspectionForm(forms.ModelForm):
         )
 
 
+class SupportingInspectionChoiceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(self, inspection):
+        inspector = inspection.inspected_by_user
+        inspector_name = (
+            inspector.get_full_name() or inspector.username
+            if inspector else 'Inspector not recorded'
+        )
+        return (
+            f'{inspection.inspection_date:%b %d, %Y} · '
+            f'{inspection.get_inspection_type_display()} · '
+            f'{inspection.completion_percentage}% observed · {inspector_name}'
+        )
+
+
 class InfrastructureOperationalForm(forms.Form):
     award_status = forms.ChoiceField(
         label='Status',
@@ -859,6 +873,12 @@ class InfrastructureOperationalForm(forms.Form):
         required=False,
         max_length=2000,
         widget=forms.Textarea(attrs={'rows': 3}),
+    )
+    supporting_inspections = SupportingInspectionChoiceField(
+        label='Supporting Inspections',
+        queryset=Project_Inspection.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
     )
     inspection_completion_percentage = forms.DecimalField(
         label='Inspection Completion', max_digits=5, decimal_places=2,
@@ -879,6 +899,13 @@ class InfrastructureOperationalForm(forms.Form):
         if self.inspection:
             initial['inspection_completion_percentage'] = self.inspection.completion_percentage
         super().__init__(*args, **kwargs)
+        self.fields['supporting_inspections'].queryset = (
+            instance.project.inspections.select_related(
+                'inspected_by_user',
+            ).order_by(
+                '-inspection_date', '-created_at', '-inspection_id',
+            )
+        )
         if not self.inspection:
             self.fields.pop('inspection_completion_percentage')
 

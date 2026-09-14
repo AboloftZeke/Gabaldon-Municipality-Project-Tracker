@@ -598,6 +598,11 @@ class InfrastructureProgressUpdate(models.Model):
         blank=True,
         related_name='infrastructure_progress_updates',
     )
+    supporting_inspections = models.ManyToManyField(
+        'Project_Inspection',
+        blank=True,
+        related_name='supported_progress_updates',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

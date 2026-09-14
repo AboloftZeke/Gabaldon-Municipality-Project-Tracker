@@ -711,7 +711,11 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
                 args=[infra.pk],
             )
             context['progress_update_history'] = (
-                infra.progress_updates.select_related('updated_by').all()
+                infra.progress_updates.select_related(
+                    'updated_by',
+                ).prefetch_related(
+                    'supporting_inspections__inspected_by_user',
+                ).all()
             )
 
         return context
@@ -851,6 +855,9 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
                     previous_status=previous_status,
                     previous_physical_progress=previous_physical_progress,
                     remarks=form.cleaned_data['head_remarks'],
+                    supporting_inspections=(
+                        form.cleaned_data['supporting_inspections']
+                    ),
                 )
                 revision = create_head_operational_revision(
                     infrastructure.project,

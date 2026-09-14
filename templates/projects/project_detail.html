@@ -289,6 +289,18 @@
                         <div class="detail-value">{{ update.head_remarks }}</div>
                     </div>
                 {% endif %}
+                <div class="detail-item full-width">
+                    <span class="detail-label">Supporting Inspections</span>
+                    {% for inspection in update.supporting_inspections.all %}
+                        <div class="detail-value">
+                            {{ inspection.inspection_date|date:"M d, Y" }} ·
+                            {{ inspection.get_inspection_type_display }} ·
+                            {{ inspection.completion_percentage|floatformat:2 }}% observed completion
+                        </div>
+                    {% empty %}
+                        <div class="detail-value">No supporting inspections selected.</div>
+                    {% endfor %}
+                </div>
             </article>
         {% empty %}
             <p>No official status or physical progress updates have been recorded.</p>
