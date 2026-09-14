@@ -41,7 +41,7 @@
 
             <div class="wizard-progress" aria-label="Infrastructure form progress">
                 <div class="wizard-progress-summary">
-                    <span data-wizard-progress-text>Step 1 of 7</span>
+                    <span data-wizard-progress-text>Step 1 of 6</span>
                     <span>Complete each step to continue</span>
                 </div>
                 <ol class="wizard-steps">
@@ -50,8 +50,7 @@
                     <li data-wizard-indicator="2"><span>3</span><strong>Funding</strong></li>
                     <li data-wizard-indicator="3"><span>4</span><strong>Schedule</strong></li>
                     <li data-wizard-indicator="4"><span>5</span><strong>Progress</strong></li>
-                    <li data-wizard-indicator="5"><span>6</span><strong>Inspection</strong></li>
-                    <li data-wizard-indicator="6"><span>7</span><strong>Photos</strong></li>
+                    <li data-wizard-indicator="5"><span>6</span><strong>Photos</strong></li>
                 </ol>
             </div>
 
@@ -275,46 +274,14 @@
                 </div>
             </div>
 
-            <div class="fieldset wizard-panel" id="inspection-information" data-wizard-step="5" hidden>
-                <div class="section-heading">
-                    <span class="section-number">6</span>
-                    <div><h3>Inspection Information</h3><p>Add inspection details when a site inspection has been completed.</p></div>
-                </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="{{ form.inspection_date.id_for_label }}">Inspection Date</label>
-                        {{ form.inspection_date }}
-                        {% if form.inspection_date.errors %}
-                            <div class="error-message">{{ form.inspection_date.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group full-span">
-                        <label for="{{ form.inspection_findings.id_for_label }}">Inspection Findings</label>
-                        {{ form.inspection_findings }}
-                        {% if form.inspection_findings.errors %}
-                            <div class="error-message">{{ form.inspection_findings.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group full-span">
-                        <label for="{{ form.inspection_remarks.id_for_label }}">Remarks</label>
-                        {{ form.inspection_remarks }}
-                        {% if form.inspection_remarks.errors %}
-                            <div class="error-message">{{ form.inspection_remarks.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
 <!-- =========================================================
      PROJECT IMAGES
      ========================================================= -->
 
-<div class="fieldset wizard-panel" id="project-photos" data-wizard-step="6" hidden>
+<div class="fieldset wizard-panel" id="project-photos" data-wizard-step="5" hidden>
 
     <div class="section-heading">
-        <span class="section-number">7</span>
+        <span class="section-number">6</span>
         <div><h3>Project Photos / Attachments <span class="optional-badge">Optional</span></h3><p>Upload project photos, preview them, and choose the image shown as the cover.</p></div>
     </div>
 

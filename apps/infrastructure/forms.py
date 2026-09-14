@@ -267,13 +267,6 @@ class InfrastructureProjectForm(forms.Form):
         min_value=0,
     )
 
-    inspection_date = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={'type': 'date'}),
-    )
-    inspection_findings = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={'rows': 3}))
-    inspection_remarks = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={'rows': 3}))
-
     project_images = MultipleFileField(
         required=False,
         widget=MultipleFileInput(attrs={'accept': 'image/*'}),
@@ -413,25 +406,6 @@ class InfrastructureProjectForm(forms.Form):
             self.initial.setdefault('actual_start_date', sched.actual_start_date)
             self.initial.setdefault('actual_completion_date', sched.actual_completion_date)
 
-        if infra.project:
-            latest_inspection = infra.project.inspections.order_by(
-                '-inspection_date',
-                '-created_at',
-            ).first()
-            if latest_inspection:
-                self.initial.setdefault(
-                    'inspection_date',
-                    latest_inspection.inspection_date,
-                )
-                self.initial.setdefault(
-                    'inspection_findings',
-                    latest_inspection.findings,
-                )
-                self.initial.setdefault(
-                    'inspection_remarks',
-                    latest_inspection.remarks,
-                )
-
     def clean(self):
         cleaned_data = super().clean()
         category_obj = cleaned_data.get('category')
@@ -445,17 +419,6 @@ class InfrastructureProjectForm(forms.Form):
             self.add_error(
                 'other_category',
                 'Enter a category name when Other is selected.',
-            )
-
-        inspection_date = cleaned_data.get('inspection_date')
-        inspection_details = (
-            bool((cleaned_data.get('inspection_findings') or '').strip())
-            or bool((cleaned_data.get('inspection_remarks') or '').strip())
-        )
-        if inspection_details and not inspection_date:
-            self.add_error(
-                'inspection_date',
-                'Enter an inspection date when recording inspection details.',
             )
 
         planned_start = cleaned_data.get('planned_start_date')
@@ -752,30 +715,33 @@ class InfrastructureProjectForm(forms.Form):
             fin.actual_expenditure = actual_exp if actual_exp is not None else 0
             fin.save()
 
-        insp_date = data.get('inspection_date')
-        insp_findings = data.get('inspection_findings')
-        insp_remarks = data.get('inspection_remarks')
-        if insp_date or insp_findings or insp_remarks:
-            inspection = None
-            if instance is not None:
-                inspection = proj.inspections.order_by(
-                    '-inspection_date',
-                    '-created_at',
-                ).first()
-
-            if inspection is None:
-                inspection = Project_Inspection(project=proj)
-
-            inspection.inspection_date = insp_date
-            inspection.inspected_by_user = user
-            if inspection.pk is None:
-                inspection.completion_percentage = 0
-            inspection.findings = insp_findings or ''
-            inspection.remarks = insp_remarks or ''
-            inspection.save()
-
         self._save_images(proj)
         return infra
+
+
+class InfrastructureInspectionForm(forms.ModelForm):
+    completion_percentage = forms.DecimalField(
+        label='Observed Completion',
+        max_digits=5,
+        decimal_places=2,
+        min_value=0,
+        max_value=100,
+        widget=forms.NumberInput(attrs={'step': '0.01'}),
+    )
+
+    class Meta:
+        model = Project_Inspection
+        fields = (
+            'inspection_date',
+            'completion_percentage',
+            'findings',
+            'remarks',
+        )
+        widgets = {
+            'inspection_date': forms.DateInput(attrs={'type': 'date'}),
+            'findings': forms.Textarea(attrs={'rows': 4}),
+            'remarks': forms.Textarea(attrs={'rows': 4}),
+        }
 
 
 class InfrastructureOperationalForm(forms.Form):

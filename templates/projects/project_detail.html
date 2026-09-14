@@ -263,30 +263,44 @@
         </div>
     </section>
 
-    <!-- Inspection Records Section -->
-    {% if project_details.inspection_date or project_details.inspection_findings or project_details.inspection_remarks %}
+    <!-- Inspection History Section -->
     <section class="detail-section">
-        <h3>Inspection Records</h3>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <span class="detail-label">Inspection Date</span>
-                <span class="detail-value">{{ project_details.inspection_date|date:"M d, Y"|default:"Not recorded" }}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Inspection Completion</span>
-                <span class="detail-value">{% if project_details.inspection_completion_percentage is not None %}{{ project_details.inspection_completion_percentage|floatformat:1 }}%{% else %}Not recorded{% endif %}</span>
-            </div>
-            <div class="detail-item full-width">
-                <span class="detail-label">Inspection Findings</span>
-                <div class="detail-value">{{ project_details.inspection_findings|default:"No findings recorded." }}</div>
-            </div>
-            <div class="detail-item full-width">
-                <span class="detail-label">Remarks</span>
-                <div class="detail-value">{{ project_details.inspection_remarks|default:"No remarks recorded." }}</div>
-            </div>
+        <div class="detail-section-heading">
+            <h3>Inspection History</h3>
+            {% if can_manage_inspections %}<a class="btn btn-edit" href="{{ inspection_create_url }}">Add Inspection</a>{% endif %}
         </div>
+        {% for inspection in inspection_history %}
+            <article class="detail-grid inspection-history-item">
+                <div class="detail-item">
+                    <span class="detail-label">Inspection Date</span>
+                    <span class="detail-value">{{ inspection.inspection_date|date:"M d, Y" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Inspector</span>
+                    <span class="detail-value">{% if inspection.inspected_by_user %}{{ inspection.inspected_by_user.get_full_name|default:inspection.inspected_by_user.username }}{% else %}Not recorded{% endif %}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Observed Completion</span>
+                    <span class="detail-value">{{ inspection.completion_percentage|floatformat:2 }}%</span>
+                </div>
+                <div class="detail-item full-width">
+                    <span class="detail-label">Findings</span>
+                    <div class="detail-value">{{ inspection.findings|default:"No findings recorded." }}</div>
+                </div>
+                <div class="detail-item full-width">
+                    <span class="detail-label">Remarks</span>
+                    <div class="detail-value">{{ inspection.remarks|default:"No remarks recorded." }}</div>
+                </div>
+                {% if can_manage_inspections %}
+                    <div class="detail-item full-width">
+                        <a href="{% url 'engineering_projects:inspection_update' project_details.pk inspection.pk %}">Edit Inspection</a>
+                    </div>
+                {% endif %}
+            </article>
+        {% empty %}
+            <p>No inspections have been recorded for this project.</p>
+        {% endfor %}
     </section>
-    {% endif %}
 
     <!-- GIS & Map Section -->
     {% include "projects/project_detail_gis_section.html" %}

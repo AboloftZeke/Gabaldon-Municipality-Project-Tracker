@@ -12,6 +12,7 @@ from apps.system.models import (
     ImplementingOffice,
     InfrastructureCategory,
     Project_Image,
+    Project_Inspection,
     UserFlag,
 )
 
@@ -105,13 +106,13 @@ class InfrastructureProjectFormTests(TestCase):
             'funding-contract',
             'project-schedule',
             'progress-status',
-            'inspection-information',
             'project-photos',
         ):
             self.assertContains(response, f'id="{section_id}"')
+        self.assertNotContains(response, 'id="inspection-information"')
         self.assertContains(response, 'wizard-progress')
         self.assertContains(response, 'data-wizard-step="0"')
-        self.assertContains(response, 'data-wizard-step="6"')
+        self.assertContains(response, 'data-wizard-step="5"')
         self.assertContains(response, 'data-wizard-next')
         self.assertContains(response, 'data-wizard-back')
         self.assertContains(response, 'data-wizard-submit')
@@ -339,25 +340,23 @@ class InfrastructureProjectFormTests(TestCase):
         self.assertIn('pre_bid_date', form.errors)
         self.assertIn('actual_completion_date', form.errors)
 
-    def test_inspection_details_require_a_date(self):
-        form = InfrastructureProjectForm(
-            data=self.valid_data(
-                inspection_findings='Work is on schedule.',
-                inspection_date='',
-            )
-        )
+    def test_project_form_does_not_embed_inspection_fields(self):
+        form = InfrastructureProjectForm()
 
-        self.assertFalse(form.is_valid())
-        self.assertIn('inspection_date', form.errors)
+        self.assertNotIn('inspection_date', form.fields)
+        self.assertNotIn('inspection_findings', form.fields)
+        self.assertNotIn('inspection_remarks', form.fields)
 
     def test_staff_edit_preserves_latest_inspection_completion(self):
-        infra = self.create_project(
+        infra = self.create_project()
+        inspection = Project_Inspection.objects.create(
+            project=infra.project,
             inspection_date='2026-06-01',
-            inspection_completion_percentage='40',
-            inspection_findings='Initial findings',
+            inspected_by_user=self.user,
+            completion_percentage=Decimal('40'),
+            findings='Initial findings',
         )
         self.assertEqual(infra.project.inspections.count(), 1)
-        infra.project.inspections.update(completion_percentage=Decimal('40'))
 
         edit_form = InfrastructureProjectForm(
             data=self.valid_data(
@@ -371,8 +370,8 @@ class InfrastructureProjectFormTests(TestCase):
         edit_form.save(user=self.user, instance=infra)
 
         self.assertEqual(infra.project.inspections.count(), 1)
-        inspection = infra.project.inspections.get()
-        self.assertEqual(inspection.findings, 'Updated findings')
+        inspection.refresh_from_db()
+        self.assertEqual(inspection.findings, 'Initial findings')
         self.assertEqual(
             inspection.completion_percentage,
             Decimal('40'),

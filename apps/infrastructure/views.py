@@ -10,7 +10,11 @@ from django.urls import reverse, NoReverseMatch
 from django.db.models import Sum
 from django.db import transaction
 from django.templatetags.static import static
-from .forms import InfrastructureOperationalForm, InfrastructureProjectForm
+from .forms import (
+    InfrastructureInspectionForm,
+    InfrastructureOperationalForm,
+    InfrastructureProjectForm,
+)
 from apps.system.models import InfrastructureProject as SystemInfrastructureProject
 from apps.system.models import (
     InfrastructureCategory,
@@ -688,6 +692,20 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
                 args=[project.pk],
             )
             context['can_manage_publication'] = can_manage_infrastructure(self.request.user)
+            context['inspection_history'] = infra.project.inspections.select_related(
+                'inspected_by_user',
+            ).order_by(
+                '-inspection_date',
+                '-created_at',
+                '-inspection_id',
+            )
+            context['can_manage_inspections'] = can_manage_infrastructure(
+                self.request.user,
+            )
+            context['inspection_create_url'] = reverse(
+                'engineering_projects:inspection_create',
+                args=[infra.pk],
+            )
 
         return context
 
@@ -842,6 +860,93 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
                 revision_id=return_revision_id,
             )
         return redirect('engineering_projects:project_detail', pk=pk)
+
+
+class InfrastructureInspectionCreateView(EngineerOnlyMixin, View):
+    template_name = 'projects/inspection_form.html'
+
+    def get_project(self, pk):
+        return get_object_or_404(
+            Infrastructure_Project.objects.select_related('project'),
+            pk=pk,
+        )
+
+    def get(self, request, pk):
+        infrastructure = self.get_project(pk)
+        return render(request, self.template_name, {
+            'infrastructure': infrastructure,
+            'form': InfrastructureInspectionForm(),
+            'action': 'Add',
+        })
+
+    def post(self, request, pk):
+        infrastructure = self.get_project(pk)
+        form = InfrastructureInspectionForm(request.POST)
+        if not form.is_valid():
+            return render(request, self.template_name, {
+                'infrastructure': infrastructure,
+                'form': form,
+                'action': 'Add',
+            }, status=400)
+        inspection = form.save(commit=False)
+        inspection.project = infrastructure.project
+        inspection.inspected_by_user = request.user
+        inspection.save()
+        messages.success(request, 'Inspection added to project history.')
+        return redirect(
+            'engineering_projects:project_detail',
+            pk=infrastructure.pk,
+        )
+
+
+class InfrastructureInspectionUpdateView(EngineerOnlyMixin, View):
+    template_name = 'projects/inspection_form.html'
+
+    def get_objects(self, project_pk, inspection_pk):
+        infrastructure = get_object_or_404(
+            Infrastructure_Project.objects.select_related('project'),
+            pk=project_pk,
+        )
+        inspection = get_object_or_404(
+            infrastructure.project.inspections,
+            pk=inspection_pk,
+        )
+        return infrastructure, inspection
+
+    def get(self, request, project_pk, inspection_pk):
+        infrastructure, inspection = self.get_objects(
+            project_pk,
+            inspection_pk,
+        )
+        return render(request, self.template_name, {
+            'infrastructure': infrastructure,
+            'inspection': inspection,
+            'form': InfrastructureInspectionForm(instance=inspection),
+            'action': 'Edit',
+        })
+
+    def post(self, request, project_pk, inspection_pk):
+        infrastructure, inspection = self.get_objects(
+            project_pk,
+            inspection_pk,
+        )
+        form = InfrastructureInspectionForm(
+            request.POST,
+            instance=inspection,
+        )
+        if not form.is_valid():
+            return render(request, self.template_name, {
+                'infrastructure': infrastructure,
+                'inspection': inspection,
+                'form': form,
+                'action': 'Edit',
+            }, status=400)
+        form.save()
+        messages.success(request, 'Inspection record updated.')
+        return redirect(
+            'engineering_projects:project_detail',
+            pk=infrastructure.pk,
+        )
 
 
 class ProjectSubmitForReviewView(EngineerOnlyMixin, View):

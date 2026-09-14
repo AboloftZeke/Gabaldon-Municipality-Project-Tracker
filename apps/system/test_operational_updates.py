@@ -146,7 +146,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertContains(detail, 'Variance (Actual vs Scheduled)')
         self.assertContains(detail, 'Entered Cost Progress')
         self.assertContains(detail, 'Calculated Cost Progress')
-        self.assertContains(detail, 'Inspection Completion')
+        self.assertContains(detail, 'Observed Completion')
         self.assertContains(detail, 'Calculated reference', count=3)
         response = self.client.get(self.infra_url())
         self.assertContains(response, 'Expected / Scheduled Progress')

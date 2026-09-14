@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ action }} Inspection - Infrastructure Projects{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_form.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-nav">
+    <a href="{% url 'engineering_projects:project_detail' infrastructure.pk %}">← Back to Project</a>
+    <span>/</span>
+    <strong>{{ action }} Inspection</strong>
+</div>
+
+<div class="form-container">
+    <div class="form-card">
+        <div class="form-heading">
+            <div>
+                <p class="form-eyebrow">Engineering Office</p>
+                <h2>{{ action }} Inspection</h2>
+                <p class="form-intro">{{ infrastructure.infrastructure_title }}</p>
+            </div>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                {% for error in form.non_field_errors %}<div class="error-message">{{ error }}</div>{% endfor %}
+            {% endif %}
+            <div class="fieldset">
+                <div class="section-heading">
+                    <span class="section-number">1</span>
+                    <div><h3>Inspection Information</h3><p>Record the observed conditions from this inspection.</p></div>
+                </div>
+                <div class="form-grid">
+                    {% for field in form %}
+                        <div class="form-group {% if field.name == 'findings' or field.name == 'remarks' %}full-span{% endif %}">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-actions">
+                <a class="btn btn-cancel" href="{% url 'engineering_projects:project_detail' infrastructure.pk %}">Cancel</a>
+                <button class="btn btn-submit" type="submit">Save Inspection</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
