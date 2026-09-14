@@ -35,6 +35,32 @@ NUMERIC = {
     'official_physical_progress',
 }
 
+INFORMATION_GROUPS = {
+    'infrastructure': (
+        ('Basic Project Information', {
+            'code', 'title', 'description', 'category',
+            'implementing_office',
+        }),
+        ('Location', {'address'}),
+        ('Schedule', {'planned_start_date', 'planned_end_date'}),
+        ('Procurement & Contractor', {
+            'contractor', 'procurement_method', 'award_status',
+        }),
+        ('Status & Progress', {
+            'cost_progress_percentage', 'physical_progress_percentage',
+        }),
+    ),
+    'non_infrastructure': (
+        ('Basic Program Information', {
+            'code', 'title', 'description', 'category',
+        }),
+        ('Location & Venue', {'address', 'venue_name'}),
+        ('Schedule', {'event_date', 'start_time', 'end_time'}),
+        ('Service & Beneficiaries', {'proponent', 'beneficiaries'}),
+        ('Status & Operational Information', {'status'}),
+    ),
+}
+
 
 def revision_comparison(revision):
     """Use the same current revision selector as public read paths, never drafts."""
@@ -137,6 +163,32 @@ def _fields(before, after, prefix='', compare=True):
     return rows
 
 
+def _information_groups(section_key, rows):
+    """Group large project/program sections for review-page presentation."""
+    definitions = INFORMATION_GROUPS.get(section_key)
+    if not definitions:
+        return []
+    groups = []
+    assigned_paths = set()
+    for label, roots in definitions:
+        fields = [row for row in rows if row['path'].split('.', 1)[0] in roots]
+        if fields:
+            groups.append({
+                'label': label,
+                'fields': fields,
+                'changed': any(row['changed'] for row in fields),
+            })
+            assigned_paths.update(row['path'] for row in fields)
+    remaining = [row for row in rows if row['path'] not in assigned_paths]
+    if remaining:
+        groups.append({
+            'label': 'Additional Information',
+            'fields': remaining,
+            'changed': any(row['changed'] for row in remaining),
+        })
+    return groups
+
+
 def compare_snapshots(submitted, published=None):
     """Compare content only. None means no baseline, including first submissions."""
     submitted, baseline = submitted or {}, published or {}
@@ -145,7 +197,12 @@ def compare_snapshots(submitted, published=None):
         old, new = baseline.get(key) or {}, submitted.get(key) or {}
         rows = _fields(old, new, compare=published is not None)
         if rows:
-            sections.append({'label': label, 'fields': rows, 'changed': any(r['changed'] for r in rows)})
+            sections.append({
+                'label': label,
+                'fields': rows,
+                'groups': _information_groups(key, rows),
+                'changed': any(r['changed'] for r in rows),
+            })
     images = []
     old_images = list(baseline.get('images') or [])
     for new in submitted.get('images') or []:

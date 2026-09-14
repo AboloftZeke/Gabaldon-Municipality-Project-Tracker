@@ -342,6 +342,10 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertContains(detail, 'Calculated Cost Progress')
         self.assertContains(detail, 'Observed Completion')
         self.assertContains(detail, 'Calculated reference', count=3)
+        self.assertContains(detail, 'class="information-card-grid"')
+        self.assertContains(detail, 'Financial &amp; Funding Information')
+        self.assertContains(detail, 'Procurement &amp; Contractor Information')
+        self.assertContains(detail, 'Status &amp; Progress')
         response = self.client.get(self.infra_url())
         self.assertContains(response, 'Expected / Scheduled Progress')
         self.assertContains(response, 'Variance')
@@ -472,6 +476,11 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertContains(detail, 'Update Project Status')
         self.assertNotContains(detail, 'Edit Project')
         self.assertNotContains(detail, 'Delete Project')
+        self.assertContains(detail, 'class="information-card-grid"')
+        self.assertContains(detail, 'Program Information')
+        self.assertContains(detail, 'Location &amp; Venue')
+        self.assertContains(detail, 'Service &amp; Beneficiary Information')
+        self.assertContains(detail, 'Status &amp; Operational Information')
         self.assertEqual(self.client.post(url, {
             'status': 'completed', 'non_infra_name': 'Crafted change',
         }).status_code, 302)

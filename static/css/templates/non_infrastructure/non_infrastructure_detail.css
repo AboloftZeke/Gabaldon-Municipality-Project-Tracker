@@ -118,6 +118,20 @@
     font-size: 0.95rem;
     color: #111827;
     line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.project-image {
+    overflow: hidden;
+    border: 1px solid #d9e2dc;
+    border-radius: 10px;
+    background: #f3f4f6;
+}
+
+.project-image img {
+    display: block;
+    width: 100%;
+    height: auto;
 }
 
 .action-buttons {

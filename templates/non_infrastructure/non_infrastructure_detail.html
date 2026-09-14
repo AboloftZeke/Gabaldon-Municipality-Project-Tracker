@@ -6,6 +6,7 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_detail.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}">
+<link rel="stylesheet" href="{% static 'css/components/head_information_cards.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -82,50 +83,33 @@
     </div>
 
 
-    <!-- Project Information -->
-    <div class="project-section">
-
-        <h3>Project Information</h3>
-
-        <div class="section-content">
-
-            <!-- Proponent -->
-            <div class="content-item">
-                <div class="content-label">Proponent</div>
-                <div class="content-value">
-                    {{ project_proponent|default:"N/A" }}
-                </div>
-            </div>
-
-            <!-- Beneficiaries -->
-            <div class="content-item">
-                <div class="content-label">Beneficiaries</div>
-                <div class="content-value">
-                    {% if project_beneficiaries %}
-                        {{ project_beneficiaries }}
-                    {% else %}
-                        N/A
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Project Manager -->
-            <div class="content-item">
-                <div class="content-label">Project Manager</div>
-                <div class="content-value">
-                    {{ project_manager }}
-                </div>
-            </div>
-
+    <div class="information-card-grid" aria-label="Program information">
+    <section class="project-section information-card information-card--wide">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Non-Infrastructure</span>
+            <h3>Program Information</h3>
         </div>
+        <div class="section-content">
+            <div class="content-item">
+                <div class="content-label">Program Name</div>
+                <div class="content-value">{{ project_name }}</div>
+            </div>
+            <div class="content-item">
+                <div class="content-label">Category</div>
+                <div class="content-value">{{ project_category|default:"Not specified" }}</div>
+            </div>
+            <div class="content-item information-card__full-row">
+                <div class="content-label">Description</div>
+                <div class="content-value content-value--long">{{ project_description|default:"No description provided." }}</div>
+            </div>
+        </div>
+    </section>
 
-    </div>
-
-
-    <!-- Schedule -->
-    <div class="project-section">
-
-        <h3>Schedule</h3>
+    <section class="project-section information-card">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Timeline</span>
+            <h3>Schedule</h3>
+        </div>
 
         <div class="section-content">
 
@@ -165,28 +149,22 @@
                 </div>
             </div>
 
-            <!-- Venue -->
-            <div class="content-item">
-                <div class="content-label">Venue</div>
-                <div class="content-value">
-                    {{ project_venue|default:"N/A" }}
-                </div>
-            </div>
+        </div>
+    </section>
 
+    <section class="project-section information-card">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Where</span>
+            <h3>Location &amp; Venue</h3>
         </div>
 
-    </div>
-
-
-    <!-- Location -->
-    <div class="project-section">
-
-        <h3>Location</h3>
+        <div class="section-content">
+            <div class="content-item information-card__full-row">
+                <div class="content-label">Venue</div>
+                <div class="content-value">{{ project_venue|default:"Not assigned" }}</div>
+            </div>
 
         {% if project_address %}
-
-            <div class="section-content">
-
                 {% if project_address.street %}
                     <div class="content-item">
                         <div class="content-label">Street</div>
@@ -218,45 +196,48 @@
                         {{ project_address.province|default:"Nueva Ecija" }}
                     </div>
                 </div>
-
-            </div>
-
         {% else %}
-
-            <div class="section-content">
-                <div class="content-item">
-                    <div class="content-value">
-                        No location assigned.
-                    </div>
-                </div>
+            <div class="content-item information-card__full-row">
+                <div class="content-label">Address</div>
+                <div class="content-value">No location assigned.</div>
             </div>
-
         {% endif %}
-
-    </div>
-
-
-    <!-- Description -->
-    <div class="project-section">
-
-        <h3>Description</h3>
-
-        <div class="section-content">
-
-            <div class="content-item">
-
-                <div class="content-value">
-                    {% if project_description %}
-                        {{ project_description }}
-                    {% else %}
-                        No description provided.
-                    {% endif %}
-                </div>
-
-            </div>
-
         </div>
+    </section>
 
+    <section class="project-section information-card">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Community</span>
+            <h3>Service &amp; Beneficiary Information</h3>
+        </div>
+        <div class="section-content">
+            <div class="content-item">
+                <div class="content-label">Proponent</div>
+                <div class="content-value">{{ project_proponent|default:"Not specified" }}</div>
+            </div>
+            <div class="content-item">
+                <div class="content-label">Project Manager</div>
+                <div class="content-value">{{ project_manager|default:"Not assigned" }}</div>
+            </div>
+            <div class="content-item information-card__full-row">
+                <div class="content-label">Beneficiaries</div>
+                <div class="content-value content-value--long">{{ project_beneficiaries|default:"Not specified" }}</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="project-section information-card">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Official operations</span>
+            <h3>Status &amp; Operational Information</h3>
+        </div>
+        <div class="section-content">
+            <div class="content-item information-card__full-row">
+                <div class="content-label">Official Status</div>
+                <div class="content-value">{{ project_status|default:"Not confirmed" }}</div>
+            </div>
+        </div>
+    </section>
     </div>
 
 
@@ -275,7 +256,7 @@
                         <img
                             src="{{ image.image_url }}"
                             alt="{{ project_name }}"
-                            style="width: 100%; height: auto; border-radius: 8px;"
+                            loading="lazy"
                         >
                     </div>
 

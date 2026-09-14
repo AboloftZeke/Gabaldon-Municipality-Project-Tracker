@@ -609,6 +609,31 @@
     border-top: 5px solid var(--review-green) !important;
 }
 
+.snapshot-group-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+}
+
+.snapshot-group-card {
+    min-width: 0;
+    padding: 0.9rem;
+    border: 1px solid #dfe7e2;
+    border-radius: 9px;
+    background: #fbfcfb;
+}
+
+.snapshot-group-card h3 {
+    margin: 0 0 0.7rem;
+    color: #244536;
+    font-size: 0.9rem;
+}
+
+.snapshot-group-card .snapshot-grid {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+}
+
 .operational-readiness {
     border-left: 5px solid var(--review-green) !important;
 }
@@ -954,7 +979,8 @@
     }
 
     .snapshot-grid,
-    .snapshot-images {
+    .snapshot-images,
+    .snapshot-group-grid {
         grid-template-columns: 1fr;
     }
 

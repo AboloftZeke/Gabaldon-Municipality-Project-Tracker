@@ -57,6 +57,29 @@ class SnapshotDiffTests(SimpleTestCase):
         self.assertEqual(rows['status']['after'], 'Completed')
         self.assertNotIn('status_label', rows)
 
+    def test_large_information_sections_are_grouped_for_head_review(self):
+        infrastructure = compare_snapshots({'infrastructure': {
+            'title': 'Bridge', 'address': {'barangay': 'South Poblacion'},
+            'planned_start_date': '2026-09-01', 'contractor': {'name': 'Builder'},
+            'physical_progress_percentage': '20',
+        }})['sections'][0]
+        self.assertEqual(
+            [group['label'] for group in infrastructure['groups']],
+            ['Basic Project Information', 'Location', 'Schedule',
+             'Procurement & Contractor', 'Status & Progress'],
+        )
+
+        program = compare_snapshots({'non_infrastructure': {
+            'title': 'Medical Mission', 'venue_name': 'Municipal Hall',
+            'event_date': '2026-09-10', 'beneficiaries': 100,
+            'status': 'planned',
+        }})['sections'][0]
+        self.assertEqual(
+            [group['label'] for group in program['groups']],
+            ['Basic Program Information', 'Location & Venue', 'Schedule',
+             'Service & Beneficiaries', 'Status & Operational Information'],
+        )
+
     def test_images_added_removed_and_cover_changed(self):
         old = {'images': [{'id': 1, 'url': '/1', 'is_cover': True}, {'id': 2, 'url': '/2'}]}
         new = {'images': [{'id': 1, 'url': '/1', 'is_cover': False}, {'id': 3, 'url': '/3'}]}
@@ -169,6 +192,8 @@ class PublicationComparisonViewTests(TestCase):
         pending = self.revision(2, PublicationStatus.PENDING_REVIEW, new)
         response = self.detail(pending)
         self.assertContains(response, 'Program Information')
+        self.assertContains(response, 'Basic Program Information')
+        self.assertContains(response, 'Location &amp; Venue')
         self.assertContains(response, 'Old street')
         self.assertContains(response, '&lt;script&gt;')
         self.assertNotContains(response, '<script>alert(1)</script>')

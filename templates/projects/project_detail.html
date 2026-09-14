@@ -6,6 +6,7 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/projects/project_detail.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}">
+<link rel="stylesheet" href="{% static 'css/components/head_information_cards.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -79,9 +80,12 @@
         </div>
     </header>
 
-    <!-- Project Information Section -->
-    <section class="detail-section">
-        <h3>Project Information</h3>
+    <div class="information-card-grid" aria-label="Project information">
+    <section class="detail-section information-card information-card--wide">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Infrastructure</span>
+            <h3>Project Information</h3>
+        </div>
         <div class="detail-grid">
             <div class="detail-item">
                 <span class="detail-label">Title</span>
@@ -106,23 +110,11 @@
         </div>
     </section>
 
-    {% if project_images %}
-    <section class="detail-section">
-        <h3>Project Images</h3>
-        <div class="project-image-grid">
-            {% for image in project_images %}
-            <figure class="project-image-card">
-                <img src="{{ image.image_url }}" alt="{{ project_details.title }} photo {{ forloop.counter }}" loading="lazy">
-                {% if image.is_cover %}<figcaption>Cover photo</figcaption>{% endif %}
-            </figure>
-            {% endfor %}
+    <section class="detail-section information-card">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Site</span>
+            <h3>Location</h3>
         </div>
-    </section>
-    {% endif %}
-
-    <!-- Location Section -->
-    <section class="detail-section">
-        <h3>Location</h3>
         <div class="detail-grid">
             <div class="detail-item">
                 <span class="detail-label">Street</span>
@@ -151,11 +143,67 @@
         </div>
     </section>
 
-    <!-- Contractor & Procurement Section -->
-    <section class="detail-section">
-        <h3>Contractor & Procurement</h3>
+    <section class="detail-section information-card">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Timeline</span>
+            <h3>Schedule</h3>
+        </div>
         <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">Planned Start Date</span>
+                <span class="detail-value">{{ project_details.planned_start_date|date:"M d, Y"|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Planned End Date</span>
+                <span class="detail-value">{{ project_details.planned_end_date|date:"M d, Y"|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Actual Start Date</span>
+                <span class="detail-value">{{ project_details.actual_start_date|date:"M d, Y"|default:"Not assigned" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Actual Completion Date</span>
+                <span class="detail-value">{{ project_details.actual_completion_date|date:"M d, Y"|default:"Not assigned" }}</span>
+            </div>
             <div class="detail-item full-width">
+                <span class="detail-label">Duration</span>
+                <span class="detail-value">{% if project_details.duration_days is not None %}{{ project_details.duration_days }} days{% else %}Not calculated{% endif %}</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="detail-section information-card">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Budget</span>
+            <h3>Financial &amp; Funding Information</h3>
+        </div>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">Approved Budget (ABC)</span>
+                <span class="detail-value">{% if project_details.abc_amount %}₱{{ project_details.abc_amount|floatformat:2 }}{% else %}Not assigned{% endif %}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Contract Price</span>
+                <span class="detail-value">{% if project_details.contract_price %}₱{{ project_details.contract_price|floatformat:2 }}{% else %}Not assigned{% endif %}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Actual Expenditure</span>
+                <span class="detail-value">{% if project_details.actual_expenditure %}₱{{ project_details.actual_expenditure|floatformat:2 }}{% else %}Not recorded{% endif %}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Source of Fund</span>
+                <span class="detail-value">{{ project_details.source_of_fund|default:"Not specified" }}</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="detail-section information-card information-card--wide">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Delivery</span>
+            <h3>Procurement &amp; Contractor Information</h3>
+        </div>
+        <div class="detail-grid">
+            <div class="detail-item">
                 <span class="detail-label">Contractor</span>
                 <span class="detail-value">{{ project_details.contractor|default:"Not assigned" }}</span>
             </div>
@@ -190,52 +238,15 @@
         </div>
     </section>
 
-    <!-- Financial Information Section -->
-    <section class="detail-section">
-        <h3>Financial Information</h3>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <span class="detail-label">Approved Budget (ABC)</span>
-                <span class="detail-value">{% if project_details.abc_amount %}₱{{ project_details.abc_amount|floatformat:2 }}{% else %}Not assigned{% endif %}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Contract Price</span>
-                <span class="detail-value">{% if project_details.contract_price %}₱{{ project_details.contract_price|floatformat:2 }}{% else %}Not assigned{% endif %}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Actual Expenditure</span>
-                <span class="detail-value">{% if project_details.actual_expenditure %}₱{{ project_details.actual_expenditure|floatformat:2 }}{% else %}Not recorded{% endif %}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Source of Fund</span>
-                <span class="detail-value">{{ project_details.source_of_fund|default:"Not specified" }}</span>
-            </div>
+    <section class="detail-section information-card information-card--wide">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Official operations</span>
+            <h3>Status &amp; Progress</h3>
         </div>
-    </section>
-
-    <!-- Schedule & Progress Section -->
-    <section class="detail-section">
-        <h3>Schedule & Progress</h3>
         <div class="detail-grid">
             <div class="detail-item">
-                <span class="detail-label">Planned Start Date</span>
-                <span class="detail-value">{{ project_details.planned_start_date|date:"M d, Y"|default:"Not assigned" }}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Planned End Date</span>
-                <span class="detail-value">{{ project_details.planned_end_date|date:"M d, Y"|default:"Not assigned" }}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Actual Start Date</span>
-                <span class="detail-value">{{ project_details.actual_start_date|date:"M d, Y"|default:"Not assigned" }}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Actual Completion Date</span>
-                <span class="detail-value">{{ project_details.actual_completion_date|date:"M d, Y"|default:"Not assigned" }}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Duration (days)</span>
-                <span class="detail-value">{{ project_details.duration_days|default:"Not calculated" }}</span>
+                <span class="detail-label">Official Status</span>
+                <span class="detail-value">{{ project_details.get_status_display|default:"Not confirmed" }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Entered Cost Progress</span>
@@ -262,6 +273,21 @@
             </div>
         </div>
     </section>
+    </div>
+
+    {% if project_images %}
+    <section class="detail-section">
+        <h3>Project Images</h3>
+        <div class="project-image-grid">
+            {% for image in project_images %}
+            <figure class="project-image-card">
+                <img src="{{ image.image_url }}" alt="{{ project_details.title }} photo {{ forloop.counter }}" loading="lazy">
+                {% if image.is_cover %}<figcaption>Cover photo</figcaption>{% endif %}
+            </figure>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 
     <section class="detail-section workflow-history-section">
         <div class="workflow-section-heading">

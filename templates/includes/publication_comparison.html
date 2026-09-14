@@ -17,6 +17,25 @@
 {% for section in comparison.sections %}
     <section class="revision-section">
         <h2>{{ section.label }} {% if section.changed %}<span class="snapshot-change-badge">Changed</span>{% endif %}</h2>
+        {% if section.groups %}<div class="snapshot-group-grid">{% endif %}
+        {% for group in section.groups %}
+        <section class="snapshot-group-card">
+            <h3>{{ group.label }} {% if group.changed %}<span class="snapshot-change-badge">Changed</span>{% endif %}</h3>
+            <dl class="snapshot-grid">
+                {% for field in group.fields %}
+                    <div{% if field.changed %} class="snapshot-change snapshot-change--{{ field.state }}"{% endif %}>
+                        <dt>{{ field.label }} {% if field.changed %}<span class="snapshot-change-badge">{{ field.badge }}</span>{% endif %}</dt>
+                        {% if field.changed %}
+                            <dd class="snapshot-before"><span class="snapshot-value-label">Previously published</span>{{ field.before }}</dd>
+                            <dd><span class="snapshot-value-label">Newly submitted{% if field.state == 'removed' %} · Cleared{% endif %}</span>{{ field.after }}</dd>
+                        {% else %}
+                            <dd>{{ field.after }}</dd>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </dl>
+        </section>
+        {% empty %}
         <dl class="snapshot-grid">
             {% for field in section.fields %}
                 <div{% if field.changed %} class="snapshot-change snapshot-change--{{ field.state }}"{% endif %}>
@@ -30,6 +49,8 @@
                 </div>
             {% endfor %}
         </dl>
+        {% endfor %}
+        {% if section.groups %}</div>{% endif %}
     </section>
 {% endfor %}
 
