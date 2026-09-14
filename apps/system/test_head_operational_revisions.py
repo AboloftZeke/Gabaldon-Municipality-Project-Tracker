@@ -8,6 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import (
+    InspectionEvidence,
     NonInfrastructureCategory,
     Non_Infrastructure_Project,
     Project,
@@ -193,6 +194,189 @@ class HeadOperationalRevisionTests(TestCase):
             public_project['inspection']['completion_percentage'],
             Decimal('70.00'),
         )
+
+    def test_progress_evidence_is_retained_until_explicit_publication(self):
+        evidence = InspectionEvidence.objects.create(
+            inspection=self.inspection,
+            evidence_type='document',
+            original_name='field-report.pdf',
+            storage_name='inspections/reports/field-report.pdf',
+            file_url='/media/inspections/reports/field-report.pdf',
+            content_type='application/pdf',
+            uploaded_by_user=self.users['engineer', 'staff'],
+        )
+        self.inspection.inspection_type = 'progress'
+        self.inspection.findings = 'Verified structural work on site.'
+        self.inspection.remarks = 'Weather delayed the morning inspection.'
+        self.inspection.inspected_by_user = self.users['engineer', 'staff']
+        self.inspection.save(update_fields=[
+            'inspection_type', 'findings', 'remarks', 'inspected_by_user',
+        ])
+        current_public_snapshot = deepcopy(
+            self.infrastructure_public.snapshot_data,
+        )
+        self.client.force_login(self.users['engineer', 'head'])
+
+        response = self.client.post(reverse(
+            'engineering_projects:project_operations',
+            args=[self.infrastructure.pk],
+        ), {
+            'award_status': 'completed',
+            'physical_progress_percentage': '62',
+            'cost_progress_percentage': '55',
+            'inspection_completion_percentage': '70',
+            'head_remarks': 'Official decision based on the field report.',
+            'supporting_inspections': [str(self.inspection.pk)],
+        })
+
+        self.assertEqual(response.status_code, 302)
+        revision = self.infrastructure.project.publication_revisions.get(
+            status=PublicationStatus.APPROVED,
+        )
+        progress_snapshot = revision.snapshot_data['progress_update']
+        self.assertEqual(progress_snapshot['official_status'], 'completed')
+        self.assertEqual(progress_snapshot['official_physical_progress'], '62.00')
+        self.assertEqual(
+            progress_snapshot['head_remarks'],
+            'Official decision based on the field report.',
+        )
+        inspection_snapshot = progress_snapshot['supporting_inspections'][0]
+        self.assertEqual(inspection_snapshot['id'], self.inspection.pk)
+        self.assertEqual(inspection_snapshot['inspection_type'], 'progress')
+        self.assertEqual(inspection_snapshot['completion_percentage'], '70.00')
+        self.assertEqual(
+            inspection_snapshot['findings'],
+            'Verified structural work on site.',
+        )
+        self.assertEqual(inspection_snapshot['evidence'][0], {
+            'id': evidence.pk,
+            'type': 'document',
+            'type_label': 'Document',
+            'original_name': 'field-report.pdf',
+            'url': '/media/inspections/reports/field-report.pdf',
+            'content_type': 'application/pdf',
+            'uploaded_by': {
+                'id': self.users['engineer', 'staff'].pk,
+                'username': 'engineer-staff',
+                'display_name': 'engineer-staff',
+            },
+            'created_at': evidence.created_at.isoformat(),
+        })
+
+        self.infrastructure_public.refresh_from_db()
+        self.assertEqual(
+            self.infrastructure_public.snapshot_data,
+            current_public_snapshot,
+        )
+        self.assertNotIn(
+            'progress_update',
+            self.infrastructure_public.snapshot_data,
+        )
+        public_response = self.client.get(reverse(
+            'public_infrastructure_project_detail',
+            args=[self.infrastructure.pk],
+        ))
+        self.assertEqual(
+            public_response.context['public_project']['award_status'],
+            'awarded',
+        )
+
+        retained_snapshot = deepcopy(revision.snapshot_data)
+        self.inspection.completion_percentage = Decimal('99')
+        self.inspection.findings = 'Changed working inspection.'
+        self.inspection.save(update_fields=[
+            'completion_percentage', 'findings',
+        ])
+        evidence.original_name = 'renamed-working-report.pdf'
+        evidence.file_url = '/media/inspections/reports/renamed.pdf'
+        evidence.save(update_fields=['original_name', 'file_url'])
+        revision.refresh_from_db()
+        self.assertEqual(revision.snapshot_data, retained_snapshot)
+
+        preview = self.client.get(reverse(
+            'publication_revision_detail', args=[revision.pk],
+        ))
+        self.assertContains(preview, 'Supporting Inspections')
+        self.assertContains(preview, 'field-report.pdf')
+        self.assertContains(preview, 'Verified structural work on site.')
+        self.assertNotContains(preview, 'renamed-working-report.pdf')
+        comparison_sections = {
+            section['label']
+            for section in preview.context['comparison']['sections']
+        }
+        self.assertIn('Operational Progress Update', comparison_sections)
+
+        publish_response = self.client.post(reverse(
+            'publication_revision_publish', args=[revision.pk],
+        ))
+        self.assertEqual(publish_response.status_code, 302)
+        revision.refresh_from_db()
+        self.infrastructure_public.refresh_from_db()
+        self.assertEqual(revision.status, PublicationStatus.PUBLISHED)
+        self.assertTrue(revision.is_current_public_revision)
+        self.assertEqual(
+            self.infrastructure_public.status,
+            PublicationStatus.ARCHIVED,
+        )
+        self.assertFalse(self.infrastructure_public.is_current_public_revision)
+        self.assertEqual(revision.snapshot_data, retained_snapshot)
+
+    def test_first_publication_revision_receives_head_progress_evidence(self):
+        self.infrastructure_public.delete()
+        pending = ProjectPublicationRevision.objects.create(
+            project=self.infrastructure.project,
+            revision_number=1,
+            status=PublicationStatus.APPROVED,
+            snapshot_data=build_project_publication_snapshot(
+                self.infrastructure.project,
+            ),
+            submitted_by=self.users['engineer', 'staff'],
+        )
+        evidence = InspectionEvidence.objects.create(
+            inspection=self.inspection,
+            evidence_type='image',
+            original_name='initial-site.jpg',
+            storage_name='inspections/photos/initial-site.jpg',
+            file_url='/media/inspections/photos/initial-site.jpg',
+            content_type='image/jpeg',
+            uploaded_by_user=self.users['engineer', 'staff'],
+        )
+        self.client.force_login(self.users['engineer', 'head'])
+
+        response = self.client.post(reverse(
+            'engineering_projects:project_operations',
+            args=[self.infrastructure.pk],
+        ), {
+            'award_status': 'awarded',
+            'physical_progress_percentage': '30',
+            'cost_progress_percentage': '20',
+            'inspection_completion_percentage': '35',
+            'head_remarks': 'Initial publication confirmation.',
+            'supporting_inspections': [str(self.inspection.pk)],
+            'from_review': str(pending.pk),
+        })
+
+        self.assertRedirects(
+            response,
+            reverse('publication_revision_detail', args=[pending.pk]),
+        )
+        self.assertEqual(
+            self.infrastructure.project.publication_revisions.count(),
+            1,
+        )
+        pending.refresh_from_db()
+        progress_snapshot = pending.snapshot_data['progress_update']
+        self.assertEqual(
+            progress_snapshot['head_remarks'],
+            'Initial publication confirmation.',
+        )
+        self.assertEqual(
+            progress_snapshot['supporting_inspections'][0]['evidence'][0][
+                'id'
+            ],
+            evidence.pk,
+        )
+        self.assertFalse(pending.is_current_public_revision)
 
     def test_operational_revision_retains_public_financial_snapshot(self):
         published_snapshot = deepcopy(self.infrastructure_public.snapshot_data)

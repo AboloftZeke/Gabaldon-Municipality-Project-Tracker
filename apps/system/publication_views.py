@@ -197,6 +197,9 @@ def _revision_page_context(revision, user, review_form=None):
         ),
         'comparison': comparison,
         'operational': operational,
+        'progress_update': (
+            (revision.snapshot_data or {}).get('progress_update')
+        ),
         'can_review': (
             revision.status == PublicationStatus.PENDING_REVIEW
             and can_review_revision(user, revision)

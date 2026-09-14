@@ -103,6 +103,35 @@
             </section>
             {% endif %}
 
+            {% if progress_update %}
+            <section class="revision-section">
+                <p class="review-eyebrow">Retained update evidence</p>
+                <h2>Supporting Inspections</h2>
+                {% if progress_update.head_remarks %}
+                    <p><strong>Head remarks:</strong> {{ progress_update.head_remarks }}</p>
+                {% endif %}
+                {% for inspection in progress_update.supporting_inspections %}
+                    <article class="snapshot-field">
+                        <h3>{{ inspection.inspection_date }} · {{ inspection.inspection_type_label }}</h3>
+                        <p>{{ inspection.completion_percentage }}% observed completion</p>
+                        {% if inspection.findings %}<p><strong>Findings:</strong> {{ inspection.findings }}</p>{% endif %}
+                        {% if inspection.remarks %}<p><strong>Remarks:</strong> {{ inspection.remarks }}</p>{% endif %}
+                        {% if inspection.evidence %}
+                            <ul>
+                                {% for item in inspection.evidence %}
+                                    <li><a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.original_name }}</a> <span>({{ item.type_label }})</span></li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>No supporting files attached to this inspection.</p>
+                        {% endif %}
+                    </article>
+                {% empty %}
+                    <p>No supporting inspections were selected for this update.</p>
+                {% endfor %}
+            </section>
+            {% endif %}
+
             {% include "includes/publication_comparison.html" %}
         </div>
 

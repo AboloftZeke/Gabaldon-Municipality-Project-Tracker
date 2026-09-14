@@ -56,6 +56,66 @@ def _image_data(project):
     ]
 
 
+def build_progress_update_snapshot(progress_update):
+    """Retain one Head progress decision and its selected inspection evidence."""
+    inspections = []
+    queryset = progress_update.supporting_inspections.select_related(
+        'inspected_by_user',
+    ).prefetch_related(
+        'evidence__uploaded_by_user',
+    ).order_by(
+        '-inspection_date', '-created_at', '-inspection_id',
+    )
+    for inspection in queryset:
+        evidence = [
+            {
+                'id': item.pk,
+                'type': item.evidence_type,
+                'type_label': item.get_evidence_type_display(),
+                'original_name': item.original_name,
+                'url': item.file_url or '',
+                'content_type': item.content_type or '',
+                'uploaded_by': _user_data(item.uploaded_by_user),
+                'created_at': _isoformat(item.created_at),
+            }
+            for item in inspection.evidence.all()
+        ]
+        inspections.append({
+            'id': inspection.pk,
+            'inspection_date': _isoformat(inspection.inspection_date),
+            'inspection_type': inspection.inspection_type,
+            'inspection_type_label': inspection.get_inspection_type_display(),
+            'completion_percentage': _decimal_string(
+                inspection.completion_percentage,
+            ),
+            'findings': inspection.findings or '',
+            'remarks': inspection.remarks or '',
+            'inspected_by': _user_data(inspection.inspected_by_user),
+            'evidence': evidence,
+        })
+
+    summary = '; '.join(
+        f"{item['inspection_date']} · {item['inspection_type_label']}"
+        for item in inspections
+    )
+    return {
+        'id': progress_update.pk,
+        'official_status': progress_update.new_official_status or '',
+        'official_status_label': (
+            progress_update.get_new_official_status_display() or ''
+        ),
+        'official_physical_progress': (
+            format(progress_update.new_physical_progress, '.2f')
+            if progress_update.new_physical_progress is not None else None
+        ),
+        'head_remarks': progress_update.head_remarks or '',
+        'updated_by': _user_data(progress_update.updated_by),
+        'created_at': _isoformat(progress_update.created_at),
+        'supporting_inspections_summary': summary,
+        'supporting_inspections': inspections,
+    }
+
+
 def _base_snapshot(project, images):
     cover = next((image for image in images if image['is_cover']), None)
     return {

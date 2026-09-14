@@ -15,18 +15,24 @@ SECTIONS = (
     ('financial', 'Funding'),
     ('schedule', 'Schedule'),
     ('inspection', 'Latest Inspection'),
+    ('progress_update', 'Operational Progress Update'),
 )
-IGNORED = {'id', 'schema_version', 'created_at', 'updated_at', 'cover_image_url'}
+IGNORED = {
+    'id', 'schema_version', 'created_at', 'updated_at', 'cover_image_url',
+    'supporting_inspections',
+}
 LABELS = {
     'creator': 'Published By Attribution', 'award_status': 'Status',
     'status': 'Status', 'procurement_method': 'Procurement Method',
     'inspected_by': 'Inspected By', 'duration_days': 'Duration (days)',
+    'official_physical_progress': 'Official Physical Progress',
 }
 NUMERIC = {
     'approved_budget', 'contract_price', 'actual_expenditure', 'percentage',
     'cost_progress_percentage', 'physical_progress_percentage',
     'completion_percentage', 'latitude', 'longitude', 'beneficiaries',
     'duration_days',
+    'official_physical_progress',
 }
 
 
@@ -82,7 +88,10 @@ def _display(value, key):
             return f'₱{Decimal(str(value)):,.2f}'
         except InvalidOperation:
             pass
-    if key.endswith('percentage') or key == 'percentage':
+    if (
+        key.endswith('percentage')
+        or key in {'percentage', 'official_physical_progress'}
+    ):
         return f'{value}%'
     if key.endswith('_date'):
         try:

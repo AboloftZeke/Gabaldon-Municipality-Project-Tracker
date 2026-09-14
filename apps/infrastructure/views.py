@@ -849,7 +849,7 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
                     infrastructure.physical_progress_percentage
                 )
                 form.save()
-                record_progress_update(
+                progress_update = record_progress_update(
                     infrastructure,
                     request.user,
                     previous_status=previous_status,
@@ -862,6 +862,7 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
                 revision = create_head_operational_revision(
                     infrastructure.project,
                     request.user,
+                    progress_update=progress_update,
                 )
         except ValidationError as exc:
             infrastructure.refresh_from_db()

@@ -8,7 +8,10 @@ from django.db.models import Max
 from django.utils import timezone
 
 from .models import Project, ProjectPublicationRevision
-from .publication_snapshots import build_project_publication_snapshot
+from .publication_snapshots import (
+    build_progress_update_snapshot,
+    build_project_publication_snapshot,
+)
 from .permissions import (
     can_review_revision, can_publish_revision, can_manage_infrastructure,
     can_manage_non_infrastructure, can_update_infrastructure_operations,
@@ -37,7 +40,12 @@ def _operational_confirmation(project, actor):
     }
 
 
-def _synchronize_head_operational_snapshot(revision, project, actor):
+def _synchronize_head_operational_snapshot(
+    revision,
+    project,
+    actor,
+    progress_update=None,
+):
     """Copy only Head-owned values into an existing submitted snapshot."""
     snapshot = deepcopy(revision.snapshot_data or {})
     current = build_project_publication_snapshot(project)
@@ -63,6 +71,14 @@ def _synchronize_head_operational_snapshot(revision, project, actor):
                 snapshot['inspection'] = submitted_inspection
             submitted_inspection['completion_percentage'] = (
                 current_inspection.get('completion_percentage')
+            )
+        if progress_update is not None:
+            if progress_update.infrastructure.project_id != project.pk:
+                raise ValidationError(
+                    'Progress update evidence must belong to this project.',
+                )
+            snapshot['progress_update'] = build_progress_update_snapshot(
+                progress_update,
             )
     elif project.project_type == 'non_infrastructure':
         submitted = snapshot.setdefault('non_infrastructure', {})
@@ -454,7 +470,7 @@ def submit_project_for_review(project, actor):
 
 
 @transaction.atomic
-def create_head_operational_revision(project, actor):
+def create_head_operational_revision(project, actor, progress_update=None):
     """Snapshot a Head update for later publication when a public version exists."""
     project_id = getattr(project, 'pk', project)
     locked_project = Project.objects.select_for_update().get(pk=project_id)
@@ -480,6 +496,7 @@ def create_head_operational_revision(project, actor):
                 active_revision,
                 locked_project,
                 actor,
+                progress_update=progress_update,
             )
             active_revision.save(update_fields=['snapshot_data', 'updated_at'])
         return None
@@ -518,6 +535,7 @@ def create_head_operational_revision(project, actor):
         operational_revision,
         locked_project,
         actor,
+        progress_update=progress_update,
     )
     operational_revision.save()
     return operational_revision
