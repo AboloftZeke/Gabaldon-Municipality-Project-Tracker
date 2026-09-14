@@ -93,6 +93,10 @@
     background: var(--operational-surface);
 }
 
+.operational-card--evidence {
+    border-left: 4px solid #4f8b69;
+}
+
 .operational-section-heading {
     display: flex;
     align-items: flex-start;
@@ -304,12 +308,155 @@
     font-weight: 800;
 }
 
+.operational-reference-grid small {
+    display: block;
+    margin-top: 0.35rem;
+    color: var(--operational-muted);
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+
+.inspection-choice-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.inspection-choice-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: flex-start;
+    gap: 0.8rem;
+    margin: 0;
+    padding: 1rem;
+    border: 1px solid #d7e1da;
+    border-radius: 11px;
+    background: #fbfcfb;
+    cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.inspection-choice-card:hover {
+    border-color: #86ad95;
+    background: #f6faf7;
+}
+
+.inspection-choice-card:has(input:checked) {
+    border-color: var(--operational-green);
+    background: var(--operational-green-soft);
+    box-shadow: 0 0 0 2px rgba(26, 90, 58, 0.1);
+}
+
+.inspection-choice-card > input {
+    width: 1.05rem;
+    height: 1.05rem;
+    margin: 0.18rem 0 0;
+    accent-color: var(--operational-green);
+}
+
+.inspection-choice-card__body,
+.inspection-choice-card__header,
+.inspection-choice-card__header > span:first-child {
+    display: grid;
+    min-width: 0;
+}
+
+.inspection-choice-card__header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.inspection-choice-card__header strong {
+    color: #173d2a;
+}
+
+.inspection-choice-card__header small,
+.inspection-choice-card__meta {
+    color: var(--operational-muted);
+    font-size: 0.77rem;
+}
+
+.inspection-choice-card__progress {
+    padding: 0.28rem 0.55rem;
+    border-radius: 999px;
+    background: #e5f1e9;
+    color: #1a5a3a;
+    font-size: 0.74rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.inspection-choice-card__meta {
+    margin-top: 0.45rem;
+}
+
+.inspection-choice-card__findings {
+    margin-top: 0.55rem;
+    color: #36483e;
+    font-size: 0.84rem;
+    line-height: 1.5;
+}
+
+.inspection-choice-card__files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.65rem;
+}
+
+.inspection-choice-card__files span {
+    padding: 0.22rem 0.45rem;
+    border: 1px solid #d3ddd6;
+    border-radius: 6px;
+    background: #fff;
+    color: #56665d;
+    font-size: 0.69rem;
+    overflow-wrap: anywhere;
+}
+
+.inspection-choice-card__selected {
+    display: none;
+    margin-top: 0.7rem;
+    color: var(--operational-green);
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+.inspection-choice-card:has(input:checked) .inspection-choice-card__selected {
+    display: block;
+}
+
+.operational-empty-state {
+    padding: 1.4rem;
+    border: 1px dashed #cbd8d0;
+    border-radius: 10px;
+    background: #f7faf8;
+    color: var(--operational-muted);
+    text-align: center;
+}
+
+.operational-empty-state strong {
+    color: #315440;
+}
+
+.operational-empty-state p {
+    margin: 0.3rem 0 0;
+}
+
 .operational-actions {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 0.7rem;
     padding-top: 0.15rem;
+}
+
+.operational-actions p {
+    max-width: 570px;
+    margin: 0 auto 0 0;
+    color: var(--operational-muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
 }
 
 .operational-button {
@@ -355,6 +502,14 @@
     .operational-field-grid--single,
     .operational-reference-grid {
         grid-template-columns: 1fr;
+    }
+
+    .inspection-choice-card__header {
+        grid-template-columns: 1fr;
+    }
+
+    .inspection-choice-card__progress {
+        justify-self: start;
     }
 
     .operational-actions {

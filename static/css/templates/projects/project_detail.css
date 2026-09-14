@@ -280,6 +280,367 @@ section.detail-section .detail-section-heading h3 {
     font-size: 0.78rem;
 }
 
+.workflow-section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.4rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.workflow-section-heading > p,
+.workflow-section-heading > div > p:last-child {
+    max-width: 570px;
+    margin: 0;
+    color: #66766d;
+    font-size: 0.86rem;
+    line-height: 1.5;
+}
+
+section.detail-section .workflow-section-heading h3 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.workflow-eyebrow {
+    margin: 0 0 0.35rem !important;
+    color: #1a5a3a !important;
+    font-size: 0.7rem !important;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.workflow-add-button {
+    flex: 0 0 auto;
+    border: 1px solid #b9d0c0;
+    box-shadow: 0 3px 10px rgba(20, 83, 52, 0.08);
+}
+
+.progress-timeline {
+    display: grid;
+}
+
+.progress-timeline-item {
+    position: relative;
+    padding: 0 0 1.25rem 1.8rem;
+}
+
+.progress-timeline-item:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    top: 0.8rem;
+    bottom: -0.1rem;
+    left: 0.37rem;
+    width: 2px;
+    background: #c8dbcf;
+}
+
+.progress-timeline-marker {
+    position: absolute;
+    top: 0.55rem;
+    left: 0;
+    width: 0.8rem;
+    height: 0.8rem;
+    border: 3px solid #dcebe1;
+    border-radius: 50%;
+    background: #1a5a3a;
+}
+
+.progress-update-card,
+.inspection-card {
+    overflow: hidden;
+    border: 1px solid #d9e2dc;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 5px 16px rgba(15, 23, 42, 0.045);
+}
+
+.progress-update-card__header,
+.inspection-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid #e5ebe7;
+    background: #f5f9f6;
+}
+
+.progress-update-card__header div,
+.progress-update-card__header span {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.progress-update-card__header span,
+.progress-update-card__header time,
+.inspection-card__inspector {
+    color: #66766d;
+    font-size: 0.8rem;
+}
+
+.progress-change-grid,
+.inspection-notes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+    padding: 1rem 1.1rem;
+}
+
+.progress-change-grid > div,
+.inspection-notes-grid > div {
+    min-width: 0;
+    padding: 0.85rem;
+    border: 1px solid #e1e8e3;
+    border-radius: 9px;
+    background: #fafcfb;
+}
+
+.progress-change-grid span,
+.inspection-notes-grid span,
+.progress-update-remarks span {
+    color: #6b756f;
+    font-size: 0.7rem;
+    font-weight: 750;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.progress-change-grid p {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin: 0.4rem 0 0;
+}
+
+.progress-change-grid del {
+    color: #7b817d;
+}
+
+.progress-change-grid strong {
+    color: #155236;
+}
+
+.progress-change-grid b {
+    color: #93a098;
+}
+
+.progress-update-remarks,
+.linked-inspections,
+.inspection-card__evidence {
+    margin: 0 1.1rem 1rem;
+    padding: 0.9rem;
+    border-radius: 9px;
+    background: #f7f9f8;
+}
+
+.progress-update-remarks p,
+.linked-inspection-card p,
+.inspection-notes-grid p {
+    margin: 0.35rem 0 0;
+    color: #303b34;
+    line-height: 1.5;
+    white-space: pre-line;
+}
+
+.linked-inspections h4,
+.inspection-card__evidence h4 {
+    margin: 0 0 0.65rem;
+    color: #244536;
+    font-size: 0.86rem;
+}
+
+.linked-inspection-card {
+    padding: 0.8rem;
+    border: 1px solid #dce5df;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.linked-inspection-card + .linked-inspection-card {
+    margin-top: 0.65rem;
+}
+
+.linked-inspection-card__summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.7rem;
+    font-size: 0.8rem;
+}
+
+.linked-inspection-card__summary span,
+.inspection-type-badge {
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background: #e8f2eb;
+    color: #28563d;
+    font-size: 0.7rem;
+    font-weight: 750;
+}
+
+.linked-inspection-card__summary b {
+    margin-left: auto;
+    color: #1a5a3a;
+}
+
+.evidence-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.65rem;
+}
+
+.evidence-chip {
+    padding: 0.35rem 0.55rem;
+    border: 1px solid #cedbd2;
+    border-radius: 7px;
+    background: #f7faf8;
+    color: #28563d;
+    font-size: 0.74rem;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.evidence-chip--document {
+    border-color: #ead1d1;
+    background: #fff7f7;
+    color: #8b2929;
+}
+
+.inspection-timeline {
+    display: grid;
+    gap: 1rem;
+}
+
+.inspection-card__header time {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: #193c2a;
+    font-weight: 800;
+}
+
+.inspection-observed-progress {
+    display: grid;
+    gap: 0.1rem;
+    text-align: right;
+}
+
+.inspection-observed-progress small {
+    color: #69766e;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.inspection-observed-progress strong {
+    color: #1a5a3a;
+    font-size: 1.25rem;
+}
+
+.inspection-card__inspector {
+    margin: 0;
+    padding: 0.8rem 1.1rem 0;
+}
+
+.inspection-evidence-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: 0.65rem;
+}
+
+.evidence-photo-card,
+.evidence-document-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #d8e1db;
+    border-radius: 8px;
+    background: #fff;
+    color: #244536;
+    text-decoration: none;
+}
+
+.evidence-photo-card img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+}
+
+.evidence-photo-card span,
+.evidence-document-card span {
+    display: block;
+    padding: 0.55rem;
+    font-size: 0.72rem;
+    overflow-wrap: anywhere;
+}
+
+.evidence-document-card {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem;
+}
+
+.evidence-document-card b {
+    padding: 0.4rem;
+    border-radius: 6px;
+    background: #fbe8e8;
+    color: #922c2c;
+    font-size: 0.7rem;
+}
+
+.evidence-document-card span {
+    padding: 0;
+}
+
+.inspection-card__actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.8rem 1.1rem;
+    border-top: 1px solid #e5ebe7;
+}
+
+.inspection-card__actions a {
+    color: #1a5a3a;
+    font-size: 0.8rem;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.workflow-empty-state {
+    padding: 2rem 1rem;
+    border: 1px dashed #cbd8d0;
+    border-radius: 11px;
+    background: #f8faf9;
+    color: #67746c;
+    text-align: center;
+}
+
+.workflow-empty-state strong {
+    color: #315440;
+}
+
+.workflow-empty-state p {
+    margin: 0.35rem 0;
+}
+
+.workflow-empty-state a {
+    color: #1a5a3a;
+    font-weight: 750;
+}
+
+.workflow-empty-inline,
+.evidence-empty-inline {
+    color: #77827b;
+    font-size: 0.78rem;
+}
+
 div.detail-item--derived {
     background: #f3f4f6;
     border-style: dashed;
@@ -405,5 +766,36 @@ div.detail-value {
     .project-meta,
     div.detail-grid {
         grid-template-columns: 1fr;
+    }
+
+    .workflow-section-heading,
+    .progress-update-card__header,
+    .inspection-card__header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .workflow-add-button {
+        width: 100%;
+        box-sizing: border-box;
+        text-align: center;
+    }
+
+    .progress-timeline-item {
+        padding-left: 1.35rem;
+    }
+
+    .progress-change-grid,
+    .inspection-notes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .inspection-observed-progress {
+        text-align: left;
+    }
+
+    .linked-inspection-card__summary b {
+        width: 100%;
+        margin-left: 0;
     }
 }

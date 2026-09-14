@@ -4,7 +4,7 @@
 {% block title %}Update Status &amp; Progress{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/templates/core/operational_update.css' %}?v=20260913-1">
+<link rel="stylesheet" href="{% static 'css/templates/core/operational_update.css' %}?v=20260914-2">
 {% endblock %}
 
 {% block content %}
@@ -43,24 +43,63 @@
 
             <div class="operational-field-grid">
                 {% for field in form %}
-                    <div class="operational-field {% if field.name == 'head_remarks' or field.name == 'supporting_inspections' %}operational-field--wide{% endif %}">
+                    {% if field.name != 'supporting_inspections' %}
+                    <div class="operational-field {% if field.name == 'head_remarks' %}operational-field--wide operational-field--remarks{% endif %}">
                         <label for="{{ field.id_for_label }}">
-                            {% if field.name == 'award_status' %}Official Status{% elif field.name == 'physical_progress_percentage' %}Actual Physical Progress{% else %}{{ field.label }}{% endif %}
+                            {% if field.name == 'award_status' %}Official Status{% elif field.name == 'physical_progress_percentage' %}Official Physical Progress{% elif field.name == 'inspection_completion_percentage' %}Latest Inspection Observed Progress{% else %}{{ field.label }}{% endif %}
                             {% if field.name == 'cost_progress_percentage' or field.name == 'head_remarks' %}<span class="operational-optional">Optional</span>{% endif %}
                         </label>
                         {{ field }}
                         {% if field.name == 'physical_progress_percentage' %}
-                            <p class="operational-help">Enter the actual completed work from 0% to 100%.</p>
+                            <p class="operational-help">Actual Physical Progress is your official assessment of completed work, from 0% to 100%.</p>
                         {% elif field.name == 'cost_progress_percentage' %}
                             <p class="operational-help">Enter a manually confirmed cost percentage only when available.</p>
                         {% elif field.name == 'inspection_completion_percentage' %}
-                            <p class="operational-help">Required because this project has an inspection record.</p>
+                            <p class="operational-help">Inspection Completion is the latest observed field progress. It provides evidence and does not automatically set official physical progress.</p>
                         {% elif field.name == 'head_remarks' %}
                             <p class="operational-help">Add context for this official status or physical progress decision.</p>
-                        {% elif field.name == 'supporting_inspections' %}
-                            <p class="operational-help">Select inspections used as evidence for this decision. Observed completion remains reference evidence and will not replace the official physical progress entered above.</p>
                         {% endif %}
                         {% for error in field.errors %}<p class="operational-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="operational-card operational-card--evidence" aria-labelledby="supporting-inspections-heading">
+            <div class="operational-section-heading">
+                <span class="operational-section-number">02</span>
+                <div>
+                    <h2 id="supporting-inspections-heading">Supporting Inspections</h2>
+                    <p>Select the field inspections that support this official decision. Their observed percentages remain evidence only.</p>
+                </div>
+            </div>
+
+            {% for error in form.supporting_inspections.errors %}<p class="operational-error">{{ error }}</p>{% endfor %}
+            <div class="inspection-choice-list">
+                {% for inspection in inspection_options %}
+                    <label class="inspection-choice-card">
+                        <input type="checkbox" name="supporting_inspections" value="{{ inspection.pk }}" {% if inspection.is_selected_for_update %}checked{% endif %}>
+                        <span class="inspection-choice-card__body">
+                            <span class="inspection-choice-card__header">
+                                <span>
+                                    <strong>{{ inspection.inspection_date|date:"M d, Y" }}</strong>
+                                    <small>{{ inspection.get_inspection_type_display }} inspection</small>
+                                </span>
+                            <span class="inspection-choice-card__progress">{{ inspection.completion_percentage|floatformat:2 }}% observed completion</span>
+                            </span>
+                            <span class="inspection-choice-card__meta">Inspector: {% if inspection.inspected_by_user %}{{ inspection.inspected_by_user.get_full_name|default:inspection.inspected_by_user.username }}{% else %}Not recorded{% endif %}</span>
+                            {% if inspection.findings %}<span class="inspection-choice-card__findings">{{ inspection.findings|truncatechars:180 }}</span>{% endif %}
+                            <span class="inspection-choice-card__files">
+                                {% for item in inspection.evidence.all %}<span>{{ item.get_evidence_type_display }} · {{ item.original_name }}</span>{% empty %}<span>No files attached</span>{% endfor %}
+                            </span>
+                            <span class="inspection-choice-card__selected">Selected as supporting evidence</span>
+                        </span>
+                    </label>
+                {% empty %}
+                    <div class="operational-empty-state">
+                        <strong>No inspections recorded</strong>
+                        <p>This update can still be saved without supporting inspections.</p>
                     </div>
                 {% endfor %}
             </div>
@@ -68,7 +107,7 @@
 
         <section class="operational-card operational-card--reference" aria-labelledby="calculated-reference-heading">
             <div class="operational-section-heading">
-                <span class="operational-section-number operational-section-number--muted">02</span>
+                <span class="operational-section-number operational-section-number--muted">03</span>
                 <div>
                     <div class="operational-heading-line">
                         <h2 id="calculated-reference-heading">Calculated Reference</h2>
@@ -82,6 +121,7 @@
                 <div>
                     <dt>Expected / Scheduled Progress</dt>
                     <dd>{% if expected_progress is not None %}{{ expected_progress|floatformat:1 }}%{% else %}Not available{% endif %}</dd>
+                    <small>Calculated from the active project schedule.</small>
                 </div>
                 <div>
                     <dt>Variance</dt>
@@ -95,6 +135,7 @@
         </section>
 
         <div class="operational-actions">
+            <p>Saving records this Head decision and prepares its publication preview. It does not publish the update.</p>
             <button type="submit" class="operational-button operational-button--primary">Save Status &amp; Progress</button>
         </div>
     </form>

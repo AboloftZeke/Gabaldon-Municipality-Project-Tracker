@@ -6,6 +6,7 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_form.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/projects/inspection_form.css' %}?v=20260914-1">
 {% endblock %}
 
 {% block content %}
@@ -30,34 +31,77 @@
             {% if form.non_field_errors %}
                 {% for error in form.non_field_errors %}<div class="error-message">{{ error }}</div>{% endfor %}
             {% endif %}
-            <div class="fieldset">
+            <div class="fieldset inspection-form-section">
                 <div class="section-heading">
                     <span class="section-number">1</span>
-                    <div><h3>Inspection Information</h3><p>Record the observed conditions from this inspection.</p></div>
+                    <div><h3>Inspection Details</h3><p>Identify when and why the field inspection took place.</p></div>
                 </div>
                 <div class="form-grid">
-                    {% for field in form %}
-                        <div class="form-group {% if field.name == 'findings' or field.name == 'remarks' %}full-span{% endif %}">
-                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                            {{ field }}
-                            {% if field.name == 'inspection_photos' %}<small class="helper-text">Upload one or more JPG, PNG, GIF, or WebP photos. Maximum 10 MB each.</small>{% endif %}
-                            {% if field.name == 'inspection_documents' %}<small class="helper-text">Optional PDF inspection reports, up to 10 MB each.</small>{% endif %}
-                            {% for error in field.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
-                        </div>
-                    {% endfor %}
-                </div>
-                {% if inspection and inspection.evidence.exists %}
-                    <div class="existing-images-section">
-                        <h4>Current Evidence</h4>
-                        <div class="existing-images-grid">
-                            {% for item in inspection.evidence.all %}
-                                <div class="existing-image-card">
-                                    {% if item.evidence_type == 'image' %}<img src="{{ item.file_url }}" alt="{{ item.original_name }}">{% endif %}
-                                    <a href="{{ item.file_url }}" target="_blank" rel="noopener">{{ item.original_name }}</a>
-                                </div>
-                            {% endfor %}
-                        </div>
+                    {% for field in form %}{% if field.name == 'inspection_type' or field.name == 'inspection_date' or field.name == 'completion_percentage' %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.name == 'completion_percentage' %}<small class="helper-text">Record the observed completion at this inspection. This does not set official physical progress.</small>{% endif %}
+                        {% for error in field.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
                     </div>
+                    {% endif %}{% endfor %}
+                </div>
+            </div>
+
+            <div class="fieldset inspection-form-section">
+                <div class="section-heading">
+                    <span class="section-number">2</span>
+                    <div><h3>Field Observations</h3><p>Summarize what was observed and any context needed for later review.</p></div>
+                </div>
+                <div class="form-grid">
+                    {% for field in form %}{% if field.name == 'findings' or field.name == 'remarks' %}
+                    <div class="form-group full-span">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
+                    </div>
+                    {% endif %}{% endfor %}
+                </div>
+            </div>
+
+            <div class="fieldset inspection-form-section">
+                <div class="section-heading">
+                    <span class="section-number">3</span>
+                    <div><h3>Supporting Evidence</h3><p>Attach field photos and optional PDF reports to this inspection record.</p></div>
+                </div>
+                <div class="inspection-upload-grid">
+                    {% for field in form %}{% if field.name == 'inspection_photos' or field.name == 'inspection_documents' %}
+                    <div class="form-group inspection-upload-card">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.name == 'inspection_photos' %}<small class="helper-text">Select one or more JPG, PNG, GIF, or WebP photos, up to 10 MB each.</small>{% else %}<small class="helper-text">Select optional PDF inspection reports, up to 10 MB each.</small>{% endif %}
+                        {% for error in field.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
+                    </div>
+                    {% endif %}{% endfor %}
+                </div>
+
+                {% if inspection and inspection.evidence.exists %}
+                <div class="inspection-current-evidence">
+                    <div class="inspection-subheading"><h4>Current Evidence</h4><p>Open a file to inspect it before deciding whether to remove it.</p></div>
+                    <div class="inspection-evidence-grid">
+                        {% for item in inspection.evidence.all %}
+                        <a class="inspection-file-card inspection-file-card--{{ item.evidence_type }}" href="{{ item.file_url }}" target="_blank" rel="noopener">
+                            {% if item.evidence_type == 'image' %}<img src="{{ item.file_url }}" alt="{{ item.original_name }}">{% else %}<span class="inspection-file-card__icon">PDF</span>{% endif %}
+                            <span><strong>{{ item.original_name }}</strong><small>{{ item.get_evidence_type_display }}</small></span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% if form.evidence_to_remove %}
+                    <div class="form-group inspection-remove-evidence">
+                        <label>{{ form.evidence_to_remove.label }}</label>
+                        <p class="helper-text">Choose only files that should be removed from this working inspection record.</p>
+                        {{ form.evidence_to_remove }}
+                        {% for error in form.evidence_to_remove.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="inspection-empty-evidence"><strong>No evidence attached yet</strong><span>Uploaded photos and PDF reports will appear here after saving.</span></div>
                 {% endif %}
             </div>
             <div class="form-actions">

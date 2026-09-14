@@ -111,6 +111,22 @@ class InfrastructureInspectionHistoryTests(TestCase):
         detail = self.client.get(self.detail_url)
         self.assertContains(detail, 'Add Inspection')
         self.assertContains(detail, 'Edit Inspection', count=2)
+        self.assertContains(detail, 'class="inspection-card"', count=2)
+
+    def test_inspection_form_uses_clear_workflow_sections(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.get(self.create_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Inspection Details')
+        self.assertContains(response, 'Field Observations')
+        self.assertContains(response, 'Supporting Evidence')
+        self.assertContains(response, 'No evidence attached yet')
+        self.assertContains(
+            response,
+            '/static/css/templates/projects/inspection_form.css?v=20260914-1',
+        )
 
     def test_history_is_newest_first_and_visible_to_engineering_head(self):
         Project_Inspection.objects.create(
@@ -277,6 +293,8 @@ class InfrastructureInspectionHistoryTests(TestCase):
         self.assertContains(detail, 'south.png')
         self.assertContains(detail, 'inspection-report.pdf')
         self.assertContains(detail, 'Supporting Evidence')
+        self.assertContains(detail, 'class="evidence-photo-card"', count=2)
+        self.assertContains(detail, 'class="evidence-document-card"')
         self.assertNotContains(detail, 'Remove Existing Evidence')
 
     def test_staff_can_remove_and_add_evidence_while_editing(self):

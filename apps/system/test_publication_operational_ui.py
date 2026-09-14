@@ -336,7 +336,7 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(response, 'Save Status &amp; Progress')
         self.assertContains(
             response,
-            '/static/css/templates/core/operational_update.css?v=20260913-1',
+            '/static/css/templates/core/operational_update.css?v=20260914-2',
         )
 
         self.non_infrastructure.non_infra_name = 'Newer Staff Program Title'

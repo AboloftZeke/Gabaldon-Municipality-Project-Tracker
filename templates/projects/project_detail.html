@@ -263,110 +263,74 @@
         </div>
     </section>
 
-    <section class="detail-section">
-        <h3>Progress Update History</h3>
+    <section class="detail-section workflow-history-section">
+        <div class="workflow-section-heading">
+            <div><p class="workflow-eyebrow">Official decisions</p><h3>Progress Update History</h3></div>
+            <p>Chronological record of status and physical-progress decisions made by the Engineering Head.</p>
+        </div>
+        <div class="progress-timeline">
         {% for update in progress_update_history %}
-            <article class="detail-grid inspection-history-item">
-                <div class="detail-item">
-                    <span class="detail-label">Official Status</span>
-                    <span class="detail-value">{{ update.get_previous_official_status_display|default:"Not set" }} → {{ update.get_new_official_status_display|default:"Not set" }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Actual Physical Progress</span>
-                    <span class="detail-value">{% if update.previous_physical_progress is not None %}{{ update.previous_physical_progress|floatformat:2 }}%{% else %}Not set{% endif %} → {% if update.new_physical_progress is not None %}{{ update.new_physical_progress|floatformat:2 }}%{% else %}Not set{% endif %}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Updated By</span>
-                    <span class="detail-value">{% if update.updated_by %}{{ update.updated_by.get_full_name|default:update.updated_by.username }}{% else %}Unknown{% endif %}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Updated At</span>
-                    <span class="detail-value">{{ update.created_at|date:"M d, Y g:i A" }}</span>
-                </div>
-                {% if update.head_remarks %}
-                    <div class="detail-item full-width">
-                        <span class="detail-label">Head Remarks</span>
-                        <div class="detail-value">{{ update.head_remarks }}</div>
+            <article class="progress-timeline-item">
+                <span class="progress-timeline-marker" aria-hidden="true"></span>
+                <div class="progress-update-card">
+                    <header class="progress-update-card__header">
+                        <div><strong>{% if update.updated_by %}{{ update.updated_by.get_full_name|default:update.updated_by.username }}{% else %}Unknown Head{% endif %}</strong><span>Engineering Head decision</span></div>
+                        <time datetime="{{ update.created_at|date:'c' }}">{{ update.created_at|date:"M d, Y · g:i A" }}</time>
+                    </header>
+                    <div class="progress-change-grid">
+                        <div><span>Official Status</span><p><del>{{ update.get_previous_official_status_display|default:"Not set" }}</del><b aria-hidden="true">→</b><strong>{{ update.get_new_official_status_display|default:"Not set" }}</strong></p></div>
+                        <div><span>Official Physical Progress</span><p><del>{% if update.previous_physical_progress is not None %}{{ update.previous_physical_progress|floatformat:2 }}%{% else %}Not set{% endif %}</del><b aria-hidden="true">→</b><strong>{% if update.new_physical_progress is not None %}{{ update.new_physical_progress|floatformat:2 }}%{% else %}Not set{% endif %}</strong></p></div>
                     </div>
-                {% endif %}
-                <div class="detail-item full-width">
-                    <span class="detail-label">Supporting Inspections</span>
-                    {% for inspection in update.supporting_inspections.all %}
-                        <div class="detail-value">
-                            {{ inspection.inspection_date|date:"M d, Y" }} ·
-                            {{ inspection.get_inspection_type_display }} ·
-                            {{ inspection.completion_percentage|floatformat:2 }}% observed completion
-                        </div>
-                    {% empty %}
-                        <div class="detail-value">No supporting inspections selected.</div>
-                    {% endfor %}
+                    {% if update.head_remarks %}<div class="progress-update-remarks"><span>Head Remarks</span><p>{{ update.head_remarks }}</p></div>{% endif %}
+                    <div class="linked-inspections">
+                        <h4>Supporting Inspections</h4>
+                        {% for inspection in update.supporting_inspections.all %}
+                        <article class="linked-inspection-card">
+                            <div class="linked-inspection-card__summary"><strong>{{ inspection.inspection_date|date:"M d, Y" }}</strong><span>{{ inspection.get_inspection_type_display }}</span><b>{{ inspection.completion_percentage|floatformat:2 }}% observed completion</b></div>
+                            {% if inspection.findings %}<p>{{ inspection.findings }}</p>{% endif %}
+                            <div class="evidence-chip-list">
+                                {% for item in inspection.evidence.all %}<a class="evidence-chip evidence-chip--{{ item.evidence_type }}" href="{{ item.file_url }}" target="_blank" rel="noopener">{% if item.evidence_type == 'document' %}PDF · {% else %}Photo · {% endif %}{{ item.original_name }}</a>{% empty %}<span class="evidence-empty-inline">No files attached</span>{% endfor %}
+                            </div>
+                        </article>
+                        {% empty %}<p class="workflow-empty-inline">No supporting inspections selected.</p>{% endfor %}
+                    </div>
                 </div>
             </article>
         {% empty %}
-            <p>No official status or physical progress updates have been recorded.</p>
+            <div class="workflow-empty-state"><strong>No progress updates yet</strong><p>Official Engineering Head decisions will appear here after a status or physical-progress change.</p></div>
         {% endfor %}
+        </div>
     </section>
 
     <!-- Inspection History Section -->
-    <section class="detail-section">
-        <div class="detail-section-heading">
-            <h3>Inspection History</h3>
-            {% if can_manage_inspections %}<a class="btn btn-edit" href="{{ inspection_create_url }}">Add Inspection</a>{% endif %}
+    <section class="detail-section workflow-history-section">
+        <div class="workflow-section-heading workflow-section-heading--actions">
+            <div><p class="workflow-eyebrow">Field records</p><h3>Inspection History</h3><p>Newest inspections appear first. Observed completion supports review but does not set official physical progress.</p></div>
+            {% if can_manage_inspections %}<a class="btn btn-edit workflow-add-button" href="{{ inspection_create_url }}">Add Inspection</a>{% endif %}
         </div>
+        <div class="inspection-timeline">
         {% for inspection in inspection_history %}
-            <article class="detail-grid inspection-history-item">
-                <div class="detail-item">
-                    <span class="detail-label">Inspection Date</span>
-                    <span class="detail-value">{{ inspection.inspection_date|date:"M d, Y" }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Inspection Type</span>
-                    <span class="detail-value">{{ inspection.get_inspection_type_display }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Inspector</span>
-                    <span class="detail-value">{% if inspection.inspected_by_user %}{{ inspection.inspected_by_user.get_full_name|default:inspection.inspected_by_user.username }}{% else %}Not recorded{% endif %}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Observed Completion</span>
-                    <span class="detail-value">{{ inspection.completion_percentage|floatformat:2 }}%</span>
-                </div>
-                <div class="detail-item full-width">
-                    <span class="detail-label">Findings</span>
-                    <div class="detail-value">{{ inspection.findings|default:"No findings recorded." }}</div>
-                </div>
-                <div class="detail-item full-width">
-                    <span class="detail-label">Remarks</span>
-                    <div class="detail-value">{{ inspection.remarks|default:"No remarks recorded." }}</div>
-                </div>
-                <div class="detail-item full-width">
-                    <span class="detail-label">Supporting Evidence</span>
-                    {% if inspection.evidence.all %}
-                        <div class="inspection-evidence-list">
-                            {% for item in inspection.evidence.all %}
-                                {% if item.evidence_type == 'image' %}
-                                    <a class="inspection-evidence-photo" href="{{ item.file_url }}" target="_blank" rel="noopener">
-                                        <img src="{{ item.file_url }}" alt="{{ item.original_name }}" loading="lazy">
-                                        <span>{{ item.original_name }}</span>
-                                    </a>
-                                {% else %}
-                                    <a href="{{ item.file_url }}" target="_blank" rel="noopener">{{ item.original_name }}</a>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="detail-value">No supporting evidence attached.</div>
-                    {% endif %}
-                </div>
-                {% if can_manage_inspections %}
-                    <div class="detail-item full-width">
-                        <a href="{% url 'engineering_projects:inspection_update' project_details.pk inspection.pk %}">Edit Inspection</a>
+            <article class="inspection-card">
+                <header class="inspection-card__header">
+                    <div><time datetime="{{ inspection.inspection_date|date:'Y-m-d' }}">{{ inspection.inspection_date|date:"M d, Y" }}</time><span class="inspection-type-badge">{{ inspection.get_inspection_type_display }}</span></div>
+                    <div class="inspection-observed-progress"><small>Observed Completion</small><strong>{{ inspection.completion_percentage|floatformat:2 }}%</strong></div>
+                </header>
+                <p class="inspection-card__inspector">Inspected by <strong>{% if inspection.inspected_by_user %}{{ inspection.inspected_by_user.get_full_name|default:inspection.inspected_by_user.username }}{% else %}Not recorded{% endif %}</strong></p>
+                <div class="inspection-notes-grid"><div><span>Findings</span><p>{{ inspection.findings|default:"No findings recorded." }}</p></div><div><span>Remarks</span><p>{{ inspection.remarks|default:"No remarks recorded." }}</p></div></div>
+                <div class="inspection-card__evidence">
+                    <h4>Supporting Evidence</h4>
+                    <div class="inspection-evidence-gallery">
+                    {% for item in inspection.evidence.all %}
+                        {% if item.evidence_type == 'image' %}<a class="evidence-photo-card" href="{{ item.file_url }}" target="_blank" rel="noopener"><img src="{{ item.file_url }}" alt="{{ item.original_name }}" loading="lazy"><span>Photo · {{ item.original_name }}</span></a>{% else %}<a class="evidence-document-card" href="{{ item.file_url }}" target="_blank" rel="noopener"><b>PDF</b><span>{{ item.original_name }}</span></a>{% endif %}
+                    {% empty %}<div class="workflow-empty-inline">No supporting evidence attached.</div>{% endfor %}
                     </div>
-                {% endif %}
+                </div>
+                {% if can_manage_inspections %}<footer class="inspection-card__actions"><a href="{% url 'engineering_projects:inspection_update' project_details.pk inspection.pk %}">Edit Inspection</a></footer>{% endif %}
             </article>
         {% empty %}
-            <p>No inspections have been recorded for this project.</p>
+            <div class="workflow-empty-state"><strong>No inspections recorded</strong><p>Field inspections and their supporting evidence will appear here.</p>{% if can_manage_inspections %}<a href="{{ inspection_create_url }}">Add the first inspection</a>{% endif %}</div>
         {% endfor %}
+        </div>
     </section>
 
     <!-- GIS & Map Section -->

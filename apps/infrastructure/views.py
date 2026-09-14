@@ -715,6 +715,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
                     'updated_by',
                 ).prefetch_related(
                     'supporting_inspections__inspected_by_user',
+                    'supporting_inspections__evidence',
                 ).all()
             )
 
@@ -812,6 +813,22 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
             (return_revision.snapshot_data or {}).get('infrastructure') or {}
             if return_revision else {}
         )
+        selected_inspection_ids = set()
+        if form.is_bound:
+            selected_inspection_ids = set(
+                form.data.getlist('supporting_inspections')
+            )
+        inspection_options = list(
+            infrastructure.project.inspections.select_related(
+                'inspected_by_user',
+            ).prefetch_related('evidence').order_by(
+                '-inspection_date', '-created_at', '-inspection_id',
+            )
+        )
+        for inspection in inspection_options:
+            inspection.is_selected_for_update = (
+                str(inspection.pk) in selected_inspection_ids
+            )
         return render(request, self.template_name, {
             'project': infrastructure,
             'form': form,
@@ -820,6 +837,7 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
                 or infrastructure.infrastructure_title
             ),
             'return_revision_id': getattr(return_revision, 'pk', None),
+            'inspection_options': inspection_options,
             **self.reference_values(infrastructure, reference_revision),
         }, status=status)
 

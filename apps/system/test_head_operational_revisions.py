@@ -296,6 +296,8 @@ class HeadOperationalRevisionTests(TestCase):
         preview = self.client.get(reverse(
             'publication_revision_detail', args=[revision.pk],
         ))
+        self.assertContains(preview, 'class="revision-section progress-evidence-panel"')
+        self.assertContains(preview, 'Official Physical Progress')
         self.assertContains(preview, 'Supporting Inspections')
         self.assertContains(preview, 'field-report.pdf')
         self.assertContains(preview, 'Verified structural work on site.')

@@ -234,6 +234,11 @@ class HeadOperationalUpdateTests(TestCase):
         get_response = self.client.get(self.infra_url())
         self.assertContains(get_response, 'Supporting Inspections')
         self.assertContains(get_response, '30.00% observed')
+        self.assertContains(get_response, 'class="inspection-choice-card"')
+        self.assertContains(
+            get_response,
+            'does not automatically set official physical progress',
+        )
         available = get_response.context['form'].fields[
             'supporting_inspections'
         ].queryset
@@ -314,6 +319,8 @@ class HeadOperationalUpdateTests(TestCase):
                 self.assertContains(response, 'Final decision')
                 self.assertContains(response, 'Supporting Inspections')
                 self.assertContains(response, '30.00% observed completion')
+                self.assertContains(response, 'class="progress-timeline"')
+                self.assertContains(response, 'class="progress-update-card"')
                 self.assertContains(response, '25.00%')
                 self.assertContains(response, '100.00%')
                 self.assertNotContains(response, 'Edit Progress Update')
