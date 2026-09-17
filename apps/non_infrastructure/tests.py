@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.template.loader import render_to_string
+from django.urls import reverse
 
 from apps.non_infrastructure.forms import NonInfrastructureProjectForm
 from apps.system.models import (
@@ -10,7 +11,55 @@ from apps.system.models import (
     NonInfrastructureProject,
     Project,
     ProjectImage,
+    UserRole,
 )
+
+
+class NonInfrastructureProjectDashboardTests(TestCase):
+    def test_dashboard_counts_projects_by_status(self):
+        user = get_user_model().objects.create_user(
+            username='mayor-staff',
+            password='testpass123',
+        )
+        UserRole.objects.create(user=user, department='mayor', role='staff')
+
+        expected_counts = {
+            'planned': 1,
+            'ongoing': 2,
+            'completed': 3,
+        }
+        for status, count in expected_counts.items():
+            for index in range(count):
+                project = Project.objects.create(
+                    project_type='non_infrastructure',
+                    created_by_user=user,
+                    updated_by_user=user,
+                )
+                NonInfrastructureProject.objects.create(
+                    project=project,
+                    title=f'{status.title()} Program {index + 1}',
+                    status=status,
+                )
+
+        self.client.force_login(user)
+        response = self.client.get(reverse(
+            'mayor_projects:non_infrastructure_project_dashboard'
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['total_projects'], 6)
+        self.assertEqual(response.context['planned_projects'], 1)
+        self.assertEqual(response.context['in_progress_projects'], 2)
+        self.assertEqual(response.context['completed_projects'], 3)
+        self.assertContains(response, 'Planned')
+        self.assertContains(response, 'In Progress')
+        self.assertContains(response, 'Completed')
+        for count in expected_counts.values():
+            self.assertContains(
+                response,
+                f'<div class="stat-value">{count}</div>',
+                html=True,
+            )
 
 
 class NonInfrastructureProjectFormTests(TestCase):

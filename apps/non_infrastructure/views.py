@@ -96,11 +96,9 @@ class NonInfrastructureProjectDashboardView(MayorsOfficeRequiredMixin, TemplateV
 
             context['total_projects'] = user_projects.count()
 
-            # Non-infrastructure projects no longer have a progress/status field
-            # in the redesigned schema, so these cannot be calculated reliably.
-            context['planned_projects'] = 0
-            context['in_progress_projects'] = 0
-            context['completed_projects'] = 0
+            context['planned_projects'] = user_projects.filter(status='planned').count()
+            context['in_progress_projects'] = user_projects.filter(status='ongoing').count()
+            context['completed_projects'] = user_projects.filter(status='completed').count()
 
             context['recent_projects'] = user_projects.order_by('-created_at')[:5]
 
