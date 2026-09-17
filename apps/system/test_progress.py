@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from .models import Infrastructure_Project, Project
+from .models import InfrastructureProject, Project
 from .progress import (
     derived_cost_progress,
     expected_progress,
@@ -70,9 +70,9 @@ class DerivedProgressTests(TestCase):
 
     def test_calculations_do_not_mutate_actual_value(self):
         project = Project.objects.create(project_type='infrastructure')
-        infrastructure = Infrastructure_Project.objects.create(
+        infrastructure = InfrastructureProject.objects.create(
             project=project,
-            infrastructure_title='Stored progress test',
+            title='Stored progress test',
             planned_start_date=date(2026, 2, 1),
             planned_end_date=date(2026, 2, 11),
             physical_progress_percentage=Decimal('42.50'),

@@ -8,16 +8,16 @@ from django.db import transaction
 from apps.system.models import (
     Address,
     Contractor,
-    Financial,
+    FinancialRecord,
     FundSource,
     ImplementingOffice,
     InfrastructureCategory,
-    Infrastructure_Project,
-    Infrastructure_Schedule,
+    InfrastructureProject,
+    InfrastructureSchedule,
     NonInfrastructureCategory,
-    Non_Infrastructure_Project,
+    NonInfrastructureProject,
     Project,
-    UserFlag,
+    UserRole,
 )
 from apps.system.publication_service import (
     create_head_operational_revision,
@@ -301,7 +301,7 @@ class Command(BaseCommand):
         if changed_fields:
             user.save(update_fields=list(dict.fromkeys(changed_fields)))
 
-        UserFlag.objects.update_or_create(
+        UserRole.objects.update_or_create(
             user=user,
             defaults={
                 'department': department,
@@ -442,11 +442,11 @@ class Command(BaseCommand):
         }
         progress = progress_by_status[status]
 
-        infrastructure = Infrastructure_Project.objects.create(
+        infrastructure = InfrastructureProject.objects.create(
             project=project,
             infrastructure_code=f'SEED-INF-{project.pk:06d}',
-            infrastructure_title=self._title(INFRA_TITLES, index),
-            infrastructure_description=(
+            title=self._title(INFRA_TITLES, index),
+            description=(
                 'Municipal infrastructure test record generated for development '
                 'and workflow verification. Includes normalized location, '
                 'procurement, schedule, and financial information.'
@@ -456,8 +456,8 @@ class Command(BaseCommand):
             contractor=contractors[index % len(contractors)],
             implementing_office=office,
             procurement_method=(
-                Infrastructure_Project.PROCUREMENT_METHOD_CHOICES[
-                    index % len(Infrastructure_Project.PROCUREMENT_METHOD_CHOICES)
+                InfrastructureProject.PROCUREMENT_METHOD_CHOICES[
+                    index % len(InfrastructureProject.PROCUREMENT_METHOD_CHOICES)
                 ][0]
             ),
             award_status=status,
@@ -474,7 +474,7 @@ class Command(BaseCommand):
             if status == 'completed'
             else (bid_amount * progress / Decimal('100.00'))
         )
-        Financial.objects.create(
+        FinancialRecord.objects.create(
             infrastructure=infrastructure,
             fund_source=fund_sources[index % len(fund_sources)],
             approved_budget=approved_budget,
@@ -486,7 +486,7 @@ class Command(BaseCommand):
         posting_date = start_date - timedelta(days=60)
         actual_start = start_date if status in {'awarded', 'completed'} else None
         actual_completion = end_date if status == 'completed' else None
-        Infrastructure_Schedule.objects.create(
+        InfrastructureSchedule.objects.create(
             infrastructure=infrastructure,
             posting_date=posting_date,
             pre_bid_date=posting_date + timedelta(days=14),
@@ -510,10 +510,10 @@ class Command(BaseCommand):
         )
         statuses = ['planned', 'ongoing', 'completed']
         event_date = date(2026, 8, 25) + timedelta(days=index * 12)
-        Non_Infrastructure_Project.objects.create(
+        NonInfrastructureProject.objects.create(
             project=project,
-            non_infra_name=self._title(NON_INFRA_TITLES, index),
-            non_infra_category=categories[index % len(categories)],
+            title=self._title(NON_INFRA_TITLES, index),
+            category=categories[index % len(categories)],
             status=statuses[index % len(statuses)],
             proponent=(
                 "Mayor's Office" if index % 2 == 0 else 'Municipal Social Services Office'

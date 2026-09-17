@@ -9,13 +9,13 @@ from .models import (
     Contractor,
     ImplementingOffice,
     FundSource,
-    Infrastructure_Project,
+    InfrastructureProject,
     InfrastructureProgressUpdate,
-    Non_Infrastructure_Project,
-    Infrastructure_Schedule,
-    Financial,
+    NonInfrastructureProject,
+    InfrastructureSchedule,
+    FinancialRecord,
     InspectionEvidence,
-    Project_Inspection,
+    ProjectInspection,
 )
 
 
@@ -88,10 +88,10 @@ class FundSourceAdmin(ProjectDataAdmin):
     search_fields = ('fund_source_code', 'fund_source_name')
 
 
-@admin.register(Infrastructure_Project)
+@admin.register(InfrastructureProject)
 class InfrastructureProjectAdmin(ProjectDataAdmin):
-    list_display = ('infrastructure_id', 'infrastructure_title', 'category', 'contractor', 'implementing_office', 'project')
-    search_fields = ('infrastructure_title', 'infrastructure_code', 'category__category_name')
+    list_display = ('infrastructure_id', 'title', 'category', 'contractor', 'implementing_office', 'project')
+    search_fields = ('title', 'infrastructure_code', 'category__category_name')
 
 
 @admin.register(InfrastructureProgressUpdate)
@@ -106,28 +106,28 @@ class InfrastructureProgressUpdateAdmin(ProjectDataAdmin):
         'updated_by',
         'created_at',
     )
-    search_fields = ('infrastructure__infrastructure_title', 'head_remarks')
+    search_fields = ('infrastructure__title', 'head_remarks')
 
 
-@admin.register(Non_Infrastructure_Project)
+@admin.register(NonInfrastructureProject)
 class NonInfrastructureProjectAdmin(ProjectDataAdmin):
-    list_display = ('non_infra_id', 'non_infra_name', 'non_infra_category', 'address', 'project')
-    search_fields = ('non_infra_name', 'venue_name', 'non_infra_category__type_name')
+    list_display = ('non_infra_id', 'title', 'category', 'address', 'project')
+    search_fields = ('title', 'venue_name', 'category__type_name')
 
 
-@admin.register(Infrastructure_Schedule)
+@admin.register(InfrastructureSchedule)
 class InfrastructureScheduleAdmin(ProjectDataAdmin):
     list_display = ('schedule_id', 'infrastructure', 'actual_start_date', 'actual_completion_date')
-    search_fields = ('infrastructure__infrastructure_title',)
+    search_fields = ('infrastructure__title',)
 
 
-@admin.register(Financial)
+@admin.register(FinancialRecord)
 class FinancialAdmin(ProjectDataAdmin):
     list_display = ('financial_id', 'infrastructure', 'approved_budget', 'bid_amount', 'actual_expenditure')
-    search_fields = ('infrastructure__infrastructure_title', 'fund_source__fund_source_name')
+    search_fields = ('infrastructure__title', 'fund_source__fund_source_name')
 
 
-@admin.register(Project_Inspection)
+@admin.register(ProjectInspection)
 class ProjectInspectionAdmin(ProjectDataAdmin):
     list_display = ('inspection_id', 'project', 'inspection_type', 'inspection_date', 'completion_percentage', 'inspected_by_user')
     search_fields = ('project__project_id', 'remarks', 'findings')

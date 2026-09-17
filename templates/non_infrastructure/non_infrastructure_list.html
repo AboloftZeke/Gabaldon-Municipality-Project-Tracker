@@ -30,15 +30,15 @@
             {% for project in projects %}
                 <div class="project-card">
                     <div class="project-card-image">
-                        {% if project.cover_image_url %}
-                            <img src="{{ project.cover_image_url }}" alt="{{ project.title }} cover">
+                        {% if project.project.images.first.image_url %}
+                            <img src="{{ project.project.images.first.image_url }}" alt="{{ project.title }} cover">
                         {% else %}
                             <img src="{% static 'images/project-placeholder.svg' %}" alt="{{ project.title }} cover">
                         {% endif %}
                     </div>
                     <div class="project-card-body">
                         <div class="project-title">{{ project.title }}</div>
-                        <div class="project-location">📍 {{ project.location|default:'Barangay not specified' }}</div>
+                        <div class="project-location">📍 {{ project.address.barangay|default:'Barangay not specified' }}</div>
                         <div class="project-category">{{ project.category|default:'Uncategorized' }}</div>
 
                         {% if project.event_date %}
@@ -47,8 +47,8 @@
                             </div>
                         {% endif %}
 
-                        <div class="project-status {% if project.status_label == 'Completed' %}status-completed{% elif project.status_label == 'Planned' %}status-planning{% else %}status-ongoing{% endif %}">
-                            {{ project.status_label }}
+                        <div class="project-status {% if project.get_status_display == 'Completed' %}status-completed{% elif project.get_status_display == 'Planned' %}status-planning{% else %}status-ongoing{% endif %}">
+                            {{ project.get_status_display }}
                         </div>
                         {% if project.publication_state %}
                             <div class="publication-card-state">

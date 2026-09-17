@@ -5,7 +5,7 @@ explicit at their call sites because create and edit permissions differ today.
 Review capabilities are scoped to the Head's office, never to superuser status.
 """
 
-from .models import UserFlag
+from .models import UserRole
 
 
 VALID_ASSIGNMENTS = {
@@ -27,8 +27,8 @@ def is_system_admin(user):
 def _assignment(user):
     if not _active_user(user):
         return None
-    # Query persisted data, not a potentially stale user.flags/profile cache.
-    pair = UserFlag.objects.filter(user_id=user.pk).values_list('department', 'role').first()
+    # Query persisted data, not a potentially stale user.role_assignment/profile cache.
+    pair = UserRole.objects.filter(user_id=user.pk).values_list('department', 'role').first()
     return pair if pair in VALID_ASSIGNMENTS else None
 
 
@@ -87,7 +87,7 @@ def can_access_publication_review(user, revision):
 def can_review_revision(user, revision):
     if not can_access_publication_review(user, revision):
         return False
-    creator = ((revision.snapshot_data or {}).get('project') or {}).get('creator') or {}
+    creator = ((revision.snapshot or {}).get('project') or {}).get('creator') or {}
     return user.pk not in {
         revision.submitted_by_id,
         revision.project.created_by_user_id,

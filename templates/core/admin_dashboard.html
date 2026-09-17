@@ -40,10 +40,10 @@
                 <li><a href="{% url 'user_list' %}">User Management</a></li>
                 <li><a href="{% url 'user_create' %}">Create User</a></li>
             {% endif %}
-            {% if user.profile.department == 'engineer' and not user.is_superuser %}
+            {% if user.role_assignment.department == 'engineer' and not user.is_superuser %}
                 <li><a href="{% url 'engineering_projects:project_dashboard' %}">Projects</a></li>
             {% endif %}
-            {% if user.profile.department == 'mayor' and not user.is_superuser %}
+            {% if user.role_assignment.department == 'mayor' and not user.is_superuser %}
                 <li><a href="{% url 'mayor_projects:non_infrastructure_project_dashboard' %}">Projects</a></li>
             {% endif %}
         </ul>
@@ -101,7 +101,7 @@
         </div>
         <div class="stat-card">
             <h3>Awaiting Publication</h3>
-            <p class="stat-value">{{ approved_publication_revisions }}</p>
+            <p class="stat-value">{{ approved_revisions }}</p>
             <div class="stat-subtitle">Approved by office Heads</div>
         </div>
     </div>
@@ -132,7 +132,7 @@
     {% endif %}
 
     <!-- Infrastructure Projects Section for Engineering Users -->
-    {% if user.profile.department == 'engineer' and not user.is_superuser %}
+    {% if user.role_assignment.department == 'engineer' and not user.is_superuser %}
     <div class="dashboard-section">
         <h3><span class="section-icon"><img src="{% static 'images/infra-icon.png' %}" alt="Infrastructure"></span>Infrastructure Projects</h3>
         <div class="action-grid">
@@ -156,7 +156,7 @@
     {% endif %}
 
     <!-- Non-Infrastructure Projects Section for Mayor's Office Users -->
-    {% if user.profile.department == 'mayor' and not user.is_superuser %}
+    {% if user.role_assignment.department == 'mayor' and not user.is_superuser %}
     <div class="dashboard-section">
         <h3><span class="section-icon"><img src="{% static 'images/projects-icon.png' %}" alt="Non-Infrastructure"></span>Non-Infrastructure Projects</h3>
         <div class="action-grid">

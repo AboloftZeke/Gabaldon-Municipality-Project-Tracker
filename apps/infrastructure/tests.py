@@ -11,9 +11,9 @@ from apps.system.models import (
     FundSource,
     ImplementingOffice,
     InfrastructureCategory,
-    Project_Image,
-    Project_Inspection,
-    UserFlag,
+    ProjectImage,
+    ProjectInspection,
+    UserRole,
 )
 
 
@@ -88,7 +88,7 @@ class InfrastructureProjectFormTests(TestCase):
     def test_create_form_renders_all_organized_sections(self):
         self.user.is_staff = True
         self.user.save(update_fields=['is_staff'])
-        UserFlag.objects.update_or_create(
+        UserRole.objects.update_or_create(
             user=self.user,
             defaults={'department': 'engineer'},
         )
@@ -121,7 +121,7 @@ class InfrastructureProjectFormTests(TestCase):
         infrastructure = self.create_project()
         self.user.is_staff = True
         self.user.save(update_fields=['is_staff'])
-        UserFlag.objects.update_or_create(
+        UserRole.objects.update_or_create(
             user=self.user,
             defaults={'department': 'engineer'},
         )
@@ -349,7 +349,7 @@ class InfrastructureProjectFormTests(TestCase):
 
     def test_staff_edit_preserves_latest_inspection_completion(self):
         infra = self.create_project()
-        inspection = Project_Inspection.objects.create(
+        inspection = ProjectInspection.objects.create(
             project=infra.project,
             inspection_date='2026-06-01',
             inspected_by_user=self.user,
@@ -379,12 +379,12 @@ class InfrastructureProjectFormTests(TestCase):
 
     def test_image_edit_deletes_selected_image_and_changes_cover(self):
         infra = self.create_project()
-        first = Project_Image.objects.create(
+        first = ProjectImage.objects.create(
             project=infra.project,
             image_url='https://example.com/first.jpg',
             is_cover=True,
         )
-        second = Project_Image.objects.create(
+        second = ProjectImage.objects.create(
             project=infra.project,
             image_url='https://example.com/second.jpg',
         )

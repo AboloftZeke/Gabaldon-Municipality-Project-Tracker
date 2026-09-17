@@ -6,14 +6,14 @@ from decimal import Decimal, InvalidOperation
 from django.http import Http404
 from django.urls import reverse
 
-from .models import ProjectPublicationRevision
+from .models import ProjectRevision
 from .publication_workflow import PublicationStatus
 
 
 def current_public_revisions():
-    return ProjectPublicationRevision.objects.filter(
+    return ProjectRevision.objects.filter(
         status=PublicationStatus.PUBLISHED,
-        is_current_public_revision=True,
+        is_current_public=True,
     ).select_related('project')
 
 
@@ -71,7 +71,7 @@ def _creator_name(snapshot):
 
 
 def infrastructure_public_data(revision):
-    snapshot = revision.snapshot_data or {}
+    snapshot = revision.snapshot or {}
     infrastructure = snapshot.get('infrastructure') or {}
     financial = snapshot.get('financial') or {}
     schedule = snapshot.get('schedule') or {}
@@ -161,7 +161,7 @@ def infrastructure_public_data(revision):
 
 
 def non_infrastructure_public_data(revision):
-    snapshot = revision.snapshot_data or {}
+    snapshot = revision.snapshot or {}
     noninfra = snapshot.get('non_infrastructure') or {}
     project = snapshot.get('project') or {}
     record_id = noninfra.get('id')
@@ -208,7 +208,7 @@ def public_projects():
     infrastructure = []
     non_infrastructure = []
     for revision in current_public_revisions():
-        project_type = (revision.snapshot_data or {}).get('project', {}).get('type')
+        project_type = (revision.snapshot or {}).get('project', {}).get('type')
         if project_type == 'infrastructure':
             data = infrastructure_public_data(revision)
             if data:
@@ -227,7 +227,7 @@ def get_public_project(project_type, record_id):
         else non_infrastructure_public_data
     )
     for revision in current_public_revisions():
-        snapshot = revision.snapshot_data or {}
+        snapshot = revision.snapshot or {}
         if snapshot.get('project', {}).get('type') != project_type:
             continue
         data = adapter(revision)

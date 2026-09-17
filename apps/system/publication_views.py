@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import DetailView, ListView
 
-from .models import ProjectPublicationRevision
+from .models import ProjectRevision
 from .publication_forms import PublicationReviewForm
 from .publication_diff import revision_comparison
 from .publication_public import (
@@ -53,7 +53,7 @@ class OfficeHeadRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 
 def _revision_preview(revision):
-    project_type = (revision.snapshot_data or {}).get('project', {}).get('type')
+    project_type = (revision.snapshot or {}).get('project', {}).get('type')
     if project_type == 'infrastructure':
         data = infrastructure_public_data(revision)
         detail_url_name = 'engineering_projects:project_detail'
@@ -84,7 +84,7 @@ def _snapshot_date(value):
 
 def _operational_information(revision, project_type, preview, user):
     """Build display data from the retained snapshot and shared readiness."""
-    snapshot = revision.snapshot_data or {}
+    snapshot = revision.snapshot or {}
     readiness = publication_readiness(revision)
     controlled = []
     reference = []
@@ -198,7 +198,7 @@ def _revision_page_context(revision, user, review_form=None):
         'comparison': comparison,
         'operational': operational,
         'progress_update': (
-            (revision.snapshot_data or {}).get('progress_update')
+            (revision.snapshot or {}).get('progress_update')
         ),
         'can_review': (
             revision.status == PublicationStatus.PENDING_REVIEW
@@ -214,7 +214,7 @@ def _revision_page_context(revision, user, review_form=None):
 
 
 class PublicationReviewQueueView(OfficeHeadRequiredMixin, ListView):
-    model = ProjectPublicationRevision
+    model = ProjectRevision
     template_name = 'core/publication_review_queue.html'
     context_object_name = 'revisions'
     paginate_by = 20
@@ -226,7 +226,7 @@ class PublicationReviewQueueView(OfficeHeadRequiredMixin, ListView):
             requested_status = PublicationStatus.PENDING_REVIEW
         self.selected_status = requested_status
         return (
-            ProjectPublicationRevision.objects.filter(
+            ProjectRevision.objects.filter(
                 status=requested_status,
                 project__project_type=review_project_type(self.request.user),
             )
@@ -247,7 +247,7 @@ class PublicationReviewQueueView(OfficeHeadRequiredMixin, ListView):
             })
         counts = {
             item['status']: item['total']
-            for item in ProjectPublicationRevision.objects.filter(
+            for item in ProjectRevision.objects.filter(
                 project__project_type=review_project_type(self.request.user),
             ).values('status')
             .annotate(total=Count('pk'))
@@ -273,7 +273,7 @@ class PublicationReviewQueueView(OfficeHeadRequiredMixin, ListView):
 class PublicationRevisionDetailView(LoginRequiredMixin, DetailView):
     login_url = 'login'
     raise_exception = True
-    model = ProjectPublicationRevision
+    model = ProjectRevision
     pk_url_kwarg = 'revision_id'
     template_name = 'core/publication_revision_detail.html'
     context_object_name = 'revision'
@@ -289,12 +289,12 @@ class PublicationRevisionDetailView(LoginRequiredMixin, DetailView):
         return revision
 
     def get_queryset(self):
-        return ProjectPublicationRevision.objects.select_related(
+        return ProjectRevision.objects.select_related(
             'project',
             'submitted_by',
             'reviewed_by',
             'published_by',
-            'supersedes_revision',
+            'previous_revision',
         )
 
     def get_context_data(self, **kwargs):
@@ -306,7 +306,7 @@ class PublicationRevisionDetailView(LoginRequiredMixin, DetailView):
 class PublicationRevisionReviewView(OfficeHeadRequiredMixin, View):
     def post(self, request, revision_id):
         revision = get_object_or_404(
-            ProjectPublicationRevision,
+            ProjectRevision,
             pk=revision_id,
         )
         if not can_review_revision(request.user, revision):
@@ -357,7 +357,7 @@ class PublicationRevisionPublishView(OfficeHeadRequiredMixin, View):
 
     def post(self, request, revision_id):
         revision = get_object_or_404(
-            ProjectPublicationRevision,
+            ProjectRevision,
             pk=revision_id,
         )
         if not can_publish_revision(request.user, revision):

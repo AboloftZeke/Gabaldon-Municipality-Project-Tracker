@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Project, ProjectPublicationRevision, UserFlag
+from .models import Project, ProjectRevision, UserRole
 from .permissions import can_review_infrastructure, can_review_non_infrastructure
 from .publication_service import review_publication_revision
 
@@ -17,13 +17,13 @@ class OfficeReviewPermissionTests(TestCase):
         for office, project_type in [('engineer', 'infrastructure'), ('mayor', 'non_infrastructure')]:
             for role in ['staff', 'head']:
                 user = User.objects.create_user(f'{office}-{role}', is_staff=True)
-                UserFlag.objects.create(user=user, department=office, role=role)
+                UserRole.objects.create(user=user, department=office, role=role)
                 self.users[office, role] = user
             staff = self.users[office, 'staff']
             project = Project.objects.create(project_type=project_type, created_by_user=staff)
-            self.revisions[office] = ProjectPublicationRevision.objects.create(
+            self.revisions[office] = ProjectRevision.objects.create(
                 project=project, revision_number=1, status='pending_review', submitted_by=staff,
-                snapshot_data={
+                snapshot={
                     'project': {'type': project_type, 'creator': {'id': staff.pk}},
                     project_type: {'id': 1, 'title': f'{office} submission'},
                 },
@@ -42,10 +42,10 @@ class OfficeReviewPermissionTests(TestCase):
             ))
             self.assertContains(detail, 'Record Decision')
             self.assertNotContains(detail, 'Publish to Public Dashboard')
-            snapshot = deepcopy(revision.snapshot_data)
+            snapshot = deepcopy(revision.snapshot)
             for decision in ['approved', 'rejected', 'needs_revision']:
                 with self.subTest(office=office, decision=decision):
-                    ProjectPublicationRevision.objects.filter(pk=revision.pk).update(status='pending_review')
+                    ProjectRevision.objects.filter(pk=revision.pk).update(status='pending_review')
                     response = self.client.post(reverse('publication_revision_review', args=[revision.pk]), {
                         'decision': decision, 'notes': 'Office review notes',
                     })
@@ -54,8 +54,8 @@ class OfficeReviewPermissionTests(TestCase):
                     self.assertEqual(revision.status, decision)
                     self.assertEqual(revision.reviewed_by, head)
                     self.assertEqual(revision.review_notes, 'Office review notes')
-                    self.assertEqual(revision.snapshot_data, snapshot)
-                    self.assertFalse(revision.is_current_public_revision)
+                    self.assertEqual(revision.snapshot, snapshot)
+                    self.assertFalse(revision.is_current_public)
                     if decision == 'approved':
                         detail = self.client.get(reverse(
                             'publication_revision_detail',
@@ -70,7 +70,7 @@ class OfficeReviewPermissionTests(TestCase):
 
     def test_queue_rows_and_counts_are_scoped_for_each_status(self):
         other = self.revisions['mayor']
-        ProjectPublicationRevision.objects.create(project=other.project, revision_number=2, status='approved')
+        ProjectRevision.objects.create(project=other.project, revision_number=2, status='approved')
         for office in ['engineer', 'mayor']:
             self.client.force_login(self.users[office, 'head'])
             response = self.client.get(reverse('publication_review_queue'))
@@ -103,7 +103,7 @@ class OfficeReviewPermissionTests(TestCase):
     def test_self_review_after_promotion_is_denied_and_not_offered(self):
         for office, revision in self.revisions.items():
             submitter = self.users[office, 'staff']
-            UserFlag.objects.filter(user=submitter).update(role='head')
+            UserRole.objects.filter(user=submitter).update(role='head')
             self.client.force_login(submitter)
             detail = self.client.get(reverse('publication_revision_detail', args=[revision.pk]))
             self.assertEqual(detail.status_code, 200)
@@ -117,7 +117,7 @@ class OfficeReviewPermissionTests(TestCase):
     def test_service_uses_persisted_submitter_not_callers_stale_revision(self):
         revision = self.revisions['engineer']
         head = self.users['engineer', 'head']
-        ProjectPublicationRevision.objects.filter(pk=revision.pk).update(submitted_by=head)
+        ProjectRevision.objects.filter(pk=revision.pk).update(submitted_by=head)
         with self.assertRaises(PermissionDenied):
             review_publication_revision(revision, head, 'approved')
 
@@ -125,8 +125,8 @@ class OfficeReviewPermissionTests(TestCase):
         revision = self.revisions['engineer']
         creator = self.users['engineer', 'staff']
         head = self.users['engineer', 'head']
-        UserFlag.objects.filter(user=creator).update(role='head')
-        ProjectPublicationRevision.objects.filter(pk=revision.pk).update(submitted_by=head)
+        UserRole.objects.filter(user=creator).update(role='head')
+        ProjectRevision.objects.filter(pk=revision.pk).update(submitted_by=head)
         with self.assertRaises(PermissionDenied):
             review_publication_revision(revision, creator, 'approved')
 
@@ -145,15 +145,15 @@ class OfficeReviewPermissionTests(TestCase):
         revision = self.revisions['engineer']
         creator = self.users['engineer', 'staff']
         replacement = self.users['engineer', 'head']
-        UserFlag.objects.filter(user=creator).update(role='head')
+        UserRole.objects.filter(user=creator).update(role='head')
         Project.objects.filter(pk=revision.project_id).update(created_by_user=replacement)
-        ProjectPublicationRevision.objects.filter(pk=revision.pk).update(submitted_by=replacement)
+        ProjectRevision.objects.filter(pk=revision.pk).update(submitted_by=replacement)
         with self.assertRaises(PermissionDenied):
             review_publication_revision(revision, creator, 'approved')
 
     def test_heads_can_publish_but_admin_detail_is_read_only(self):
         revision = self.revisions['engineer']
-        snapshot = deepcopy(revision.snapshot_data)
+        snapshot = deepcopy(revision.snapshot)
         snapshot['infrastructure'].update({
             'award_status': 'awarded',
             'award_status_label': 'Awarded',
@@ -163,8 +163,8 @@ class OfficeReviewPermissionTests(TestCase):
             'project_type': 'infrastructure',
             'confirmed_by_user_id': self.users['engineer', 'head'].pk,
         }
-        revision.snapshot_data = snapshot
-        revision.save(update_fields=['snapshot_data'])
+        revision.snapshot = snapshot
+        revision.save(update_fields=['snapshot'])
         revision = review_publication_revision(revision, self.users['engineer', 'head'], 'approved')
         self.client.force_login(self.users['engineer', 'head'])
         detail = self.client.get(reverse('publication_revision_detail', args=[revision.pk]))
@@ -179,17 +179,17 @@ class OfficeReviewPermissionTests(TestCase):
 
     def test_seed_publish_uses_head_approval_and_publication(self):
         from .management.commands.seed_projects import Command
-        from .models import Infrastructure_Project
+        from .models import InfrastructureProject
 
         project = Project.objects.create(project_type='infrastructure', created_by_user=self.users['engineer', 'staff'])
-        Infrastructure_Project.objects.create(
+        InfrastructureProject.objects.create(
             project=project,
-            infrastructure_title='Seed verification',
+            title='Seed verification',
             award_status='ongoing_bidding',
             physical_progress_percentage=0,
         )
         Command()._publish_project(project, employee=self.users['engineer', 'staff'], admin=self.admin)
-        revision = project.publication_revisions.get()
+        revision = project.revisions.get()
         self.assertEqual(revision.status, 'published')
-        self.assertEqual(revision.reviewed_by.flags.role, 'head')
+        self.assertEqual(revision.reviewed_by.role_assignment.role, 'head')
         self.assertEqual(revision.published_by, revision.reviewed_by)

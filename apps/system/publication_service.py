@@ -7,7 +7,7 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
-from .models import Project, ProjectPublicationRevision
+from .models import Project, ProjectRevision
 from .publication_snapshots import (
     build_progress_update_snapshot,
     build_project_publication_snapshot,
@@ -47,7 +47,7 @@ def _synchronize_head_operational_snapshot(
     progress_update=None,
 ):
     """Copy only Head-owned values into an existing submitted snapshot."""
-    snapshot = deepcopy(revision.snapshot_data or {})
+    snapshot = deepcopy(revision.snapshot or {})
     current = build_project_publication_snapshot(project)
 
     if project.project_type == 'infrastructure':
@@ -90,12 +90,12 @@ def _synchronize_head_operational_snapshot(
         project,
         actor,
     )
-    revision.snapshot_data = snapshot
+    revision.snapshot = snapshot
     return revision
 
 
 def _missing_first_publication_requirements(revision):
-    snapshot = revision.snapshot_data or {}
+    snapshot = revision.snapshot or {}
     confirmation = snapshot.get(OPERATIONAL_CONFIRMATION_KEY) or {}
     confirmed = (
         confirmation.get('project_type') == revision.project.project_type
@@ -135,11 +135,11 @@ def _missing_first_publication_requirements(revision):
 
 def publication_readiness(revision):
     """Return the same first-publication readiness used by publishing."""
-    was_previously_published = revision.project.publication_revisions.filter(
+    was_previously_published = revision.project.revisions.filter(
         status__in=[PublicationStatus.PUBLISHED, PublicationStatus.ARCHIVED],
     ).exclude(pk=revision.pk).exists()
     is_first_publication = not was_previously_published
-    snapshot = revision.snapshot_data or {}
+    snapshot = revision.snapshot or {}
     confirmation = snapshot.get(OPERATIONAL_CONFIRMATION_KEY) or {}
     is_confirmed = (
         confirmation.get('project_type') == revision.project.project_type
@@ -195,7 +195,7 @@ def _require_head_operational_authority(project, actor):
 
 def _locked_revision(revision):
     revision_id = getattr(revision, 'pk', revision)
-    return ProjectPublicationRevision.objects.select_for_update().select_related(
+    return ProjectRevision.objects.select_for_update().select_related(
         'project',
     ).get(pk=revision_id)
 
@@ -203,7 +203,7 @@ def _locked_revision(revision):
 def _locked_project_revision(revision):
     """Lock in project-then-revision order for project-wide mutations."""
     revision_id = getattr(revision, 'pk', revision)
-    project_id = ProjectPublicationRevision.objects.only(
+    project_id = ProjectRevision.objects.only(
         'project_id',
     ).get(pk=revision_id).project_id
     Project.objects.select_for_update().get(pk=project_id)
@@ -212,7 +212,7 @@ def _locked_project_revision(revision):
 
 def revision_targets_current_public(revision, current_public):
     """Return whether a revision still replaces the public version it captured."""
-    return revision.supersedes_revision_id == getattr(current_public, 'pk', None)
+    return revision.previous_revision_id == getattr(current_public, 'pk', None)
 
 
 @transaction.atomic
@@ -223,7 +223,7 @@ def create_publication_draft(project, actor):
     locked_project = Project.objects.select_for_update().get(pk=project_id)
     _require_project_manager(locked_project, actor)
 
-    if locked_project.publication_revisions.filter(
+    if locked_project.revisions.filter(
         status__in=OPEN_REVISION_STATUSES,
     ).exists():
         raise ValidationError(
@@ -231,23 +231,23 @@ def create_publication_draft(project, actor):
         )
 
     latest_number = (
-        locked_project.publication_revisions.aggregate(
+        locked_project.revisions.aggregate(
             highest=Max('revision_number'),
         )['highest']
         or 0
     )
-    current_public = locked_project.publication_revisions.filter(
+    current_public = locked_project.revisions.filter(
         status=PublicationStatus.PUBLISHED,
-        is_current_public_revision=True,
+        is_current_public=True,
     ).first()
 
-    return ProjectPublicationRevision.objects.create(
+    return ProjectRevision.objects.create(
         project=locked_project,
         revision_number=latest_number + 1,
         status=PublicationStatus.DRAFT,
-        snapshot_data=build_project_publication_snapshot(locked_project),
+        snapshot=build_project_publication_snapshot(locked_project),
         source_updated_at=locked_project.updated_at,
-        supersedes_revision=current_public,
+        previous_revision=current_public,
     )
 
 
@@ -262,7 +262,7 @@ def submit_publication_revision(revision, actor):
         PublicationStatus.PENDING_REVIEW,
     )
 
-    locked_revision.snapshot_data = build_project_publication_snapshot(
+    locked_revision.snapshot = build_project_publication_snapshot(
         locked_revision.project,
     )
     locked_revision.source_updated_at = locked_revision.project.updated_at
@@ -273,7 +273,7 @@ def submit_publication_revision(revision, actor):
     locked_revision.reviewed_at = None
     locked_revision.review_notes = ''
     locked_revision.save(update_fields=[
-        'snapshot_data',
+        'snapshot',
         'source_updated_at',
         'status',
         'submitted_by',
@@ -346,10 +346,10 @@ def publish_publication_revision(revision, publisher):
     )
 
     current_public = (
-        ProjectPublicationRevision.objects.select_for_update().filter(
+        ProjectRevision.objects.select_for_update().filter(
             project_id=locked_revision.project_id,
             status=PublicationStatus.PUBLISHED,
-            is_current_public_revision=True,
+            is_current_public=True,
         )
         .exclude(pk=locked_revision.pk)
         .first()
@@ -365,22 +365,22 @@ def publish_publication_revision(revision, publisher):
     now = timezone.now()
     if current_public is not None:
         current_public.status = PublicationStatus.ARCHIVED
-        current_public.is_current_public_revision = False
+        current_public.is_current_public = False
         current_public.save(update_fields=[
             'status',
-            'is_current_public_revision',
+            'is_current_public',
             'updated_at',
         ])
 
     locked_revision.status = PublicationStatus.PUBLISHED
     locked_revision.published_by = publisher
     locked_revision.published_at = now
-    locked_revision.is_current_public_revision = True
+    locked_revision.is_current_public = True
     locked_revision.save(update_fields=[
         'status',
         'published_by',
         'published_at',
-        'is_current_public_revision',
+        'is_current_public',
         'updated_at',
     ])
     Project.objects.filter(pk=locked_revision.project_id).update(
@@ -398,13 +398,13 @@ def archive_publication_revision(revision, actor):
 def publication_state(project):
     """Return presentation-ready workflow state for an employee project page."""
     project_id = getattr(project, 'pk', project)
-    revisions = ProjectPublicationRevision.objects.filter(
+    revisions = ProjectRevision.objects.filter(
         project_id=project_id,
     ).order_by('-revision_number')
     active = revisions.filter(status__in=OPEN_REVISION_STATUSES).first()
     current_public = revisions.filter(
         status=PublicationStatus.PUBLISHED,
-        is_current_public_revision=True,
+        is_current_public=True,
     ).first()
     latest = revisions.first()
     displayed = active or latest
@@ -453,7 +453,7 @@ def submit_project_for_review(project, actor):
     locked_project = Project.objects.select_for_update().get(pk=project_id)
     _require_project_manager(locked_project, actor)
     active = (
-        locked_project.publication_revisions.select_for_update()
+        locked_project.revisions.select_for_update()
         .filter(status__in=OPEN_REVISION_STATUSES)
         .order_by('-revision_number')
         .first()
@@ -477,16 +477,16 @@ def create_head_operational_revision(project, actor, progress_update=None):
     _require_head_operational_authority(locked_project, actor)
 
     current_public = (
-        locked_project.publication_revisions.select_for_update()
+        locked_project.revisions.select_for_update()
         .filter(
             status=PublicationStatus.PUBLISHED,
-            is_current_public_revision=True,
+            is_current_public=True,
         )
         .first()
     )
     if current_public is None:
         active_revision = (
-            locked_project.publication_revisions.select_for_update()
+            locked_project.revisions.select_for_update()
             .filter(status__in=OPEN_REVISION_STATUSES)
             .order_by('-revision_number')
             .first()
@@ -498,10 +498,10 @@ def create_head_operational_revision(project, actor, progress_update=None):
                 actor,
                 progress_update=progress_update,
             )
-            active_revision.save(update_fields=['snapshot_data', 'updated_at'])
+            active_revision.save(update_fields=['snapshot', 'updated_at'])
         return None
 
-    if locked_project.publication_revisions.select_for_update().filter(
+    if locked_project.revisions.select_for_update().filter(
         status__in=OPEN_REVISION_STATUSES,
     ).exists():
         raise ValidationError(
@@ -510,19 +510,19 @@ def create_head_operational_revision(project, actor, progress_update=None):
         )
 
     latest_number = (
-        locked_project.publication_revisions.aggregate(
+        locked_project.revisions.aggregate(
             highest=Max('revision_number'),
         )['highest']
         or 0
     )
     now = timezone.now()
-    operational_revision = ProjectPublicationRevision(
+    operational_revision = ProjectRevision(
         project=locked_project,
         revision_number=latest_number + 1,
         status=PublicationStatus.APPROVED,
-        snapshot_data=deepcopy(current_public.snapshot_data or {}),
+        snapshot=deepcopy(current_public.snapshot or {}),
         source_updated_at=locked_project.updated_at,
-        supersedes_revision=current_public,
+        previous_revision=current_public,
         submitted_by=actor,
         submitted_at=now,
         reviewed_by=actor,

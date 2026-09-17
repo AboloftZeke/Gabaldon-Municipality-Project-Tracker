@@ -14,17 +14,16 @@ ACCOUNT_ROLE_CHOICES = tuple((key, value[2]) for key, value in ACCOUNT_ASSIGNMEN
 
 
 def account_assignment(user):
-    """Read persisted role for account editing; retain legacy missing-flag fallback."""
-    from .models import UserFlag
+    """Read persisted role for account editing; show missing assignments as unassigned."""
+    from .models import UserRole
 
     if user.is_superuser:
         return 'admin'
-    flag = UserFlag.objects.filter(user=user).first() if user.pk else None
+    flag = UserRole.objects.filter(user=user).first() if user.pk else None
     if flag:
         return next((key for key, pair in ACCOUNT_ASSIGNMENTS.items()
                      if pair[:2] == (flag.department, flag.role)), '')
-    department = getattr(getattr(user, 'profile', None), 'department', None)
-    return {'engineer': 'engineering', 'mayor': 'mayors', 'admin': 'admin'}.get(department, '')
+    return ''
 
 
 def account_role_label(value):
@@ -32,14 +31,13 @@ def account_role_label(value):
 
 
 def save_account_assignment(user, assignment):
-    from .models import UserFlag
+    from .models import UserRole
 
     department, role, _ = ACCOUNT_ASSIGNMENTS[assignment]
-    UserFlag.objects.update_or_create(
+    UserRole.objects.update_or_create(
         user=user, defaults={'department': department, 'role': role},
     )
-    user.__dict__.pop('_compat_profile', None)
-    user._state.fields_cache.pop('flags', None)
+    user._state.fields_cache.pop('role_assignment', None)
 
 
 class CustomUserCreationForm(forms.ModelForm):
@@ -82,12 +80,12 @@ class CustomUserCreationForm(forms.ModelForm):
 
         if commit:
             user.save()
-            # Save the user profile with the department
-            self._save_user_profile(user, role)
+            # Save the persisted office and role
+            self._save_user_role(user, role)
 
         return user
 
-    def _save_user_profile(self, user, role):
+    def _save_user_role(self, user, role):
         """Persist the selected department and responsibility together."""
         save_account_assignment(user, role)
 
@@ -137,12 +135,12 @@ class CustomUserChangeForm(forms.ModelForm):
 
         if commit:
             user.save()
-            # Save the user profile with the department
-            self._save_user_profile(user, role)
+            # Save the persisted office and role
+            self._save_user_role(user, role)
 
         return user
 
-    def _save_user_profile(self, user, role):
+    def _save_user_role(self, user, role):
         """Persist the selected department and responsibility together."""
         save_account_assignment(user, role)
 

@@ -247,7 +247,7 @@ def projects_geojson(request):
 @require_GET
 def project_photos(request, project_id):
     revision = current_public_revisions().filter(project_id=project_id).first()
-    photos = (revision.snapshot_data or {}).get("images", []) if revision else []
+    photos = (revision.snapshot or {}).get("images", []) if revision else []
     data = [{
         "id": photo.get("id"),
         "url": photo.get("url") or "",

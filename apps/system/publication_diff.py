@@ -68,12 +68,12 @@ def revision_comparison(revision):
     from .publication_workflow import PublicationStatus
 
     baseline = current_public_revisions().filter(project_id=revision.project_id).first()
-    previously_published = baseline is not None or revision.project.publication_revisions.filter(
+    previously_published = baseline is not None or revision.project.revisions.filter(
         status__in=[PublicationStatus.PUBLISHED, PublicationStatus.ARCHIVED],
     ).exists()
     result = compare_snapshots(
-        revision.snapshot_data,
-        baseline.snapshot_data if baseline is not None else None,
+        revision.snapshot,
+        baseline.snapshot if baseline is not None else None,
     )
     result.update({
         'baseline': baseline,

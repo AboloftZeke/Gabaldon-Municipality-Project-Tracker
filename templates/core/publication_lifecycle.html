@@ -6,7 +6,7 @@
 <h1>Publication Lifecycle</h1><p>Read-only publication history. Office Heads review and publish revisions. Historical revisions are archived automatically when replaced; this does not cancel or complete a project.</p>
 <div class="review-list">{% for revision in revisions %}
 
-<article class="revision-header"><div class="review-card__body"><a href="{% url 'publication_revision_detail' revision.pk %}">{% firstof revision.snapshot_data.infrastructure.title revision.snapshot_data.non_infrastructure.title "Project" %} · Revision {{ revision.revision_number }}</a><p>{{ revision.get_status_display }}</p></div></article>
+<article class="revision-header"><div class="review-card__body"><a href="{% url 'publication_revision_detail' revision.pk %}">{% firstof revision.snapshot.infrastructure.title revision.snapshot.non_infrastructure.title "Project" %} · Revision {{ revision.revision_number }}</a><p>{{ revision.get_status_display }}</p></div></article>
 
 {% empty %}<p>No approved, published or archived revisions.</p>{% endfor %}</div>
 {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}

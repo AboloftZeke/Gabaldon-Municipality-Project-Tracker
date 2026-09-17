@@ -3,14 +3,14 @@ from django.db.models import F
 from django.urls import reverse
 from django.views.generic import TemplateView, ListView
 
-from .models import ProjectPublicationRevision
+from .models import ProjectRevision
 from .permissions import review_project_type
 from .publication_service import publication_readiness
 from .publication_views import OfficeHeadRequiredMixin, SuperuserRequiredMixin
 
 
 def _revision_dashboard_item(revision, project_type, **extra):
-    snapshot = (revision.snapshot_data or {}).get(project_type) or {}
+    snapshot = (revision.snapshot or {}).get(project_type) or {}
     return {
         'revision': revision,
         'title': snapshot.get('title') or 'Untitled project',
@@ -38,13 +38,13 @@ class HeadDashboardView(OfficeHeadRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        revisions = ProjectPublicationRevision.objects.filter(
+        revisions = ProjectRevision.objects.filter(
             project__project_type=self.project_type,
         ).select_related(
             'project',
             'submitted_by',
             'reviewed_by',
-            'supersedes_revision',
+            'previous_revision',
         )
 
         pending_revisions = revisions.filter(
@@ -53,10 +53,10 @@ class HeadDashboardView(OfficeHeadRequiredMixin, TemplateView):
         operational_revisions = (
             revisions.filter(
                 status='approved',
-                supersedes_revision__isnull=False,
+                previous_revision__isnull=False,
                 submitted_by=F('reviewed_by'),
             )
-            .select_related('supersedes_revision')
+            .select_related('previous_revision')
             .order_by('-reviewed_at', '-pk')
         )
         operational_ids = operational_revisions.values_list('pk', flat=True)
@@ -125,7 +125,7 @@ class HeadDashboardView(OfficeHeadRequiredMixin, TemplateView):
         ]
         current_public = revisions.filter(
             status='published',
-            is_current_public_revision=True,
+            is_current_public=True,
         ).order_by('-published_at', '-pk')[:5]
         if self.project_type == 'infrastructure':
             context['published_operational_projects'] = [
@@ -142,7 +142,7 @@ class HeadDashboardView(OfficeHeadRequiredMixin, TemplateView):
                 }
                 for revision in current_public
                 if (snapshot := (
-                    revision.snapshot_data or {}
+                    revision.snapshot or {}
                 ).get('infrastructure') or {}).get('id')
             ]
             context['operational_action_label'] = 'Update Status & Progress'
@@ -161,7 +161,7 @@ class HeadDashboardView(OfficeHeadRequiredMixin, TemplateView):
                 }
                 for revision in current_public
                 if (snapshot := (
-                    revision.snapshot_data or {}
+                    revision.snapshot or {}
                 ).get('non_infrastructure') or {}).get('id')
             ]
             context['operational_action_label'] = 'Update Status'
@@ -177,6 +177,6 @@ class PublicationLifecycleView(SuperuserRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        return ProjectPublicationRevision.objects.filter(
+        return ProjectRevision.objects.filter(
             status__in=['approved', 'published', 'archived'],
         ).order_by('-created_at', '-pk')

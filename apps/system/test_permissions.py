@@ -4,7 +4,7 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Infrastructure_Project, Non_Infrastructure_Project, Project, UserFlag
+from .models import InfrastructureProject, NonInfrastructureProject, Project, UserRole
 from .permissions import (
     can_manage_infrastructure, can_manage_non_infrastructure,
     department_for_user, is_engineering_head, is_mayor_head,
@@ -17,16 +17,16 @@ class ProjectCapabilityTests(TestCase):
         for department in ['engineer', 'mayor']:
             for role in ['staff', 'head']:
                 user = User.objects.create_user(f'{department}-{role}', is_staff=True)
-                UserFlag.objects.create(user=user, department=department, role=role)
+                UserRole.objects.create(user=user, department=department, role=role)
                 self.accounts[department, role] = user
         self.admin = User.objects.create_superuser('admin', 'admin@example.com', 'password')
-        self.infra = Infrastructure_Project.objects.create(
+        self.infra = InfrastructureProject.objects.create(
             project=Project.objects.create(project_type='infrastructure', created_by_user=self.admin),
-            infrastructure_title='Permission test road',
+            title='Permission test road',
         )
-        self.noninfra = Non_Infrastructure_Project.objects.create(
+        self.noninfra = NonInfrastructureProject.objects.create(
             project=Project.objects.create(project_type='non_infrastructure', created_by_user=self.admin),
-            non_infra_name='Permission test program',
+            title='Permission test program',
         )
 
     def urls(self, department):
@@ -61,8 +61,8 @@ class ProjectCapabilityTests(TestCase):
                         self.assertEqual(self.client.get(url).status_code, 403)
                         self.assertEqual(self.client.post(url, {}).status_code, 403)
         self.assertEqual(Project.objects.count(), 2)
-        self.assertEqual(self.infra.project.publication_revisions.count(), 0)
-        self.assertEqual(self.noninfra.project.publication_revisions.count(), 0)
+        self.assertEqual(self.infra.project.revisions.count(), 0)
+        self.assertEqual(self.noninfra.project.revisions.count(), 0)
 
     def test_staff_reach_forms_and_can_delete_their_office_project(self):
         for department in ['engineer', 'mayor']:
@@ -102,7 +102,7 @@ class ProjectCapabilityTests(TestCase):
         user = self.accounts['engineer', 'staff']
         # Simulate legacy/corrupt data without disabling the database constraint.
         for pair in [('engineer', ''), ('engineer', 'admin'), ('mayor', None), ('admin', 'head'), ('', 'staff'), ('unknown', 'staff')]:
-            with self.subTest(pair=pair), patch('apps.system.permissions.UserFlag.objects.filter') as query:
+            with self.subTest(pair=pair), patch('apps.system.permissions.UserRole.objects.filter') as query:
                 query.return_value.values_list.return_value.first.return_value = pair
                 self.assertIsNone(department_for_user(user))
                 for helper in [can_manage_infrastructure, can_manage_non_infrastructure, is_engineering_head, is_mayor_head]:
@@ -110,9 +110,9 @@ class ProjectCapabilityTests(TestCase):
 
     def test_persisted_role_change_overrides_cached_profile_and_flag(self):
         user = self.accounts['engineer', 'staff']
-        self.assertEqual(user.flags.role, 'staff')
-        self.assertEqual(user.profile.department, 'engineer')
-        UserFlag.objects.filter(user=user).update(role='head')
+        self.assertEqual(user.role_assignment.role, 'staff')
+        self.assertEqual(user.role_assignment.department, 'engineer')
+        UserRole.objects.filter(user=user).update(role='head')
         self.assertFalse(can_manage_infrastructure(user))
         self.assertTrue(is_engineering_head(user))
 
@@ -129,12 +129,12 @@ class ProjectCapabilityTests(TestCase):
     def test_denied_payloads_leave_all_project_data_unchanged(self):
         from django.apps import apps
         from django.core.files.uploadedfile import SimpleUploadedFile
-        from .models import Project_Image
+        from .models import ProjectImage
 
-        image = Project_Image.objects.create(project=self.infra.project, image_url='/media/original.jpg', is_cover=True)
+        image = ProjectImage.objects.create(project=self.infra.project, image_url='/media/original.jpg', is_cover=True)
         # Include normalized fields, images, inspections, financials and revisions.
         models = [model for model in apps.get_app_config('system').get_models()
-                  if model._meta.managed and model not in [UserFlag]]
+                  if model._meta.managed and model not in [UserRole]]
         def snapshot():
             return {model._meta.label: list(model.objects.order_by(model._meta.pk.name).values()) for model in models}
 
@@ -147,7 +147,7 @@ class ProjectCapabilityTests(TestCase):
                 for action, url in self.urls(department).items():
                     with self.subTest(pair=pair, office=department, action=action):
                         response = self.client.post(url, {
-                            'title': 'Unauthorized change', 'non_infra_name': 'Unauthorized change',
+                            'title': 'Unauthorized change', 'title': 'Unauthorized change',
                             'status': 'completed', 'physical_progress_percentage': '100',
                             'images_to_delete': str(image.pk), 'cover_image_selection': 'new:0',
                             'project_images': SimpleUploadedFile('denied.jpg', b'image', content_type='image/jpeg'),
@@ -168,13 +168,13 @@ class ProjectCapabilityTests(TestCase):
 
     def test_internal_submission_services_reject_heads_and_cross_office(self):
         from django.core.exceptions import PermissionDenied
-        from .models import ProjectPublicationRevision
+        from .models import ProjectRevision
         from .publication_service import create_publication_draft, submit_publication_revision, submit_project_for_review
 
         for office, project in [('engineer', self.infra.project), ('mayor', self.noninfra.project)]:
             staff = self.accounts[office, 'staff']
             draft = create_publication_draft(project, staff)
-            before = list(ProjectPublicationRevision.objects.values())
+            before = list(ProjectRevision.objects.values())
             for pair, actor in self.accounts.items():
                 if pair == (office, 'staff'):
                     continue
@@ -185,7 +185,7 @@ class ProjectCapabilityTests(TestCase):
                 ]:
                     with self.subTest(office=office, actor=pair), self.assertRaises(PermissionDenied):
                         call()
-                    self.assertEqual(list(ProjectPublicationRevision.objects.values()), before)
+                    self.assertEqual(list(ProjectRevision.objects.values()), before)
             self.client.force_login(staff)
             self.assertEqual(self.client.post(self.urls(office)['submit_for_review']).status_code, 302)
             draft.refresh_from_db()
@@ -228,21 +228,21 @@ class ProjectCapabilityTests(TestCase):
         infra_data = fixture.valid_data()
         category = NonInfrastructureCategory.objects.create(type_code='phase7', type_name='Phase 7')
         noninfra_data = {
-            'non_infra_name': 'Staff program', 'description': 'Community event',
-            'non_infra_category': category.pk, 'status': 'planned',
+            'title': 'Staff program', 'description': 'Community event',
+            'category': category.pk, 'status': 'planned',
             'proponent': 'Mayor Office', 'beneficiaries': '10', 'event_date': '2026-09-01',
             'start_time': '08:00', 'end_time': '09:00', 'venue_name': 'Plaza', 'barangay': 'bagting',
         }
         for office, data, model, title_field in [
-            ('engineer', infra_data, Infrastructure_Project, 'infrastructure_title'),
-            ('mayor', noninfra_data, Non_Infrastructure_Project, 'non_infra_name'),
+            ('engineer', infra_data, InfrastructureProject, 'title'),
+            ('mayor', noninfra_data, NonInfrastructureProject, 'title'),
         ]:
             self.client.force_login(self.accounts[office, 'staff'])
             response = self.client.post(self.urls(office)['create'], data)
             self.assertEqual(response.status_code, 302, getattr(response, 'context', None))
             record = model.objects.order_by('-pk').first()
             self.assertEqual(record.project.created_by_user, self.accounts[office, 'staff'])
-            payload_title = 'title' if office == 'engineer' else 'non_infra_name'
+            payload_title = 'title' if office == 'engineer' else 'title'
             data[payload_title] = 'Updated by Staff'
             prefix = 'engineering_projects:project' if office == 'engineer' else 'mayor_projects:non_infrastructure_project'
             response = self.client.post(reverse(prefix + '_update', args=[record.pk]), data)
@@ -258,8 +258,8 @@ class ProjectCapabilityTests(TestCase):
         project.project_type = 'non_infrastructure'  # Caller-supplied stale object.
         with self.assertRaises(PermissionDenied):
             create_publication_draft(project, self.accounts['mayor', 'staff'])
-        self.assertEqual(staff.flags.role, 'staff')
-        UserFlag.objects.filter(user=staff).update(role='head')
+        self.assertEqual(staff.role_assignment.role, 'staff')
+        UserRole.objects.filter(user=staff).update(role='head')
         with self.assertRaises(PermissionDenied):
             submit_project_for_review(project, staff)
         revision = submit_project_for_review(project, self.admin)

@@ -3,13 +3,13 @@ import os
 from django import forms
 from django.core.files.storage import default_storage
 
-from apps.non_infrastructure.models import NonInfrastructureProject as LegacyNonInfrastructureProject
+from apps.system.choices import BARANGAY_CHOICES
 from apps.system.models import (
     Address,
     NonInfrastructureCategory,
-    Non_Infrastructure_Project,
+    NonInfrastructureProject,
     Project,
-    Project_Image,
+    ProjectImage,
 )
 from apps.system.publication_images import retire_project_images
 
@@ -46,9 +46,9 @@ NON_INFRA_CATEGORY_DEFAULTS = [
 
 
 class NonInfrastructureProjectForm(forms.Form):
-    non_infra_name = forms.CharField(required=True, max_length=255)
+    title = forms.CharField(required=True, max_length=255)
     description = forms.CharField(required=True, widget=forms.Textarea(attrs={'rows': 4}), max_length=2000)
-    non_infra_category = forms.ModelChoiceField(
+    category = forms.ModelChoiceField(
         queryset=NonInfrastructureCategory.objects.none(),
         required=True,
         empty_label='Select Category',
@@ -63,7 +63,7 @@ class NonInfrastructureProjectForm(forms.Form):
     street = forms.CharField(required=False, max_length=500)
     barangay = forms.ChoiceField(
         required=True,
-        choices=[('', 'Select Barangay')] + list(LegacyNonInfrastructureProject.LOCATION_CHOICES),
+        choices=[('', 'Select Barangay')] + list(BARANGAY_CHOICES),
         widget=forms.Select,
     )
     municipality = forms.CharField(
@@ -98,7 +98,7 @@ class NonInfrastructureProjectForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         self._ensure_categories_exist()
-        self.fields['non_infra_category'].queryset = NonInfrastructureCategory.objects.all().order_by('type_name')
+        self.fields['category'].queryset = NonInfrastructureCategory.objects.all().order_by('type_name')
 
         self.fields['municipality'].initial = 'Gabaldon'
         self.fields['province'].initial = 'Nueva Ecija'
@@ -119,9 +119,9 @@ class NonInfrastructureProjectForm(forms.Form):
                     self.fields['cover_image_selection'].initial = (
                         f'existing:{existing_cover.pk}'
                     )
-                self.fields['non_infra_name'].initial = normalized.non_infra_name
+                self.fields['title'].initial = normalized.title
                 self.fields['description'].initial = normalized.description
-                self.fields['non_infra_category'].initial = normalized.non_infra_category_id
+                self.fields['category'].initial = normalized.category_id
                 self.fields['proponent'].initial = normalized.proponent
                 self.fields['beneficiaries'].initial = normalized.beneficiaries
                 self.fields['event_date'].initial = normalized.event_date
@@ -163,17 +163,7 @@ class NonInfrastructureProjectForm(forms.Form):
 
     @staticmethod
     def _resolve_instance(instance):
-        if isinstance(instance, Non_Infrastructure_Project):
-            return instance
-        non_infra_id = getattr(instance, 'non_infra_id', None)
-        if non_infra_id is None:
-            return None
-        return (
-            Non_Infrastructure_Project.objects
-            .select_related('project', 'address', 'non_infra_category')
-            .filter(non_infra_id=non_infra_id)
-            .first()
-        )
+        return instance if isinstance(instance, NonInfrastructureProject) else None
 
     def _save_images(self, project):
 
@@ -223,7 +213,7 @@ class NonInfrastructureProjectForm(forms.Form):
             file_url = default_storage.url(filename)
 
             saved_images.append(
-                Project_Image.objects.create(
+                ProjectImage.objects.create(
                     project=project,
                     image_url=file_url,
                 )
@@ -266,20 +256,20 @@ class NonInfrastructureProjectForm(forms.Form):
                     created_by_user=user,
                     updated_by_user=user,
                 )
-                non = Non_Infrastructure_Project.objects.create(project=project)
+                non = NonInfrastructureProject.objects.create(project=project)
         else:
             project = Project.objects.create(
                 project_type='non_infrastructure',
                 created_by_user=user,
                 updated_by_user=user,
             )
-            non = Non_Infrastructure_Project.objects.filter(project=project).first()
+            non = NonInfrastructureProject.objects.filter(project=project).first()
             if non is None:
-                non = Non_Infrastructure_Project(project=project)
+                non = NonInfrastructureProject(project=project)
 
-        non.non_infra_name = data.get('non_infra_name') or non.non_infra_name
+        non.title = data.get('title') or non.title
         non.description = data.get('description') or ''
-        non.non_infra_category = data.get('non_infra_category')
+        non.category = data.get('category')
         non.proponent = data.get('proponent') or ''
         non.beneficiaries = data.get('beneficiaries')
         non.event_date = data.get('event_date')
@@ -318,5 +308,5 @@ class NonInfrastructureProjectForm(forms.Form):
 
 class NonInfrastructureOperationalForm(forms.ModelForm):
     class Meta:
-        model = Non_Infrastructure_Project
+        model = NonInfrastructureProject
         fields = ['status']

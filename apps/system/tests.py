@@ -1,11 +1,10 @@
+from .permissions import department_for_user as _department_for_user
 import json
-import importlib
 import re
 from datetime import date, time, timedelta
 from decimal import Decimal
 from unittest.mock import patch
 
-from django.apps import apps as django_apps
 from django.test import TestCase, override_settings
 from django.core import mail
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -18,21 +17,20 @@ from .account_setup import AccountSetupDeliveryError
 from .models import (
     Address,
     Contractor,
-    Financial,
+    FinancialRecord,
     FundSource,
     ImplementingOffice,
     InfrastructureCategory,
-    Infrastructure_Schedule,
-    Infrastructure_Project,
+    InfrastructureSchedule,
+    InfrastructureProject,
     LoginOTPChallenge,
     NonInfrastructureCategory,
-    Non_Infrastructure_Project,
+    NonInfrastructureProject,
     Project,
-    Project_Image,
-    Project_Inspection,
-    ProjectPublicationRevision,
-    UserFlag,
-    UserProfile,
+    ProjectImage,
+    ProjectInspection,
+    ProjectRevision,
+    UserRole,
 )
 from .publication_workflow import (
     PublicationStatus,
@@ -56,13 +54,13 @@ from .publication_service import (
 def publish_current_snapshot(project):
     # Reload so model date/time fields assigned as test strings are normalized.
     project = Project.objects.get(pk=project.pk)
-    return ProjectPublicationRevision.objects.create(
+    return ProjectRevision.objects.create(
         project=project,
         revision_number=1,
         status=PublicationStatus.PUBLISHED,
-        snapshot_data=build_project_publication_snapshot(project),
+        snapshot=build_project_publication_snapshot(project),
         source_updated_at=project.updated_at,
-        is_current_public_revision=True,
+        is_current_public=True,
     )
 
 
@@ -114,7 +112,7 @@ class PublicationWorkflowTests(TestCase):
             validate_publication_transition('draft', 'unknown')
 
 
-class ProjectPublicationRevisionModelTests(TestCase):
+class ProjectRevisionModelTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='publication-reviewer',
@@ -127,73 +125,73 @@ class ProjectPublicationRevisionModelTests(TestCase):
         )
 
     def test_revision_stores_snapshot_and_defaults_to_draft(self):
-        revision = ProjectPublicationRevision.objects.create(
+        revision = ProjectRevision.objects.create(
             project=self.project,
             revision_number=1,
-            snapshot_data={'title': 'Barangay Road Project'},
+            snapshot={'title': 'Barangay Road Project'},
         )
 
         self.assertEqual(revision.status, PublicationStatus.DRAFT)
         self.assertEqual(
-            revision.snapshot_data,
+            revision.snapshot,
             {'title': 'Barangay Road Project'},
         )
-        self.assertFalse(revision.is_current_public_revision)
+        self.assertFalse(revision.is_current_public)
         self.assertEqual(
             str(revision),
             f'Project {self.project.pk} publication revision 1',
         )
 
     def test_revision_number_is_unique_within_project(self):
-        ProjectPublicationRevision.objects.create(
+        ProjectRevision.objects.create(
             project=self.project,
             revision_number=1,
         )
 
         with self.assertRaises(IntegrityError), transaction.atomic():
-            ProjectPublicationRevision.objects.create(
+            ProjectRevision.objects.create(
                 project=self.project,
                 revision_number=1,
             )
 
     def test_project_can_have_only_one_current_public_revision(self):
-        first_revision = ProjectPublicationRevision.objects.create(
+        first_revision = ProjectRevision.objects.create(
             project=self.project,
             revision_number=1,
             status=PublicationStatus.PUBLISHED,
-            is_current_public_revision=True,
+            is_current_public=True,
         )
 
         with self.assertRaises(IntegrityError), transaction.atomic():
-            ProjectPublicationRevision.objects.create(
+            ProjectRevision.objects.create(
                 project=self.project,
                 revision_number=2,
                 status=PublicationStatus.PUBLISHED,
-                is_current_public_revision=True,
-                supersedes_revision=first_revision,
+                is_current_public=True,
+                previous_revision=first_revision,
             )
 
     def test_current_public_revision_must_be_published(self):
         with self.assertRaises(IntegrityError), transaction.atomic():
-            ProjectPublicationRevision.objects.create(
+            ProjectRevision.objects.create(
                 project=self.project,
                 revision_number=1,
                 status=PublicationStatus.DRAFT,
-                is_current_public_revision=True,
+                is_current_public=True,
             )
 
     def test_revision_can_reference_the_version_it_supersedes(self):
-        first_revision = ProjectPublicationRevision.objects.create(
+        first_revision = ProjectRevision.objects.create(
             project=self.project,
             revision_number=1,
         )
-        second_revision = ProjectPublicationRevision.objects.create(
+        second_revision = ProjectRevision.objects.create(
             project=self.project,
             revision_number=2,
-            supersedes_revision=first_revision,
+            previous_revision=first_revision,
         )
 
-        self.assertEqual(second_revision.supersedes_revision, first_revision)
+        self.assertEqual(second_revision.previous_revision, first_revision)
         self.assertIn(
             second_revision,
             first_revision.superseded_by_revisions.all(),
@@ -203,12 +201,12 @@ class ProjectPublicationRevisionModelTests(TestCase):
 class PublicationServiceTests(TestCase):
     def setUp(self):
         self.head = User.objects.create_user(username='review-head', is_staff=True)
-        UserFlag.objects.create(user=self.head, department='engineer', role='head')
+        UserRole.objects.create(user=self.head, department='engineer', role='head')
         self.employee = User.objects.create_user(
             username='publication-employee',
             password='password123',
         )
-        UserFlag.objects.create(user=self.employee, department='engineer', role='staff')
+        UserRole.objects.create(user=self.employee, department='engineer', role='staff')
         self.admin = User.objects.create_superuser(
             username='publication-admin',
             email='admin@example.com',
@@ -219,15 +217,15 @@ class PublicationServiceTests(TestCase):
             created_by_user=self.employee,
             updated_by_user=self.employee,
         )
-        self.infrastructure = Infrastructure_Project.objects.create(
+        self.infrastructure = InfrastructureProject.objects.create(
             project=self.project,
-            infrastructure_title='Working Project Title',
+            title='Working Project Title',
             award_status='awarded',
         )
 
     def _approve_and_publish(self, revision):
         submitted = submit_publication_revision(revision, self.employee)
-        if not self.project.publication_revisions.filter(
+        if not self.project.revisions.filter(
             status__in=[
                 PublicationStatus.PUBLISHED,
                 PublicationStatus.ARCHIVED,
@@ -250,8 +248,8 @@ class PublicationServiceTests(TestCase):
 
     def test_full_workflow_publishes_submitted_snapshot(self):
         draft = create_publication_draft(self.project, self.employee)
-        self.infrastructure.infrastructure_title = 'Submitted Project Title'
-        self.infrastructure.save(update_fields=['infrastructure_title'])
+        self.infrastructure.title = 'Submitted Project Title'
+        self.infrastructure.save(update_fields=['title'])
 
         submitted = submit_publication_revision(draft, self.employee)
         self._confirm_initial_operations()
@@ -263,10 +261,10 @@ class PublicationServiceTests(TestCase):
         published = publish_publication_revision(approved, self.head)
 
         self.assertEqual(published.status, PublicationStatus.PUBLISHED)
-        self.assertTrue(published.is_current_public_revision)
+        self.assertTrue(published.is_current_public)
         self.assertEqual(published.published_by, self.head)
         self.assertEqual(
-            published.snapshot_data['infrastructure']['title'],
+            published.snapshot['infrastructure']['title'],
             'Submitted Project Title',
         )
         self.project.refresh_from_db()
@@ -277,22 +275,22 @@ class PublicationServiceTests(TestCase):
         first = self._approve_and_publish(
             create_publication_draft(self.project, self.employee),
         )
-        self.infrastructure.infrastructure_title = 'Approved Revision Two'
-        self.infrastructure.save(update_fields=['infrastructure_title'])
+        self.infrastructure.title = 'Approved Revision Two'
+        self.infrastructure.save(update_fields=['title'])
         second_draft = create_publication_draft(self.project, self.employee)
 
         self.assertEqual(second_draft.revision_number, 2)
-        self.assertEqual(second_draft.supersedes_revision, first)
+        self.assertEqual(second_draft.previous_revision, first)
         second = self._approve_and_publish(second_draft)
 
         first.refresh_from_db()
         self.assertEqual(first.status, PublicationStatus.ARCHIVED)
-        self.assertFalse(first.is_current_public_revision)
-        self.assertTrue(second.is_current_public_revision)
+        self.assertFalse(first.is_current_public)
+        self.assertTrue(second.is_current_public)
         self.assertEqual(
-            ProjectPublicationRevision.objects.filter(
+            ProjectRevision.objects.filter(
                 project=self.project,
-                is_current_public_revision=True,
+                is_current_public=True,
             ).count(),
             1,
         )
@@ -321,14 +319,14 @@ class PublicationServiceTests(TestCase):
             PublicationStatus.NEEDS_REVISION,
             notes='Clarify the public project title.',
         )
-        self.infrastructure.infrastructure_title = 'Corrected Public Title'
-        self.infrastructure.save(update_fields=['infrastructure_title'])
+        self.infrastructure.title = 'Corrected Public Title'
+        self.infrastructure.save(update_fields=['title'])
         resubmitted = submit_publication_revision(returned, self.employee)
 
         self.assertEqual(resubmitted.status, PublicationStatus.PENDING_REVIEW)
         self.assertEqual(resubmitted.review_notes, '')
         self.assertEqual(
-            resubmitted.snapshot_data['infrastructure']['title'],
+            resubmitted.snapshot['infrastructure']['title'],
             'Corrected Public Title',
         )
 
@@ -347,26 +345,26 @@ class PublicationServiceTests(TestCase):
         with self.assertRaises(PermissionDenied):
             archive_publication_revision(published, self.admin)
         published.refresh_from_db()
-        self.assertTrue(published.is_current_public_revision)
+        self.assertTrue(published.is_current_public)
 
 
 
 class EmployeePublicationWorkflowViewTests(TestCase):
     def setUp(self):
         self.head = User.objects.create_user(username='review-head', is_staff=True)
-        UserFlag.objects.create(user=self.head, department='engineer', role='head')
+        UserRole.objects.create(user=self.head, department='engineer', role='head')
         self.engineer = User.objects.create_user(
             username='workflow-engineer',
             password='password123',
             is_staff=True,
         )
-        UserFlag.objects.create(user=self.engineer, department='engineer')
+        UserRole.objects.create(user=self.engineer, department='engineer')
         self.mayor_user = User.objects.create_user(
             username='workflow-mayor',
             password='password123',
             is_staff=True,
         )
-        UserFlag.objects.create(user=self.mayor_user, department='mayor')
+        UserRole.objects.create(user=self.mayor_user, department='mayor')
         self.admin = User.objects.create_superuser(
             username='workflow-admin',
             email='workflow-admin@example.com',
@@ -377,18 +375,18 @@ class EmployeePublicationWorkflowViewTests(TestCase):
             project_type='infrastructure',
             created_by_user=self.engineer,
         )
-        self.infrastructure = Infrastructure_Project.objects.create(
+        self.infrastructure = InfrastructureProject.objects.create(
             project=infra_base,
-            infrastructure_title='Employee Submission Road',
+            title='Employee Submission Road',
             award_status='awarded',
         )
         noninfra_base = Project.objects.create(
             project_type='non_infrastructure',
             created_by_user=self.mayor_user,
         )
-        self.non_infrastructure = Non_Infrastructure_Project.objects.create(
+        self.non_infrastructure = NonInfrastructureProject.objects.create(
             project=noninfra_base,
-            non_infra_name='Employee Submission Program',
+            title='Employee Submission Program',
             status='planned',
         )
 
@@ -410,7 +408,7 @@ class EmployeePublicationWorkflowViewTests(TestCase):
 
         response = self.client.post(submit_url)
         self.assertRedirects(response, detail_url)
-        revision = ProjectPublicationRevision.objects.get(
+        revision = ProjectRevision.objects.get(
             project=self.infrastructure.project,
         )
         self.assertEqual(revision.status, PublicationStatus.PENDING_REVIEW)
@@ -459,12 +457,12 @@ class EmployeePublicationWorkflowViewTests(TestCase):
         response = self.client.post(submit_url)
 
         self.assertRedirects(response, detail_url)
-        revision = ProjectPublicationRevision.objects.get(
+        revision = ProjectRevision.objects.get(
             project=self.non_infrastructure.project,
         )
         self.assertEqual(revision.status, PublicationStatus.PENDING_REVIEW)
         self.assertEqual(
-            revision.snapshot_data['non_infrastructure']['title'],
+            revision.snapshot['non_infrastructure']['title'],
             'Employee Submission Program',
         )
         delete_response = self.client.post(reverse(
@@ -495,13 +493,13 @@ class EmployeePublicationWorkflowViewTests(TestCase):
 class OfficeHeadPublicationReviewViewTests(TestCase):
     def setUp(self):
         self.head = User.objects.create_user(username='review-head', is_staff=True)
-        UserFlag.objects.create(user=self.head, department='engineer', role='head')
+        UserRole.objects.create(user=self.head, department='engineer', role='head')
         self.employee = User.objects.create_user(
             username='review-queue-employee',
             password='password123',
             is_staff=True,
         )
-        UserFlag.objects.create(user=self.employee, department='engineer')
+        UserRole.objects.create(user=self.employee, department='engineer')
         self.admin = User.objects.create_superuser(
             username='review-queue-admin',
             email='review-queue-admin@example.com',
@@ -511,13 +509,13 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
             project_type='infrastructure',
             created_by_user=self.employee,
         )
-        self.infrastructure = Infrastructure_Project.objects.create(
+        self.infrastructure = InfrastructureProject.objects.create(
             project=project,
-            infrastructure_title='Submitted Admin Preview Project',
-            infrastructure_description='Snapshot reviewed by the administrator.',
+            title='Submitted Admin Preview Project',
+            description='Snapshot reviewed by the administrator.',
             award_status='awarded',
         )
-        Project_Image.objects.create(
+        ProjectImage.objects.create(
             project=project,
             image_url='/media/projects/admin-review-cover.jpg',
             is_cover=True,
@@ -525,8 +523,8 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
         self.revision = submit_project_for_review(project, self.employee)
 
     def test_head_queue_and_detail_show_submitted_snapshot(self):
-        self.infrastructure.infrastructure_title = 'Later Working Copy Edit'
-        self.infrastructure.save(update_fields=['infrastructure_title'])
+        self.infrastructure.title = 'Later Working Copy Edit'
+        self.infrastructure.save(update_fields=['title'])
         self.client.force_login(self.head)
 
         queue = self.client.get(reverse('publication_review_queue'))
@@ -542,7 +540,7 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
         self.assertContains(queue, 'Pending Review')
         self.assertContains(dashboard, 'Publication Lifecycle')
         self.assertEqual(
-            dashboard.context['approved_publication_revisions'],
+            dashboard.context['approved_revisions'],
             0,
         )
         self.assertContains(detail, 'Submitted Admin Preview Project')
@@ -686,14 +684,14 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
         self.client.post(publish_url)
         self.revision.refresh_from_db()
         self.assertEqual(self.revision.status, PublicationStatus.PUBLISHED)
-        self.assertTrue(self.revision.is_current_public_revision)
+        self.assertTrue(self.revision.is_current_public)
         public = self.client.get(reverse('public_dashboard'))
         self.assertContains(public, 'Submitted Admin Preview Project')
 
         self.assertEqual(self.client.post(archive_url).status_code, 403)
         self.revision.refresh_from_db()
         self.assertEqual(self.revision.status, PublicationStatus.PUBLISHED)
-        self.assertTrue(self.revision.is_current_public_revision)
+        self.assertTrue(self.revision.is_current_public)
         public = self.client.get(reverse('public_dashboard'))
         self.assertContains(public, 'Submitted Admin Preview Project')
 
@@ -710,13 +708,13 @@ class RoleDashboardAccessTests(TestCase):
             password='password123',
             is_staff=True,
         )
-        UserFlag.objects.create(user=self.engineer, department='engineer')
+        UserRole.objects.create(user=self.engineer, department='engineer')
         self.mayor = User.objects.create_user(
             username='dashboard-access-mayor',
             password='password123',
             is_staff=True,
         )
-        UserFlag.objects.create(user=self.mayor, department='mayor')
+        UserRole.objects.create(user=self.mayor, department='mayor')
 
     def test_superuser_can_follow_working_project_navigation(self):
         self.client.force_login(self.admin)
@@ -785,11 +783,11 @@ class ProjectPublicationSnapshotTests(TestCase):
         office = ImplementingOffice.objects.create(
             office_name='Municipal Engineering Office',
         )
-        infrastructure = Infrastructure_Project.objects.create(
+        infrastructure = InfrastructureProject.objects.create(
             project=project,
             infrastructure_code='INF-001',
-            infrastructure_title='Barangay Road Rehabilitation',
-            infrastructure_description='Rehabilitation description.',
+            title='Barangay Road Rehabilitation',
+            description='Rehabilitation description.',
             category=category,
             address=address,
             contractor=contractor,
@@ -806,32 +804,32 @@ class ProjectPublicationSnapshotTests(TestCase):
             fund_source_name='Local Development Fund',
             fund_percentage=Decimal('20.00'),
         )
-        Financial.objects.create(
+        FinancialRecord.objects.create(
             infrastructure=infrastructure,
             fund_source=fund_source,
             approved_budget=Decimal('2500000.00'),
             bid_amount=Decimal('2400000.00'),
             actual_expenditure=Decimal('500000.00'),
         )
-        Infrastructure_Schedule.objects.create(
+        InfrastructureSchedule.objects.create(
             infrastructure=infrastructure,
             posting_date=date(2025, 12, 1),
             actual_start_date=date(2026, 1, 20),
             duration_days=180,
         )
-        Project_Inspection.objects.create(
+        ProjectInspection.objects.create(
             project=project,
             inspection_date=date(2026, 4, 15),
             inspected_by_user=self.user,
             completion_percentage=Decimal('55.25'),
             findings='Work is on schedule.',
         )
-        Project_Image.objects.create(
+        ProjectImage.objects.create(
             project=project,
             image_url='/media/projects/road-cover.jpg',
             is_cover=True,
         )
-        Project_Image.objects.create(
+        ProjectImage.objects.create(
             project=project,
             image_url='/media/projects/road-progress.jpg',
         )
@@ -882,10 +880,10 @@ class ProjectPublicationSnapshotTests(TestCase):
             municipality='Gabaldon',
             province='Nueva Ecija',
         )
-        non_infrastructure = Non_Infrastructure_Project.objects.create(
+        non_infrastructure = NonInfrastructureProject.objects.create(
             project=project,
-            non_infra_name='Community Health Day',
-            non_infra_category=category,
+            title='Community Health Day',
+            category=category,
             status='planned',
             description='Free health services.',
             proponent='Municipal Health Office',
@@ -896,7 +894,7 @@ class ProjectPublicationSnapshotTests(TestCase):
             venue_name='Municipal Gymnasium',
             address=address,
         )
-        Project_Image.objects.create(
+        ProjectImage.objects.create(
             project=project,
             image_url='/media/projects/health-cover.jpg',
             is_cover=True,
@@ -929,189 +927,25 @@ class ProjectPublicationSnapshotTests(TestCase):
             build_project_publication_snapshot(project)
 
 
-class ProjectPublicationBackfillMigrationTests(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.migration = importlib.import_module(
-            'apps.system.migrations.0027_backfill_published_revisions',
-        )
-
-    def test_backfills_complete_current_revisions_for_existing_projects(self):
-        author = User.objects.create_user(
-            username='existing-author',
-            first_name='Existing',
-            last_name='Author',
-        )
-        infrastructure_project = Project.objects.create(
-            project_type='infrastructure',
-            created_by_user=author,
-        )
-        infrastructure = Infrastructure_Project.objects.create(
-            project=infrastructure_project,
-            infrastructure_title='Existing Road Project',
-            procurement_method='competitive_bidding',
-            award_status='awarded',
-        )
-        Financial.objects.create(
-            infrastructure=infrastructure,
-            approved_budget=Decimal('1000000.00'),
-        )
-        Project_Image.objects.create(
-            project=infrastructure_project,
-            image_url='/media/projects/existing-road.jpg',
-            is_cover=True,
-        )
-
-        non_infrastructure_project = Project.objects.create(
-            project_type='non_infrastructure',
-            created_by_user=author,
-        )
-        non_infrastructure = Non_Infrastructure_Project.objects.create(
-            project=non_infrastructure_project,
-            non_infra_name='Existing Community Program',
-            status='ongoing',
-        )
-
-        self.migration.backfill_published_revisions(django_apps, None)
-
-        infrastructure_revision = ProjectPublicationRevision.objects.get(
-            project=infrastructure_project,
-        )
-        self.assertEqual(infrastructure_revision.status, 'published')
-        self.assertTrue(infrastructure_revision.is_current_public_revision)
-        self.assertEqual(
-            infrastructure_revision.snapshot_data['infrastructure']['title'],
-            'Existing Road Project',
-        )
-        self.assertEqual(
-            infrastructure_revision.snapshot_data['financial'][
-                'approved_budget'
-            ],
-            '1000000.00',
-        )
-        self.assertEqual(
-            infrastructure_revision.snapshot_data['project'][
-                'cover_image_url'
-            ],
-            '/media/projects/existing-road.jpg',
-        )
-
-        non_infrastructure_revision = ProjectPublicationRevision.objects.get(
-            project=non_infrastructure_project,
-        )
-        self.assertEqual(
-            non_infrastructure_revision.snapshot_data[
-                'non_infrastructure'
-            ]['status_label'],
-            'Ongoing',
-        )
-        infrastructure_project.refresh_from_db()
-        non_infrastructure_project.refresh_from_db()
-        self.assertTrue(infrastructure_project.is_published)
-        self.assertTrue(infrastructure_project.is_visible_to_public)
-        self.assertTrue(non_infrastructure_project.is_published)
-        self.assertTrue(non_infrastructure_project.is_visible_to_public)
-
-    def test_is_idempotent_and_preserves_existing_workflow_revisions(self):
-        existing_project = Project.objects.create(
-            project_type='infrastructure',
-        )
-        Infrastructure_Project.objects.create(
-            project=existing_project,
-            infrastructure_title='Already in Workflow',
-        )
-        existing_revision = ProjectPublicationRevision.objects.create(
-            project=existing_project,
-            revision_number=1,
-            status='draft',
-            snapshot_data={'existing': True},
-        )
-        backfill_project = Project.objects.create(
-            project_type='non_infrastructure',
-        )
-        Non_Infrastructure_Project.objects.create(
-            project=backfill_project,
-            non_infra_name='Needs Backfill',
-        )
-
-        self.migration.backfill_published_revisions(django_apps, None)
-        self.migration.backfill_published_revisions(django_apps, None)
-
-        self.assertEqual(
-            ProjectPublicationRevision.objects.filter(
-                project=existing_project,
-            ).count(),
-            1,
-        )
-        existing_revision.refresh_from_db()
-        self.assertEqual(existing_revision.snapshot_data, {'existing': True})
-        self.assertEqual(
-            ProjectPublicationRevision.objects.filter(
-                project=backfill_project,
-            ).count(),
-            1,
-        )
-
-    def test_reverse_removes_only_generated_revisions(self):
-        backfill_project = Project.objects.create(
-            project_type='non_infrastructure',
-        )
-        Non_Infrastructure_Project.objects.create(
-            project=backfill_project,
-            non_infra_name='Generated Revision',
-        )
-        existing_project = Project.objects.create(
-            project_type='infrastructure',
-        )
-        Infrastructure_Project.objects.create(
-            project=existing_project,
-            infrastructure_title='Manual Revision',
-        )
-        manual_revision = ProjectPublicationRevision.objects.create(
-            project=existing_project,
-            revision_number=1,
-            status='published',
-            snapshot_data={'manual': True},
-            is_current_public_revision=True,
-        )
-
-        self.migration.backfill_published_revisions(django_apps, None)
-        self.migration.remove_backfilled_revisions(django_apps, None)
-
-        self.assertFalse(
-            ProjectPublicationRevision.objects.filter(
-                project=backfill_project,
-            ).exists(),
-        )
-        self.assertTrue(
-            ProjectPublicationRevision.objects.filter(
-                pk=manual_revision.pk,
-            ).exists(),
-        )
-        backfill_project.refresh_from_db()
-        self.assertFalse(backfill_project.is_published)
-        self.assertFalse(backfill_project.is_visible_to_public)
-
 
 class ProjectPublicationImageRetentionTests(TestCase):
     def setUp(self):
         self.project = Project.objects.create(project_type='infrastructure')
-        self.infrastructure = Infrastructure_Project.objects.create(
+        self.infrastructure = InfrastructureProject.objects.create(
             project=self.project,
-            infrastructure_title='Image Retention Project',
+            title='Image Retention Project',
         )
 
     def test_revision_referenced_image_is_retired_not_deleted(self):
-        image = Project_Image.objects.create(
+        image = ProjectImage.objects.create(
             project=self.project,
             image_url='/media/projects/published-cover.jpg',
             is_cover=True,
         )
-        ProjectPublicationRevision.objects.create(
+        ProjectRevision.objects.create(
             project=self.project,
             revision_number=1,
-            snapshot_data={
+            snapshot={
                 'images': [{
                     'id': image.pk,
                     'url': image.image_url,
@@ -1123,8 +957,8 @@ class ProjectPublicationImageRetentionTests(TestCase):
         result = retire_project_images(self.project, [image.pk])
 
         self.assertEqual(result, {'retired': 1, 'deleted': 0})
-        self.assertFalse(Project_Image.objects.filter(pk=image.pk).exists())
-        retained = Project_Image.all_objects.get(pk=image.pk)
+        self.assertFalse(ProjectImage.objects.filter(pk=image.pk).exists())
+        retained = ProjectImage.all_objects.get(pk=image.pk)
         self.assertFalse(retained.is_active)
         self.assertFalse(retained.is_cover)
         self.assertIsNotNone(retained.removed_at)
@@ -1134,7 +968,7 @@ class ProjectPublicationImageRetentionTests(TestCase):
         )
 
     def test_unreferenced_image_metadata_is_deleted(self):
-        image = Project_Image.objects.create(
+        image = ProjectImage.objects.create(
             project=self.project,
             image_url='/media/projects/unused.jpg',
         )
@@ -1143,23 +977,23 @@ class ProjectPublicationImageRetentionTests(TestCase):
 
         self.assertEqual(result, {'retired': 0, 'deleted': 1})
         self.assertFalse(
-            Project_Image.all_objects.filter(pk=image.pk).exists(),
+            ProjectImage.all_objects.filter(pk=image.pk).exists(),
         )
 
     def test_new_snapshots_exclude_retired_images(self):
-        retained_image = Project_Image.objects.create(
+        retained_image = ProjectImage.objects.create(
             project=self.project,
             image_url='/media/projects/old-version.jpg',
         )
-        active_image = Project_Image.objects.create(
+        active_image = ProjectImage.objects.create(
             project=self.project,
             image_url='/media/projects/current-version.jpg',
             is_cover=True,
         )
-        ProjectPublicationRevision.objects.create(
+        ProjectRevision.objects.create(
             project=self.project,
             revision_number=1,
-            snapshot_data={
+            snapshot={
                 'images': [{
                     'id': retained_image.pk,
                     'url': retained_image.image_url,
@@ -1208,10 +1042,10 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             fund_source_code='local-test',
             fund_source_name='Local Development Fund',
         )
-        self.infrastructure = Infrastructure_Project.objects.create(
+        self.infrastructure = InfrastructureProject.objects.create(
             project=base_project,
-            infrastructure_title='Normalized Road Project',
-            infrastructure_description='Connected through normalized data.',
+            title='Normalized Road Project',
+            description='Connected through normalized data.',
             category=category,
             address=address,
             contractor=contractor,
@@ -1223,17 +1057,17 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             cost_progress_percentage=42,
             physical_progress_percentage=55,
         )
-        Financial.objects.create(
+        FinancialRecord.objects.create(
             infrastructure=self.infrastructure,
             fund_source=fund_source,
             approved_budget=2500000,
             bid_amount=2400000,
         )
-        Infrastructure_Schedule.objects.create(
+        InfrastructureSchedule.objects.create(
             infrastructure=self.infrastructure,
             actual_start_date='2026-01-20',
         )
-        Project_Inspection.objects.create(
+        ProjectInspection.objects.create(
             project=base_project,
             inspection_date='2026-04-15',
             inspected_by_user=self.user,
@@ -1241,7 +1075,7 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             findings='Work is on schedule.',
             remarks='Continue regular monitoring.',
         )
-        Project_Image.objects.create(
+        ProjectImage.objects.create(
             project=base_project,
             image_url='/media/projects/infrastructure-cover.jpg',
             is_cover=True,
@@ -1422,10 +1256,10 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertNotContains(response, 'Delete Project')
 
     def test_public_infrastructure_detail_hides_missing_inspection(self):
-        snapshot = self.public_revision.snapshot_data
+        snapshot = self.public_revision.snapshot
         snapshot['inspection'] = None
-        self.public_revision.snapshot_data = snapshot
-        self.public_revision.save(update_fields=['snapshot_data'])
+        self.public_revision.snapshot = snapshot
+        self.public_revision.save(update_fields=['snapshot'])
 
         response = self.client.get(reverse(
             'public_infrastructure_project_detail',
@@ -1436,11 +1270,11 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertNotContains(response, 'Inspection Details')
 
     def test_public_infrastructure_detail_handles_missing_coordinates(self):
-        snapshot = self.public_revision.snapshot_data
+        snapshot = self.public_revision.snapshot
         snapshot['infrastructure']['address']['latitude'] = None
         snapshot['infrastructure']['address']['longitude'] = None
-        self.public_revision.snapshot_data = snapshot
-        self.public_revision.save(update_fields=['snapshot_data'])
+        self.public_revision.snapshot = snapshot
+        self.public_revision.save(update_fields=['snapshot'])
 
         response = self.client.get(
             reverse(
@@ -1455,10 +1289,10 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertNotContains(response, 'id="gabaldon-gis-root"')
 
     def test_public_surfaces_stay_on_snapshot_until_a_new_revision_is_published(self):
-        self.infrastructure.infrastructure_title = 'Unapproved Edited Title'
+        self.infrastructure.title = 'Unapproved Edited Title'
         self.infrastructure.physical_progress_percentage = 99
         self.infrastructure.save(update_fields=[
-            'infrastructure_title',
+            'title',
             'physical_progress_percentage',
         ])
         self.infrastructure.project.images.create(
@@ -1489,9 +1323,9 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
 
     def test_unpublished_project_is_absent_and_its_public_detail_is_404(self):
         project = Project.objects.create(project_type='infrastructure')
-        unpublished = Infrastructure_Project.objects.create(
+        unpublished = InfrastructureProject.objects.create(
             project=project,
-            infrastructure_title='Internal Draft Project',
+            title='Internal Draft Project',
         )
 
         dashboard = self.client.get(reverse('public_dashboard'))
@@ -1521,19 +1355,19 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
                 created_by_user=self.user,
                 updated_by_user=self.user,
             )
-            noninfra = Non_Infrastructure_Project.objects.create(
+            noninfra = NonInfrastructureProject.objects.create(
                 project=project,
-                non_infra_name=name,
+                title=name,
                 status=status,
             )
 
             if status == 'ongoing':
-                Project_Image.objects.create(
+                ProjectImage.objects.create(
                     project=noninfra.project,
                     image_url='/media/projects/ongoing-cover.jpg',
                     is_cover=True,
                 )
-                Project_Image.objects.create(
+                ProjectImage.objects.create(
                     project=noninfra.project,
                     image_url='/media/projects/ongoing-other.jpg',
                 )
@@ -1591,13 +1425,13 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
 
         mayor_detail_url = reverse(
             'mayor_projects:non_infrastructure_project_detail',
-            args=[Non_Infrastructure_Project.objects.get(status='ongoing').pk],
+            args=[NonInfrastructureProject.objects.get(status='ongoing').pk],
         )
         self.assertNotContains(response, mayor_detail_url)
         self.assertContains(response, 'data-project-modal-trigger', count=3)
 
     def test_public_non_infrastructure_detail_is_available_without_login(self):
-        project = Non_Infrastructure_Project.objects.get(status='ongoing')
+        project = NonInfrastructureProject.objects.get(status='ongoing')
         detail_url = reverse(
             'public_non_infrastructure_project_detail',
             args=[project.pk],
@@ -1610,7 +1444,7 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
             response,
             'Dashboard/non_infrastructure_detail.html',
         )
-        self.assertContains(response, project.non_infra_name)
+        self.assertContains(response, project.title)
         self.assertContains(response, '/media/projects/ongoing-cover.jpg')
         self.assertContains(
             response,
@@ -1660,7 +1494,7 @@ class SuperuserProfileTests(TestCase):
         )
         # Runtime no longer creates archive-backed profiles; department is inferred.
         self.assertTrue(user.is_superuser)
-        self.assertEqual(user.profile.department, 'admin')
+        self.assertEqual(_department_for_user(user), 'admin')
 
 
 class UserCreationFormTests(TestCase):
@@ -1699,7 +1533,7 @@ class UserCreationFormTests(TestCase):
         user = form.save(commit=True)
 
         self.assertFalse(user.has_usable_password())
-        self.assertEqual(user.profile.department, 'engineer')
+        self.assertEqual(user.role_assignment.department, 'engineer')
 
     def test_mayor_user_is_staff_and_keeps_mayor_department(self):
         form = CustomUserCreationForm(
@@ -1719,7 +1553,7 @@ class UserCreationFormTests(TestCase):
         self.assertFalse(user.has_usable_password())
         self.assertTrue(user.is_staff)
         self.assertFalse(user.is_superuser)
-        self.assertEqual(user.profile.department, 'mayor')
+        self.assertEqual(user.role_assignment.department, 'mayor')
 
 
 @override_settings(
@@ -1749,7 +1583,7 @@ class UserCreateConfirmViewTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         created_user = User.objects.get(username='mayoruser')
-        self.assertEqual(created_user.profile.department, 'mayor')
+        self.assertEqual(created_user.role_assignment.department, 'mayor')
         self.assertFalse(created_user.has_usable_password())
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [created_user.email])
@@ -1821,7 +1655,7 @@ class AccountSetupFlowTests(TestCase):
 
         self.assertRedirects(response, reverse('user_list'))
         self.assertFalse(user.has_usable_password())
-        self.assertEqual(user.flags.department, 'engineer')
+        self.assertEqual(user.role_assignment.department, 'engineer')
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [user.email])
         self.assertIn('Set up your Municipality Project Tracker account', mail.outbox[0].subject)
@@ -1967,7 +1801,7 @@ class PublicPasswordResetTests(TestCase):
             is_staff=True,
         )
 
-        UserFlag.objects.create(user=self.user, department='engineer', role='staff')
+        UserRole.objects.create(user=self.user, department='engineer', role='staff')
 
     def _request_reset(self, email=None):
         return self.client.post(
@@ -2127,7 +1961,7 @@ class LoginOTPTests(TestCase):
             password='ValidLoginPass!2026',
             is_staff=True,
         )
-        UserFlag.objects.update_or_create(
+        UserRole.objects.update_or_create(
             user=self.user,
             defaults={'department': 'engineer'},
         )

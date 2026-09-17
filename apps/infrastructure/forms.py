@@ -9,15 +9,15 @@ import os
 from apps.system.models import (
     Address,
     Contractor,
-    Financial,
+    FinancialRecord,
     FundSource,
     ImplementingOffice,
     InfrastructureCategory,
-    Infrastructure_Project,
-    Infrastructure_Schedule,
+    InfrastructureProject,
+    InfrastructureSchedule,
     Project,
-    Project_Image,
-    Project_Inspection,
+    ProjectImage,
+    ProjectInspection,
 )
 from apps.system.publication_images import retire_project_images
 
@@ -200,7 +200,7 @@ class InfrastructureProjectForm(forms.Form):
     )
     procurement_method = forms.ChoiceField(
         required=True,
-        choices=[('', 'Select Procurement Method')] + list(Infrastructure_Project.PROCUREMENT_METHOD_CHOICES),
+        choices=[('', 'Select Procurement Method')] + list(InfrastructureProject.PROCUREMENT_METHOD_CHOICES),
         widget=forms.Select,
     )
     abc_amount = forms.DecimalField(
@@ -315,53 +315,15 @@ class InfrastructureProjectForm(forms.Form):
                     )
 
     def _resolve_infrastructure_instance(self, instance):
-        if instance is None:
-            return None
-
-        if isinstance(instance, Infrastructure_Project):
-            return instance
-
-        infrastructure_id = getattr(instance, 'infrastructure_id', None)
-        if infrastructure_id is not None:
-            return Infrastructure_Project.objects.filter(infrastructure_id=infrastructure_id).select_related(
-                'project', 'address', 'category'
-            ).first()
-
-        project_id = getattr(instance, 'project_id', None)
-        if project_id is not None:
-            infra = Infrastructure_Project.objects.filter(project_id=project_id).select_related(
-                'project', 'address', 'category'
-            ).first()
-            if infra is not None:
-                return infra
-
-        project = getattr(instance, 'project', None)
-        if project is not None:
-            infra = Infrastructure_Project.objects.filter(project=project).select_related(
-                'project', 'address', 'category'
-            ).first()
-            if infra is not None:
-                return infra
-
-        # The legacy compatibility InfrastructureProject model maps its `id`
-        # column directly to `Infrastructure_Project.infrastructure_id`. Do not
-        # reinterpret that value as a base Project.project_id; those sequences
-        # are independent and can point at a different project (or none at all).
-        instance_id = getattr(instance, 'id', None)
-        if instance_id is not None:
-            return Infrastructure_Project.objects.filter(
-                infrastructure_id=instance_id
-            ).select_related('project', 'address', 'category').first()
-
-        return None
+        return instance if isinstance(instance, InfrastructureProject) else None
 
     def _populate_from_instance(self, instance):
         infra = self._resolve_infrastructure_instance(instance)
         if infra is None:
             return
 
-        self.initial.setdefault('title', infra.infrastructure_title)
-        self.initial.setdefault('description', infra.infrastructure_description)
+        self.initial.setdefault('title', infra.title)
+        self.initial.setdefault('description', infra.description)
         self.initial.setdefault('category', infra.category_id)
 
         self.initial.setdefault(
@@ -511,7 +473,7 @@ class InfrastructureProjectForm(forms.Form):
                 upload,
             )
             saved_images.append(
-                Project_Image.objects.create(
+                ProjectImage.objects.create(
                     project=project,
                     image_url=default_storage.url(filename),
                 )
@@ -550,9 +512,9 @@ class InfrastructureProjectForm(forms.Form):
                 created_by_user=user,
                 updated_by_user=user,
             )
-            infra = Infrastructure_Project.objects.filter(project=proj).first()
+            infra = InfrastructureProject.objects.filter(project=proj).first()
             if infra is None:
-                infra = Infrastructure_Project(project=proj)
+                infra = InfrastructureProject(project=proj)
         else:
             resolved = self._resolve_infrastructure_instance(instance)
             if resolved is not None:
@@ -567,12 +529,12 @@ class InfrastructureProjectForm(forms.Form):
                         created_by_user=user,
                         updated_by_user=user,
                     )
-                infra = Infrastructure_Project.objects.filter(project=proj).first()
+                infra = InfrastructureProject.objects.filter(project=proj).first()
                 if infra is None:
-                    infra = Infrastructure_Project(project=proj)
+                    infra = InfrastructureProject(project=proj)
 
-        infra.infrastructure_title = data.get('title') or infra.infrastructure_title
-        infra.infrastructure_description = data.get('description') or ''
+        infra.title = data.get('title') or infra.title
+        infra.description = data.get('description') or ''
 
         category_obj = data.get('category')
 
@@ -667,7 +629,7 @@ class InfrastructureProjectForm(forms.Form):
         duration = data.get('duration_days')
         actual_start = data.get('actual_start_date')
         actual_completion = data.get('actual_completion_date')
-        existing_sched = Infrastructure_Schedule.objects.filter(
+        existing_sched = InfrastructureSchedule.objects.filter(
             infrastructure=infra
         ).first()
         if (
@@ -681,7 +643,7 @@ class InfrastructureProjectForm(forms.Form):
             or actual_completion
             or existing_sched is not None
         ):
-            sched = existing_sched or Infrastructure_Schedule(
+            sched = existing_sched or InfrastructureSchedule(
                 infrastructure=infra
             )
             sched.posting_date = posting
@@ -708,7 +670,7 @@ class InfrastructureProjectForm(forms.Form):
             or actual_exp is not None
             or existing_fin is not None
         ):
-            fin = existing_fin or Financial(infrastructure=infra)
+            fin = existing_fin or FinancialRecord(infrastructure=infra)
             fin.approved_budget = abc
             fin.bid_amount = bid
             fin.fund_source = fund_source_obj
@@ -730,7 +692,7 @@ class InfrastructureInspectionForm(forms.ModelForm):
 
     inspection_type = forms.ChoiceField(
         label='Inspection Type',
-        choices=Project_Inspection.INSPECTION_TYPE_CHOICES,
+        choices=ProjectInspection.INSPECTION_TYPE_CHOICES,
         required=False,
         initial='routine',
     )
@@ -763,7 +725,7 @@ class InfrastructureInspectionForm(forms.ModelForm):
     )
 
     class Meta:
-        model = Project_Inspection
+        model = ProjectInspection
         fields = (
             'inspection_type',
             'inspection_date',
@@ -858,7 +820,7 @@ class SupportingInspectionChoiceField(forms.ModelMultipleChoiceField):
 class InfrastructureOperationalForm(forms.Form):
     award_status = forms.ChoiceField(
         label='Status',
-        choices=Infrastructure_Project.AWARD_STATUS_CHOICES,
+        choices=InfrastructureProject.AWARD_STATUS_CHOICES,
     )
     physical_progress_percentage = forms.DecimalField(
         label='Physical Progress', max_digits=5, decimal_places=2,
@@ -876,7 +838,7 @@ class InfrastructureOperationalForm(forms.Form):
     )
     supporting_inspections = SupportingInspectionChoiceField(
         label='Supporting Inspections',
-        queryset=Project_Inspection.objects.none(),
+        queryset=ProjectInspection.objects.none(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
     )

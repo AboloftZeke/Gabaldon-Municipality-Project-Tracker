@@ -1,4 +1,11 @@
-# Municipality Project Tracker - System Access Module (Setup Phase)
+# Municipality Project Tracker
+
+> **Current branch schema:** Application models now use consistent names and a
+> clean initial migration. Read [schema naming and database rebuild](SCHEMA_NAMING.md)
+> before setup. Use an empty development database, then run `python manage.py migrate`.
+> The legacy project/profile tables are no longer created. For the full portable
+> test suite, run `python manage.py test --settings=config.test_settings`.
+
 
 > **Branch status (Database-redesign):** This README retains the original setup-phase
 > description below. The branch now includes working Infrastructure and

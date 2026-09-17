@@ -10,7 +10,7 @@ from django.utils.html import escape
 from .forms import (
     ACCOUNT_ASSIGNMENTS, CustomUserChangeForm, CustomUserCreationForm,
 )
-from .models import UserFlag
+from .models import UserRole
 from .account_setup import AccountSetupDeliveryError
 
 
@@ -42,7 +42,7 @@ class AccountAssignmentTests(TestCase):
                 response = self.client.post(reverse('user_create_confirm'))
                 self.assertRedirects(response, reverse('user_list'))
                 user = User.objects.get(username=username)
-                self.assertEqual((user.flags.department, user.flags.role), (department, role))
+                self.assertEqual((user.role_assignment.department, user.role_assignment.role), (department, role))
                 self.assertTrue(user.is_active)
                 self.assertTrue(user.is_staff)
                 self.assertEqual(user.is_superuser, assignment == 'admin')
@@ -76,7 +76,7 @@ class AccountAssignmentTests(TestCase):
                     self.assertContains(response, 'CHANGED')
                     self.assertRedirects(self.client.post(confirm_url), reverse('user_list'))
                     user.refresh_from_db()
-                    self.assertEqual((user.flags.department, user.flags.role), ACCOUNT_ASSIGNMENTS[after][:2])
+                    self.assertEqual((user.role_assignment.department, user.role_assignment.role), ACCOUNT_ASSIGNMENTS[after][:2])
                     self.assertEqual(user.password, original_password)
                     self.assertTrue(user.is_active)
                     self.assertTrue(user.is_staff)
@@ -112,7 +112,7 @@ class AccountAssignmentTests(TestCase):
 
     def test_editing_inactive_head_does_not_activate_account(self):
         user = User.objects.create_user('inactive', email='inactive@example.com', is_active=False, is_staff=True)
-        UserFlag.objects.create(user=user, department='engineer', role='head')
+        UserRole.objects.create(user=user, department='engineer', role='head')
         data = self.data('engineering', 'inactive')
         data['is_active'] = False
         form = CustomUserChangeForm(data, instance=user)
@@ -123,7 +123,7 @@ class AccountAssignmentTests(TestCase):
 
     def test_non_admin_cannot_assign_accounts(self):
         user = User.objects.create_user('office-head', is_staff=True)
-        UserFlag.objects.create(user=user, department='engineer', role='head')
+        UserRole.objects.create(user=user, department='engineer', role='head')
         self.client.force_login(user)
         self.assertEqual(self.client.post(reverse('user_create'), self.data('admin')).status_code, 403)
 
@@ -139,7 +139,7 @@ class AccountAssignmentTests(TestCase):
         }), reverse('account_setup_complete'))
         user = User.objects.get(username='account')
         self.assertTrue(user.check_password(password))
-        self.assertEqual(user.flags.role, 'head')
+        self.assertEqual(user.role_assignment.role, 'head')
         self.assertRedirects(self.client.post(reverse('login'), {
             'username': user.username, 'password': password,
         }), reverse('login_otp_verify'), fetch_redirect_response=False)
@@ -150,5 +150,5 @@ class AccountAssignmentTests(TestCase):
         with patch('apps.system.views.send_account_setup_email', side_effect=AccountSetupDeliveryError):
             self.client.post(reverse('user_create_confirm'))
         self.assertFalse(User.objects.filter(username='account').exists())
-        self.assertFalse(UserFlag.objects.filter(user__username='account').exists())
+        self.assertFalse(UserRole.objects.filter(user__username='account').exists())
         self.assertEqual(self.client.session['user_create_form_data']['role'], 'mayors_head')

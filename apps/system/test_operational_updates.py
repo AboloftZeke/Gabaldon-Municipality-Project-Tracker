@@ -7,14 +7,14 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import (
-    Financial,
+    FinancialRecord,
     InfrastructureProgressUpdate,
     NonInfrastructureCategory,
-    Non_Infrastructure_Project,
+    NonInfrastructureProject,
     Project,
-    Project_Inspection,
-    ProjectPublicationRevision,
-    UserFlag,
+    ProjectInspection,
+    ProjectRevision,
+    UserRole,
 )
 from .progress import expected_progress
 from apps.infrastructure.progress_history import record_progress_update
@@ -30,7 +30,7 @@ class HeadOperationalUpdateTests(TestCase):
             user = User.objects.create_user(
                 f'{department}-{role}', is_staff=True,
             )
-            UserFlag.objects.create(
+            UserRole.objects.create(
                 user=user, department=department, role=role,
             )
             self.users[department, role] = user
@@ -46,20 +46,20 @@ class HeadOperationalUpdateTests(TestCase):
         self.infrastructure.planned_start_date = date.today() - timedelta(days=5)
         self.infrastructure.planned_end_date = date.today() + timedelta(days=5)
         self.infrastructure.save()
-        self.inspection = Project_Inspection.objects.create(
+        self.inspection = ProjectInspection.objects.create(
             project=self.infrastructure.project,
             inspection_date=date.today(),
             completion_percentage=Decimal('30'),
         )
-        Financial.objects.filter(infrastructure=self.infrastructure).update(
+        FinancialRecord.objects.filter(infrastructure=self.infrastructure).update(
             bid_amount=Decimal('1000'), actual_expenditure=Decimal('400'),
         )
-        self.public_revision = ProjectPublicationRevision.objects.create(
+        self.public_revision = ProjectRevision.objects.create(
             project=self.infrastructure.project,
             revision_number=1,
             status='published',
-            is_current_public_revision=True,
-            snapshot_data={'infrastructure': {'title': 'Published version'}},
+            is_current_public=True,
+            snapshot={'infrastructure': {'title': 'Published version'}},
         )
         self.staff_payload = fixture.valid_data(
             title='Changed by Engineering Staff',
@@ -73,11 +73,11 @@ class HeadOperationalUpdateTests(TestCase):
         self.non_infrastructure_category = NonInfrastructureCategory.objects.create(
             type_code='operational-test', type_name='Operational Test',
         )
-        self.non_infrastructure = Non_Infrastructure_Project.objects.create(
+        self.non_infrastructure = NonInfrastructureProject.objects.create(
             project=base,
-            non_infra_name='Community Program',
+            title='Community Program',
             status='planned',
-            non_infra_category=self.non_infrastructure_category,
+            category=self.non_infrastructure_category,
         )
 
     def infra_url(self):
@@ -88,7 +88,7 @@ class HeadOperationalUpdateTests(TestCase):
 
     def test_engineering_head_updates_only_operational_fields(self):
         self.client.force_login(self.users['engineer', 'head'])
-        before_title = self.infrastructure.infrastructure_title
+        before_title = self.infrastructure.title
         before_expected = expected_progress(
             self.infrastructure.planned_start_date,
             self.infrastructure.planned_end_date,
@@ -99,7 +99,7 @@ class HeadOperationalUpdateTests(TestCase):
             'cost_progress_percentage': '55',
             'inspection_completion_percentage': '70',
             'head_remarks': 'Verified against the latest field report.',
-            'infrastructure_title': 'Crafted ordinary-field change',
+            'title': 'Crafted ordinary-field change',
             'expected_progress_percentage': '1',
         })
         self.assertEqual(response.status_code, 302)
@@ -109,7 +109,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertEqual(self.infrastructure.physical_progress_percentage, Decimal('60'))
         self.assertEqual(self.infrastructure.cost_progress_percentage, Decimal('55'))
         self.assertEqual(self.inspection.completion_percentage, Decimal('70'))
-        self.assertEqual(self.infrastructure.infrastructure_title, before_title)
+        self.assertEqual(self.infrastructure.title, before_title)
         self.assertEqual(
             expected_progress(
                 self.infrastructure.planned_start_date,
@@ -117,23 +117,23 @@ class HeadOperationalUpdateTests(TestCase):
             ),
             before_expected,
         )
-        self.assertEqual(self.infrastructure.project.publication_revisions.count(), 2)
+        self.assertEqual(self.infrastructure.project.revisions.count(), 2)
         operational_revision = (
-            self.infrastructure.project.publication_revisions
+            self.infrastructure.project.revisions
             .exclude(pk=self.public_revision.pk)
             .get()
         )
         self.assertEqual(operational_revision.status, 'approved')
         self.assertEqual(
-            operational_revision.supersedes_revision,
+            operational_revision.previous_revision,
             self.public_revision,
         )
         self.public_revision.refresh_from_db()
         self.assertEqual(
-            self.public_revision.snapshot_data,
+            self.public_revision.snapshot,
             {'infrastructure': {'title': 'Published version'}},
         )
-        self.assertTrue(self.public_revision.is_current_public_revision)
+        self.assertTrue(self.public_revision.is_current_public)
         progress_update = InfrastructureProgressUpdate.objects.get()
         self.assertEqual(progress_update.infrastructure, self.infrastructure)
         self.assertEqual(progress_update.previous_official_status, 'awarded')
@@ -185,7 +185,7 @@ class HeadOperationalUpdateTests(TestCase):
         )
 
     def test_head_can_link_multiple_project_inspections_without_copying_progress(self):
-        earlier_inspection = Project_Inspection.objects.create(
+        earlier_inspection = ProjectInspection.objects.create(
             project=self.infrastructure.project,
             inspection_date=date.today() - timedelta(days=2),
             inspection_type='progress',
@@ -223,7 +223,7 @@ class HeadOperationalUpdateTests(TestCase):
 
     def test_operational_form_rejects_inspection_from_another_project(self):
         other_project = Project.objects.create(project_type='infrastructure')
-        other_inspection = Project_Inspection.objects.create(
+        other_inspection = ProjectInspection.objects.create(
             project=other_project,
             inspection_date=date.today(),
             inspection_type='special',
@@ -353,10 +353,10 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertContains(response, 'Read-only')
         for field in [
             'expected_progress', 'progress_variance',
-            'calculated_cost_progress', 'infrastructure_title',
+            'calculated_cost_progress', 'title',
         ]:
             self.assertNotContains(response, f'name="{field}"')
-        ProjectPublicationRevision.objects.filter(
+        ProjectRevision.objects.filter(
             pk=self.public_revision.pk,
         ).update(review_notes='Retained review note')
         self.client.force_login(self.users['engineer', 'staff'])
@@ -412,7 +412,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.infrastructure.refresh_from_db()
         self.inspection.refresh_from_db()
-        self.assertEqual(self.infrastructure.infrastructure_title, 'Changed by Engineering Staff')
+        self.assertEqual(self.infrastructure.title, 'Changed by Engineering Staff')
         self.assertEqual(self.infrastructure.award_status, 'awarded')
         self.assertEqual(self.infrastructure.physical_progress_percentage, Decimal('25'))
         self.assertEqual(self.infrastructure.cost_progress_percentage, Decimal('20'))
@@ -423,9 +423,9 @@ class HeadOperationalUpdateTests(TestCase):
             'mayor_projects:non_infrastructure_project_update',
             args=[self.non_infrastructure.pk],
         ), {
-            'non_infra_name': 'Changed by Mayor Staff',
+            'title': 'Changed by Mayor Staff',
             'description': 'Ordinary details remain editable.',
-            'non_infra_category': self.non_infrastructure_category.pk,
+            'category': self.non_infrastructure_category.pk,
             'status': 'completed',
             'proponent': 'Municipal Office',
             'beneficiaries': '20',
@@ -438,7 +438,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.non_infrastructure.refresh_from_db()
         self.assertEqual(
-            self.non_infrastructure.non_infra_name,
+            self.non_infrastructure.title,
             'Changed by Mayor Staff',
         )
         self.assertEqual(self.non_infrastructure.status, 'planned')
@@ -482,12 +482,12 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertContains(detail, 'Service &amp; Beneficiary Information')
         self.assertContains(detail, 'Status &amp; Operational Information')
         self.assertEqual(self.client.post(url, {
-            'status': 'completed', 'non_infra_name': 'Crafted change',
+            'status': 'completed', 'title': 'Crafted change',
         }).status_code, 302)
         self.non_infrastructure.refresh_from_db()
         self.assertEqual(self.non_infrastructure.status, 'completed')
-        self.assertEqual(self.non_infrastructure.non_infra_name, 'Community Program')
-        self.assertEqual(self.non_infrastructure.project.publication_revisions.count(), 0)
+        self.assertEqual(self.non_infrastructure.title, 'Community Program')
+        self.assertEqual(self.non_infrastructure.project.revisions.count(), 0)
         self.client.force_login(self.users['mayor', 'staff'])
         detail = self.client.get(reverse(
             'mayor_projects:non_infrastructure_project_detail',

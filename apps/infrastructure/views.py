@@ -17,12 +17,11 @@ from .forms import (
 )
 from .inspection_evidence import update_inspection_evidence
 from .progress_history import record_progress_update
-from apps.system.models import InfrastructureProject as SystemInfrastructureProject
 from apps.system.models import (
     InfrastructureCategory,
-    Infrastructure_Project,
+    InfrastructureProject,
     Project,
-    ProjectPublicationRevision,
+    ProjectRevision,
 )
 from apps.system.publication_service import (
     create_head_operational_revision,
@@ -96,7 +95,7 @@ class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         projects = (
-            Infrastructure_Project.objects
+            InfrastructureProject.objects
             .select_related('address', 'category', 'project')
             .prefetch_related('project__images', 'financial_records')
         )
@@ -136,14 +135,14 @@ class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
 
 class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
     """Display normalized infrastructure projects."""
-    model = Infrastructure_Project
+    model = InfrastructureProject
     template_name = 'projects/project_list.html'
     context_object_name = 'projects'
     paginate_by = 10
 
     def get_queryset(self):
         queryset = (
-            Infrastructure_Project.objects
+            InfrastructureProject.objects
             .select_related('address', 'category', 'project')
             .prefetch_related('project__images', 'financial_records')
         )
@@ -174,7 +173,7 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
             )
             project.publication_state = publication_state(project.project)
         context['locations'] = (
-            Infrastructure_Project.objects
+            InfrastructureProject.objects
             .exclude(address__barangay__isnull=True)
             .exclude(address__barangay='')
             .values_list('address__barangay', flat=True)
@@ -184,7 +183,7 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
         context['categories'] = InfrastructureCategory.objects.filter(
             is_active=True
         ).order_by('category_name')
-        context['statuses'] = Infrastructure_Project.AWARD_STATUS_CHOICES
+        context['statuses'] = InfrastructureProject.AWARD_STATUS_CHOICES
         context['can_update_operations'] = (
             can_update_infrastructure_operations(self.request.user)
         )
@@ -193,7 +192,7 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
 
 class ProjectCreateView(EngineerOnlyMixin, CreateView):
     """Create a new infrastructure project - engineers only"""
-    model = SystemInfrastructureProject
+    model = InfrastructureProject
     form_class = InfrastructureProjectForm
     template_name = 'projects/project_form.html'
 
@@ -206,24 +205,19 @@ class ProjectCreateView(EngineerOnlyMixin, CreateView):
         return context
 
     def form_valid(self, form):
-        # Use the compatibility form save which writes to normalized tables
         infra = form.save(user=self.request.user)
-        # Set the created object for the view to a compatibility instance
-        # `SystemInfrastructureProject` is a compatibility model where the pk
-        # column is `infrastructure_id`. Match by that id to reliably get the
-        # compatibility instance for redirects and context.
-        self.object = SystemInfrastructureProject.objects.filter(id=infra.infrastructure_id).first()
+        self.object = infra
         return redirect(self.get_success_url())
 
 
 class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
     """Display project details"""
-    model = SystemInfrastructureProject
+    model = InfrastructureProject
     template_name = 'projects/project_detail.html'
     context_object_name = 'project'
 
     def get_queryset(self):
-        return SystemInfrastructureProject.objects.all()
+        return InfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -233,7 +227,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
         # FIND THE NORMALIZED INFRASTRUCTURE PROJECT
         # ---------------------------------------------------------
         infra = (
-            Infrastructure_Project.objects
+            InfrastructureProject.objects
             .filter(infrastructure_id=project.pk)
             .select_related(
                 'project',
@@ -480,12 +474,12 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
         # PROJECT NAME / DESCRIPTION
         # ---------------------------------------------------------
         project_name = (
-            infra.infrastructure_title
+            infra.title
             if infra else getattr(project, 'title', '')
         ) or 'Not specified'
 
         description = (
-            infra.infrastructure_description
+            infra.description
             if infra else getattr(project, 'description', '')
         ) or ''
 
@@ -599,11 +593,11 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
         context['project_details'] = {
             'pk': project.pk,
             'title': (
-                infra.infrastructure_title
+                infra.title
                 if infra else getattr(project, 'title', '')
             ),
             'description': (
-                infra.infrastructure_description
+                infra.description
                 if infra else getattr(project, 'description', '')
             ),
             'get_status_display': status_label,
@@ -727,7 +721,7 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
 
     def get_object(self, pk):
         return get_object_or_404(
-            Infrastructure_Project.objects.select_related('project'),
+            InfrastructureProject.objects.select_related('project'),
             pk=pk,
         )
 
@@ -742,7 +736,7 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
 
     def reference_values(self, infrastructure, reference_revision=None):
         if reference_revision is not None:
-            snapshot = reference_revision.snapshot_data or {}
+            snapshot = reference_revision.snapshot or {}
             project_data = snapshot.get('infrastructure') or {}
             financial_data = snapshot.get('financial') or {}
             schedule_data = snapshot.get('schedule') or {}
@@ -796,21 +790,21 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
         )
         if not revision_id:
             return None
-        return infrastructure.project.publication_revisions.filter(
+        return infrastructure.project.revisions.filter(
             pk=revision_id,
         ).first()
 
     def render_form(self, request, infrastructure, form, status=200):
         return_revision = self.return_revision(request, infrastructure)
         reference_revision = return_revision or (
-            ProjectPublicationRevision.objects.filter(
+            ProjectRevision.objects.filter(
                 project=infrastructure.project,
                 status='published',
-                is_current_public_revision=True,
+                is_current_public=True,
             ).first()
         )
         revision_snapshot = (
-            (return_revision.snapshot_data or {}).get('infrastructure') or {}
+            (return_revision.snapshot or {}).get('infrastructure') or {}
             if return_revision else {}
         )
         selected_inspection_ids = set()
@@ -834,7 +828,7 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
             'form': form,
             'operational_display_title': (
                 revision_snapshot.get('title')
-                or infrastructure.infrastructure_title
+                or infrastructure.title
             ),
             'return_revision_id': getattr(return_revision, 'pk', None),
             'inspection_options': inspection_options,
@@ -911,7 +905,7 @@ class InfrastructureInspectionCreateView(EngineerOnlyMixin, View):
 
     def get_project(self, pk):
         return get_object_or_404(
-            Infrastructure_Project.objects.select_related('project'),
+            InfrastructureProject.objects.select_related('project'),
             pk=pk,
         )
 
@@ -954,7 +948,7 @@ class InfrastructureInspectionUpdateView(EngineerOnlyMixin, View):
 
     def get_objects(self, project_pk, inspection_pk):
         infrastructure = get_object_or_404(
-            Infrastructure_Project.objects.select_related('project'),
+            InfrastructureProject.objects.select_related('project'),
             pk=project_pk,
         )
         inspection = get_object_or_404(
@@ -1012,7 +1006,7 @@ class ProjectSubmitForReviewView(EngineerOnlyMixin, View):
 
     def post(self, request, pk):
         infrastructure = get_object_or_404(
-            Infrastructure_Project.objects.select_related('project'),
+            InfrastructureProject.objects.select_related('project'),
             pk=pk,
         )
         try:
@@ -1036,7 +1030,7 @@ class ProjectSubmitForReviewView(EngineerOnlyMixin, View):
 
 class ProjectEditView(EngineerOnlyMixin, UpdateView):
     """Update an existing infrastructure project - engineers only"""
-    model = SystemInfrastructureProject
+    model = InfrastructureProject
     form_class = InfrastructureProjectForm
     template_name = 'projects/project_form.html'
 
@@ -1044,7 +1038,7 @@ class ProjectEditView(EngineerOnlyMixin, UpdateView):
         return reverse('engineering_projects:project_list')
 
     def get_queryset(self):
-        return SystemInfrastructureProject.objects.all()
+        return InfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1053,20 +1047,20 @@ class ProjectEditView(EngineerOnlyMixin, UpdateView):
 
     def form_valid(self, form):
         infra = form.save(user=self.request.user, instance=self.get_object())
-        self.object = SystemInfrastructureProject.objects.filter(id=infra.infrastructure_id).first()
+        self.object = infra
         return redirect(self.get_success_url())
 
 
 class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
     """Delete an infrastructure project - engineers only"""
-    model = SystemInfrastructureProject
+    model = InfrastructureProject
     template_name = 'projects/project_confirm_delete.html'
 
     def get_success_url(self):
         return reverse('engineering_projects:project_list')
 
     def get_queryset(self):
-        return SystemInfrastructureProject.objects.all()
+        return InfrastructureProject.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1076,17 +1070,17 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
         return context
 
     def form_valid(self, form):
-        compat_project = self.get_object()
+        project_record = self.get_object()
         normalized = (
-            Infrastructure_Project.objects
-            .filter(infrastructure_id=compat_project.pk)
+            InfrastructureProject.objects
+            .filter(infrastructure_id=project_record.pk)
             .select_related('project')
             .first()
         )
         success_url = self.get_success_url()
 
         if normalized is not None and normalized.project is not None:
-            if normalized.project.publication_revisions.exists():
+            if normalized.project.revisions.exists():
                 messages.error(
                     self.request,
                     'A project with publication history cannot be deleted. '
@@ -1095,10 +1089,10 @@ class ProjectDeleteView(EngineerOnlyMixin, DeleteView):
                 )
                 return redirect(
                     'engineering_projects:project_detail',
-                    pk=compat_project.pk,
+                    pk=project_record.pk,
                 )
             normalized.project.delete()
         else:
-            compat_project.delete()
+            project_record.delete()
 
         return redirect(success_url)

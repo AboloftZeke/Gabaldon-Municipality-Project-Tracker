@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from .publication_diff import compare_snapshots, revision_comparison
-from .models import Project, ProjectPublicationRevision, UserFlag
+from .models import Project, ProjectRevision, UserRole
 from .publication_workflow import PublicationStatus
 
 
@@ -118,13 +118,13 @@ class PublicationComparisonViewTests(TestCase):
             'images': [{'id': 1, 'url': '/media/old.jpg', 'is_cover': True}],
         }
         self.head = User.objects.create_user('diff-head', is_staff=True)
-        UserFlag.objects.create(user=self.head, department='engineer', role='head')
+        UserRole.objects.create(user=self.head, department='engineer', role='head')
         self.client.force_login(self.head)
 
     def revision(self, number, status, snapshot=None, **kwargs):
-        return ProjectPublicationRevision.objects.create(
+        return ProjectRevision.objects.create(
             project=self.project, revision_number=number, status=status,
-            snapshot_data=deepcopy(snapshot if snapshot is not None else self.snapshot), **kwargs,
+            snapshot=deepcopy(snapshot if snapshot is not None else self.snapshot), **kwargs,
         )
 
     def detail(self, revision):
@@ -142,8 +142,8 @@ class PublicationComparisonViewTests(TestCase):
         archived = self.revision(1, PublicationStatus.ARCHIVED)
         current_snapshot = deepcopy(self.snapshot)
         current_snapshot['infrastructure']['title'] = 'Actual current public title'
-        current = self.revision(2, PublicationStatus.PUBLISHED, current_snapshot, is_current_public_revision=True)
-        pending = self.revision(3, PublicationStatus.PENDING_REVIEW, supersedes_revision=archived)
+        current = self.revision(2, PublicationStatus.PUBLISHED, current_snapshot, is_current_public=True)
+        pending = self.revision(3, PublicationStatus.PENDING_REVIEW, previous_revision=archived)
         self.revision(4, PublicationStatus.REJECTED)
         comparison = revision_comparison(pending)
         self.assertEqual(comparison['baseline'], current)
@@ -154,7 +154,7 @@ class PublicationComparisonViewTests(TestCase):
         self.assertContains(response, 'snapshot-change--modified')
 
     def test_removed_added_images_and_values_survive_invalid_review_form(self):
-        self.revision(1, PublicationStatus.PUBLISHED, is_current_public_revision=True)
+        self.revision(1, PublicationStatus.PUBLISHED, is_current_public=True)
         submitted = deepcopy(self.snapshot)
         submitted['infrastructure'].update(description='', contractor={'id': 1, 'name': 'New contractor'})
         submitted['images'] = [{'id': 2, 'url': '/media/new.jpg', 'is_cover': True}]
@@ -174,7 +174,7 @@ class PublicationComparisonViewTests(TestCase):
         self.assertEqual(response.context['comparison']['change_count'], 0)
 
     def test_current_revision_and_unchanged_submission_have_no_highlights(self):
-        current = self.revision(1, PublicationStatus.PUBLISHED, is_current_public_revision=True)
+        current = self.revision(1, PublicationStatus.PUBLISHED, is_current_public=True)
         self.assertContains(self.detail(current), 'Current Published Revision')
         pending = self.revision(2, PublicationStatus.PENDING_REVIEW)
         response = self.detail(pending)
@@ -182,11 +182,11 @@ class PublicationComparisonViewTests(TestCase):
         self.assertNotContains(response, 'snapshot-change--')
 
     def test_non_infrastructure_comparison_and_html_escaping(self):
-        UserFlag.objects.filter(user=self.head).update(department='mayor')
+        UserRole.objects.filter(user=self.head).update(department='mayor')
         self.project.project_type = 'non_infrastructure'
         self.project.save(update_fields=['project_type'])
         old = {'project': {'type': 'non_infrastructure'}, 'non_infrastructure': {'id': 1, 'title': 'Program', 'beneficiaries': 20, 'address': {'street': 'Old street'}}}
-        self.revision(1, PublicationStatus.PUBLISHED, old, is_current_public_revision=True)
+        self.revision(1, PublicationStatus.PUBLISHED, old, is_current_public=True)
         new = deepcopy(old)
         new['non_infrastructure'].update(beneficiaries=0, title='<script>alert(1)</script>', address=None)
         pending = self.revision(2, PublicationStatus.PENDING_REVIEW, new)

@@ -8,7 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from apps.system.models import InspectionEvidence, Project_Inspection, UserFlag
+from apps.system.models import InspectionEvidence, ProjectInspection, UserRole
 
 
 class InfrastructureInspectionHistoryTests(TestCase):
@@ -26,7 +26,7 @@ class InfrastructureInspectionHistoryTests(TestCase):
         self.staff = fixture.user
         self.staff.is_staff = True
         self.staff.save(update_fields=['is_staff'])
-        UserFlag.objects.create(
+        UserRole.objects.create(
             user=self.staff,
             department='engineer',
             role='staff',
@@ -37,7 +37,7 @@ class InfrastructureInspectionHistoryTests(TestCase):
             'engineering-head',
             is_staff=True,
         )
-        UserFlag.objects.create(
+        UserRole.objects.create(
             user=self.head,
             department='engineer',
             role='head',
@@ -46,7 +46,7 @@ class InfrastructureInspectionHistoryTests(TestCase):
             'mayor-head',
             is_staff=True,
         )
-        UserFlag.objects.create(
+        UserRole.objects.create(
             user=self.mayor_head,
             department='mayor',
             role='head',
@@ -129,7 +129,7 @@ class InfrastructureInspectionHistoryTests(TestCase):
         )
 
     def test_history_is_newest_first_and_visible_to_engineering_head(self):
-        Project_Inspection.objects.create(
+        ProjectInspection.objects.create(
             project=self.infrastructure.project,
             inspection_date='2026-05-01',
             inspected_by_user=self.staff,
@@ -137,7 +137,7 @@ class InfrastructureInspectionHistoryTests(TestCase):
             findings='Older inspection',
             remarks='Older remarks',
         )
-        newest = Project_Inspection.objects.create(
+        newest = ProjectInspection.objects.create(
             project=self.infrastructure.project,
             inspection_date='2026-06-01',
             inspected_by_user=self.staff,
@@ -160,14 +160,14 @@ class InfrastructureInspectionHistoryTests(TestCase):
         self.assertNotContains(response, 'Edit Inspection')
 
     def test_staff_can_edit_one_inspection_without_changing_another(self):
-        first = Project_Inspection.objects.create(
+        first = ProjectInspection.objects.create(
             project=self.infrastructure.project,
             inspection_date='2026-05-01',
             inspected_by_user=self.staff,
             completion_percentage=Decimal('20.00'),
             findings='First record',
         )
-        second = Project_Inspection.objects.create(
+        second = ProjectInspection.objects.create(
             project=self.infrastructure.project,
             inspection_date='2026-06-01',
             inspected_by_user=self.staff,
@@ -196,7 +196,7 @@ class InfrastructureInspectionHistoryTests(TestCase):
         self.assertEqual(second.completion_percentage, Decimal('45.00'))
 
     def test_non_staff_roles_cannot_add_or_edit_inspections(self):
-        inspection = Project_Inspection.objects.create(
+        inspection = ProjectInspection.objects.create(
             project=self.infrastructure.project,
             inspection_date='2026-06-01',
             inspected_by_user=self.staff,
@@ -298,7 +298,7 @@ class InfrastructureInspectionHistoryTests(TestCase):
         self.assertNotContains(detail, 'Remove Existing Evidence')
 
     def test_staff_can_remove_and_add_evidence_while_editing(self):
-        inspection = Project_Inspection.objects.create(
+        inspection = ProjectInspection.objects.create(
             project=self.infrastructure.project,
             inspection_type='routine',
             inspection_date='2026-07-01',
@@ -392,7 +392,7 @@ class InfrastructureInspectionHistoryTests(TestCase):
         self.assertFalse(self.infrastructure.project.inspections.exists())
 
     def test_existing_inspection_without_evidence_displays_normally(self):
-        inspection = Project_Inspection.objects.create(
+        inspection = ProjectInspection.objects.create(
             project=self.infrastructure.project,
             inspection_date='2026-07-01',
             inspected_by_user=self.staff,

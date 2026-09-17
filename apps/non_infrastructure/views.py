@@ -7,12 +7,11 @@ from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy, reverse, NoReverseMatch
 from django.db import models, transaction
-from django.db.models import Q, Sum
+from django.db.models import Prefetch, Q, Sum
 from django.templatetags.static import static
 from django.utils import timezone
 from .forms import NonInfrastructureOperationalForm, NonInfrastructureProjectForm
-from apps.system.models import NonInfrastructureProject as SystemNonInfrastructureProject
-from apps.system.models import Non_Infrastructure_Project, Project, Project_Image
+from apps.system.models import NonInfrastructureCategory, NonInfrastructureProject, Project, ProjectImage
 from apps.system.publication_service import (
     create_head_operational_revision,
     publication_state,
@@ -92,8 +91,8 @@ class NonInfrastructureProjectDashboardView(MayorsOfficeRequiredMixin, TemplateV
         def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
 
-            # All Mayor's Office users see the same project pool using the normalized compatibility model.
-            user_projects = SystemNonInfrastructureProject.objects.all()
+            # All Mayor's Office users see the same project pool using the normalized model.
+            user_projects = NonInfrastructureProject.objects.select_related('project', 'address', 'category').prefetch_related(Prefetch('project__images', queryset=ProjectImage.objects.order_by('-is_cover', '-created_at')))
 
             context['total_projects'] = user_projects.count()
 
@@ -110,42 +109,32 @@ class NonInfrastructureProjectDashboardView(MayorsOfficeRequiredMixin, TemplateV
 
 class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
     """Display list of non-infrastructure projects"""
-    model = SystemNonInfrastructureProject
+    model = NonInfrastructureProject
     template_name = 'non_infrastructure/non_infrastructure_list.html'
     context_object_name = 'projects'
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = SystemNonInfrastructureProject.objects.all()
+        queryset = NonInfrastructureProject.objects.select_related('project', 'address', 'category').prefetch_related(Prefetch('project__images', queryset=ProjectImage.objects.order_by('-is_cover', '-created_at')))
 
         # Filter by location
         location = self.request.GET.get('location', '').strip()
         if location:
-            queryset = queryset.filter(location=location)
+            queryset = queryset.filter(address__barangay=location)
 
         # Filter by category
         category = self.request.GET.get('category', '').strip()
         if category:
-            queryset = queryset.filter(category=category)
+            queryset = queryset.filter(category_id=category)
 
         return queryset.order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        normalized_projects = {
-            project.pk: project
-            for project in Non_Infrastructure_Project.objects.filter(
-                pk__in=[item.pk for item in context['projects']],
-            ).select_related('project')
-        }
         for project in context['projects']:
-            normalized = normalized_projects.get(project.pk)
-            project.publication_state = (
-                publication_state(normalized.project)
-                if normalized and normalized.project else None
-            )
-        context['locations'] = getattr(SystemNonInfrastructureProject, 'LOCATION_CHOICES', [])
-        context['categories'] = getattr(SystemNonInfrastructureProject, 'PROJECT_CATEGORY_CHOICES', [])
+            project.publication_state = publication_state(project.project)
+        context['locations'] = NonInfrastructureProject.objects.values_list('address__barangay', flat=True).distinct()
+        context['categories'] = NonInfrastructureCategory.objects.all()
         context['can_update_operations'] = (
             can_update_non_infrastructure_operations(self.request.user)
         )
@@ -154,7 +143,7 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
 
 class NonInfrastructureProjectCreateView(MayorsOfficeOnlyMixin, CreateView):
     """Create a new non-infrastructure project - Mayor's Office only"""
-    model = SystemNonInfrastructureProject
+    model = NonInfrastructureProject
     form_class = NonInfrastructureProjectForm
     template_name = 'non_infrastructure/non_infrastructure_form.html'
 
@@ -168,39 +157,27 @@ class NonInfrastructureProjectCreateView(MayorsOfficeOnlyMixin, CreateView):
 
     def form_valid(self, form):
         non = form.save(user=self.request.user)
-        self.object = SystemNonInfrastructureProject.objects.filter(non_infra_name=non.non_infra_name).first()
+        self.object = non
         return redirect(self.get_success_url())
 
 
 class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
     """Display project details"""
-    model = SystemNonInfrastructureProject
+    model = NonInfrastructureProject
     template_name = 'non_infrastructure/non_infrastructure_detail.html'
     context_object_name = 'project'
 
     def get_queryset(self):
-        return SystemNonInfrastructureProject.objects.all()
+        return NonInfrastructureProject.objects.select_related('project', 'address', 'category').prefetch_related(Prefetch('project__images', queryset=ProjectImage.objects.order_by('-is_cover', '-created_at')))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        compat_project = self.object
-
-        normalized = (
-            Non_Infrastructure_Project.objects
-            .filter(non_infra_id=compat_project.non_infra_id)
-            .select_related(
-                'project',
-                'project__created_by_user',
-                'address',
-                'non_infra_category',
-            )
-            .first()
-        )
-
-        project = normalized if normalized is not None else compat_project
+        project_record = self.object
+        normalized = project_record
+        project = project_record
 
         project_name = (
-            getattr(project, 'non_infra_name', '')
+            getattr(project, 'title', '')
             or 'Non-Infrastructure Project'
         )
 
@@ -223,7 +200,7 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
                 project.project.images.order_by('-is_cover', '-created_at')
             )
 
-        context['project_code'] = f'NINF-{compat_project.pk:05d}'
+        context['project_code'] = f'NINF-{project_record.pk:05d}'
         context['project_type_label'] = 'Non-Infrastructure'
         context['project_name'] = project_name
         context['project_manager'] = project_manager
@@ -231,7 +208,7 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
         context['project_status'] = project.get_status_display()
         context['project_category'] = (
             getattr(
-                getattr(project, 'non_infra_category', None),
+                getattr(project, 'category', None),
                 'type_name',
                 ''
             )
@@ -296,7 +273,7 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
             context['publication'] = publication_state(normalized.project)
             context['publication_submit_url'] = reverse(
                 'mayor_projects:non_infrastructure_project_submit_for_review',
-                args=[compat_project.pk],
+                args=[project_record.pk],
             )
             context['can_manage_publication'] = can_manage_non_infrastructure(self.request.user)
 
@@ -304,12 +281,12 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
 
 
 class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):
-    model = Non_Infrastructure_Project
+    model = NonInfrastructureProject
     form_class = NonInfrastructureOperationalForm
     template_name = 'non_infrastructure/non_infrastructure_operational_form.html'
 
     def get_queryset(self):
-        return Non_Infrastructure_Project.objects.all()
+        return NonInfrastructureProject.objects.select_related('project', 'address', 'category').prefetch_related(Prefetch('project__images', queryset=ProjectImage.objects.order_by('-is_cover', '-created_at')))
 
     def return_revision(self):
         revision_id = (
@@ -318,7 +295,7 @@ class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):
         )
         if not revision_id:
             return None
-        return self.object.project.publication_revisions.filter(
+        return self.object.project.revisions.filter(
             pk=revision_id,
         ).first()
 
@@ -326,13 +303,13 @@ class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         return_revision = self.return_revision()
         revision_snapshot = (
-            (return_revision.snapshot_data or {}).get(
+            (return_revision.snapshot or {}).get(
                 'non_infrastructure',
             ) or {}
             if return_revision else {}
         )
         context['operational_display_title'] = (
-            revision_snapshot.get('title') or self.object.non_infra_name
+            revision_snapshot.get('title') or self.object.title
         )
         context['return_revision_id'] = getattr(
             return_revision,
@@ -389,7 +366,7 @@ class NonInfrastructureProjectSubmitForReviewView(
 
     def post(self, request, pk):
         non_infrastructure = get_object_or_404(
-            Non_Infrastructure_Project.objects.select_related('project'),
+            NonInfrastructureProject.objects.select_related('project'),
             pk=pk,
         )
         try:
@@ -413,7 +390,7 @@ class NonInfrastructureProjectSubmitForReviewView(
 
 class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
     """Update an existing non-infrastructure project - Mayor's Office and admins only"""
-    model = SystemNonInfrastructureProject
+    model = NonInfrastructureProject
     form_class = NonInfrastructureProjectForm
     template_name = 'non_infrastructure/non_infrastructure_form.html'
 
@@ -421,7 +398,7 @@ class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
         return reverse('mayor_projects:non_infrastructure_project_list')
 
     def get_queryset(self):
-        return SystemNonInfrastructureProject.objects.all()
+        return NonInfrastructureProject.objects.select_related('project', 'address', 'category').prefetch_related(Prefetch('project__images', queryset=ProjectImage.objects.order_by('-is_cover', '-created_at')))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -430,20 +407,20 @@ class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
 
     def form_valid(self, form):
         non = form.save(user=self.request.user, instance=self.get_object())
-        self.object = SystemNonInfrastructureProject.objects.filter(non_infra_name=non.non_infra_name).first()
+        self.object = non
         return redirect(self.get_success_url())
 
 
 class NonInfrastructureProjectDeleteView(MayorsOfficeEditMixin, DeleteView):
     """Delete a non-infrastructure project - Mayor's Office and admins only"""
-    model = SystemNonInfrastructureProject
+    model = NonInfrastructureProject
     template_name = 'non_infrastructure/non_infrastructure_confirm_delete.html'
 
     def get_success_url(self):
         return reverse('mayor_projects:non_infrastructure_project_list')
 
     def get_queryset(self):
-        return SystemNonInfrastructureProject.objects.all()
+        return NonInfrastructureProject.objects.select_related('project', 'address', 'category').prefetch_related(Prefetch('project__images', queryset=ProjectImage.objects.order_by('-is_cover', '-created_at')))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -453,15 +430,15 @@ class NonInfrastructureProjectDeleteView(MayorsOfficeEditMixin, DeleteView):
         return context
 
     def form_valid(self, form):
-        compat_project = self.get_object()
+        project_record = self.get_object()
         normalized = (
-            Non_Infrastructure_Project.objects
-            .filter(pk=compat_project.pk)
+            NonInfrastructureProject.objects
+            .filter(pk=project_record.pk)
             .select_related('project')
             .first()
         )
         if normalized and normalized.project:
-            if normalized.project.publication_revisions.exists():
+            if normalized.project.revisions.exists():
                 messages.error(
                     self.request,
                     'A project with publication history cannot be deleted. '
@@ -470,9 +447,9 @@ class NonInfrastructureProjectDeleteView(MayorsOfficeEditMixin, DeleteView):
                 )
                 return redirect(
                     'mayor_projects:non_infrastructure_project_detail',
-                    pk=compat_project.pk,
+                    pk=project_record.pk,
                 )
             normalized.project.delete()
         else:
-            compat_project.delete()
+            project_record.delete()
         return redirect(self.get_success_url())

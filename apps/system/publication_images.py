@@ -3,15 +3,15 @@
 from django.db import transaction
 from django.utils import timezone
 
-from .models import Project_Image
+from .models import ProjectImage
 
 
-def revision_snapshot_references_image(snapshot_data, image):
+def revision_snapshot_references_image(snapshot, image):
     """Return whether a snapshot contains an image by stable ID or URL."""
-    if not isinstance(snapshot_data, dict):
+    if not isinstance(snapshot, dict):
         return False
 
-    for snapshot_image in snapshot_data.get('images', []):
+    for snapshot_image in snapshot.get('images', []):
         if not isinstance(snapshot_image, dict):
             continue
         if snapshot_image.get('id') == image.pk:
@@ -23,9 +23,9 @@ def revision_snapshot_references_image(snapshot_data, image):
 
 def image_is_referenced_by_revision(image):
     """Check all retained revisions, including pending and archived ones."""
-    revisions = image.project.publication_revisions.only('snapshot_data')
+    revisions = image.project.revisions.only('snapshot')
     return any(
-        revision_snapshot_references_image(revision.snapshot_data, image)
+        revision_snapshot_references_image(revision.snapshot, image)
         for revision in revisions.iterator()
     )
 
@@ -49,7 +49,7 @@ def retire_project_images(project, image_ids):
         return {'retired': 0, 'deleted': 0}
 
     images = list(
-        Project_Image.all_objects.select_for_update().filter(
+        ProjectImage.all_objects.select_for_update().filter(
             project=project,
             pk__in=normalized_ids,
             is_active=True,

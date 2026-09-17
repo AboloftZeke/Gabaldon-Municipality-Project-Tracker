@@ -1,91 +1,34 @@
-# Publication Approval Workflow Rollout
+# Publication approval workflow
 
-## What changes for employees and administrators
+Office Staff create and edit working project records and submit revision snapshots.
+The corresponding Engineering or Mayor's Office Head reviews the submission.
+Review permission stays scoped to the Head's office and self-review rules.
+Approval does not publish a project. A Head explicitly publishes an approved
+revision; only the current published snapshot appears on public dashboards,
+details, GIS, and photo endpoints.
 
-New and edited projects remain working records until an employee submits a
-revision for review. An administrator can inspect the submitted snapshot,
-request revisions, reject it, or approve it. Approval and publication are
-separate actions. Only the revision explicitly published by an administrator
-is shown on the public dashboard, project detail pages, GIS layer, and photo
-endpoints.
+Editing a working record does not change the submitted or published snapshot.
+Publishing a replacement archives the previous public revision. Operational
+updates, inspection evidence, image retirement, and cover selection retain their
+existing workflow rules. Admin maintenance exceptions are unchanged; superuser
+status alone does not make an account an office Head.
 
-Editing a project after submission does not silently change the submitted or
-published version. Publishing a later approved revision archives the previous
-public revision. Archiving the current revision removes the project from all
-public surfaces without deleting the employee's working record.
+## Database setup
 
-## Pre-deployment checklist
+Follow [the schema rebuild instructions](SCHEMA_NAMING.md). This branch has a new
+migration baseline for empty development databases. The old publication backfill
+migration has been removed; new projects are not implicitly published.
 
-1. Confirm the deployment is using the
-   `feature/publication-approval-workflow` branch or its reviewed merge commit.
-2. Take and verify a restorable database backup.
-3. Confirm the production environment provides a long, random `SECRET_KEY`.
-4. Set `DEBUG=False` and configure the production host names in
-   `ALLOWED_HOSTS`.
-5. When HTTPS is terminated by Django, enable secure session and CSRF cookies,
-   HTTPS redirection, and an appropriate HSTS policy. When TLS is terminated by
-   a reverse proxy, configure the proxy and Django's forwarded-protocol setting
-   consistently before enabling redirects or HSTS.
-6. Ensure uploaded project images referenced by published revisions remain
-   available at their stored URLs.
+## Acceptance checks
 
-## Deployment sequence
+- Staff can create, edit, view, and submit projects in their own office.
+- Heads can review and update official operational information in their own office.
+- Approval alone leaves the project private; explicit publishing makes it public.
+- Submitted and published snapshots are stable when working records change.
+- A replacement publication archives the old current revision and retains history.
+- Inspection evidence and selected cover images remain available in the proper views.
+- OTP login and account assignment respect the configured department and role.
 
-Run these commands from the application directory with the production virtual
-environment and configuration loaded:
-
-```text
-python manage.py check --deploy
-python manage.py migrate --plan
-python manage.py migrate
-python manage.py collectstatic --noinput
-```
-
-Migration `system.0027_backfill_published_revisions` creates one current
-published revision for each existing normalized infrastructure or
-non-infrastructure project that has no publication history. This preserves the
-projects that residents could see before the approval workflow was introduced.
-Projects that already have a workflow revision are not changed.
-
-Do not mark migration `0027` as fake. Its data operation is required for the
-public dashboard to retain existing projects.
-
-## Post-deployment acceptance check
-
-Use one test project for each department and confirm:
-
-- A newly created project is absent from the public dashboard.
-- The responsible employee can submit it for review.
-- A different department cannot use that submission endpoint.
-- Only an administrator can open the review queue and record a decision.
-- Returning or rejecting a revision requires review notes.
-- Approval alone does not make the project public.
-- Publishing the approved revision makes that exact snapshot public.
-- Editing the working record does not change the public version.
-- Publishing a later approved revision replaces and archives the old public
-  revision.
-- Archiving the current revision removes it from the dashboard, detail pages,
-  GIS output, and project-photo output.
-
-## Focused verification command
-
-The following test groups cover the final workflow without running unrelated
-application tests:
-
-```text
-python manage.py test \
-  apps.system.tests.PublicationServiceTests \
-  apps.system.tests.EmployeePublicationWorkflowViewTests \
-  apps.system.tests.AdminPublicationReviewViewTests \
-  apps.system.tests.ProjectPublicationBackfillMigrationTests \
-  apps.system.tests.PublicDashboardInfrastructureDataSourceTests \
-  apps.system.tests.PublicDashboardNonInfrastructureStatusTests
-```
-
-## Rollback note
-
-Prefer restoring the verified pre-deployment database backup if the deployment
-must be fully rolled back. Reversing migration `0027` removes only revisions
-that carry its migration marker, but later review activity may have changed
-publication history after deployment. Review that history before attempting a
-database migration rollback on an active system.
+Run the complete suite with `python manage.py test --settings=config.test_settings`.
+This configuration enables OTP, uses in-memory mail, and creates a fresh test
+database through the real migration graph.

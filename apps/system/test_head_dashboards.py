@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Project, ProjectPublicationRevision, UserFlag
+from .models import Project, ProjectRevision, UserRole
 from .navigation import dashboard_name
 
 
@@ -24,12 +24,12 @@ class HeadDashboardTests(TestCase):
                 f'{department}-{role}', email=f'{department}-{role}@example.com',
                 password='ValidLoginPass!2026', is_staff=True, is_superuser=role == 'admin',
             )
-            UserFlag.objects.create(user=user, department=department, role=role)
+            UserRole.objects.create(user=user, department=department, role=role)
             self.users[department, role] = (user, destination)
         self.revisions = {}
         for office, kind in [('engineer', 'infrastructure'), ('mayor', 'non_infrastructure')]:
             project = Project.objects.create(project_type=kind)
-            self.revisions[office] = ProjectPublicationRevision.objects.create(
+            self.revisions[office] = ProjectRevision.objects.create(
                 project=project, revision_number=1, status='approved', reviewed_at=timezone.now(),
             )
 
@@ -117,7 +117,7 @@ class HeadDashboardTests(TestCase):
         response = self.client.get(reverse('publication_lifecycle'))
         self.assertEqual(set(response.context['revisions']), set(self.revisions.values()))
         revision = self.revisions['engineer']
-        ProjectPublicationRevision.objects.filter(pk=revision.pk).update(status='pending_review')
+        ProjectRevision.objects.filter(pk=revision.pk).update(status='pending_review')
         response = self.client.get(reverse('publication_lifecycle'))
         self.assertNotIn(revision.pk, [item.pk for item in response.context['revisions']])
         for (department, role), (user, _) in self.users.items():
@@ -132,23 +132,23 @@ class HeadDashboardTests(TestCase):
             ('mayor', 'non_infrastructure'),
         ]:
             project = Project.objects.create(project_type=project_type)
-            current = ProjectPublicationRevision.objects.create(
+            current = ProjectRevision.objects.create(
                 project=project,
                 revision_number=1,
                 status='published',
-                is_current_public_revision=True,
-                snapshot_data={'project': {'type': project_type}},
+                is_current_public=True,
+                snapshot={'project': {'type': project_type}},
             )
             head = self.users[office, 'head'][0]
-            operational[office] = ProjectPublicationRevision.objects.create(
+            operational[office] = ProjectRevision.objects.create(
                 project=project,
                 revision_number=2,
                 status='approved',
-                supersedes_revision=current,
+                previous_revision=current,
                 submitted_by=head,
                 reviewed_by=head,
                 reviewed_at=timezone.now(),
-                snapshot_data={
+                snapshot={
                     'project': {'type': project_type},
                     project_type: {
                         'id': 20,
@@ -185,7 +185,7 @@ class HeadDashboardTests(TestCase):
 
     def test_complete_initial_revision_is_ready_to_publish(self):
         revision = self.revisions['engineer']
-        revision.snapshot_data = {
+        revision.snapshot = {
             'project': {'type': 'infrastructure'},
             'infrastructure': {
                 'id': 1,
@@ -199,7 +199,7 @@ class HeadDashboardTests(TestCase):
                 'confirmed_by_user_id': self.users['engineer', 'head'][0].pk,
             },
         }
-        revision.save(update_fields=['snapshot_data'])
+        revision.save(update_fields=['snapshot'])
         self.client.force_login(self.users['engineer', 'head'][0])
 
         response = self.client.get(reverse('engineering_head_dashboard'))

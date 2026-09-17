@@ -7,12 +7,12 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import (
-    Infrastructure_Project,
-    Non_Infrastructure_Project,
+    InfrastructureProject,
+    NonInfrastructureProject,
     Project,
-    Project_Inspection,
-    ProjectPublicationRevision,
-    UserFlag,
+    ProjectInspection,
+    ProjectRevision,
+    UserRole,
 )
 from .publication_service import OPERATIONAL_CONFIRMATION_KEY
 from .publication_snapshots import build_project_publication_snapshot
@@ -32,7 +32,7 @@ class PublicationOperationalUITests(TestCase):
                 password='test-password',
                 is_staff=True,
             )
-            UserFlag.objects.create(
+            UserRole.objects.create(
                 user=user,
                 department=department,
                 role=role,
@@ -42,7 +42,7 @@ class PublicationOperationalUITests(TestCase):
             'admin',
             password='test-password',
         )
-        UserFlag.objects.create(
+        UserRole.objects.create(
             user=self.admin,
             department='admin',
             role='admin',
@@ -52,47 +52,47 @@ class PublicationOperationalUITests(TestCase):
             project_type='infrastructure',
             created_by_user=self.users['engineer', 'staff'],
         )
-        self.infrastructure = Infrastructure_Project.objects.create(
+        self.infrastructure = InfrastructureProject.objects.create(
             project=infrastructure_base,
-            infrastructure_title='Municipal Hall Rehabilitation',
+            title='Municipal Hall Rehabilitation',
             award_status='awarded',
             planned_start_date=date.today() - timedelta(days=5),
             planned_end_date=date.today() + timedelta(days=5),
         )
-        self.inspection = Project_Inspection.objects.create(
+        self.inspection = ProjectInspection.objects.create(
             project=infrastructure_base,
             inspection_date=date.today(),
             completion_percentage=Decimal('30'),
         )
-        self.infrastructure_revision = ProjectPublicationRevision.objects.create(
+        self.infrastructure_revision = ProjectRevision.objects.create(
             project=infrastructure_base,
             revision_number=1,
             status='approved',
-            snapshot_data=build_project_publication_snapshot(
+            snapshot=build_project_publication_snapshot(
                 infrastructure_base,
             ),
         )
         incomplete_snapshot = deepcopy(
-            self.infrastructure_revision.snapshot_data,
+            self.infrastructure_revision.snapshot,
         )
         incomplete_snapshot['inspection']['completion_percentage'] = None
-        self.infrastructure_revision.snapshot_data = incomplete_snapshot
-        self.infrastructure_revision.save(update_fields=['snapshot_data'])
+        self.infrastructure_revision.snapshot = incomplete_snapshot
+        self.infrastructure_revision.save(update_fields=['snapshot'])
 
         non_infrastructure_base = Project.objects.create(
             project_type='non_infrastructure',
             created_by_user=self.users['mayor', 'staff'],
         )
-        self.non_infrastructure = Non_Infrastructure_Project.objects.create(
+        self.non_infrastructure = NonInfrastructureProject.objects.create(
             project=non_infrastructure_base,
-            non_infra_name='Community Wellness Program',
+            title='Community Wellness Program',
         )
         self.non_infrastructure_revision = (
-            ProjectPublicationRevision.objects.create(
+            ProjectRevision.objects.create(
                 project=non_infrastructure_base,
                 revision_number=1,
                 status='approved',
-                snapshot_data=build_project_publication_snapshot(
+                snapshot=build_project_publication_snapshot(
                     non_infrastructure_base,
                 ),
             )
@@ -175,7 +175,7 @@ class PublicationOperationalUITests(TestCase):
         self.infrastructure_revision.refresh_from_db()
         self.assertIn(
             OPERATIONAL_CONFIRMATION_KEY,
-            self.infrastructure_revision.snapshot_data,
+            self.infrastructure_revision.snapshot,
         )
         response = self.client.get(self.revision_url(
             self.infrastructure_revision,
@@ -201,17 +201,17 @@ class PublicationOperationalUITests(TestCase):
         self.infrastructure_revision.refresh_from_db()
         self.assertEqual(self.infrastructure_revision.status, 'published')
         self.assertTrue(
-            self.infrastructure_revision.is_current_public_revision,
+            self.infrastructure_revision.is_current_public,
         )
 
     def test_calculated_cost_progress_uses_retained_submission_values(self):
-        snapshot = deepcopy(self.infrastructure_revision.snapshot_data)
+        snapshot = deepcopy(self.infrastructure_revision.snapshot)
         snapshot['financial'] = {
             'contract_price': '2350000.00',
             'actual_expenditure': '940000.00',
         }
-        self.infrastructure_revision.snapshot_data = snapshot
-        self.infrastructure_revision.save(update_fields=['snapshot_data'])
+        self.infrastructure_revision.snapshot = snapshot
+        self.infrastructure_revision.save(update_fields=['snapshot'])
         self.client.force_login(self.users['engineer', 'head'])
         operational_url = reverse(
             'engineering_projects:project_operations',
@@ -238,7 +238,7 @@ class PublicationOperationalUITests(TestCase):
         ))
         self.infrastructure_revision.refresh_from_db()
         self.assertEqual(
-            self.infrastructure_revision.snapshot_data['financial'],
+            self.infrastructure_revision.snapshot['financial'],
             snapshot['financial'],
         )
         preview = self.client.get(self.revision_url(
@@ -316,8 +316,8 @@ class PublicationOperationalUITests(TestCase):
         self.assertNotContains(response, '>Edit<', html=True)
 
     def test_review_linked_forms_use_retained_revision_titles(self):
-        self.infrastructure.infrastructure_title = 'Newer Staff Infra Title'
-        self.infrastructure.save(update_fields=['infrastructure_title'])
+        self.infrastructure.title = 'Newer Staff Infra Title'
+        self.infrastructure.save(update_fields=['title'])
         self.client.force_login(self.users['engineer', 'head'])
         response = self.client.get(reverse(
             'engineering_projects:project_operations',
@@ -339,8 +339,8 @@ class PublicationOperationalUITests(TestCase):
             '/static/css/templates/core/operational_update.css?v=20260914-2',
         )
 
-        self.non_infrastructure.non_infra_name = 'Newer Staff Program Title'
-        self.non_infrastructure.save(update_fields=['non_infra_name'])
+        self.non_infrastructure.title = 'Newer Staff Program Title'
+        self.non_infrastructure.save(update_fields=['title'])
         self.client.force_login(self.users['mayor', 'head'])
         response = self.client.get(reverse(
             'mayor_projects:non_infrastructure_project_operations',
@@ -364,15 +364,15 @@ class PublicationOperationalUITests(TestCase):
 
     def test_head_dashboard_surfaces_published_project_update(self):
         self.infrastructure_revision.status = 'published'
-        self.infrastructure_revision.is_current_public_revision = True
+        self.infrastructure_revision.is_current_public = True
         self.infrastructure_revision.save(update_fields=[
             'status',
-            'is_current_public_revision',
+            'is_current_public',
         ])
-        self.infrastructure.infrastructure_title = 'Unpublished Staff Title'
+        self.infrastructure.title = 'Unpublished Staff Title'
         self.infrastructure.award_status = 'completed'
         self.infrastructure.save(update_fields=[
-            'infrastructure_title',
+            'title',
             'award_status',
         ])
         self.client.force_login(self.users['engineer', 'head'])
@@ -392,15 +392,15 @@ class PublicationOperationalUITests(TestCase):
 
     def test_mayor_dashboard_uses_current_public_snapshot(self):
         self.non_infrastructure_revision.status = 'published'
-        self.non_infrastructure_revision.is_current_public_revision = True
+        self.non_infrastructure_revision.is_current_public = True
         self.non_infrastructure_revision.save(update_fields=[
             'status',
-            'is_current_public_revision',
+            'is_current_public',
         ])
-        self.non_infrastructure.non_infra_name = 'Unpublished Mayor Title'
+        self.non_infrastructure.title = 'Unpublished Mayor Title'
         self.non_infrastructure.status = 'completed'
         self.non_infrastructure.save(update_fields=[
-            'non_infra_name',
+            'title',
             'status',
         ])
         self.client.force_login(self.users['mayor', 'head'])

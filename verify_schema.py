@@ -1,58 +1,31 @@
+"""Verify application tables and columns against Django's active model registry."""
 import os
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
+from django.apps import apps
 from django.db import connection
-from apps.infrastructure.models import InfrastructureProject
-from apps.non_infrastructure.models import NonInfrastructureProject
 
-def get_db_columns(table_name):
-    """Get actual column names from PostgreSQL."""
-    c = connection.cursor()
-    c.execute("""
-        SELECT column_name
-        FROM information_schema.columns
-        WHERE table_schema='public' AND table_name=%s
-        ORDER BY column_name
-    """, [table_name])
-    return sorted([r[0] for r in c.fetchall()])
+def verify_schema():
+    models = [model for model in apps.get_models(include_auto_created=True)
+              if model._meta.app_label in {'system', 'infrastructure', 'non_infrastructure'}
+              and model._meta.managed]
+    expected = {model._meta.db_table for model in models}
+    with connection.cursor() as cursor:
+        tables = set(connection.introspection.table_names(cursor))
+        actual = {name for name in tables if name.startswith(('system_', 'infrastructure_', 'non_infrastructure_'))}
+        if actual != expected:
+            raise AssertionError(f'Unexpected tables: {actual - expected}; missing: {expected - actual}')
+        for model in models:
+            columns = {column.name for column in connection.introspection.get_table_description(cursor, model._meta.db_table)}
+            expected_columns = {field.column for field in model._meta.local_fields}
+            if columns != expected_columns:
+                raise AssertionError(f'{model._meta.db_table}: {columns ^ expected_columns}')
+    return sorted(expected)
 
-def get_model_columns(model):
-    """Get expected columns from Django model."""
-    return sorted({
-        f.column for f in model._meta.get_fields()
-        if getattr(f, 'concrete', False) and not f.many_to_many
-    })
-
-# Verify both tables
-checks = [
-    (InfrastructureProject, 'infrastructure_infrastructureproject'),
-    (NonInfrastructureProject, 'non_infrastructure_noninfrastructureproject'),
-]
-
-for model, table in checks:
-    model_cols = get_model_columns(model)
-    db_cols = get_db_columns(table)
-    
-    print(f"\n{'='*60}")
-    print(f"Table: {table}")
-    print(f"{'='*60}")
-    print(f"Django Model Columns: {len(model_cols)}")
-    print(f"Database Columns: {len(db_cols)}")
-    
-    if set(model_cols) == set(db_cols):
-        print("✓ Schema is IN SYNC")
-    else:
-        print("✗ Schema MISMATCH")
-        model_only = set(model_cols) - set(db_cols)
-        db_only = set(db_cols) - set(model_cols)
-        if model_only:
-            print(f"  In model but not DB: {model_only}")
-        if db_only:
-            print(f"  In DB but not model: {db_only}")
-    
-    print(f"\nColumns ({len(db_cols)}):")
-    for col in db_cols:
-        print(f"  - {col}")
+if __name__ == '__main__':
+    for table in verify_schema():
+        print(table)
+    print('All application tables and columns match the active models.')

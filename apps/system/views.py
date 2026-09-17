@@ -34,7 +34,7 @@ from .account_setup import AccountSetupDeliveryError, send_account_setup_email
 PENDING_LOGIN_OTP_SESSION_KEY = 'pending_login_otp_challenge'
 
 
-from apps.system.models import UserFlag
+from apps.system.models import UserRole
 
 def _department_for_user(user):
     if not user or not user.is_authenticated:
@@ -43,7 +43,7 @@ def _department_for_user(user):
     if user.is_superuser:
         return "admin"
 
-    flag = UserFlag.objects.filter(user=user).only("department").first()
+    flag = UserRole.objects.filter(user=user).only("department").first()
     return flag.department if flag and flag.department else None
 
 
@@ -275,9 +275,7 @@ class PublicDashboardView(TemplateView):
             non_infrastructure_dashboard_row,
             public_projects,
         )
-        from apps.infrastructure.models import (
-            InfrastructureProject as LegacyInfrastructureProject,
-        )
+        from apps.system.choices import BARANGAY_CHOICES
         infra_projects, noninfra_projects = public_projects()
         infra_total = len(infra_projects)
         noninfra_total = len(noninfra_projects)
@@ -302,7 +300,7 @@ class PublicDashboardView(TemplateView):
         )
         location_options_map = {
             code: label
-            for code, label in LegacyInfrastructureProject.LOCATION_CHOICES
+            for code, label in BARANGAY_CHOICES
         }
         for project in infra_projects:
             barangay = project['address'].get('barangay') or ''
@@ -367,14 +365,14 @@ class AdminDashboardView(StaffRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from .models import ProjectPublicationRevision
+        from .models import ProjectRevision
         from .publication_workflow import PublicationStatus
 
         context['total_users'] = User.objects.count()
         context['total_admins'] = User.objects.filter(is_superuser=True).count()
         context['total_staff'] = User.objects.filter(is_staff=True, is_superuser=False).count()
-        context['approved_publication_revisions'] = (
-            ProjectPublicationRevision.objects.filter(
+        context['approved_revisions'] = (
+            ProjectRevision.objects.filter(
                 status=PublicationStatus.APPROVED,
             ).count()
         )
@@ -471,7 +469,7 @@ class UserListView(AdminRequiredMixin, ListView):
 
         # Filter by department if provided
         if department:
-            queryset = queryset.filter(flags__department=department)
+            queryset = queryset.filter(role_assignment__department=department)
 
         return queryset
 

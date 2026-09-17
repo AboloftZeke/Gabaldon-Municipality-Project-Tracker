@@ -1,6 +1,6 @@
 """Build stable, JSON-safe snapshots for public project revisions."""
 
-from .models import Infrastructure_Project, Non_Infrastructure_Project
+from .models import InfrastructureProject, NonInfrastructureProject
 
 
 SNAPSHOT_SCHEMA_VERSION = 1
@@ -153,8 +153,8 @@ def build_infrastructure_snapshot(infrastructure):
         'infrastructure': {
             'id': infrastructure.pk,
             'code': infrastructure.infrastructure_code or '',
-            'title': infrastructure.infrastructure_title,
-            'description': infrastructure.infrastructure_description or '',
+            'title': infrastructure.title,
+            'description': infrastructure.description or '',
             'category': (
                 {
                     'id': infrastructure.category_id,
@@ -270,15 +270,15 @@ def build_non_infrastructure_snapshot(non_infrastructure):
     snapshot['non_infrastructure'] = {
         'id': non_infrastructure.pk,
         'code': f'NINF-{non_infrastructure.pk:05d}',
-        'title': non_infrastructure.non_infra_name,
+        'title': non_infrastructure.title,
         'description': non_infrastructure.description or '',
         'category': (
             {
-                'id': non_infrastructure.non_infra_category_id,
-                'code': non_infrastructure.non_infra_category.type_code,
-                'name': non_infrastructure.non_infra_category.type_name,
+                'id': non_infrastructure.category_id,
+                'code': non_infrastructure.category.type_code,
+                'name': non_infrastructure.category.type_name,
             }
-            if non_infrastructure.non_infra_category else None
+            if non_infrastructure.category else None
         ),
         'status': non_infrastructure.status,
         'status_label': non_infrastructure.get_status_display(),
@@ -298,7 +298,7 @@ def build_project_publication_snapshot(project):
     if project.project_type == 'infrastructure':
         try:
             infrastructure = project.infrastructure_project
-        except Infrastructure_Project.DoesNotExist as exc:
+        except InfrastructureProject.DoesNotExist as exc:
             raise ValueError(
                 'Infrastructure project details are missing.'
             ) from exc
@@ -307,7 +307,7 @@ def build_project_publication_snapshot(project):
     if project.project_type == 'non_infrastructure':
         try:
             non_infrastructure = project.non_infrastructure_project
-        except Non_Infrastructure_Project.DoesNotExist as exc:
+        except NonInfrastructureProject.DoesNotExist as exc:
             raise ValueError(
                 'Non-infrastructure project details are missing.'
             ) from exc

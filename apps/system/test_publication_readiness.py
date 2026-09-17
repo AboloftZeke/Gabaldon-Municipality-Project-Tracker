@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import ProjectPublicationRevision
+from .models import ProjectRevision
 from .publication_service import publish_publication_revision
 from .publication_snapshots import build_project_publication_snapshot
 from .publication_workflow import PublicationStatus
@@ -22,11 +22,11 @@ class FirstPublicationReadinessTests(TestCase):
         self.non_infrastructure_public.delete()
 
     def approved_revision(self, project):
-        return ProjectPublicationRevision.objects.create(
+        return ProjectRevision.objects.create(
             project=project,
             revision_number=1,
             status=PublicationStatus.APPROVED,
-            snapshot_data=build_project_publication_snapshot(project),
+            snapshot=build_project_publication_snapshot(project),
         )
 
     def test_infrastructure_first_publication_reports_all_missing_requirements(self):
@@ -37,10 +37,10 @@ class FirstPublicationReadinessTests(TestCase):
             'physical_progress_percentage',
         ])
         revision = self.approved_revision(self.infrastructure.project)
-        snapshot = deepcopy(revision.snapshot_data)
+        snapshot = deepcopy(revision.snapshot)
         snapshot['inspection']['completion_percentage'] = None
-        revision.snapshot_data = snapshot
-        revision.save(update_fields=['snapshot_data'])
+        revision.snapshot = snapshot
+        revision.save(update_fields=['snapshot'])
 
         with self.assertRaises(ValidationError) as caught:
             publish_publication_revision(
@@ -55,13 +55,13 @@ class FirstPublicationReadinessTests(TestCase):
         self.assertIn('inspection completion percentage is required', message)
         revision.refresh_from_db()
         self.assertEqual(revision.status, PublicationStatus.APPROVED)
-        self.assertFalse(revision.is_current_public_revision)
+        self.assertFalse(revision.is_current_public)
 
     def test_head_confirmation_updates_only_operational_snapshot_values(self):
         revision = self.approved_revision(self.infrastructure.project)
-        reviewed_title = revision.snapshot_data['infrastructure']['title']
-        self.infrastructure.infrastructure_title = 'Unreviewed working title'
-        self.infrastructure.save(update_fields=['infrastructure_title'])
+        reviewed_title = revision.snapshot['infrastructure']['title']
+        self.infrastructure.title = 'Unreviewed working title'
+        self.infrastructure.save(update_fields=['title'])
 
         self.client.force_login(self.users['engineer', 'head'])
         response = self.client.post(reverse(
@@ -76,13 +76,13 @@ class FirstPublicationReadinessTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
         revision.refresh_from_db()
-        infrastructure = revision.snapshot_data['infrastructure']
+        infrastructure = revision.snapshot['infrastructure']
         self.assertEqual(infrastructure['title'], reviewed_title)
         self.assertEqual(infrastructure['award_status'], 'completed')
         self.assertEqual(infrastructure['physical_progress_percentage'], '45.00')
         self.assertIsNone(infrastructure['cost_progress_percentage'])
         self.assertEqual(
-            revision.snapshot_data['inspection']['completion_percentage'],
+            revision.snapshot['inspection']['completion_percentage'],
             '65.00',
         )
 
@@ -123,7 +123,7 @@ class FirstPublicationReadinessTests(TestCase):
         self.assertEqual(response.status_code, 302)
         revision.refresh_from_db()
         self.assertEqual(
-            revision.snapshot_data['non_infrastructure']['status'],
+            revision.snapshot['non_infrastructure']['status'],
             'planned',
         )
         published = publish_publication_revision(revision, mayor_head)

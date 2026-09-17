@@ -28,14 +28,14 @@
                 <div class="project-card">
                     <div class="project-card-image">
                         {% if project.cover_image_url %}
-                            <img src="{{ project.cover_image_url }}" alt="{{ project.infrastructure_title }} cover">
+                            <img src="{{ project.cover_image_url }}" alt="{{ project.title }} cover">
                         {% else %}
-                            <img src="{% static 'images/project-placeholder.svg' %}" alt="{{ project.infrastructure_title }} cover">
+                            <img src="{% static 'images/project-placeholder.svg' %}" alt="{{ project.title }} cover">
                         {% endif %}
                     </div>
                     <div class="project-card-body">
                         <div class="project-title">
-                            {{ project.infrastructure_title }}
+                            {{ project.title }}
                         </div>
                         <div class="project-location">
                             📍
@@ -70,9 +70,9 @@
                             </div>
                         {% endif %}
 
-                        {% if project.abc_amount is not None %}
+                        {% if project.financial_records.first.approved_budget is not None %}
                             <div style="font-weight: 600; color: #1d4ed8; margin-bottom: 1rem;">
-                                ₱{{ project.abc_amount|floatformat:2 }}
+                                ₱{{ project.financial_records.first.approved_budget|floatformat:2 }}
                             </div>
                         {% endif %}
 

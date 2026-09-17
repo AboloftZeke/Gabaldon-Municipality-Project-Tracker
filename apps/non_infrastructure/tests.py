@@ -7,10 +7,9 @@ from apps.non_infrastructure.forms import NonInfrastructureProjectForm
 from apps.system.models import (
     Address,
     NonInfrastructureCategory,
-    NonInfrastructureProject as SystemNonInfrastructureProject,
-    Non_Infrastructure_Project,
+    NonInfrastructureProject,
     Project,
-    Project_Image,
+    ProjectImage,
 )
 
 
@@ -48,11 +47,11 @@ class NonInfrastructureProjectFormTests(TestCase):
             created_by_user=self.user,
             updated_by_user=self.user,
         )
-        existing = Non_Infrastructure_Project.objects.create(
+        existing = NonInfrastructureProject.objects.create(
             project=project,
-            non_infra_name='Existing Community Program',
+            title='Existing Community Program',
             description='Existing program description.',
-            non_infra_category=self.category,
+            category=self.category,
             status='ongoing',
             proponent='Mayor Office',
             beneficiaries=80,
@@ -61,7 +60,7 @@ class NonInfrastructureProjectFormTests(TestCase):
             end_time='11:00',
             venue_name='Municipal Hall',
         )
-        image = Project_Image.objects.create(
+        image = ProjectImage.objects.create(
             project=project,
             image_url='https://example.com/existing.jpg',
             is_cover=True,
@@ -83,10 +82,10 @@ class NonInfrastructureProjectFormTests(TestCase):
     def test_form_saves_normalized_non_infrastructure_project(self):
         form = NonInfrastructureProjectForm(
             data={
-                'non_infra_name': 'Community Health Fair',
+                'title': 'Community Health Fair',
                 'status': 'planned',
                 'description': 'Free medical and health education event.',
-                'non_infra_category': str(self.category.non_infrastructure_category_id),
+                'category': str(self.category.non_infrastructure_category_id),
                 'proponent': 'Municipal Health Office',
                 'beneficiaries': '250',
                 'event_date': '2026-08-20',
@@ -108,8 +107,8 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         project = form.save(user=self.user)
 
-        self.assertEqual(project.non_infra_name, 'Community Health Fair')
-        self.assertEqual(project.non_infra_category, self.category)
+        self.assertEqual(project.title, 'Community Health Fair')
+        self.assertEqual(project.category, self.category)
         self.assertEqual(project.proponent, 'Municipal Health Office')
         self.assertEqual(project.beneficiaries, 250)
         self.assertEqual(project.address.barangay, 'bagting')
@@ -127,10 +126,10 @@ class NonInfrastructureProjectFormTests(TestCase):
 
     def test_form_rejects_end_time_before_start_time(self):
         form = NonInfrastructureProjectForm(data={
-            'non_infra_name': 'Community Program',
+            'title': 'Community Program',
             'status': 'planned',
             'description': 'Program description.',
-            'non_infra_category': str(self.category.non_infrastructure_category_id),
+            'category': str(self.category.non_infrastructure_category_id),
             'proponent': 'Mayor Office',
             'beneficiaries': '100',
             'event_date': '2026-08-20',
@@ -148,10 +147,10 @@ class NonInfrastructureProjectFormTests(TestCase):
 
     def test_form_rejects_end_time_equal_to_start_time(self):
         form = NonInfrastructureProjectForm(data={
-            'non_infra_name': 'Community Program',
+            'title': 'Community Program',
             'status': 'planned',
             'description': 'Program description.',
-            'non_infra_category': str(self.category.non_infrastructure_category_id),
+            'category': str(self.category.non_infrastructure_category_id),
             'proponent': 'Mayor Office',
             'beneficiaries': '100',
             'event_date': '2026-08-20',
@@ -169,15 +168,15 @@ class NonInfrastructureProjectFormTests(TestCase):
 
     def test_form_updates_existing_project_and_images(self):
         proj = Project.objects.create(project_type='non_infrastructure', created_by_user=self.user, updated_by_user=self.user)
-        existing = Non_Infrastructure_Project.objects.create(
+        existing = NonInfrastructureProject.objects.create(
             project=proj,
-            non_infra_name='Old Program',
+            title='Old Program',
             description='Old description',
-            non_infra_category=self.category,
+            category=self.category,
             event_date='2026-01-10',
             venue_name='Old Venue',
         )
-        old_image = Project_Image.objects.create(
+        old_image = ProjectImage.objects.create(
             project=proj,
             image_url='https://example.com/old.jpg',
             is_cover=True,
@@ -186,10 +185,10 @@ class NonInfrastructureProjectFormTests(TestCase):
         form = NonInfrastructureProjectForm(
             instance=existing,
             data={
-                'non_infra_name': 'Updated Community Fair',
+                'title': 'Updated Community Fair',
                 'status': 'planned',
                 'description': 'Updated description.',
-                'non_infra_category': str(self.category.non_infrastructure_category_id),
+                'category': str(self.category.non_infrastructure_category_id),
                 'proponent': 'Barangay Nutrition Council',
                 'beneficiaries': '180',
                 'event_date': '2026-09-15',
@@ -211,7 +210,7 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         updated = form.save(user=self.user, instance=existing)
 
-        self.assertEqual(updated.non_infra_name, 'Updated Community Fair')
+        self.assertEqual(updated.title, 'Updated Community Fair')
         self.assertEqual(updated.proponent, 'Barangay Nutrition Council')
         self.assertEqual(updated.beneficiaries, 180)
         self.assertEqual(updated.event_date.isoformat(), '2026-09-15')
@@ -228,32 +227,32 @@ class NonInfrastructureProjectFormTests(TestCase):
 
         form = NonInfrastructureProjectForm()
 
-        self.assertTrue(form.fields['non_infra_category'].queryset.exists())
-        self.assertIn('Social Services', list(form.fields['non_infra_category'].queryset.values_list('type_name', flat=True)))
+        self.assertTrue(form.fields['category'].queryset.exists())
+        self.assertIn('Social Services', list(form.fields['category'].queryset.values_list('type_name', flat=True)))
 
-    def test_compatibility_model_maps_redesigned_fields_for_ui(self):
+    def test_normalized_model_exposes_project_relationships(self):
         project = Project.objects.create(project_type='non_infrastructure', created_by_user=self.user, updated_by_user=self.user)
         address = Address.objects.create(barangay='Bagting', municipality='Gabaldon', province='Nueva Ecija')
-        normalized = Non_Infrastructure_Project.objects.create(
+        normalized = NonInfrastructureProject.objects.create(
             project=project,
-            non_infra_name='Community Health Fair',
-            non_infra_category=self.category,
+            title='Community Health Fair',
+            category=self.category,
             description='Health fair description',
             address=address,
         )
-        Project_Image.objects.create(
+        ProjectImage.objects.create(
             project=project,
             image_url='https://example.com/one.jpg',
             is_cover=True,
         )
-        Project_Image.objects.create(project=project, image_url='https://example.com/two.jpg')
+        ProjectImage.objects.create(project=project, image_url='https://example.com/two.jpg')
 
-        compat = SystemNonInfrastructureProject.objects.filter(non_infra_id=normalized.non_infra_id).first()
+        record = NonInfrastructureProject.objects.filter(non_infra_id=normalized.non_infra_id).first()
 
-        self.assertIsNotNone(compat)
-        self.assertEqual(compat.title, 'Community Health Fair')
-        self.assertEqual(compat.location, 'Bagting')
-        self.assertEqual(compat.category, 'Health Care')
-        self.assertEqual(compat.get_category_display(), 'Health Care')
-        self.assertEqual(len(compat.images), 2)
-        self.assertEqual(compat.cover_image_url, 'https://example.com/one.jpg')
+        self.assertIsNotNone(record)
+        self.assertEqual(record.title, 'Community Health Fair')
+        self.assertEqual(record.address.barangay, 'Bagting')
+        self.assertEqual(record.category.type_name, 'Health Care')
+        self.assertEqual(record.category.type_name, 'Health Care')
+        self.assertEqual(record.project.images.count(), 2)
+        self.assertEqual(record.project.images.order_by('-is_cover', '-created_at').first().image_url, 'https://example.com/one.jpg')

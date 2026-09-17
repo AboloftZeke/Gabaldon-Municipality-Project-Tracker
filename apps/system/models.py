@@ -7,81 +7,6 @@ import uuid
 from .publication_workflow import PublicationStatus
 
 
-class UserProfile(models.Model):
-    """
-    Compatibility model that now points at the archive table created during the safe cleanup migration.
-    """
-    DEPARTMENT_CHOICES = [
-        ('engineer', 'Engineering Office'),
-        ('mayor', "Mayor's Office"),
-        ('admin', 'Administration'),
-    ]
-
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name='profile'
-    )
-
-    department = models.CharField(
-        max_length=20,
-        choices=DEPARTMENT_CHOICES,
-        default='admin'
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.user.username} - {self.get_department_display()}"
-
-    @classmethod
-    def department_for_user(cls, user):
-        """Compatibility helper for access patterns that still rely on the legacy profile table."""
-        # Runtime should no longer depend on the archived profile table.
-        # Prefer the explicit department stored in the persisted compatibility
-        # flag or runtime profile. Only fall back to the Django staff flag when no
-        # explicit department is available.
-        if user is None:
-            return None
-        if getattr(user, 'is_superuser', False):
-            return 'admin'
-
-        try:
-            from apps.system.models import UserFlag
-            flag = UserFlag.objects.filter(user=user).first()
-            if flag and getattr(flag, 'department', None):
-                return flag.department
-        except Exception:
-            pass
-
-        profile = getattr(user, 'profile', None)
-        if profile is not None:
-            department = getattr(profile, 'department', None)
-            if department:
-                return department
-        if getattr(user, 'is_staff', False):
-            return 'engineer'
-        return 'mayor'
-
-    @classmethod
-    def profile_for_user(cls, user):
-        """Get the legacy user profile without relying on a direct OneToOne access pattern."""
-        # Return a lightweight compatibility object instead of hitting the archive table.
-        if user is None:
-            return None
-        class _P:
-            def __init__(self, user):
-                self.user = user
-                self.department = cls.department_for_user(user)
-        return _P(user)
-
-    class Meta:
-        managed = False
-        db_table = 'system_legacy_userprofile_archive'
-        ordering = ['user__username']
-
-
 class LoginOTPChallenge(models.Model):
     """Short-lived, hashed email verification challenge for a pending login."""
 
@@ -102,6 +27,7 @@ class LoginOTPChallenge(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
+        db_table = 'system_login_otp_challenge'
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['user', '-created_at']),
@@ -126,6 +52,7 @@ class Address(models.Model):
     is_active = models.BooleanField(default=True)
 
     class Meta:
+        db_table = 'system_address'
         verbose_name = 'Address'
         verbose_name_plural = 'Addresses'
 
@@ -158,6 +85,7 @@ class Project(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'system_project'
         verbose_name = 'Project'
         verbose_name_plural = 'Projects'
         ordering = ['-created_at']
@@ -166,14 +94,14 @@ class Project(models.Model):
         return f'Project {self.project_id} ({self.project_type})'
 
 
-class ProjectPublicationRevision(models.Model):
+class ProjectRevision(models.Model):
     """Public-facing snapshot submitted through the review flow."""
 
     revision_id = models.BigAutoField(primary_key=True)
     project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
-        related_name='publication_revisions',
+        related_name='revisions',
     )
     revision_number = models.PositiveIntegerField()
     status = models.CharField(
@@ -181,9 +109,9 @@ class ProjectPublicationRevision(models.Model):
         choices=PublicationStatus.choices,
         default=PublicationStatus.DRAFT,
     )
-    snapshot_data = models.JSONField(default=dict)
+    snapshot = models.JSONField(default=dict)
     source_updated_at = models.DateTimeField(null=True, blank=True)
-    supersedes_revision = models.ForeignKey(
+    previous_revision = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,
         null=True,
@@ -195,7 +123,7 @@ class ProjectPublicationRevision(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='submitted_project_publication_revisions',
+        related_name='submitted_project_revisions',
     )
     submitted_at = models.DateTimeField(null=True, blank=True)
     reviewed_by = models.ForeignKey(
@@ -203,7 +131,7 @@ class ProjectPublicationRevision(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='reviewed_project_publication_revisions',
+        related_name='reviewed_project_revisions',
     )
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_notes = models.TextField(blank=True, default='')
@@ -212,14 +140,15 @@ class ProjectPublicationRevision(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='published_project_publication_revisions',
+        related_name='published_project_revisions',
     )
     published_at = models.DateTimeField(null=True, blank=True)
-    is_current_public_revision = models.BooleanField(default=False)
+    is_current_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'system_project_revision'
         ordering = ['-revision_number']
         constraints = [
             models.UniqueConstraint(
@@ -228,12 +157,12 @@ class ProjectPublicationRevision(models.Model):
             ),
             models.UniqueConstraint(
                 fields=['project'],
-                condition=models.Q(is_current_public_revision=True),
+                condition=models.Q(is_current_public=True),
                 name='one_current_public_revision_per_project',
             ),
             models.CheckConstraint(
                 condition=(
-                    models.Q(is_current_public_revision=False)
+                    models.Q(is_current_public=False)
                     | models.Q(status=PublicationStatus.PUBLISHED)
                 ),
                 name='current_public_revision_must_be_published',
@@ -247,8 +176,8 @@ class ProjectPublicationRevision(models.Model):
         )
 
 
-class UserFlag(models.Model):
-    """Persistent runtime flags for users without reintroducing legacy profile."""
+class UserRole(models.Model):
+    """Persisted office and role assignment used for account authorization."""
     DEPARTMENT_CHOICES = [
         ('engineer', 'Engineering Office'),
         ('mayor', "Mayor's Office"),
@@ -261,7 +190,7 @@ class UserFlag(models.Model):
         ADMIN = 'admin', 'Admin'
 
     id = models.BigAutoField(primary_key=True)
-    user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='flags')
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='role_assignment')
     department = models.CharField(
         max_length=20,
         choices=DEPARTMENT_CHOICES,
@@ -311,8 +240,9 @@ class UserFlag(models.Model):
         return super().save(*args, **kwargs)
 
     class Meta:
-        verbose_name = 'User Flag'
-        verbose_name_plural = 'User Flags'
+        db_table = 'system_user_role'
+        verbose_name = 'User Role'
+        verbose_name_plural = 'User Roles'
         constraints = [
             models.CheckConstraint(
                 condition=(
@@ -320,12 +250,12 @@ class UserFlag(models.Model):
                     | models.Q(department__in=['engineer', 'mayor'], role__in=['staff', 'head'])
                     | models.Q(department='', role='staff')
                 ),
-                name='userflag_valid_department_role',
+                name='user_role_valid_department_role',
             ),
         ]
 
     def __str__(self):
-        return f'{self.user.username} flags'
+        return f'{self.user.username} role'
 
 
 class InfrastructureCategory(models.Model):
@@ -338,6 +268,7 @@ class InfrastructureCategory(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'system_infrastructure_category'
         verbose_name = 'Infrastructure Category'
         verbose_name_plural = 'Infrastructure Categories'
 
@@ -355,6 +286,7 @@ class NonInfrastructureCategory(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'system_non_infrastructure_category'
         verbose_name = 'Non-Infrastructure Category'
         verbose_name_plural = 'Non-Infrastructure Categories'
 
@@ -371,6 +303,7 @@ class Contractor(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'system_contractor'
         verbose_name = 'Contractor'
         verbose_name_plural = 'Contractors'
 
@@ -387,6 +320,7 @@ class ImplementingOffice(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'system_implementing_office'
         verbose_name = 'Implementing Office'
         verbose_name_plural = 'Implementing Offices'
 
@@ -405,6 +339,7 @@ class FundSource(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'system_fund_source'
         verbose_name = 'Fund Source'
         verbose_name_plural = 'Fund Sources'
 
@@ -412,7 +347,7 @@ class FundSource(models.Model):
         return self.fund_source_name
 
 
-class Infrastructure_Project(models.Model):
+class InfrastructureProject(models.Model):
     """Normalized infrastructure project details linked to the base Project model."""
     PROCUREMENT_METHOD_CHOICES = [
         ('competitive_bidding', 'Competitive Bidding / Public Bidding'),
@@ -438,8 +373,8 @@ class Infrastructure_Project(models.Model):
         related_name='infrastructure_project'
     )
     infrastructure_code = models.CharField(max_length=150, unique=True, null=True, blank=True)
-    infrastructure_title = models.CharField(max_length=255)
-    infrastructure_description = models.TextField(blank=True, default='')
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, default='')
     category = models.ForeignKey(
         InfrastructureCategory,
         on_delete=models.SET_NULL,
@@ -488,93 +423,32 @@ class Infrastructure_Project(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'system_infrastructure_project'
         verbose_name = 'Infrastructure Project'
         verbose_name_plural = 'Infrastructure Projects'
         ordering = ['-created_at']
 
     def __str__(self):
-        return self.infrastructure_title
+        return self.title
 
-    # Compatibility properties to match legacy InfrastructureProject attribute names
-    @property
-    def title(self):
-        return self.infrastructure_title
-
-    @title.setter
-    def title(self, value):
-        self.infrastructure_title = value
-
-    @property
-    def description(self):
-        return self.infrastructure_description
-
-    @description.setter
-    def description(self, value):
-        self.infrastructure_description = value
-
-    @property
-    def latitude(self):
-        if self.address:
-            return self.address.latitude
-        return None
-
-    @latitude.setter
-    def latitude(self, value):
-        if self.address:
-            self.address.latitude = value
-            self.address.save(update_fields=['latitude'])
-
-    @property
-    def longitude(self):
-        if self.address:
-            return self.address.longitude
-        return None
-
-    @longitude.setter
-    def longitude(self, value):
-        if self.address:
-            self.address.longitude = value
-            self.address.save(update_fields=['longitude'])
-
-    # NOTE:
-    # Keep these compatibility properties to avoid ORM reads for legacy-missing
-    # contractor/implementing_office columns while still allowing form
-    # assignment in memory.
-    
-
-    @property
-    def source_of_fund(self):
-        # Return the first related fund source name if present
-        fin = self.financial_records.first()
-        return fin and fin.fund_source and fin.fund_source.fund_source_name or None
-
-    @property
-    def abc_amount(self):
-        fin = self.financial_records.first()
-        return fin and fin.approved_budget or None
-
-    @property
-    def contract_price(self):
-        fin = self.financial_records.first()
-        return fin and fin.bid_amount or None
 
 
 class InfrastructureProgressUpdate(models.Model):
     progress_update_id = models.BigAutoField(primary_key=True)
     infrastructure = models.ForeignKey(
-        Infrastructure_Project,
+        InfrastructureProject,
         on_delete=models.CASCADE,
         related_name='progress_updates',
     )
     previous_official_status = models.CharField(
         max_length=50,
-        choices=Infrastructure_Project.AWARD_STATUS_CHOICES,
+        choices=InfrastructureProject.AWARD_STATUS_CHOICES,
         blank=True,
         default='',
     )
     new_official_status = models.CharField(
         max_length=50,
-        choices=Infrastructure_Project.AWARD_STATUS_CHOICES,
+        choices=InfrastructureProject.AWARD_STATUS_CHOICES,
         blank=True,
         default='',
     )
@@ -599,13 +473,14 @@ class InfrastructureProgressUpdate(models.Model):
         related_name='infrastructure_progress_updates',
     )
     supporting_inspections = models.ManyToManyField(
-        'Project_Inspection',
+        'ProjectInspection',
         blank=True,
         related_name='supported_progress_updates',
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'system_infrastructure_progress_update'
         verbose_name = 'Infrastructure Progress Update'
         verbose_name_plural = 'Infrastructure Progress Updates'
         ordering = ('-created_at', '-progress_update_id')
@@ -614,7 +489,7 @@ class InfrastructureProgressUpdate(models.Model):
         return f'{self.infrastructure} progress update {self.progress_update_id}'
 
 
-class Non_Infrastructure_Project(models.Model):
+class NonInfrastructureProject(models.Model):
     """Normalized non-infrastructure project details linked to the base Project model."""
     non_infra_id = models.BigAutoField(primary_key=True)
     project = models.OneToOneField(
@@ -622,8 +497,8 @@ class Non_Infrastructure_Project(models.Model):
         on_delete=models.CASCADE,
         related_name='non_infrastructure_project'
     )
-    non_infra_name = models.CharField(max_length=255)
-    non_infra_category = models.ForeignKey(
+    title = models.CharField(max_length=255)
+    category = models.ForeignKey(
         NonInfrastructureCategory,
         on_delete=models.SET_NULL,
         null=True,
@@ -648,12 +523,13 @@ class Non_Infrastructure_Project(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'system_non_infrastructure_project'
         verbose_name = 'Non-Infrastructure Project'
         verbose_name_plural = 'Non-Infrastructure Projects'
         ordering = ['-created_at']
 
     def __str__(self):
-        return self.non_infra_name
+        return self.title
     
     STATUS_CHOICES = [
         ('planned', 'Planned'),
@@ -665,11 +541,11 @@ class Non_Infrastructure_Project(models.Model):
 
 
 
-class Infrastructure_Schedule(models.Model):
+class InfrastructureSchedule(models.Model):
     """Normalized schedule/timeline data for infrastructure projects."""
     schedule_id = models.BigAutoField(primary_key=True)
     infrastructure = models.ForeignKey(
-        Infrastructure_Project,
+        InfrastructureProject,
         on_delete=models.CASCADE,
         related_name='schedules'
     )
@@ -686,18 +562,19 @@ class Infrastructure_Schedule(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'system_infrastructure_schedule'
         verbose_name = 'Infrastructure Schedule'
         verbose_name_plural = 'Infrastructure Schedules'
 
     def __str__(self):
-        return f'{self.infrastructure.infrastructure_title} schedule'
+        return f'{self.infrastructure.title} schedule'
 
 
-class Financial(models.Model):
+class FinancialRecord(models.Model):
     """Normalized financial values for infrastructure projects."""
     financial_id = models.BigAutoField(primary_key=True)
     infrastructure = models.ForeignKey(
-        Infrastructure_Project,
+        InfrastructureProject,
         on_delete=models.CASCADE,
         related_name='financial_records'
     )
@@ -716,14 +593,15 @@ class Financial(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'Financial'
+        db_table = 'system_financial_record'
+        verbose_name = 'Financial Record'
         verbose_name_plural = 'Financial Records'
 
     def __str__(self):
-        return f'{self.infrastructure.infrastructure_title} financial record'
+        return f'{self.infrastructure.title} financial record'
 
 
-class Project_Inspection(models.Model):
+class ProjectInspection(models.Model):
     """Normalized inspection/progress records for project entities."""
     INSPECTION_TYPE_CHOICES = [
         ('progress', 'Progress'),
@@ -757,6 +635,7 @@ class Project_Inspection(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'system_project_inspection'
         verbose_name = 'Project Inspection'
         verbose_name_plural = 'Project Inspections'
 
@@ -772,7 +651,7 @@ class InspectionEvidence(models.Model):
 
     inspection_evidence_id = models.BigAutoField(primary_key=True)
     inspection = models.ForeignKey(
-        Project_Inspection,
+        ProjectInspection,
         on_delete=models.CASCADE,
         related_name='evidence',
     )
@@ -794,6 +673,7 @@ class InspectionEvidence(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'system_inspection_evidence'
         verbose_name = 'Inspection Evidence'
         verbose_name_plural = 'Inspection Evidence'
         ordering = ('created_at', 'inspection_evidence_id')
@@ -807,7 +687,7 @@ class ActiveProjectImageManager(models.Manager):
         return super().get_queryset().filter(is_active=True)
 
 
-class Project_Image(models.Model):
+class ProjectImage(models.Model):
     """Simple project image metadata for the normalized ERD."""
     project_image_id = models.BigAutoField(primary_key=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='images')
@@ -823,6 +703,7 @@ class Project_Image(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'system_project_image'
         verbose_name = 'Project Image'
         verbose_name_plural = 'Project Images'
         constraints = [
@@ -834,7 +715,7 @@ class Project_Image(models.Model):
         ]
 
 
-class Reports(models.Model):
+class ProjectReport(models.Model):
     """Project report metadata for the normalized ERD."""
     report_id = models.BigAutoField(primary_key=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='reports')
@@ -846,11 +727,12 @@ class Reports(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'system_project_report'
         verbose_name = 'Report'
-        verbose_name_plural = 'Reports'
+        verbose_name_plural = 'Project Reports'
 
 
-class Reports_Template(models.Model):
+class ReportTemplate(models.Model):
     """Reusable report templates for the normalized ERD."""
     template_id = models.BigAutoField(primary_key=True)
     template_name = models.CharField(max_length=255)
@@ -860,226 +742,6 @@ class Reports_Template(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'system_report_template'
         verbose_name = 'Report Template'
         verbose_name_plural = 'Report Templates'
-
-
-# Compatibility models shaped like the legacy models but mapped to the normalized tables.
-class InfrastructureProject(models.Model):
-    """Compatibility model exposing legacy field names but using the normalized infrastructure table."""
-    id = models.BigAutoField(primary_key=True, db_column='infrastructure_id')
-    title = models.CharField(max_length=255, db_column='infrastructure_title')
-    description = models.TextField(db_column='infrastructure_description')
-    # contractor and implementing office are stored as FKs in the normalized table.
-    # Expose them as read-only compatibility properties instead of real model fields
-    # so Django won't attempt to SELECT non-existent legacy columns on the
-    # `system_infrastructure_project` compatibility table (managed=False).
-    @property
-    def contractor_id(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('contractor').first()
-        return infra.contractor.contractor_id if infra and infra.contractor else None
-
-    @property
-    def implementing_office_id(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('implementing_office').first()
-        return infra.implementing_office.office_id if infra and infra.implementing_office else None
-    procurement_method = models.CharField(max_length=50, null=True, blank=True)
-    award_status = models.CharField(max_length=50, null=True, blank=True)
-    planned_start_date = models.DateField(null=True, blank=True)
-    planned_end_date = models.DateField(null=True, blank=True)
-    cost_progress_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    physical_progress_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
-    updated_at = models.DateTimeField(auto_now=True, db_column='updated_at')
-
-    class Meta:
-        managed = False
-        db_table = 'system_infrastructure_project'
-
-    @property
-    def created_by(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('project').first()
-        return infra.project.created_by_user if infra and infra.project else None
-
-    # Compatibility accessors for template/display helpers
-    @property
-    def location(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('address').first()
-        if infra and infra.address and infra.address.barangay:
-            return infra.address.barangay
-        return ''
-
-    @property
-    def latitude(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('address').first()
-        if infra and infra.address and infra.address.latitude is not None:
-            return infra.address.latitude
-        return None
-
-    @property
-    def longitude(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('address').first()
-        if infra and infra.address and infra.address.longitude is not None:
-            return infra.address.longitude
-        return None
-
-    def get_location_display(self):
-        return self.location
-
-    def get_category_display(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).select_related('category').first()
-        return infra.category.category_name if infra and infra.category else ''
-
-    def get_procurement_method_display(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
-        if infra and getattr(infra, 'procurement_method', None):
-            return dict(Infrastructure_Project.PROCUREMENT_METHOD_CHOICES).get(infra.procurement_method, infra.procurement_method)
-        return ''
-
-    def get_award_status_display(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
-        if infra and getattr(infra, 'award_status', None):
-            return dict(Infrastructure_Project.AWARD_STATUS_CHOICES).get(infra.award_status, infra.award_status)
-        return ''
-
-    @property
-    def abc_amount(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
-        if infra:
-            fin = infra.financial_records.first()
-            return fin.approved_budget if fin else None
-        return None
-
-    @property
-    def contract_price(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
-        if infra:
-            fin = infra.financial_records.first()
-            return fin.bid_amount if fin else None
-        return None
-
-    @property
-    def cost_progress_percentage(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
-        return infra.cost_progress_percentage if infra and getattr(infra, 'cost_progress_percentage', None) is not None else None
-
-    @property
-    def physical_progress_percentage(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
-        return infra.physical_progress_percentage if infra and getattr(infra, 'physical_progress_percentage', None) is not None else None
-
-    @property
-    def contractor(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
-        contractor_id = getattr(infra, 'contractor_id', None) if infra else None
-        if contractor_id:
-            c = Contractor.objects.filter(contractor_id=contractor_id).first()
-            return c.contractor_name if c else None
-        return None
-
-    @property
-    def implementing_office(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
-        office_id = getattr(infra, 'implementing_office_id', None) if infra else None
-        if office_id:
-            o = ImplementingOffice.objects.filter(office_id=office_id).first()
-            return o.office_name if o else None
-        return None
-
-    @property
-    def source_of_fund(self):
-        infra = Infrastructure_Project.objects.filter(infrastructure_id=self.id).first()
-        if infra:
-            fin = infra.financial_records.first()
-            return fin.fund_source.fund_source_name if fin and fin.fund_source else None
-        return None
-
-
-class NonInfrastructureProject(models.Model):
-    """Compatibility model for non-infrastructure mapped to normalized non-infra table."""
-    non_infra_id = models.BigAutoField(primary_key=True, db_column='non_infra_id')
-    non_infra_name = models.CharField(max_length=255, db_column='non_infra_name')
-    event_date = models.DateField(null=True, blank=True, db_column='event_date')
-    start_time = models.TimeField(null=True, blank=True, db_column='start_time')
-    end_time = models.TimeField(null=True, blank=True, db_column='end_time')
-    proponent = models.CharField(max_length=255, blank=True, default='', db_column='proponent')
-    beneficiaries = models.IntegerField(null=True, blank=True, db_column='beneficiaries')
-    description = models.TextField(db_column='description')
-    created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
-    updated_at = models.DateTimeField(auto_now=True, db_column='updated_at')
-
-    class Meta:
-        managed = False
-        db_table = 'system_non_infrastructure_project'
-
-    @property
-    def title(self):
-        return self.non_infra_name
-
-    @title.setter
-    def title(self, value):
-        self.non_infra_name = value
-
-    @property
-    def location(self):
-        normalized = Non_Infrastructure_Project.objects.filter(non_infra_id=self.non_infra_id).select_related('address').first()
-        if normalized and normalized.address and normalized.address.barangay:
-            return normalized.address.barangay
-        return ''
-
-    @property
-    def category(self):
-        normalized = Non_Infrastructure_Project.objects.filter(non_infra_id=self.non_infra_id).select_related('non_infra_category').first()
-        if normalized and normalized.non_infra_category:
-            return normalized.non_infra_category.type_name
-        return ''
-
-    def get_location_display(self):
-        return self.location
-
-    def get_category_display(self):
-        return self.category
-
-    @property
-    def images(self):
-        normalized = Non_Infrastructure_Project.objects.filter(non_infra_id=self.non_infra_id).select_related('project').first()
-        if normalized and normalized.project:
-            return list(normalized.project.images.order_by('-is_cover', '-created_at'))
-        return []
-
-    @property
-    def cover_image_url(self):
-        normalized = (
-            Non_Infrastructure_Project.objects
-            .filter(non_infra_id=self.non_infra_id)
-            .select_related('project')
-            .first()
-        )
-        if not normalized or not normalized.project:
-            return ''
-
-        image = (
-            normalized.project.images
-            .order_by('-is_cover', '-created_at')
-            .first()
-        )
-        return (image.image_url or '') if image else ''
-
-    @property
-    def status_label(self):
-        if self.event_date:
-            today = timezone.now().date()
-            if self.event_date < today:
-                return 'Completed'
-            return 'Planned'
-        return 'Planned'
-
-    @property
-    def created_by(self):
-        # Attempt to resolve the normalized Project.created_by_user via the
-        # normalized Infrastructure/Non-Infrastructure mapping.
-        infra = Non_Infrastructure_Project.objects.filter(non_infra_id=self.non_infra_id).select_related('project').first()
-        return infra.project.created_by_user if infra and infra.project else None
-
-
- 

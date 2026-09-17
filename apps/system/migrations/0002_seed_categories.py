@@ -56,7 +56,7 @@ def reverse_seed_categories(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0008_migrate_legacy_projects_to_normalized_models'),
+        ('system', '0001_initial'),
     ]
 
     operations = [
