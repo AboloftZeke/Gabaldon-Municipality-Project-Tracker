@@ -90,6 +90,7 @@ urlpatterns = [
 
     path('engineering/head/dashboard/', dashboard_views.HeadDashboardView.as_view(project_type='infrastructure'), name='engineering_head_dashboard'),
     path('mayor/head/dashboard/', dashboard_views.HeadDashboardView.as_view(project_type='non_infrastructure'), name='mayor_head_dashboard'),
+    path('reports/', include(('apps.reports.urls', 'reports'), namespace='reports')),
     path('admin-dashboard/publication-lifecycle/', dashboard_views.PublicationLifecycleView.as_view(), name='publication_lifecycle'),
 
     # Role-specific dashboards
@@ -120,4 +121,5 @@ urlpatterns = [
     path('users/<int:pk>/resend-setup/', views.UserAccountSetupResendView.as_view(), name='user_resend_account_setup'),
     path('password-change/', views.PasswordChangeView.as_view(),name='password_change'),
 ]
+
 
