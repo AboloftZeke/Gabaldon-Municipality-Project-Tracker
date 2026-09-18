@@ -217,6 +217,79 @@ class HeadDashboardTests(TestCase):
                 self.assertContains(response, content_class)
                 self.assertNotContains(response, '>Publication Lifecycle<')
 
+    def test_user_management_department_filters_and_search_work_together(self):
+        admin, _ = self.users['admin', 'admin']
+        self.client.force_login(admin)
+        expected = {
+            '': {user.pk for user, _ in self.users.values()},
+            'engineer': {
+                self.users['engineer', 'staff'][0].pk,
+                self.users['engineer', 'head'][0].pk,
+            },
+            'mayor': {
+                self.users['mayor', 'staff'][0].pk,
+                self.users['mayor', 'head'][0].pk,
+            },
+            'admin': {admin.pk},
+        }
+
+        for department, expected_ids in expected.items():
+            response = self.client.get(
+                reverse('user_list'),
+                {'department': department} if department else {},
+            )
+            with self.subTest(department=department or 'all'):
+                self.assertEqual(
+                    {user.pk for user in response.context['users']},
+                    expected_ids,
+                )
+                self.assertEqual(response.context['current_department'], department)
+                self.assertContains(response, 'aria-label="Filter users by department"')
+                selected_label = {
+                    '': 'All Users',
+                    'engineer': 'Engineering',
+                    'mayor': "Mayor's Office",
+                    'admin': 'Admin',
+                }[department]
+                self.assertContains(
+                    response,
+                    f'aria-current="page">{selected_label}</a>',
+                )
+
+        response = self.client.get(
+            reverse('user_list'),
+            {'search': 'head', 'department': 'engineer'},
+        )
+        self.assertEqual(
+            [user.pk for user in response.context['users']],
+            [self.users['engineer', 'head'][0].pk],
+        )
+        self.assertContains(
+            response,
+            '<input type="hidden" name="department" value="engineer">',
+            html=True,
+        )
+        self.assertContains(response, 'search=head&amp;department=mayor')
+
+    def test_user_management_pagination_preserves_search_and_department(self):
+        admin, _ = self.users['admin', 'admin']
+        self.client.force_login(admin)
+        for index in range(11):
+            user = User.objects.create_user(f'filter-engineer-{index:02d}')
+            UserRole.objects.create(user=user, department='engineer', role='staff')
+
+        response = self.client.get(
+            reverse('user_list'),
+            {'search': 'filter-engineer', 'department': 'engineer'},
+        )
+
+        self.assertTrue(response.context['is_paginated'])
+        self.assertEqual(len(response.context['users']), 10)
+        self.assertContains(
+            response,
+            'search=filter-engineer&amp;department=engineer&amp;page=2',
+        )
+
     def test_admin_lifecycle_navigation_excludes_review_queue(self):
         admin, _ = self.users['admin', 'admin']
         self.client.force_login(admin)

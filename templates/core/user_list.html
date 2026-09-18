@@ -33,8 +33,23 @@
     <div class="filter-section">
         <form method="get" class="filter-form ui-form">
             {{ filter_form.as_p }}
-            <button type="submit" class="ui-button ui-button--primary">Search &amp; Filter</button>
+            {% if current_department %}<input type="hidden" name="department" value="{{ current_department }}">{% endif %}
+            <button type="submit" class="ui-button ui-button--primary">Search Users</button>
         </form>
+        <nav class="ui-filter-pills" aria-label="Filter users by department">
+            <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}{% endif %}"
+               class="ui-filter-pill{% if not current_department %} active{% endif %}"
+               {% if not current_department %}aria-current="page"{% endif %}>All Users</a>
+            <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&amp;{% endif %}department=engineer"
+               class="ui-filter-pill{% if current_department == 'engineer' %} active{% endif %}"
+               {% if current_department == 'engineer' %}aria-current="page"{% endif %}>Engineering</a>
+            <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&amp;{% endif %}department=mayor"
+               class="ui-filter-pill{% if current_department == 'mayor' %} active{% endif %}"
+               {% if current_department == 'mayor' %}aria-current="page"{% endif %}>Mayor's Office</a>
+            <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&amp;{% endif %}department=admin"
+               class="ui-filter-pill{% if current_department == 'admin' %} active{% endif %}"
+               {% if current_department == 'admin' %}aria-current="page"{% endif %}>Admin</a>
+        </nav>
     </div>
 
     <div class="ui-list-header">
@@ -113,11 +128,11 @@
         <div class="pagination ui-pagination">
 
             {% if page_obj.has_previous %}
-                <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if current_department %}department={{ current_department }}&{% endif %}page=1">
+                <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&amp;{% endif %}{% if current_department %}department={{ current_department }}&amp;{% endif %}page=1">
                     First
                 </a>
 
-                <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if current_department %}department={{ current_department }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&amp;{% endif %}{% if current_department %}department={{ current_department }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">
                     Previous
                 </a>
             {% endif %}
@@ -127,11 +142,11 @@
             </span>
 
             {% if page_obj.has_next %}
-                <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if current_department %}department={{ current_department }}&{% endif %}page={{ page_obj.next_page_number }}">
+                <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&amp;{% endif %}{% if current_department %}department={{ current_department }}&amp;{% endif %}page={{ page_obj.next_page_number }}">
                     Next
                 </a>
 
-                <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if current_department %}department={{ current_department }}&{% endif %}page={{ page_obj.paginator.num_pages }}">
+                <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&amp;{% endif %}{% if current_department %}department={{ current_department }}&amp;{% endif %}page={{ page_obj.paginator.num_pages }}">
                     Last
                 </a>
             {% endif %}
