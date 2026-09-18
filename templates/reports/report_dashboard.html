@@ -5,15 +5,16 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
+<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20260918-1">
 {% endblock %}
 
 {% block content %}
 <div class="head-dashboard" data-report-scope="{{ report_type }}">
-    <header class="head-dashboard__header">
+    <header class="head-dashboard__header report-header">
         <div>
             <p class="head-dashboard__eyebrow">Report Requests</p>
             <h1>Generate Reports</h1>
-            <p>Choose a {{ report_type_label|lower }} report request. Report data and downloadable output will be added in the next phases.</p>
+            <p>Choose the view that fits your request. Every report uses the latest information approved for public disclosure.</p>
         </div>
     </header>
 
@@ -22,35 +23,37 @@
             <div>
                 <p class="head-section__eyebrow">{{ report_type_label }} Projects</p>
                 <h2 id="report-options-heading">Report Options</h2>
-                <p>This page currently establishes the request entry point for your office.</p>
+                <p>Open one project in detail or review a filtered overview of your office's projects.</p>
             </div>
             <a class="head-button head-button--secondary" href="{% url account_navigation.dashboard %}">Back to Dashboard</a>
         </div>
 
-        <div class="attention-grid">
-            <article class="attention-card">
+        <div class="attention-grid report-options">
+            <article class="attention-card report-option">
                 <div class="attention-card__topline">
                     <span class="attention-badge attention-badge--ready">Available</span>
                 </div>
-                <h4>Individual Project Report</h4>
-                <p>Select one currently disclosed {{ report_type_label|lower }} project to open its basic report preview.</p>
-                <form method="post">
+                <div class="report-option__icon" aria-hidden="true">01</div>
+                <h3>Individual Project Report</h3>
+                <p>Select one disclosed {{ report_type_label|lower }} project and view its complete report preview.</p>
+                <form class="report-option__form" method="post">
                     {% csrf_token %}
                     {{ form.project_id.label_tag }}
                     {{ form.project_id }}
                     {% if form.project_id.errors %}
-                        <div class="errorlist">{{ form.project_id.errors }}</div>
+                        <div class="report-error">{{ form.project_id.errors }}</div>
                     {% endif %}
                     <button class="head-button head-button--primary" type="submit">View Individual Report</button>
                 </form>
             </article>
 
-            <article class="attention-card">
+            <article class="attention-card report-option">
                 <div class="attention-card__topline">
                     <span class="attention-badge attention-badge--ready">Available</span>
                 </div>
-                <h4>Project Summary Report</h4>
-                <p>Filter currently disclosed {{ report_type_label|lower }} projects and view supported totals.</p>
+                <div class="report-option__icon report-option__icon--summary" aria-hidden="true">Σ</div>
+                <h3>Project Summary Report</h3>
+                <p>Filter disclosed {{ report_type_label|lower }} projects, compare key totals, and scan the project list.</p>
                 <a class="head-button head-button--primary" href="{{ summary_url }}">View Summary Report</a>
             </article>
         </div>
