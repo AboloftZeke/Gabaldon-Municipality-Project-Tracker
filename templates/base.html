@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/templates/base.css' %}?v=20260918-2">
     {% block extra_head %}{% endblock %}
-    <link rel="stylesheet" href="{% static 'css/components/ui.css' %}?v=20260918-4">
+    <link rel="stylesheet" href="{% static 'css/components/ui.css' %}?v=20260918-5">
 </head>
 <body>
     {% block show_header %}
@@ -23,19 +23,11 @@
 
         {% if user.is_authenticated %}
             <ul>
-
-                <li><a href="{% url account_navigation.dashboard %}">Dashboard</a></li>
-                {% if user.is_superuser %}
-                    <li><a href="{% url 'user_list' %}">Users</a></li>
-                {% elif account_navigation.is_head %}
-                    <li><a href="{% url 'publication_review_queue' %}">Publication Review</a></li>
-                    <li><a href="{% url 'reports:dashboard' %}">Reports</a></li>
-                    <li><a href="{% url 'password_change' %}">Account / Password</a></li>
+                {% if not account_navigation.show_sidebar %}
+                    <li><a href="{% url account_navigation.dashboard %}">Dashboard</a></li>
+                    <li><a href="{% url 'logout' %}">Logout</a></li>
                 {% endif %}
-
-                <li><a href="{% url 'logout' %}">Logout</a></li>
                 <li><span>Welcome, {{ request.user.username }}</span></li>
-
             </ul>
         {% else %}
             <ul>
@@ -58,10 +50,17 @@
 {% endif %}
 {% endblock %}
 
-    <main>
+    <main{% if account_navigation.render_sidebar_in_base %} class="ui-sidebar-layout"{% endif %}>
+        {% if account_navigation.render_sidebar_in_base %}
+        {% include "includes/sidebar_navigation.html" %}
+        <div class="ui-sidebar-content">
+        {% endif %}
         {% block content %}
         <!-- Content goes here -->
         {% endblock %}
+        {% if account_navigation.render_sidebar_in_base %}
+        </div>
+        {% endif %}
     </main>
 
     {% block extra_scripts %}{% endblock %}

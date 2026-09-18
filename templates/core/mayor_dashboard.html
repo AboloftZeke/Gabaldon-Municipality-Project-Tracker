@@ -28,24 +28,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="sidebar">
-    <div class="sidebar-section">
-        <p class="sidebar-title">Navigation</p>
-        <ul class="sidebar-menu">
-            <li><a href="{% url 'mayor_dashboard' %}" class="active">Dashboard</a></li>
-            <li><a href="{% url 'mayor_projects:non_infrastructure_project_dashboard' %}">Projects</a></li>
-        </ul>
-    </div>
-
-    <div class="sidebar-section">
-        <p class="sidebar-title">Account</p>
-        <div class="quick-actions">
-            <h4>{{ user.username }}</h4>
-            <a href="{% url 'logout' %}" class="action-button secondary ui-button ui-button--secondary" style="display: flex; margin-right: 0;">Sign Out</a>
-        </div>
-    </div>
-</div>
-
+<div class="ui-sidebar-layout">
+{% include "includes/sidebar_navigation.html" %}
 <div class="dashboard-content">
     <div class="dashboard-header ui-page-header">
         <h2>Mayor's Office Dashboard</h2>
@@ -116,5 +100,6 @@
     </div>
 
 
+</div>
 </div>
 {% endblock %}

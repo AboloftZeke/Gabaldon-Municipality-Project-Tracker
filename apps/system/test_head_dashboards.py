@@ -108,6 +108,81 @@ class HeadDashboardTests(TestCase):
                 self.assertNotContains(response, reverse(prefix))
                 self.assertContains(response, reverse(destination))
 
+    def test_sidebar_navigation_is_scoped_to_each_role(self):
+        expectations = {
+            ('engineer', 'staff'): {
+                'groups': ['Overview', 'Projects', 'Account'],
+                'project': 'Infrastructure Projects',
+                'excluded': ['Non-Infrastructure Projects', 'Publication Review', 'Reports', 'User Management'],
+            },
+            ('engineer', 'head'): {
+                'groups': ['Overview', 'Projects', 'Review & Publication', 'Reports', 'Account'],
+                'project': 'Infrastructure Projects',
+                'excluded': ['Non-Infrastructure Projects', 'User Management'],
+            },
+            ('mayor', 'staff'): {
+                'groups': ['Overview', 'Projects', 'Account'],
+                'project': 'Non-Infrastructure Projects',
+                'excluded': ['Infrastructure Projects', 'Publication Review', 'Reports', 'User Management'],
+            },
+            ('mayor', 'head'): {
+                'groups': ['Overview', 'Projects', 'Review & Publication', 'Reports', 'Account'],
+                'project': 'Non-Infrastructure Projects',
+                'excluded': ['Infrastructure Projects', 'User Management'],
+            },
+            ('admin', 'admin'): {
+                'groups': ['Overview', 'Review & Publication', 'Administration', 'Account'],
+                'project': None,
+                'excluded': ['Infrastructure Projects', 'Non-Infrastructure Projects', 'Publication Review', 'Reports'],
+            },
+        }
+        for assignment, expected in expectations.items():
+            user, destination = self.users[assignment]
+            self.client.force_login(user)
+            response = self.client.get(reverse(destination))
+            navigation = response.context['account_navigation']
+            labels = [
+                item['label']
+                for group in navigation['groups']
+                for item in group['items']
+            ]
+            with self.subTest(assignment=assignment):
+                self.assertEqual(
+                    [group['label'] for group in navigation['groups']],
+                    expected['groups'],
+                )
+                if expected['project']:
+                    self.assertIn(expected['project'], labels)
+                for excluded in expected['excluded']:
+                    self.assertNotIn(excluded, labels)
+                self.assertNotIn('Create Project', labels)
+                self.assertNotIn('Create User', labels)
+                self.assertContains(response, 'aria-label="Account navigation"')
+                self.assertContains(response, 'aria-current="page"')
+
+    def test_sidebar_marks_project_and_administration_destinations_active(self):
+        engineer, _ = self.users['engineer', 'staff']
+        self.client.force_login(engineer)
+        response = self.client.get(reverse('engineering_projects:project_list'))
+        projects = next(
+            group for group in response.context['account_navigation']['groups']
+            if group['label'] == 'Projects'
+        )
+        self.assertTrue(projects['items'][0]['active'])
+        self.assertContains(
+            response,
+            'class="ui-sidebar__link active" aria-current="page"',
+        )
+
+        admin, _ = self.users['admin', 'admin']
+        self.client.force_login(admin)
+        response = self.client.get(reverse('user_list'))
+        administration = next(
+            group for group in response.context['account_navigation']['groups']
+            if group['label'] == 'Administration'
+        )
+        self.assertTrue(administration['items'][0]['active'])
+
     def test_admin_lifecycle_navigation_excludes_review_queue(self):
         admin, _ = self.users['admin', 'admin']
         self.client.force_login(admin)

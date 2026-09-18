@@ -10,11 +10,13 @@
 {% endblock %}
 
 {% block content %}
-<div class="breadcrumb-nav">
-    <a href="{% url 'engineering_projects:project_detail' infrastructure.pk %}">← Back to Project</a>
-    <span>/</span>
-    <strong>{{ action }} Inspection</strong>
-</div>
+<nav class="breadcrumb-nav ui-breadcrumbs" aria-label="Breadcrumb">
+    <a href="{% url 'engineering_projects:project_list' %}">Infrastructure Projects</a>
+    <span aria-hidden="true">›</span>
+    <a href="{% url 'engineering_projects:project_detail' infrastructure.pk %}">Project Details</a>
+    <span aria-hidden="true">›</span>
+    <strong aria-current="page">{{ action }} Inspection</strong>
+</nav>
 
 <div class="form-container">
     <div class="form-card ui-form-card">

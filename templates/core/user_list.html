@@ -31,29 +31,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="sidebar">
-    <div class="sidebar-section">
-        <p class="sidebar-title">Navigation</p>
-        <ul class="sidebar-menu">
-            <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
-            {% if user.is_superuser %}
-                <li><a href="{% url 'user_list' %}" class="active">User Management</a></li>
-                <li><a href="{% url 'user_create' %}">Create User</a></li>
-            {% endif %}
-        </ul>
-    </div>
-
-    <div class="sidebar-section">
-        <p class="sidebar-title">Departments</p>
-        <ul class="sidebar-menu">
-            <li><a href="{% url 'user_list' %}" class="{% if not current_department %}active-filter{% endif %}">All Users</a></li>
-            <li><a href="?department=engineer" class="{% if current_department == 'engineer' %}active-filter{% endif %}">Engineering Office</a></li>
-            <li><a href="?department=mayor" class="{% if current_department == 'mayor' %}active-filter{% endif %}">Mayor's Office</a></li>
-            <li><a href="?department=admin" class="{% if current_department == 'admin' %}active-filter{% endif %}">Administration</a></li>
-        </ul>
-    </div>
-</div>
-
+<div class="ui-sidebar-layout">
+{% include "includes/sidebar_navigation.html" %}
 <div class="page-content">
     <div class="page-header ui-page-header">
         <h2>User Account Management</h2>
@@ -169,5 +148,6 @@
         </div>
     </div>
     {% endif %}
+</div>
 </div>
 {% endblock %}

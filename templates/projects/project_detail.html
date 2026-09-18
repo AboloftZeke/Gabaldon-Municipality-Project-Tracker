@@ -12,13 +12,23 @@
 {% block content %}
 <div class="project-detail-container">
     {% if request.user.is_superuser and request.GET.from_review or account_navigation.is_head and request.GET.from_review %}
-        <a href="{% url 'publication_revision_detail' request.GET.from_review %}" class="btn btn-back ui-button ui-button--subtle">
-            <span aria-hidden="true">←</span> Back to Publication Review
-        </a>
+        <nav class="ui-breadcrumbs" aria-label="Breadcrumb">
+            {% if request.user.is_superuser %}
+                <a href="{% url 'publication_lifecycle' %}">Publication Lifecycle</a>
+            {% else %}
+                <a href="{% url 'publication_review_queue' %}">Publication Review</a>
+            {% endif %}
+            <span aria-hidden="true">›</span>
+            <a href="{% url 'publication_revision_detail' request.GET.from_review %}">Revision Details</a>
+            <span aria-hidden="true">›</span>
+            <span aria-current="page">Project Details</span>
+        </nav>
     {% else %}
-        <a href="{% url 'engineering_projects:project_list' %}" class="btn btn-back ui-button ui-button--subtle">
-            <span aria-hidden="true">←</span> Back to Projects
-        </a>
+        <nav class="ui-breadcrumbs" aria-label="Breadcrumb">
+            <a href="{% url 'engineering_projects:project_list' %}">Infrastructure Projects</a>
+            <span aria-hidden="true">›</span>
+            <span aria-current="page">Project Details</span>
+        </nav>
     {% endif %}
 
     {% if not request.user.is_superuser or not request.GET.from_review %}

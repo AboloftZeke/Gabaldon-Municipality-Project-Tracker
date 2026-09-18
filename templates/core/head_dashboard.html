@@ -9,6 +9,8 @@
 {% endblock %}
 
 {% block content %}
+<div class="ui-sidebar-layout">
+{% include "includes/sidebar_navigation.html" %}
 <div class="head-dashboard">
     <header class="head-dashboard__header ui-page-header">
         <div>
@@ -179,5 +181,6 @@
             <div class="head-empty"><p>No recent review activity.</p></div>
         {% endif %}
     </section>
+</div>
 </div>
 {% endblock %}

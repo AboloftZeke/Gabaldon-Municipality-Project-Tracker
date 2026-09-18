@@ -1,0 +1,35 @@
+<aside class="sidebar ui-sidebar" aria-label="Account navigation">
+    <div class="ui-sidebar__identity">
+        <span class="ui-sidebar__avatar" aria-hidden="true">{{ request.user.username|first|upper }}</span>
+        <div class="ui-sidebar__identity-copy">
+            <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+            <span>{{ account_navigation.role_label }}</span>
+        </div>
+    </div>
+
+    <nav class="ui-sidebar__nav" aria-label="Primary">
+        {% for group in account_navigation.groups %}
+        <section class="sidebar-section ui-sidebar__group{% if group.is_account %} ui-sidebar__group--account{% endif %}">
+            <p class="sidebar-title ui-sidebar__label">{{ group.label }}</p>
+            <ul class="sidebar-menu ui-sidebar__menu">
+                {% for nav_item in group.items %}
+                <li>
+                    <a href="{{ nav_item.url }}" class="ui-sidebar__link{% if nav_item.active %} active{% endif %}"{% if nav_item.active %} aria-current="page"{% endif %}>
+                        <svg class="ui-sidebar__icon" viewBox="0 0 24 24" aria-hidden="true">
+                            {% if nav_item.icon == 'dashboard' %}<path d="M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z" />
+                            {% elif nav_item.icon == 'projects' %}<path d="M3 7.5h7l2 2h9v10H3v-12Zm2-3h6l2 2h6v3" />
+                            {% elif nav_item.icon == 'review' %}<path d="M6 3h12v18H6V3Zm3 5h6M9 12h6M9 16h4" />
+                            {% elif nav_item.icon == 'reports' %}<path d="M5 3h10l4 4v14H5V3Zm10 0v5h4M8 12h8M8 16h8" />
+                            {% elif nav_item.icon == 'users' %}<path d="M8.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7-1a3 3 0 1 0 0-6M3 20v-2a5.5 5.5 0 0 1 11 0v2m1-7a5 5 0 0 1 6 5v2" />
+                            {% elif nav_item.icon == 'account' %}<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 9a7 7 0 0 1 14 0" />
+                            {% else %}<path d="M9 4H5v16h4M14 8l4 4-4 4m4-4H8" />{% endif %}
+                        </svg>
+                        <span>{{ nav_item.label }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </section>
+        {% endfor %}
+    </nav>
+</aside>

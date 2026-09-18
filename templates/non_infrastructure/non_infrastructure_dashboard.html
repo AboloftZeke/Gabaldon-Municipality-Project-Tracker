@@ -11,63 +11,8 @@
 
 {% block content %}
 
-<div class="non-infrastructure-layout">
-
-    <!-- ==============================
-         SIDEBAR
-    =============================== -->
-    <aside class="sidebar">
-
-        <div class="sidebar-section">
-
-            <p class="sidebar-title">Navigation</p>
-
-            {% if account_navigation.is_head %}
-            <ul class="sidebar-menu">
-                <li><a href="{% url account_navigation.dashboard %}">Dashboard</a></li>
-                <li><a href="{% url 'publication_review_queue' %}">Publication Review</a></li>
-            </ul>
-            {% else %}
-            <ul class="sidebar-menu">
-
-                <li>
-                    <a href="{% url 'mayor_dashboard' %}">
-                        Dashboard
-                    </a>
-                </li>
-
-                <li>
-                    <a href="{% url 'mayor_projects:non_infrastructure_project_dashboard' %}"
-                       class="active">
-                        Projects
-                    </a>
-               </li>
-            </ul>
-            {% endif %}
-
-        </div>
-
-
-        <!-- ACCOUNT -->
-
-        <div class="sidebar-section">
-
-            <p class="sidebar-title">Account</p>
-
-            <div class="quick-actions">
-
-                <h4>{{ user.username }}</h4>
-
-                <a href="{% url 'logout' %}"
-                   class="action-button secondary ui-button ui-button--secondary">
-                    Sign Out
-                </a>
-
-            </div>
-
-        </div>
-
-    </aside>
+<div class="non-infrastructure-layout ui-sidebar-layout">
+    {% include "includes/sidebar_navigation.html" %}
 
 
     <!-- ==============================
