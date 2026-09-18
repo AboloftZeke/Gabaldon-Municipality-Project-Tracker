@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Generate {{ report_type_label }} Reports{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
+{% endblock %}
+
+{% block content %}
+<div class="head-dashboard" data-report-scope="{{ report_type }}">
+    <header class="head-dashboard__header">
+        <div>
+            <p class="head-dashboard__eyebrow">Report Requests</p>
+            <h1>Generate Reports</h1>
+            <p>Choose a {{ report_type_label|lower }} report request. Report data and downloadable output will be added in the next phases.</p>
+        </div>
+    </header>
+
+    <section class="head-section head-section--attention" aria-labelledby="report-options-heading">
+        <div class="head-section__heading head-section__heading--with-action">
+            <div>
+                <p class="head-section__eyebrow">{{ report_type_label }} Projects</p>
+                <h2 id="report-options-heading">Report Options</h2>
+                <p>This page currently establishes the request entry point for your office.</p>
+            </div>
+            <a class="head-button head-button--secondary" href="{% url account_navigation.dashboard %}">Back to Dashboard</a>
+        </div>
+
+        <div class="attention-grid">
+            <article class="attention-card">
+                <div class="attention-card__topline">
+                    <span class="attention-badge attention-badge--update">Coming in Phase 2</span>
+                </div>
+                <h4>Individual Project Report</h4>
+                <p>Request a report for one {{ report_type_label|lower }} project.</p>
+                <span class="head-button head-button--secondary" aria-disabled="true">Coming in Phase 2</span>
+            </article>
+
+            <article class="attention-card">
+                <div class="attention-card__topline">
+                    <span class="attention-badge attention-badge--ready">Coming in Phase 3</span>
+                </div>
+                <h4>Project Summary Report</h4>
+                <p>Request a summary report for {{ report_type_label|lower }} projects.</p>
+                <span class="head-button head-button--secondary" aria-disabled="true">Coming in Phase 3</span>
+            </article>
+        </div>
+    </section>
+</div>
+{% endblock %}

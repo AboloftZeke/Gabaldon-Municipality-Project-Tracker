@@ -28,6 +28,7 @@
                     <li><a href="{% url 'user_list' %}">Users</a></li>
                 {% elif account_navigation.is_head %}
                     <li><a href="{% url 'publication_review_queue' %}">Publication Review</a></li>
+                    <li><a href="{% url 'reports:dashboard' %}">Reports</a></li>
                     <li><a href="{% url 'password_change' %}">Account / Password</a></li>
                 {% endif %}
 
