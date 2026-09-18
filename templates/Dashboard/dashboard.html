@@ -9,8 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20260910-1">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20260918-1">
   <link rel="stylesheet" href="{% static 'css/templates/projects/project_modal.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components/ui.css' %}?v=20260918-4">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ5A1C4H5iR4eKpD/UT3CXYu7bH1C7Q=" crossorigin="">
 </head>
 <body>
@@ -105,14 +106,15 @@
       </div>
     </section>
 
-    <section class="panel" aria-labelledby="registry-heading">
+    {% if show_project_registry %}
+    <section class="panel" id="project-registry" data-public-registry data-initial-category="{{ public_project_type }}" aria-labelledby="registry-heading">
       <div class="panel-head top-copy">
         <div>
-          <p class="section-kicker">Project Monitoring</p>
-          <h2 id="registry-heading">Current Project Registry</h2>
-          <p>Live project records of Gabaldon Municipality. Use the category, type, location, and status filters to narrow down.</p>
+          <p class="section-kicker">Public Project Registry</p>
+          <h2 id="registry-heading">{% if public_project_type == 'infra' %}Infrastructure Projects{% else %}Non-Infrastructure Projects{% endif %}</h2>
+          <p>Browse all currently published projects. Use search, filters, or the card/table view switcher to explore the records.</p>
         </div>
-        <div class="live-badge"><span id="visible-count">{{ project_rows|length }}</span> records shown</div>
+        <div class="live-badge"><span id="visible-count">{% if public_project_type == 'infra' %}{{ infra_total }}{% else %}{{ noninfra_total }}{% endif %}</span> records shown</div>
       </div>
 
       <div class="toolbar" role="search">
@@ -137,9 +139,9 @@
 
         <div class="toolbar-filter-row">
         <div class="tab-buttons">
-          <button type="button" class="tab-btn is-active" data-category="all">All Projects</button>
-          <button type="button" class="tab-btn" data-category="infra">Infrastructure</button>
-          <button type="button" class="tab-btn" data-category="noninfra">Non-Infrastructure</button>
+          <button type="button" class="tab-btn" data-category="all">All Projects</button>
+          <button type="button" class="tab-btn{% if public_project_type == 'infra' %} is-active{% endif %}" data-category="infra">Infrastructure</button>
+          <button type="button" class="tab-btn{% if public_project_type == 'noninfra' %} is-active{% endif %}" data-category="noninfra">Non-Infrastructure</button>
         </div>
 
         <div class="filter-group">
@@ -278,6 +280,136 @@
       </div>
       <div class="project-card-grid" id="project-card-grid" hidden aria-live="polite"></div>
     </section>
+    {% else %}
+    <div class="public-project-sections" aria-label="Published project highlights">
+      <section class="public-project-section" aria-labelledby="infrastructure-projects-heading">
+        <header class="public-project-section__header">
+          <div>
+            <p class="section-kicker">Public Project Highlights</p>
+            <h2 id="infrastructure-projects-heading">Infrastructure Projects</h2>
+            <p>Physical development projects across Gabaldon</p>
+          </div>
+          <span class="public-project-section__count">{{ infra_total }} published</span>
+        </header>
+
+        {% if infrastructure_preview_rows %}
+        <div class="public-project-preview-grid">
+          {% for row in infrastructure_preview_rows %}
+          <article class="public-project-preview ui-card ui-card--interactive">
+            {% if row.cover_image_url %}
+            <img class="public-project-preview__image" src="{{ row.cover_image_url }}" alt="{{ row.title }} cover" loading="lazy">
+            {% else %}
+            <img class="public-project-preview__image" src="{% static 'images/project-placeholder.svg' %}" alt="No project cover available" loading="lazy">
+            {% endif %}
+            <div class="public-project-preview__body">
+              <div class="public-project-preview__meta">
+                <span class="status-chip status-{{ row.status_key }}">{{ row.status_label }}</span>
+                <span>{{ row.category_label|default:"Uncategorized" }}</span>
+              </div>
+              <h3>{{ row.title }}</h3>
+              <p class="public-project-preview__location">{% if row.location %}Barangay {{ row.location }}{% else %}Location not specified{% endif %}</p>
+              <dl class="public-project-preview__facts">
+                <div><dt>Budget</dt><dd>{% if row.has_financial %}₱{{ row.budget|floatformat:"2g" }}{% else %}Not disclosed{% endif %}</dd></div>
+                <div><dt>Progress</dt><dd>{% if row.has_progress %}{{ row.progress|floatformat:0 }}%{% else %}Not available{% endif %}</dd></div>
+              </dl>
+              <a href="#"
+                 class="public-project-preview__action ui-button ui-button--primary ui-button--small"
+                 data-project-modal-trigger
+                 data-project-title="{{ row.title }}"
+                 data-project-type-label="{{ row.type_label }}"
+                 data-project-status-label="{{ row.status_label }}"
+                 data-project-status-class="status-{{ row.status_key }}"
+                 data-project-office="{{ row.office }}"
+                 data-project-location="{{ row.location }}"
+                 data-project-category="{{ row.category_label }}"
+                 data-project-contractor="{{ row.contractor }}"
+                 data-project-procurement-method="{{ row.procurement_method }}"
+                 data-project-source-of-fund="{{ row.source_of_fund }}"
+                 data-project-budget-amount="{% if row.budget_amount %}P{{ row.budget_amount|floatformat:2 }}{% endif %}"
+                 data-project-abc-amount="{% if row.abc_amount %}P{{ row.abc_amount|floatformat:2 }}{% endif %}"
+                 data-project-contract-price="{% if row.contract_price %}P{{ row.contract_price|floatformat:2 }}{% endif %}"
+                 data-project-progress-percentage="{% if row.progress_percentage is not None %}{{ row.progress_percentage|floatformat:1 }}%{% endif %}"
+                 data-project-cost-progress-percentage="{% if row.cost_progress_percentage != '' %}{{ row.cost_progress_percentage|floatformat:1 }}%{% endif %}"
+                 data-project-physical-progress-percentage="{% if row.physical_progress_percentage != '' %}{{ row.physical_progress_percentage|floatformat:1 }}%{% endif %}"
+                 data-project-planned-start-date="{{ row.planned_start_date|date:'F j, Y' }}"
+                 data-project-planned-end-date="{{ row.planned_end_date|date:'F j, Y' }}"
+                 data-project-actual-start-date="{{ row.actual_start_date|date:'F j, Y' }}"
+                 data-project-created-by="{{ row.created_by_name }}"
+                 data-project-created-at="{{ row.created_at|date:'F j, Y' }}"
+                 data-project-updated-at="{{ row.updated_at|date:'F j, Y' }}"
+                 data-project-detail-url="{{ row.detail_url }}"
+                 data-project-description="{{ row.description }}">View Project</a>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="public-project-section__empty ui-card">No published infrastructure projects are available yet.</div>
+        {% endif %}
+
+        <a class="public-project-section__all ui-button ui-button--secondary" href="{% url 'public_dashboard' %}?type=infra#project-registry">View All Infrastructure <span aria-hidden="true">→</span></a>
+      </section>
+
+      <section class="public-project-section" aria-labelledby="noninfrastructure-projects-heading">
+        <header class="public-project-section__header">
+          <div>
+            <p class="section-kicker">Community Programs</p>
+            <h2 id="noninfrastructure-projects-heading">Non-Infrastructure Projects</h2>
+            <p>Community programs, services, and municipal activities</p>
+          </div>
+          <span class="public-project-section__count">{{ noninfra_total }} published</span>
+        </header>
+
+        {% if noninfrastructure_preview_rows %}
+        <div class="public-project-preview-grid">
+          {% for row in noninfrastructure_preview_rows %}
+          <article class="public-project-preview ui-card ui-card--interactive">
+            {% if row.cover_image_url %}
+            <img class="public-project-preview__image" src="{{ row.cover_image_url }}" alt="{{ row.title }} cover" loading="lazy">
+            {% else %}
+            <img class="public-project-preview__image" src="{% static 'images/project-placeholder.svg' %}" alt="No project cover available" loading="lazy">
+            {% endif %}
+            <div class="public-project-preview__body">
+              <div class="public-project-preview__meta">
+                <span class="status-chip status-{{ row.status_key }}">{{ row.status_label }}</span>
+                <span>{{ row.category_label|default:"Community program" }}</span>
+              </div>
+              <h3>{{ row.title }}</h3>
+              <p class="public-project-preview__location">{% if row.location %}Barangay {{ row.location }}{% elif row.venue_name %}{{ row.venue_name }}{% else %}Location not specified{% endif %}</p>
+              <dl class="public-project-preview__facts">
+                <div><dt>Beneficiaries</dt><dd>{{ row.beneficiaries|default_if_none:"Not specified" }}</dd></div>
+                <div><dt>Event date</dt><dd>{{ row.event_date|date:"M d, Y"|default:"Not scheduled" }}</dd></div>
+              </dl>
+              <a href="#"
+                 class="public-project-preview__action ui-button ui-button--primary ui-button--small"
+                 data-project-modal-trigger
+                 data-project-title="{{ row.title }}"
+                 data-project-type-label="{{ row.type_label }}"
+                 data-project-status-label="{{ row.status_label }}"
+                 data-project-status-class="status-{{ row.status_key }}"
+                 data-project-category="{{ row.category_label }}"
+                 data-project-proponent="{{ row.proponent }}"
+                 data-project-beneficiaries-description="{{ row.beneficiaries|default_if_none:'' }}"
+                 data-project-venue="{{ row.venue_name }}"
+                 data-project-service-period="{{ row.event_date|date:'F j, Y' }}"
+                 data-project-service-time="{% if row.start_time %}{{ row.start_time }}{% if row.end_time %} – {{ row.end_time }}{% endif %}{% endif %}"
+                 data-project-created-by="{{ row.created_by_name }}"
+                 data-project-created-at="{{ row.created_at|date:'F j, Y' }}"
+                 data-project-updated-at="{{ row.updated_at|date:'F j, Y' }}"
+                 data-project-detail-url="{{ row.detail_url }}"
+                 data-project-description="{{ row.description }}">View Program</a>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="public-project-section__empty ui-card">No published non-infrastructure projects are available yet.</div>
+        {% endif %}
+
+        <a class="public-project-section__all ui-button ui-button--secondary" href="{% url 'public_dashboard' %}?type=noninfra#project-registry">View All Non-Infrastructure <span aria-hidden="true">→</span></a>
+      </section>
+    </div>
+    {% endif %}
   </main>
 
   <footer class="site-footer">
@@ -287,7 +419,7 @@
   {% include "projects/project_detail_modal.html" %}
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="{% static 'js/templates/Dashboard/dashboard.js' %}?v=20260910-1"></script>
+  <script src="{% static 'js/templates/Dashboard/dashboard.js' %}?v=20260918-1"></script>
   <script src="{% static 'js/templates/projects/project_modal.js' %}"></script>
 </body>
 </html>

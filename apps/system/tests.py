@@ -1174,16 +1174,20 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertContains(response, '>55%<', html=False)
         self.assertContains(response, 'Municipal Engineering Office')
         self.assertContains(response, 'Public Works Contractor')
+        registry_response = self.client.get(
+            reverse('public_dashboard'),
+            {'type': 'infra'},
+        )
         self.assertContains(
-            response,
+            registry_response,
             'label="Infrastructure Categories"',
         )
         self.assertContains(
-            response,
+            registry_response,
             'label="Non-Infrastructure Categories"',
         )
         self.assertContains(
-            response,
+            registry_response,
             'data-project-category-type="infra"',
         )
 

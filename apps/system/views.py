@@ -328,6 +328,15 @@ class PublicDashboardView(TemplateView):
             *(non_infrastructure_dashboard_row(p) for p in noninfra_projects),
         ]
         rows.sort(key=lambda x: x['created_at'], reverse=True)
+        infrastructure_rows = [
+            row for row in rows if row['category'] == 'infra'
+        ]
+        noninfrastructure_rows = [
+            row for row in rows if row['category'] == 'noninfra'
+        ]
+        public_project_type = self.request.GET.get('type', '')
+        if public_project_type not in {'infra', 'noninfra'}:
+            public_project_type = ''
 
         context.update({
             'total_projects': total_projects,
@@ -340,6 +349,10 @@ class PublicDashboardView(TemplateView):
             'total_budget': total_budget,
             'project_rows': rows,
             'recent_rows': rows[:8],
+            'infrastructure_preview_rows': infrastructure_rows[:6],
+            'noninfrastructure_preview_rows': noninfrastructure_rows[:6],
+            'show_project_registry': bool(public_project_type),
+            'public_project_type': public_project_type,
             'project_categories': category_options,
             'infrastructure_categories': infrastructure_category_options,
             'noninfrastructure_categories': (
