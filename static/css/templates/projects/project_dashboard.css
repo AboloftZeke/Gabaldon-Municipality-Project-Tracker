@@ -20,161 +20,6 @@
     pointer-events: none;
 }
 
-.project-dashboard-layout {
-    display: grid;
-    grid-template-columns: 250px minmax(0, 1fr);
-    min-height: calc(100vh - 80px);
-    width: 100%;
-}
-
-.sidebar {
-    position: static;
-    top: auto;
-    left: auto;
-
-    width: 250px;
-    height: auto;
-
-    box-sizing: border-box;
-
-    background: #1a5a3a;
-    color: white;
-
-    padding: 2rem 1rem;
-
-    overflow-y: visible;
-
-    z-index: auto;
-}
-
-
-/* Sidebar Sections */
-
-.sidebar-section {
-    margin-bottom: 2rem;
-}
-
-
-/* Sidebar Section Title */
-
-.sidebar-title {
-    margin: 0 0 0.75rem 0;
-    padding: 0 0.75rem;
-
-    font-size: 0.75rem;
-    font-weight: 700;
-
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-
-    color: rgba(255, 255, 255, 0.65);
-}
-
-
-/* Sidebar Navigation */
-
-.sidebar-menu {
-    list-style: none;
-
-    margin: 0;
-    padding: 0;
-}
-
-.sidebar-menu li {
-    margin-bottom: 0.35rem;
-}
-
-.sidebar-menu a {
-    display: block;
-
-    padding: 0.75rem;
-
-    border-radius: 8px;
-
-    color: white;
-    text-decoration: none;
-
-    font-size: 0.95rem;
-    font-weight: 500;
-
-    transition:
-        background 0.2s ease,
-        color 0.2s ease;
-}
-
-.sidebar-menu a:hover {
-    background: rgba(255, 255, 255, 0.10);
-}
-
-.sidebar-menu a.active {
-    background: rgba(255, 255, 255, 0.18);
-
-    font-weight: 600;
-}
-
-
-/* Sidebar Account */
-
-.sidebar .quick-actions {
-    padding: 0 0.75rem;
-}
-
-.sidebar .quick-actions h4 {
-    margin: 0 0 1rem 0;
-
-    color: white;
-
-    font-size: 0.95rem;
-    font-weight: 600;
-
-    word-break: break-word;
-}
-
-
-/* Sign Out */
-
-.sidebar .action-button {
-    display: block;
-
-    width: 100%;
-
-    box-sizing: border-box;
-
-    padding: 0.65rem 0.75rem;
-
-    border-radius: 7px;
-
-    text-align: center;
-    text-decoration: none;
-
-    font-size: 0.85rem;
-    font-weight: 600;
-}
-
-.sidebar .action-button.secondary {
-    background: rgba(255, 255, 255, 0.12);
-
-    color: white;
-}
-
-.sidebar .action-button.secondary:hover {
-    background: rgba(255, 255, 255, 0.20);
-}
-
-
-/* =========================================
-   MAIN CONTENT LAYOUT
-   ========================================= */
-
-.dashboard-content {
-    margin-left: 0;
-
-    min-height: auto;
-
-    box-sizing: border-box;
-}
-
-
 /* =========================================
    DASHBOARD CONTAINER
    ========================================= */
@@ -452,14 +297,6 @@
 
 @media (max-width: 900px) {
 
-    .sidebar {
-        width: 220px;
-    }
-
-    .dashboard-content {
-        margin-left: 220px;
-    }
-
     .dashboard-container {
         padding: 0 1rem;
     }
@@ -469,35 +306,8 @@
 
 @media (max-width: 700px) {
 
-    .sidebar {
-        position: static;
-
-        width: 100%;
-        height: auto;
-
-        padding: 1rem;
-    }
-
-    .dashboard-content {
-        margin-left: 0;
-    }
-
     .dashboard-container {
         margin-top: 1.5rem;
-    }
-
-    .sidebar-menu {
-        display: flex;
-
-        gap: 0.5rem;
-    }
-
-    .sidebar-menu li {
-        margin-bottom: 0;
-    }
-
-    .sidebar-section {
-        margin-bottom: 1rem;
     }
 
     .project-item {
@@ -525,4 +335,9 @@
         grid-template-columns: 1fr;
     }
 
+}
+.project-dashboard-content {
+    width: min(100%, 1280px);
+    min-width: 0;
+    justify-self: start;
 }

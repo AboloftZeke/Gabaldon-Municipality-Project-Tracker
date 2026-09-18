@@ -7,22 +7,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/templates/core/mayor_dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/core/mayor_dashboard.css' %}?v=20260919-1">
 {% endblock %}
 
 {% block show_header %}
-<header>
+<header class="site-header">
     <nav>
         <div class="header-brand">
-            <img src="{% static 'images/gabaldon-seal.png' %}" alt="Gabaldon Seal" class="header-seal">
+            <img src="{% static 'images/gabaldon-seal.png' %}" alt="Gabaldon Seal" class="header-logo">
             <h1>Municipality Project Tracker</h1>
         </div>
-        {% if user.is_authenticated %}
-            <ul>
-                <li><a href="{% url 'mayor_dashboard' %}">Dashboard</a></li>
-                <li><a href="{% url 'logout' %}">Logout</a></li>
-            </ul>
-        {% endif %}
     </nav>
 </header>
 {% endblock %}
@@ -30,7 +24,7 @@
 {% block content %}
 <div class="ui-sidebar-layout">
 {% include "includes/sidebar_navigation.html" %}
-<div class="dashboard-content">
+<div class="dashboard-content role-dashboard-content">
     <div class="dashboard-header ui-page-header">
         <h2>Mayor's Office Dashboard</h2>
         <div class="user-info">

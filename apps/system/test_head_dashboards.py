@@ -217,6 +217,61 @@ class HeadDashboardTests(TestCase):
                 self.assertContains(response, content_class)
                 self.assertNotContains(response, '>Publication Lifecycle<')
 
+    def test_confirm_and_password_pages_render_inside_shared_sidebar_content(self):
+        admin, _ = self.users['admin', 'admin']
+        active_user, _ = self.users['engineer', 'staff']
+        inactive_user, _ = self.users['mayor', 'staff']
+        inactive_user.is_active = False
+        inactive_user.save(update_fields=['is_active'])
+        self.client.force_login(admin)
+
+        for url, heading in [
+            (reverse('user_deactivate', kwargs={'pk': active_user.pk}), 'Deactivate User'),
+            (reverse('user_activate', kwargs={'pk': inactive_user.pk}), 'Activate User'),
+        ]:
+            response = self.client.get(url)
+            with self.subTest(url=url):
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'class="ui-sidebar-layout"')
+                self.assertContains(response, 'user-confirmation-content')
+                self.assertContains(response, heading)
+                header_markup = response.content.decode().split('</header>', 1)[0]
+                self.assertNotIn(reverse('user_list'), header_markup)
+                self.assertNotIn(reverse('logout'), header_markup)
+
+        response = self.client.get(reverse('password_change'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<main class="ui-sidebar-layout">')
+        self.assertContains(response, 'class="ui-sidebar-content"')
+        self.assertContains(response, 'class="password-change-content"')
+        self.assertContains(response, 'Change Your Password')
+
+    def test_staff_dashboards_render_with_shared_sidebar_content(self):
+        for assignment, route, content_class in [
+            (('engineer', 'staff'), 'engineering_dashboard', 'role-dashboard-content'),
+            (('mayor', 'staff'), 'mayor_dashboard', 'role-dashboard-content'),
+            (('engineer', 'staff'), 'engineering_projects:project_dashboard', 'project-dashboard-content'),
+            (('mayor', 'staff'), 'mayor_projects:non_infrastructure_project_dashboard', 'project-dashboard-content'),
+        ]:
+            user, _ = self.users[assignment]
+            self.client.force_login(user)
+            response = self.client.get(reverse(route))
+            with self.subTest(route=route):
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'ui-sidebar-layout')
+                self.assertContains(response, content_class)
+                self.assertEqual(response.content.decode().count('<main'), 1)
+
+        for assignment, route in [
+            (('engineer', 'staff'), 'engineering_dashboard'),
+            (('mayor', 'staff'), 'mayor_dashboard'),
+        ]:
+            user, _ = self.users[assignment]
+            self.client.force_login(user)
+            response = self.client.get(reverse(route))
+            header_markup = response.content.decode().split('</header>', 1)[0]
+            self.assertNotIn(reverse('logout'), header_markup)
+
     def test_user_management_department_filters_and_search_work_together(self):
         admin, _ = self.users['admin', 'admin']
         self.client.force_login(admin)
