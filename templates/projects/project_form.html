@@ -31,7 +31,7 @@
             {% endfor %}
         {% endif %}
 
-        <form method="post" enctype="multipart/form-data" novalidate data-infrastructure-wizard class="ui-form">
+        <form method="post" enctype="multipart/form-data" novalidate data-project-wizard class="ui-form">
             {% csrf_token %}
 
             <div class="field-requirements-banner" role="note">
@@ -41,16 +41,17 @@
 
             <div class="wizard-progress" aria-label="Infrastructure form progress">
                 <div class="wizard-progress-summary">
-                    <span data-wizard-progress-text>Step 1 of 6</span>
-                    <span>Complete each step to continue</span>
+                    <span data-wizard-progress-text>Step 1 of 7</span>
+                    <span data-wizard-progress-detail>Project details</span>
                 </div>
                 <ol class="wizard-steps">
-                    <li data-wizard-indicator="0"><span>1</span><strong>Basic Info</strong></li>
-                    <li data-wizard-indicator="1"><span>2</span><strong>Location</strong></li>
-                    <li data-wizard-indicator="2"><span>3</span><strong>Funding</strong></li>
-                    <li data-wizard-indicator="3"><span>4</span><strong>Schedule</strong></li>
-                    <li data-wizard-indicator="4"><span>5</span><strong>Progress</strong></li>
-                    <li data-wizard-indicator="5"><span>6</span><strong>Photos</strong></li>
+                    <li data-wizard-indicator="0"><span>1</span><strong>Project details</strong></li>
+                    <li data-wizard-indicator="1"><span>2</span><strong>Site location</strong></li>
+                    <li data-wizard-indicator="2"><span>3</span><strong>Funding &amp; contract</strong></li>
+                    <li data-wizard-indicator="3"><span>4</span><strong>Project schedule</strong></li>
+                    <li data-wizard-indicator="4"><span>5</span><strong>Progress status</strong></li>
+                    <li data-wizard-indicator="5"><span>6</span><strong>Project photos</strong></li>
+                    <li data-wizard-indicator="6"><span>7</span><strong>Review &amp; save</strong></li>
                 </ol>
             </div>
 
@@ -131,17 +132,19 @@
                         {% endif %}
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group fixed-field">
                         <label for="{{ form.municipality.id_for_label }}">Municipality</label>
                         {{ form.municipality }}
+                        <small class="helper-text">Fixed to Gabaldon for all projects in this tracker.</small>
                         {% if form.municipality.errors %}
                             <div class="error-message">{{ form.municipality.errors.0 }}</div>
                         {% endif %}
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group fixed-field">
                         <label for="{{ form.province.id_for_label }}">Province</label>
                         {{ form.province }}
+                        <small class="helper-text">Fixed to Nueva Ecija for all projects in this tracker.</small>
                         {% if form.province.errors %}
                             <div class="error-message">{{ form.province.errors.0 }}</div>
                         {% endif %}
@@ -170,6 +173,10 @@
                     <span class="section-number">3</span>
                     <div><h3>Funding &amp; Contract</h3><p>Record the contractor, procurement method, approved funding, and expenditure details.</p></div>
                 </div>
+                <div class="form-subsection">
+                    <h4>Contract and procurement</h4>
+                    <p>Identify who will deliver the project and how the contract was procured.</p>
+                </div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="{{ form.contractor.id_for_label }}">Contractor</label>
@@ -184,6 +191,12 @@
                         {% endif %}
                     </div>
 
+                </div>
+                <div class="form-subsection">
+                    <h4>Financial details</h4>
+                    <p>Enter the approved, contracted, and recorded spending amounts.</p>
+                </div>
+                <div class="form-grid">
                     <div class="form-group">
                         <label for="{{ form.abc_amount.id_for_label }}">Approved Budget (₱)</label>
                         {{ form.abc_amount }}
@@ -212,6 +225,10 @@
                     <span class="section-number">4</span>
                     <div><h3>Project Schedule</h3><p>Enter procurement milestones and the planned and actual delivery timeline.</p></div>
                 </div>
+                <div class="form-subsection">
+                    <h4>Procurement dates</h4>
+                    <p>Record the milestones leading to the notice to proceed.</p>
+                </div>
                 <div class="form-grid">
                     <div class="form-group"><label for="{{ form.posting_date.id_for_label }}">Posting Date</label>{{ form.posting_date }}{% if form.posting_date.errors %}<div class="error-message">{{ form.posting_date.errors.0 }}</div>{% endif %}</div>
                     <div class="form-group"><label for="{{ form.pre_bid_date.id_for_label }}">Pre-Bid Date</label>{{ form.pre_bid_date }}{% if form.pre_bid_date.errors %}<div class="error-message">{{ form.pre_bid_date.errors.0 }}</div>{% endif %}</div>
@@ -225,6 +242,12 @@
                         {% endif %}
                     </div>
 
+                </div>
+                <div class="form-subsection">
+                    <h4>Implementation dates</h4>
+                    <p>Set the planned timeline, duration, and actual dates when available.</p>
+                </div>
+                <div class="form-grid">
                     <div class="form-group">
                         <label for="{{ form.duration_days.id_for_label }}">Duration (days)</label>
                         {{ form.duration_days }}
@@ -271,6 +294,9 @@
                 <div class="section-heading">
                     <span class="section-number">5</span>
                     <div><h3>Progress &amp; Status</h3><p>Official status and operational percentages are maintained by the Engineering Head.</p></div>
+                </div>
+                <div class="step-info-callout" role="note">
+                    No input is needed here. Progress and status are updated through the Engineering Head workflow after the project is created.
                 </div>
             </div>
 
@@ -434,7 +460,7 @@
                     </span>
 
                     <span class="image-upload-subtitle">
-                        Drag and drop images here or
+                        Drag and drop images here, then choose “Set as cover” on the main photo.
                     </span>
 
                 </div>
@@ -514,12 +540,56 @@
 
 </div>
 
+            <div class="fieldset wizard-panel ui-form-section review-panel" id="review-project" data-wizard-step="6" data-review-panel hidden>
+                <div class="section-heading">
+                    <span class="section-number">7</span>
+                    <div>
+                        <h3 tabindex="-1">Review &amp; Save</h3>
+                        <p>Check the important details below. Use Back to correct anything before saving.</p>
+                    </div>
+                </div>
+                <div class="review-grid" aria-live="polite">
+                    <section class="review-card">
+                        <h4>Project</h4>
+                        <dl>
+                            <div><dt>Title</dt><dd data-review-value="{{ form.title.id_for_label }}">—</dd></div>
+                            <div><dt>Category</dt><dd data-review-value="{{ form.category.id_for_label }}">—</dd></div>
+                            <div><dt>Implementing office</dt><dd data-review-value="{{ form.implementing_office.id_for_label }}">—</dd></div>
+                        </dl>
+                    </section>
+                    <section class="review-card">
+                        <h4>Location</h4>
+                        <dl>
+                            <div><dt>Street</dt><dd data-review-value="{{ form.street.id_for_label }}">—</dd></div>
+                            <div><dt>Barangay</dt><dd data-review-value="{{ form.barangay.id_for_label }}">—</dd></div>
+                            <div><dt>Municipality</dt><dd data-review-value="{{ form.municipality.id_for_label }}">—</dd></div>
+                        </dl>
+                    </section>
+                    <section class="review-card">
+                        <h4>Funding</h4>
+                        <dl>
+                            <div><dt>Contractor</dt><dd data-review-value="{{ form.contractor.id_for_label }}">—</dd></div>
+                            <div><dt>Approved budget</dt><dd data-review-value="{{ form.abc_amount.id_for_label }}">—</dd></div>
+                            <div><dt>Fund source</dt><dd data-review-value="{{ form.fund_source.id_for_label }}">—</dd></div>
+                        </dl>
+                    </section>
+                    <section class="review-card">
+                        <h4>Schedule &amp; photos</h4>
+                        <dl>
+                            <div><dt>Planned start</dt><dd data-review-value="{{ form.planned_start_date.id_for_label }}">—</dd></div>
+                            <div><dt>Planned end</dt><dd data-review-value="{{ form.planned_end_date.id_for_label }}">—</dd></div>
+                            <div><dt>New photos</dt><dd data-review-value="{{ form.project_images.id_for_label }}">—</dd></div>
+                        </dl>
+                    </section>
+                </div>
+            </div>
+
 
             <div class="form-actions wizard-actions">
                 <button type="button" class="btn btn-back ui-button ui-button--subtle" data-wizard-back hidden>Back</button>
                 <a href="{% url 'engineering_projects:project_list' %}" class="btn btn-cancel ui-button ui-button--secondary">Cancel</a>
                 <button type="button" class="btn btn-next ui-button ui-button--primary" data-wizard-next>Next</button>
-                <button type="submit" class="btn btn-submit ui-button ui-button--primary" data-wizard-submit hidden>{{ action }} Project</button>
+                <button type="submit" class="btn btn-submit ui-button ui-button--primary" data-wizard-submit data-saving-text="Saving..." hidden>{{ action }} Project</button>
             </div>
             <script>
             document.addEventListener('DOMContentLoaded', function () {

@@ -280,6 +280,225 @@
     box-shadow: var(--ui-focus-ring);
 }
 
+/* Shared project form wizard refinements. */
+.ui-form-card .form-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--ui-space-4);
+    margin-bottom: var(--ui-space-4);
+    padding-bottom: var(--ui-space-4);
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.ui-form-card .form-heading h2 {
+    margin-bottom: 0.4rem;
+}
+
+.ui-form-card .form-eyebrow {
+    margin: 0 0 0.4rem;
+    color: var(--ui-green-700);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.ui-form-card .form-intro {
+    max-width: 68ch;
+    margin: 0;
+    color: var(--ui-muted);
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+[data-project-wizard] .section-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    margin-bottom: 1.3rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e2e9e4;
+}
+
+[data-project-wizard] .section-number {
+    display: inline-flex;
+    width: 2.15rem;
+    height: 2.15rem;
+    flex: 0 0 2.15rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--ui-green-700);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+[data-project-wizard] .section-heading h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1.08rem;
+}
+
+[data-project-wizard] .section-heading p {
+    margin: 0;
+    color: var(--ui-muted);
+    font-size: 0.86rem;
+    line-height: 1.5;
+}
+
+[data-project-wizard] .wizard-steps li.is-future {
+    color: #7b8780;
+}
+
+[data-project-wizard] .wizard-steps li.is-complete span {
+    font-size: 0;
+}
+
+[data-project-wizard] .wizard-steps li.is-complete span::after {
+    content: "✓";
+    font-size: 0.8rem;
+}
+
+[data-project-wizard] .form-subsection {
+    margin: 1.25rem 0 1rem;
+    padding: 0.8rem 1rem;
+    border-left: 3px solid var(--ui-green-700);
+    border-radius: 0 var(--ui-radius-sm) var(--ui-radius-sm) 0;
+    background: var(--ui-green-050);
+}
+
+[data-project-wizard] .form-subsection:first-of-type {
+    margin-top: 0;
+}
+
+[data-project-wizard] .form-subsection h4,
+[data-project-wizard] .review-card h4 {
+    margin: 0 0 0.25rem;
+    color: var(--ui-text);
+    font-size: 0.92rem;
+}
+
+[data-project-wizard] .form-subsection p {
+    margin: 0;
+    color: var(--ui-muted);
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+[data-project-wizard] .step-info-callout {
+    padding: 1rem;
+    border: 1px solid #bdd3ef;
+    border-radius: var(--ui-radius-sm);
+    background: var(--ui-info-soft);
+    color: #244d7d;
+    font-size: 0.88rem;
+    line-height: 1.55;
+}
+
+[data-project-wizard] .fixed-field input {
+    border-style: dashed;
+    background: #eef1ef;
+    color: #59645e;
+}
+
+[data-project-wizard] .fixed-field .helper-text {
+    color: #6c7771;
+}
+
+[data-project-wizard] .fixed-field::after {
+    display: none !important;
+}
+
+[data-project-wizard] .form-group.has-client-error input,
+[data-project-wizard] .form-group.has-client-error select,
+[data-project-wizard] .form-group.has-client-error textarea {
+    border-color: var(--ui-danger);
+    background: var(--ui-danger-soft);
+    box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.1);
+}
+
+[data-project-wizard] .form-group.has-client-error label {
+    color: var(--ui-danger-dark);
+}
+
+[data-project-wizard] .review-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ui-space-3);
+}
+
+[data-project-wizard] .review-card {
+    min-width: 0;
+    padding: var(--ui-space-3);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
+    background: var(--ui-surface);
+}
+
+[data-project-wizard] .review-card dl {
+    margin: 0.75rem 0 0;
+}
+
+[data-project-wizard] .review-card dl div {
+    display: grid;
+    grid-template-columns: minmax(7.5rem, 0.7fr) minmax(0, 1.3fr);
+    gap: var(--ui-space-2);
+    padding: 0.55rem 0;
+    border-top: 1px solid #edf1ee;
+}
+
+[data-project-wizard] .review-card dt {
+    color: var(--ui-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+[data-project-wizard] .review-card dd {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: var(--ui-text);
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+[data-project-wizard] .wizard-actions {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+}
+
+[data-project-wizard] .wizard-actions .btn,
+[data-project-wizard] .wizard-actions .ui-button {
+    width: auto;
+    min-width: 8.5rem;
+    flex: none;
+}
+
+[data-project-wizard] .wizard-actions .btn-cancel {
+    grid-column: 3;
+}
+
+[data-project-wizard] .wizard-actions [data-wizard-next],
+[data-project-wizard] .wizard-actions [data-wizard-submit] {
+    grid-column: 4;
+}
+
+[data-project-wizard] [aria-busy="true"]::before {
+    content: "";
+    width: 0.8rem;
+    height: 0.8rem;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: ui-saving-spin 700ms linear infinite;
+}
+
+@keyframes ui-saving-spin {
+    to { transform: rotate(360deg); }
+}
+
 .ui-table-wrap {
     max-width: 100%;
     overflow-x: auto;
@@ -334,11 +553,77 @@
     .ui-table-wrap td {
         padding: 0.75rem;
     }
+
+    [data-project-wizard] .review-grid {
+        grid-template-columns: 1fr;
+    }
+
+    [data-project-wizard] .wizard-actions {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--ui-space-2);
+    }
+
+    [data-project-wizard] .wizard-actions .btn,
+    [data-project-wizard] .wizard-actions .ui-button {
+        width: 100%;
+        min-width: 0;
+    }
+
+    [data-project-wizard] .wizard-actions [data-wizard-back] {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    [data-project-wizard] .wizard-actions [data-wizard-next],
+    [data-project-wizard] .wizard-actions [data-wizard-submit] {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    [data-project-wizard] .wizard-actions:has([data-wizard-back][hidden]) [data-wizard-next] {
+        grid-column: 1 / -1;
+    }
+
+    [data-project-wizard] .wizard-actions .btn-cancel {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+}
+
+@media (max-width: 420px) {
+    [data-project-wizard] .wizard-progress {
+        margin-inline: -0.25rem;
+        padding: 0.8rem;
+    }
+
+    [data-project-wizard] .wizard-steps {
+        display: flex;
+        min-width: 0;
+    }
+
+    [data-project-wizard] .wizard-steps li {
+        flex: 0 0 6.5rem;
+    }
+
+    [data-project-wizard] .wizard-steps li strong {
+        max-width: 6.2rem;
+        white-space: normal;
+        line-height: 1.25;
+    }
+
+    [data-project-wizard] .review-card dl div {
+        grid-template-columns: 1fr;
+        gap: 0.2rem;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .ui-card--interactive,
     .ui-button {
         transition: none;
+    }
+
+    [data-project-wizard] [aria-busy="true"]::before {
+        animation: none;
     }
 }

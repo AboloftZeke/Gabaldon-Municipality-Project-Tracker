@@ -75,16 +75,17 @@ class NonInfrastructureProjectFormTests(TestCase):
             description='Health care services',
         )
 
-    def test_create_form_renders_five_step_wizard(self):
+    def test_create_form_renders_six_step_wizard(self):
         content = render_to_string(
             'non_infrastructure/non_infrastructure_form.html',
             {'form': NonInfrastructureProjectForm(), 'action': 'Create'},
         )
 
-        self.assertIn('data-infrastructure-wizard', content)
-        self.assertIn('Step 1 of 5', content)
-        for step in range(5):
+        self.assertIn('data-project-wizard', content)
+        self.assertIn('Step 1 of 6', content)
+        for step in range(6):
             self.assertIn(f'data-wizard-step="{step}"', content)
+        self.assertIn('Review &amp; Save', content)
         self.assertIn('data-wizard-back', content)
         self.assertIn('data-wizard-next', content)
         self.assertIn('data-wizard-submit', content)

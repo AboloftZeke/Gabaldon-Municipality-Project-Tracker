@@ -107,12 +107,15 @@ class InfrastructureProjectFormTests(TestCase):
             'project-schedule',
             'progress-status',
             'project-photos',
+            'review-project',
         ):
             self.assertContains(response, f'id="{section_id}"')
         self.assertNotContains(response, 'id="inspection-information"')
         self.assertContains(response, 'wizard-progress')
         self.assertContains(response, 'data-wizard-step="0"')
         self.assertContains(response, 'data-wizard-step="5"')
+        self.assertContains(response, 'data-wizard-step="6"')
+        self.assertContains(response, 'Review &amp; Save')
         self.assertContains(response, 'data-wizard-next')
         self.assertContains(response, 'data-wizard-back')
         self.assertContains(response, 'data-wizard-submit')
