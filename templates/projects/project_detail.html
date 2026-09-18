@@ -12,11 +12,11 @@
 {% block content %}
 <div class="project-detail-container">
     {% if request.user.is_superuser and request.GET.from_review or account_navigation.is_head and request.GET.from_review %}
-        <a href="{% url 'publication_revision_detail' request.GET.from_review %}" class="btn btn-back">
+        <a href="{% url 'publication_revision_detail' request.GET.from_review %}" class="btn btn-back ui-button ui-button--subtle">
             <span aria-hidden="true">←</span> Back to Publication Review
         </a>
     {% else %}
-        <a href="{% url 'engineering_projects:project_list' %}" class="btn btn-back">
+        <a href="{% url 'engineering_projects:project_list' %}" class="btn btn-back ui-button ui-button--subtle">
             <span aria-hidden="true">←</span> Back to Projects
         </a>
     {% endif %}
@@ -48,9 +48,9 @@
                 </div>
                 {% if not request.user.is_superuser or not request.GET.from_review %}
                     <div class="action-buttons action-buttons--detail">
-                        {% if can_update_operations %}<a href="{% url 'engineering_projects:project_operations' project_details.pk %}" class="btn btn-edit">Update Status &amp; Progress</a>{% endif %}
-                        {% if can_manage_project %}<a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit">Edit Project</a>{% endif %}
-                        {% if can_manage_project %}<a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete">Delete Project</a>{% endif %}
+                        {% if can_update_operations %}<a href="{% url 'engineering_projects:project_operations' project_details.pk %}" class="btn btn-edit ui-button ui-button--primary">Update Status &amp; Progress</a>{% endif %}
+                        {% if can_manage_project %}<a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit ui-button ui-button--secondary">Edit Project</a>{% endif %}
+                        {% if can_manage_project %}<a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete ui-button ui-button--danger">Delete Project</a>{% endif %}
                     </div>
                 {% endif %}
             </div>
@@ -58,7 +58,7 @@
             <div class="project-meta" aria-label="Project summary">
                 <div class="meta-item">
                     <span class="meta-label">Status</span>
-                    <span class="status-badge status-{{ project_status_class }}">{{ project_details.get_status_display }}</span>
+                    <span class="status-badge status-{{ project_status_class }} ui-badge">{{ project_details.get_status_display }}</span>
                 </div>
                 <div class="meta-item">
                     <span class="meta-label">Approved Budget</span>
@@ -81,7 +81,7 @@
     </header>
 
     <div class="information-card-grid" aria-label="Project information">
-    <section class="detail-section information-card information-card--wide">
+    <section class="detail-section information-card information-card--wide ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Infrastructure</span>
             <h3>Project Information</h3>
@@ -110,7 +110,7 @@
         </div>
     </section>
 
-    <section class="detail-section information-card">
+    <section class="detail-section information-card ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Site</span>
             <h3>Location</h3>
@@ -143,7 +143,7 @@
         </div>
     </section>
 
-    <section class="detail-section information-card">
+    <section class="detail-section information-card ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Timeline</span>
             <h3>Schedule</h3>
@@ -172,7 +172,7 @@
         </div>
     </section>
 
-    <section class="detail-section information-card">
+    <section class="detail-section information-card ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Budget</span>
             <h3>Financial &amp; Funding Information</h3>
@@ -197,7 +197,7 @@
         </div>
     </section>
 
-    <section class="detail-section information-card information-card--wide">
+    <section class="detail-section information-card information-card--wide ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Delivery</span>
             <h3>Procurement &amp; Contractor Information</h3>
@@ -238,7 +238,7 @@
         </div>
     </section>
 
-    <section class="detail-section information-card information-card--wide">
+    <section class="detail-section information-card information-card--wide ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Official operations</span>
             <h3>Status &amp; Progress</h3>
@@ -298,7 +298,7 @@
         {% for update in progress_update_history %}
             <article class="progress-timeline-item">
                 <span class="progress-timeline-marker" aria-hidden="true"></span>
-                <div class="progress-update-card">
+                    <div class="progress-update-card ui-card">
                     <header class="progress-update-card__header">
                         <div><strong>{% if update.updated_by %}{{ update.updated_by.get_full_name|default:update.updated_by.username }}{% else %}Unknown Head{% endif %}</strong><span>Engineering Head decision</span></div>
                         <time datetime="{{ update.created_at|date:'c' }}">{{ update.created_at|date:"M d, Y · g:i A" }}</time>
@@ -311,7 +311,7 @@
                     <div class="linked-inspections">
                         <h4>Supporting Inspections</h4>
                         {% for inspection in update.supporting_inspections.all %}
-                        <article class="linked-inspection-card">
+                        <article class="linked-inspection-card ui-card">
                             <div class="linked-inspection-card__summary"><strong>{{ inspection.inspection_date|date:"M d, Y" }}</strong><span>{{ inspection.get_inspection_type_display }}</span><b>{{ inspection.completion_percentage|floatformat:2 }}% observed completion</b></div>
                             {% if inspection.findings %}<p>{{ inspection.findings }}</p>{% endif %}
                             <div class="evidence-chip-list">
@@ -332,13 +332,13 @@
     <section class="detail-section workflow-history-section">
         <div class="workflow-section-heading workflow-section-heading--actions">
             <div><p class="workflow-eyebrow">Field records</p><h3>Inspection History</h3><p>Newest inspections appear first. Observed completion supports review but does not set official physical progress.</p></div>
-            {% if can_manage_inspections %}<a class="btn btn-edit workflow-add-button" href="{{ inspection_create_url }}">Add Inspection</a>{% endif %}
+            {% if can_manage_inspections %}<a class="btn btn-edit workflow-add-button ui-button ui-button--primary" href="{{ inspection_create_url }}">Add Inspection</a>{% endif %}
         </div>
         <div class="inspection-timeline">
         {% for inspection in inspection_history %}
             <article class="inspection-card">
                 <header class="inspection-card__header">
-                    <div><time datetime="{{ inspection.inspection_date|date:'Y-m-d' }}">{{ inspection.inspection_date|date:"M d, Y" }}</time><span class="inspection-type-badge">{{ inspection.get_inspection_type_display }}</span></div>
+                    <div><time datetime="{{ inspection.inspection_date|date:'Y-m-d' }}">{{ inspection.inspection_date|date:"M d, Y" }}</time><span class="inspection-type-badge ui-badge ui-badge--info">{{ inspection.get_inspection_type_display }}</span></div>
                     <div class="inspection-observed-progress"><small>Observed Completion</small><strong>{{ inspection.completion_percentage|floatformat:2 }}%</strong></div>
                 </header>
                 <p class="inspection-card__inspector">Inspected by <strong>{% if inspection.inspected_by_user %}{{ inspection.inspected_by_user.get_full_name|default:inspection.inspected_by_user.username }}{% else %}Not recorded{% endif %}</strong></p>

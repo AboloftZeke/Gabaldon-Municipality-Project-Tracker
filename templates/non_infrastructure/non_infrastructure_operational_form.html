@@ -17,14 +17,14 @@
         {% endif %}
     </nav>
 
-    <header class="operational-header">
+    <header class="operational-header ui-page-header">
         <p class="operational-eyebrow">Mayor's Office Head · Operational Update</p>
         <h1>Update Project Status</h1>
         <p class="operational-project-title">{{ operational_display_title }}</p>
         <p class="operational-intro">Set the official project status used in this project's publication record.</p>
     </header>
 
-    <form method="post" class="operational-form">
+    <form method="post" class="operational-form ui-form">
         {% csrf_token %}
         {% if return_revision_id %}<input type="hidden" name="from_review" value="{{ return_revision_id }}">{% endif %}
 
@@ -32,7 +32,7 @@
             <div class="operational-alert" role="alert">{{ form.non_field_errors }}</div>
         {% endif %}
 
-        <section class="operational-card" aria-labelledby="operational-information-heading">
+        <section class="operational-card ui-card" aria-labelledby="operational-information-heading">
             <div class="operational-section-heading">
                 <span class="operational-section-number">01</span>
                 <div>
@@ -51,7 +51,7 @@
         </section>
 
         <div class="operational-actions">
-            <button type="submit" class="operational-button operational-button--primary">Save Status</button>
+            <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Save Status</button>
         </div>
     </form>
 </div>

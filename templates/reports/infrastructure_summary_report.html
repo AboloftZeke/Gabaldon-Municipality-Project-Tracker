@@ -16,7 +16,7 @@
         <span>Infrastructure summary</span>
     </nav>
 
-    <header class="head-dashboard__header report-header">
+    <header class="head-dashboard__header report-header ui-page-header">
         <div>
             <p class="head-dashboard__eyebrow">Project Summary Report</p>
             <h1>Infrastructure Projects</h1>
@@ -31,10 +31,10 @@
                 <h2 id="filters-heading">Filters</h2>
                 <p>Use any combination of filters, then apply them to update the summary below.</p>
             </div>
-            <a class="head-button head-button--secondary" href="{% url 'reports:infrastructure' %}">Back to Reports</a>
+            <a class="head-button head-button--secondary ui-button ui-button--secondary" href="{% url 'reports:infrastructure' %}">Back to Reports</a>
         </div>
 
-        <form class="report-filter-form" method="get">
+        <form class="report-filter-form ui-form" method="get">
             {% if form.non_field_errors %}
                 <div class="report-filter-errors">{{ form.non_field_errors }}</div>
             {% endif %}
@@ -48,8 +48,8 @@
                 {% endfor %}
             </div>
             <div class="report-filter-actions">
-                <button class="head-button head-button--primary" type="submit">Apply Filters</button>
-                {% if form.is_bound %}<a class="head-button head-button--secondary" href="{% url 'reports:infrastructure_summary' %}">Clear Filters</a>{% endif %}
+                <button class="head-button head-button--primary ui-button ui-button--primary" type="submit">Apply Filters</button>
+                {% if form.is_bound %}<a class="head-button head-button--secondary ui-button ui-button--subtle" href="{% url 'reports:infrastructure_summary' %}">Clear Filters</a>{% endif %}
             </div>
         </form>
 
@@ -80,24 +80,24 @@
                 <strong>Ready to create this report?</strong>
                 <span>The PDF will use the filters and public data shown below.</span>
             </div>
-            <button class="head-button head-button--primary" type="submit">Generate Summary PDF</button>
+            <button class="head-button head-button--primary ui-button ui-button--primary" type="submit">Generate Summary PDF</button>
         </form>
         <div class="report-metrics">
-            <article class="report-metric">
+            <article class="report-metric ui-card">
                 <span class="report-metric__label">Total Projects</span>
                 <strong class="report-metric__value">{{ summary.total_projects }}</strong>
             </article>
-            <article class="report-metric">
+            <article class="report-metric ui-card">
                 <span class="report-metric__label">Disclosed Contract Value</span>
                 <strong class="report-metric__value">PHP {{ summary.total_contract_value|floatformat:2 }}</strong>
             </article>
-            <article class="report-metric">
+            <article class="report-metric ui-card">
                 <span class="report-metric__label">Average Physical Progress</span>
                 <strong class="report-metric__value">{% if summary.average_physical_progress is not None %}{{ summary.average_physical_progress|floatformat:1 }}%{% else %}N/A{% endif %}</strong>
             </article>
         </div>
         <div class="report-breakdown">
-            <article class="report-breakdown__card">
+            <article class="report-breakdown__card ui-card">
                 <h3>Projects by status</h3>
                 <div class="report-breakdown__items">
                     {% for label, count in summary.status_counts.items %}

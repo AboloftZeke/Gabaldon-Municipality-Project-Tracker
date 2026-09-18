@@ -45,9 +45,9 @@
 </div>
 
 <div>
-    <h2 class="page-title">{{ action }} User</h2>
+    <h2 class="page-title ui-page-title">{{ action }} User</h2>
 
-    <div class="form-wrapper">
+    <div class="form-wrapper ui-form-card">
         {% if form.non_field_errors %}
             <div class="error-messages">
                 <strong>Error:</strong>
@@ -63,11 +63,11 @@
             </div>
         {% endif %}
 
-        <form method="post" novalidate>
+        <form method="post" novalidate class="ui-form">
             {% csrf_token %}
 
             <!-- Basic Information Section -->
-            <div class="form-section">
+            <div class="form-section ui-form-section">
                 <h3>Basic Information</h3>
 
                 <div class="form-group {% if form.username.errors %}form-group-error{% endif %}">
@@ -108,7 +108,7 @@
             </div>
 
             <!-- Department & Role Section -->
-            <div class="form-section">
+            <div class="form-section ui-form-section">
                 <h3>Department & Role</h3>
 
                 {% if form.role %}
@@ -147,7 +147,7 @@
             </div>
 
             <!-- Account Status Section -->
-            <div class="form-section">
+            <div class="form-section ui-form-section">
                 <h3>Account Status</h3>
 
                 {% if form.is_active %}
@@ -165,15 +165,15 @@
 
             <!-- Form Actions -->
             {% if action == 'Create' %}
-                <div class="form-section">
+                <div class="form-section ui-form-section">
                     <h3>Account Setup</h3>
                     <p>The employee will receive a secure email link and will create their own password.</p>
                 </div>
             {% endif %}
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">{{ action }} User</button>
-                <a href="{% url 'user_list' %}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary ui-button ui-button--primary">{{ action }} User</button>
+                <a href="{% url 'user_list' %}" class="btn btn-secondary ui-button ui-button--secondary">Cancel</a>
             </div>
         </form>
     </div>

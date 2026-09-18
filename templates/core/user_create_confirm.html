@@ -17,7 +17,7 @@
 
 {% block content %}
 <div class="confirm-container">
-    <div class="confirm-card">
+    <div class="confirm-card ui-card ui-card--padded">
         <div class="confirm-header">
             <h2>Confirm User Creation</h2>
         </div>
@@ -25,7 +25,7 @@
         <div class="confirm-content">
             {% if error %}
                 <div class="error-message">{{ error }}</div>
-                <a href="{% url 'user_create' %}" class="btn btn-primary">Return to Form</a>
+                <a href="{% url 'user_create' %}" class="btn btn-primary ui-button ui-button--primary">Return to Form</a>
             {% else %}
                 <div class="warning-box">
                     <p><strong>Please review the information below carefully.</strong> Once confirmed, the account will be created and a secure setup link will be emailed to the employee.</p>
@@ -59,8 +59,8 @@
                 <form method="post" style="margin-bottom: 0;">
                     {% csrf_token %}
                     <div class="confirm-actions">
-                        <button type="submit" class="btn btn-primary">Create User &amp; Send Setup Email</button>
-                        <a href="{% url 'user_create' %}" class="btn btn-secondary">Go Back & Edit</a>
+                        <button type="submit" class="btn btn-primary ui-button ui-button--primary">Create User &amp; Send Setup Email</button>
+                        <a href="{% url 'user_create' %}" class="btn btn-secondary ui-button ui-button--secondary">Go Back & Edit</a>
                     </div>
                 </form>
             {% endif %}

@@ -17,14 +17,14 @@
         {% endif %}
     </nav>
 
-    <header class="operational-header">
+    <header class="operational-header ui-page-header">
         <p class="operational-eyebrow">Engineering Head · Operational Update</p>
         <h1>Update Status &amp; Progress</h1>
         <p class="operational-project-title">{{ operational_display_title }}</p>
         <p class="operational-intro">Set the official status and actual operational values used in this project's publication record.</p>
     </header>
 
-    <form method="post" class="operational-form">
+    <form method="post" class="operational-form ui-form">
         {% csrf_token %}
         {% if return_revision_id %}<input type="hidden" name="from_review" value="{{ return_revision_id }}">{% endif %}
 
@@ -32,7 +32,7 @@
             <div class="operational-alert" role="alert">{{ form.non_field_errors }}</div>
         {% endif %}
 
-        <section class="operational-card" aria-labelledby="operational-information-heading">
+        <section class="operational-card ui-card" aria-labelledby="operational-information-heading">
             <div class="operational-section-heading">
                 <span class="operational-section-number">01</span>
                 <div>
@@ -66,7 +66,7 @@
             </div>
         </section>
 
-        <section class="operational-card operational-card--evidence" aria-labelledby="supporting-inspections-heading">
+        <section class="operational-card operational-card--evidence ui-card" aria-labelledby="supporting-inspections-heading">
             <div class="operational-section-heading">
                 <span class="operational-section-number">02</span>
                 <div>
@@ -105,7 +105,7 @@
             </div>
         </section>
 
-        <section class="operational-card operational-card--reference" aria-labelledby="calculated-reference-heading">
+        <section class="operational-card operational-card--reference ui-card" aria-labelledby="calculated-reference-heading">
             <div class="operational-section-heading">
                 <span class="operational-section-number operational-section-number--muted">03</span>
                 <div>
@@ -136,7 +136,7 @@
 
         <div class="operational-actions">
             <p>Saving records this Head decision and prepares its publication preview. It does not publish the update.</p>
-            <button type="submit" class="operational-button operational-button--primary">Save Status &amp; Progress</button>
+            <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Save Status &amp; Progress</button>
         </div>
     </form>
 </div>

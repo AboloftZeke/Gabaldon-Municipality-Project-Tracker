@@ -9,7 +9,7 @@
 
 {% block content %}
 <div class="delete-container">
-    <div class="delete-card">
+    <div class="delete-card ui-card ui-card--padded">
         <div class="delete-icon">⚠️</div>
         <h2>Delete Project?</h2>
 
@@ -26,8 +26,8 @@
         <form method="post">
             {% csrf_token %}
             <div class="form-actions">
-                <button type="submit" class="btn btn-delete">Yes, Delete Project</button>
-                <a href="{{ cancel_url }}" class="btn btn-cancel">Cancel</a>
+                <button type="submit" class="btn btn-delete ui-button ui-button--danger">Yes, Delete Project</button>
+                <a href="{{ cancel_url }}" class="btn btn-cancel ui-button ui-button--secondary">Cancel</a>
             </div>
         </form>
     </div>

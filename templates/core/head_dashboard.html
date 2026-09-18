@@ -10,7 +10,7 @@
 
 {% block content %}
 <div class="head-dashboard">
-    <header class="head-dashboard__header">
+    <header class="head-dashboard__header ui-page-header">
         <div>
             <p class="head-dashboard__eyebrow">Publication Review</p>
             <h1>{{ account_navigation.label }} Dashboard</h1>
@@ -20,7 +20,7 @@
 
     <nav class="head-summary" aria-label="Publication workload summary">
         {% for card in status_cards %}
-            <a class="head-summary__card" href="{{ card.href }}">
+            <a class="head-summary__card ui-card ui-card--interactive" href="{{ card.href }}">
                 <strong>{{ card.count }}</strong>
                 <span>{{ card.label }}</span>
             </a>
@@ -41,14 +41,14 @@
                 <h3>Pending Reviews <span>{{ pending_review_items|length }}</span></h3>
                 <div class="attention-grid">
                     {% for item in pending_review_items %}
-                        <article class="attention-card">
+                        <article class="attention-card ui-card ui-card--padded">
                             <div class="attention-card__topline">
-                                <span class="publication-badge publication-status-pending_review">Pending Review</span>
+                                <span class="publication-badge publication-status-pending_review ui-badge">Pending Review</span>
                                 <span>Revision {{ item.revision.revision_number }}</span>
                             </div>
                             <h4>{{ item.title }}</h4>
                             <p>Review the submitted snapshot and record your decision.</p>
-                            <a class="head-button head-button--primary" href="{{ item.detail_url }}">Review Submission</a>
+                            <a class="head-button head-button--primary ui-button ui-button--primary" href="{{ item.detail_url }}">Review Submission</a>
                         </article>
                     {% endfor %}
                 </div>
@@ -60,14 +60,14 @@
                 <h3>Operational Information Required <span>{{ needs_operational_items|length }}</span></h3>
                 <div class="attention-grid">
                     {% for item in needs_operational_items %}
-                        <article class="attention-card attention-card--required">
+                        <article class="attention-card attention-card--required ui-card ui-card--padded">
                             <div class="attention-card__topline">
-                                <span class="attention-badge attention-badge--warning">Action Required</span>
+                                <span class="attention-badge attention-badge--warning ui-badge ui-badge--warning">Action Required</span>
                                 <span>Revision {{ item.revision.revision_number }}</span>
                             </div>
                             <h4>{{ item.title }}</h4>
                             <p>This approved first publication still needs the required office Head confirmation.</p>
-                            <a class="head-button head-button--primary" href="{{ item.detail_url }}">Complete Operational Information</a>
+                            <a class="head-button head-button--primary ui-button ui-button--primary" href="{{ item.detail_url }}">Complete Operational Information</a>
                         </article>
                     {% endfor %}
                 </div>
@@ -79,14 +79,14 @@
                 <h3>Ready to Publish <span>{{ ready_to_publish_items|length }}</span></h3>
                 <div class="attention-grid">
                     {% for item in ready_to_publish_items %}
-                        <article class="attention-card attention-card--ready">
+                        <article class="attention-card attention-card--ready ui-card ui-card--padded">
                             <div class="attention-card__topline">
-                                <span class="attention-badge attention-badge--ready">Ready</span>
+                                <span class="attention-badge attention-badge--ready ui-badge ui-badge--success">Ready</span>
                                 <span>Revision {{ item.revision.revision_number }}</span>
                             </div>
                             <h4>{{ item.title }}</h4>
                             <p>Operational information is complete. Preview the approved snapshot before publishing.</p>
-                            <a class="head-button head-button--primary" href="{{ item.detail_url }}">Preview &amp; Publish</a>
+                            <a class="head-button head-button--primary ui-button ui-button--primary" href="{{ item.detail_url }}">Preview &amp; Publish</a>
                         </article>
                     {% endfor %}
                 </div>
@@ -98,14 +98,14 @@
                 <h3>Operational Updates Waiting to Publish <span>{{ operational_update_items|length }}</span></h3>
                 <div class="attention-grid">
                     {% for item in operational_update_items %}
-                        <article class="attention-card attention-card--update">
+                        <article class="attention-card attention-card--update ui-card ui-card--padded">
                             <div class="attention-card__topline">
-                                <span class="attention-badge attention-badge--update">Operational Update</span>
+                                <span class="attention-badge attention-badge--update ui-badge ui-badge--info">Operational Update</span>
                                 <span>Revision {{ item.revision.revision_number }}</span>
                             </div>
                             <h4>{{ item.title }}</h4>
                             <p>Approved operational changes are waiting for an explicit publication decision.</p>
-                            <a class="head-button head-button--primary" href="{{ item.detail_url }}">Preview &amp; Publish Update</a>
+                            <a class="head-button head-button--primary ui-button ui-button--primary" href="{{ item.detail_url }}">Preview &amp; Publish Update</a>
                         </article>
                     {% endfor %}
                 </div>
@@ -127,19 +127,19 @@
                 <h2 id="published-heading">Published Projects</h2>
                 <p>Update the official operational information for projects currently visible to the public.</p>
             </div>
-            <a class="head-button head-button--secondary" href="{{ project_list_url }}">View All Office Projects</a>
+            <a class="head-button head-button--secondary ui-button ui-button--secondary" href="{{ project_list_url }}">View All Office Projects</a>
         </div>
 
         {% if published_operational_projects %}
             <div class="published-grid">
                 {% for project in published_operational_projects %}
-                    <article class="published-card">
+                    <article class="published-card ui-card ui-card--padded">
                         <div>
-                            <span class="publication-badge publication-status-published">Published</span>
+                            <span class="publication-badge publication-status-published ui-badge">Published</span>
                             <h3>{{ project.title }}</h3>
                             <dl><dt>Official Status</dt><dd>{{ project.status }}</dd></dl>
                         </div>
-                        <a class="head-button head-button--secondary" href="{{ project.update_url }}">{{ operational_action_label }}</a>
+                        <a class="head-button head-button--secondary ui-button ui-button--secondary" href="{{ project.update_url }}">{{ operational_action_label }}</a>
                     </article>
                 {% endfor %}
             </div>
@@ -163,13 +163,13 @@
         {% if recent_activity_items %}
             <div class="activity-list">
                 {% for item in recent_activity_items %}
-                    <article class="activity-row">
+                    <article class="activity-row ui-card">
                         <div>
                             <strong>{{ item.title }}</strong>
                             <span>Revision {{ item.revision.revision_number }}</span>
                         </div>
                         <div class="activity-row__meta">
-                            <span class="publication-badge publication-status-{{ item.revision.status }}">{{ item.status }}</span>
+                            <span class="publication-badge publication-status-{{ item.revision.status }} ui-badge">{{ item.status }}</span>
                             <time>{{ item.activity_at|date:"M d, Y · g:i A" }}</time>
                         </div>
                     </article>

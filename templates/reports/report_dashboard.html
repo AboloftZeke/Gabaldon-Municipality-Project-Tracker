@@ -10,7 +10,7 @@
 
 {% block content %}
 <div class="head-dashboard" data-report-scope="{{ report_type }}">
-    <header class="head-dashboard__header report-header">
+    <header class="head-dashboard__header report-header ui-page-header">
         <div>
             <p class="head-dashboard__eyebrow">Report Requests</p>
             <h1>Generate Reports</h1>
@@ -25,13 +25,13 @@
                 <h2 id="report-options-heading">Report Options</h2>
                 <p>Open one project in detail or review a filtered overview of your office's projects.</p>
             </div>
-            <a class="head-button head-button--secondary" href="{% url account_navigation.dashboard %}">Back to Dashboard</a>
+            <a class="head-button head-button--secondary ui-button ui-button--secondary" href="{% url account_navigation.dashboard %}">Back to Dashboard</a>
         </div>
 
         <div class="attention-grid report-options">
-            <article class="attention-card report-option">
+            <article class="attention-card report-option ui-card ui-card--padded">
                 <div class="attention-card__topline">
-                    <span class="attention-badge attention-badge--ready">Available</span>
+                    <span class="attention-badge attention-badge--ready ui-badge ui-badge--success">Available</span>
                 </div>
                 <div class="report-option__icon" aria-hidden="true">01</div>
                 <h3>Individual Project Report</h3>
@@ -43,18 +43,18 @@
                     {% if form.project_id.errors %}
                         <div class="report-error">{{ form.project_id.errors }}</div>
                     {% endif %}
-                    <button class="head-button head-button--primary" type="submit">View Individual Report</button>
+                    <button class="head-button head-button--primary ui-button ui-button--primary" type="submit">View Individual Report</button>
                 </form>
             </article>
 
-            <article class="attention-card report-option">
+            <article class="attention-card report-option ui-card ui-card--padded">
                 <div class="attention-card__topline">
-                    <span class="attention-badge attention-badge--ready">Available</span>
+                    <span class="attention-badge attention-badge--ready ui-badge ui-badge--success">Available</span>
                 </div>
                 <div class="report-option__icon report-option__icon--summary" aria-hidden="true">Σ</div>
                 <h3>Project Summary Report</h3>
                 <p>Filter disclosed {{ report_type_label|lower }} projects, compare key totals, and scan the project list.</p>
-                <a class="head-button head-button--primary" href="{{ summary_url }}">View Summary Report</a>
+                <a class="head-button head-button--primary ui-button ui-button--primary" href="{{ summary_url }}">View Summary Report</a>
             </article>
         </div>
     </section>
@@ -74,7 +74,7 @@
                             <h3>{{ generated_report.report_name }}</h3>
                             <p>{{ generated_report.get_report_type_display }} · {{ generated_report.created_at|date:"M j, Y, g:i A" }}</p>
                         </div>
-                        <a class="head-button head-button--secondary" href="{% url 'reports:generated_report_detail' generated_report.report_id %}">Open Report</a>
+                        <a class="head-button head-button--secondary ui-button ui-button--secondary ui-button--small" href="{% url 'reports:generated_report_detail' generated_report.report_id %}">Open Report</a>
                     </article>
                 {% endfor %}
             </div>

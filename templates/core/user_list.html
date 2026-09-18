@@ -55,19 +55,19 @@
 </div>
 
 <div class="page-content">
-    <div class="page-header">
+    <div class="page-header ui-page-header">
         <h2>User Account Management</h2>
-        <a href="{% url 'user_create' %}" class="create-btn">Create New User</a>
+        <a href="{% url 'user_create' %}" class="create-btn ui-button ui-button--primary">Create New User</a>
     </div>
 
     <div class="filter-section">
-        <form method="get" class="filter-form">
+        <form method="get" class="filter-form ui-form">
             {{ filter_form.as_p }}
-            <button type="submit">Search &amp; Filter</button>
+            <button type="submit" class="ui-button ui-button--primary">Search &amp; Filter</button>
         </form>
     </div>
 
-    <div class="users-table-wrapper">
+    <div class="users-table-wrapper ui-table-wrap">
         <table class="user-table">
             <thead>
                 <tr>
@@ -92,15 +92,15 @@
                         </td>
                         <td>{{ user.email }}</td>
                         <td>
-                            <span class="department-badge {{ user.account_role_badge }}">{{ user.account_role_label }}</span>
+                            <span class="department-badge {{ user.account_role_badge }} ui-badge ui-badge--neutral">{{ user.account_role_label }}</span>
                         </td>
                         <td>
                             {% if not user.has_usable_password %}
-                                <span class="status-badge status-setup-pending">Setup Pending</span>
+                                <span class="status-badge status-setup-pending ui-badge ui-badge--warning">Setup Pending</span>
                             {% elif user.is_active %}
-                                <span class="status-badge status-active">Active</span>
+                                <span class="status-badge status-active ui-badge ui-badge--success">Active</span>
                             {% else %}
-                                <span class="status-badge status-inactive">Inactive</span>
+                                <span class="status-badge status-inactive ui-badge ui-badge--danger">Inactive</span>
                             {% endif %}
                         </td>
                         <td>
@@ -108,14 +108,14 @@
                                 {% if not user.has_usable_password %}
                                     <form method="post" action="{% url 'user_resend_account_setup' user.pk %}">
                                         {% csrf_token %}
-                                        <button type="submit" class="action-btn action-btn-setup">Resend Setup</button>
+                                        <button type="submit" class="action-btn action-btn-setup ui-button ui-button--subtle ui-button--small">Resend Setup</button>
                                     </form>
                                 {% endif %}
-                                <a href="{% url 'user_edit' user.pk %}" class="action-btn action-btn-primary">Edit</a>
+                                <a href="{% url 'user_edit' user.pk %}" class="action-btn action-btn-primary ui-button ui-button--secondary ui-button--small">Edit</a>
                                 {% if user.is_active %}
-                                    <a href="{% url 'user_deactivate' user.pk %}" class="action-btn action-btn-danger">Deactivate</a>
+                                    <a href="{% url 'user_deactivate' user.pk %}" class="action-btn action-btn-danger ui-button ui-button--danger ui-button--small">Deactivate</a>
                                 {% else %}
-                                    <a href="{% url 'user_activate' user.pk %}" class="action-btn action-btn-success">Activate</a>
+                                    <a href="{% url 'user_activate' user.pk %}" class="action-btn action-btn-success ui-button ui-button--primary ui-button--small">Activate</a>
                                 {% endif %}
                             </div>
                         </td>
@@ -123,9 +123,9 @@
                 {% empty %}
                     <tr>
                         <td colspan="5">
-                            <div class="empty-state">
+                            <div class="empty-state ui-empty-state">
                                 <p>No user accounts found in the system.</p>
-                                <a href="{% url 'user_create' %}" class="create-btn">Create First User</a>
+                                <a href="{% url 'user_create' %}" class="create-btn ui-button ui-button--primary">Create First User</a>
                             </div>
                         </td>
                     </tr>
@@ -135,7 +135,7 @@
     </div>
 
     {% if is_paginated %}
-    <div class="users-table-wrapper">
+    <div class="users-table-wrapper ui-card">
         <div class="pagination">
 
             {% if page_obj.has_previous %}

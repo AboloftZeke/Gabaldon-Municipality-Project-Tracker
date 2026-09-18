@@ -15,11 +15,11 @@
 
     <!-- Back Button -->
     {% if request.user.is_superuser and request.GET.from_review or account_navigation.is_head and request.GET.from_review %}
-        <a href="{% url 'publication_revision_detail' request.GET.from_review %}" class="btn btn-back">
+        <a href="{% url 'publication_revision_detail' request.GET.from_review %}" class="btn btn-back ui-button ui-button--subtle">
             ← Back to Publication Review
         </a>
     {% else %}
-        <a href="{% url 'mayor_dashboard' %}" class="btn btn-back">
+        <a href="{% url 'mayor_dashboard' %}" class="btn btn-back ui-button ui-button--subtle">
             ← Back to Dashboard
         </a>
     {% endif %}
@@ -44,11 +44,11 @@
         <div class="project-detail-header-content">
             <h2>{{ project_name }}</h2>
             {% if can_update_operations %}
-                <a href="{% url 'mayor_projects:non_infrastructure_project_operations' project.pk %}" class="btn btn-edit">Update Project Status</a>
+                <a href="{% url 'mayor_projects:non_infrastructure_project_operations' project.pk %}" class="btn btn-edit ui-button ui-button--primary">Update Project Status</a>
             {% endif %}
             {% if can_manage_project %}
-                <a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}" class="btn btn-edit">Edit Project</a>
-                <a href="{% url 'mayor_projects:non_infrastructure_project_delete' project.pk %}" class="btn btn-delete">Delete Project</a>
+                <a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}" class="btn btn-edit ui-button ui-button--secondary">Edit Project</a>
+                <a href="{% url 'mayor_projects:non_infrastructure_project_delete' project.pk %}" class="btn btn-delete ui-button ui-button--danger">Delete Project</a>
             {% endif %}
 
             <div class="project-meta">
@@ -84,7 +84,7 @@
 
 
     <div class="information-card-grid" aria-label="Program information">
-    <section class="project-section information-card information-card--wide">
+    <section class="project-section information-card information-card--wide ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Non-Infrastructure</span>
             <h3>Program Information</h3>
@@ -105,7 +105,7 @@
         </div>
     </section>
 
-    <section class="project-section information-card">
+    <section class="project-section information-card ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Timeline</span>
             <h3>Schedule</h3>
@@ -152,7 +152,7 @@
         </div>
     </section>
 
-    <section class="project-section information-card">
+    <section class="project-section information-card ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Where</span>
             <h3>Location &amp; Venue</h3>
@@ -205,7 +205,7 @@
         </div>
     </section>
 
-    <section class="project-section information-card">
+    <section class="project-section information-card ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Community</span>
             <h3>Service &amp; Beneficiary Information</h3>
@@ -226,7 +226,7 @@
         </div>
     </section>
 
-    <section class="project-section information-card">
+    <section class="project-section information-card ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Official operations</span>
             <h3>Status &amp; Operational Information</h3>

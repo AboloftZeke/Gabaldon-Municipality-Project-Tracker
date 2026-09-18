@@ -20,7 +20,7 @@
         <strong>Revision {{ revision.revision_number }}</strong>
     </nav>
 
-    <header class="revision-header">
+    <header class="revision-header ui-page-header">
         <div>
             <p class="review-eyebrow">Immutable Submitted Snapshot</p>
             <h1>{{ preview.title|default:"Project revision" }}</h1>
@@ -29,7 +29,7 @@
                 · Revision {{ revision.revision_number }}
             </p>
         </div>
-        <span class="publication-badge publication-status-{{ revision.status }}">{{ revision.get_status_display }}</span>
+        <span class="publication-badge publication-status-{{ revision.status }} ui-badge">{{ revision.get_status_display }}</span>
     </header>
 
     <section class="revision-notice">
@@ -57,7 +57,7 @@
 
     <div class="revision-layout">
         <div class="revision-preview">
-            <section class="revision-section revision-hero">
+            <section class="revision-section revision-hero ui-card ui-card--padded">
                 {% if preview.cover_image_url %}
                     <img src="{{ preview.cover_image_url }}" alt="{{ preview.title }} cover">
                 {% else %}
@@ -67,13 +67,13 @@
             </section>
 
             {% if operational.update_url %}
-            <section class="revision-section operational-readiness {% if operational.is_complete %}operational-readiness--complete{% else %}operational-readiness--incomplete{% endif %}">
+            <section class="revision-section operational-readiness ui-card ui-card--padded {% if operational.is_complete %}operational-readiness--complete{% else %}operational-readiness--incomplete{% endif %}">
                 <div class="operational-readiness__header">
                     <div>
                         <p class="review-eyebrow">Head-owned publication information</p>
                         <h2>Operational Information: {% if operational.is_complete %}Complete{% else %}Incomplete{% endif %}</h2>
                     </div>
-                    <span class="operational-readiness__status">{% if operational.is_complete %}Ready{% else %}Action required{% endif %}</span>
+                    <span class="operational-readiness__status ui-badge {% if operational.is_complete %}ui-badge--success{% else %}ui-badge--warning{% endif %}">{% if operational.is_complete %}Ready{% else %}Action required{% endif %}</span>
                 </div>
                 {% if not operational.is_complete %}
                     <p>Complete the required operational information before this first publication can be published.</p>
@@ -99,12 +99,12 @@
                         {% endfor %}
                     </dl>
                 {% endif %}
-                <a class="review-primary-link" href="{{ operational.update_url }}?from_review={{ revision.pk }}">{{ operational.update_label }}</a>
+                <a class="review-primary-link ui-button ui-button--primary" href="{{ operational.update_url }}?from_review={{ revision.pk }}">{{ operational.update_label }}</a>
             </section>
             {% endif %}
 
             {% if progress_update %}
-            <section class="revision-section progress-evidence-panel">
+            <section class="revision-section progress-evidence-panel ui-card ui-card--padded">
                 <div class="progress-evidence-panel__heading">
                     <div><p class="review-eyebrow">Retained update evidence</p><h2>Operational Progress Update</h2></div>
                     <span>Snapshot record</span>
@@ -142,7 +142,7 @@
             {% include "includes/publication_comparison.html" %}
         </div>
 
-        <aside class="revision-actions">
+        <aside class="revision-actions ui-card ui-card--padded">
             <section>
                 <h2>Submission Record</h2>
                 <dl>
@@ -165,7 +165,7 @@
                         <label for="{{ review_form.notes.id_for_label }}">{{ review_form.notes.label }}</label>
                         {{ review_form.notes }}
                         {% for error in review_form.notes.errors %}<p class="review-form-error">{{ error }}</p>{% endfor %}
-                        <button type="submit" class="review-button review-button--primary">Record Decision</button>
+                        <button type="submit" class="review-button review-button--primary ui-button ui-button--primary">Record Decision</button>
                     </form>
                 </section>
             {% elif can_publish %}
@@ -174,14 +174,14 @@
                     <p>Publishing replaces the current public version immediately. This submitted snapshot cannot be changed afterward.</p>
                     <form method="post" action="{% url 'publication_revision_publish' revision.pk %}">
                         {% csrf_token %}
-                        <button type="submit" class="review-button review-button--primary">{% if comparison.baseline %}Publish Update to Public Dashboard{% else %}Publish to Public Dashboard{% endif %}</button>
+                        <button type="submit" class="review-button review-button--primary ui-button ui-button--primary">{% if comparison.baseline %}Publish Update to Public Dashboard{% else %}Publish to Public Dashboard{% endif %}</button>
                     </form>
                 </section>
             {% elif revision.status == 'approved' and operational.update_url and not operational.is_complete %}
                 <section class="publish-blocked">
                     <h2>Operational Information Required</h2>
                     <p>This first publication cannot be published until the office Head completes the required operational information.</p>
-                    <a class="review-button review-button--primary" href="{{ operational.update_url }}?from_review={{ revision.pk }}">{{ operational.update_label }}</a>
+                    <a class="review-button review-button--primary ui-button ui-button--primary" href="{{ operational.update_url }}?from_review={{ revision.pk }}">{{ operational.update_label }}</a>
                 </section>
             {% endif %}
         </aside>

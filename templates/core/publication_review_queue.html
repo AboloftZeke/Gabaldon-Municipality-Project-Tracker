@@ -16,7 +16,7 @@
         <strong>Publication Review</strong>
     </nav>
 
-    <header class="review-header">
+    <header class="review-header ui-page-header">
         <div>
             <p class="review-eyebrow">{{ account_navigation.label }} Workspace</p>
             <h1>Publication Review</h1>
@@ -39,7 +39,7 @@
     {% if revision_rows %}
         <div class="review-list">
             {% for row in revision_rows %}
-                <article class="review-card">
+                <article class="review-card ui-card ui-card--interactive">
                     <div class="review-card__image">
                         {% if row.preview.cover_image_url %}
                             <img src="{{ row.preview.cover_image_url }}" alt="">
@@ -49,7 +49,7 @@
                     </div>
                     <div class="review-card__body">
                         <div class="review-card__topline">
-                            <span class="publication-badge publication-status-{{ row.revision.status }}">
+                            <span class="publication-badge publication-status-{{ row.revision.status }} ui-badge">
                                 {{ row.revision.get_status_display }}
                             </span>
                             <span>Revision {{ row.revision.revision_number }}</span>
@@ -62,7 +62,7 @@
                             <div><dt>Submitted by</dt><dd>{% if row.revision.submitted_by %}{{ row.revision.submitted_by.get_full_name|default:row.revision.submitted_by.username }}{% else %}Unknown{% endif %}</dd></div>
                             <div><dt>Submitted</dt><dd>{{ row.revision.submitted_at|date:"M d, Y g:i A"|default:"Not recorded" }}</dd></div>
                         </dl>
-                        <a href="{% url 'publication_revision_detail' row.revision.pk %}" class="review-primary-link">
+                        <a href="{% url 'publication_revision_detail' row.revision.pk %}" class="review-primary-link ui-button ui-button--primary ui-button--small">
                             {% if row.revision.status == 'pending_review' %}Review Submission{% elif row.revision.status == 'approved' and not row.readiness.is_complete %}Complete Operational Information{% elif row.revision.status == 'approved' %}Preview &amp; Publish{% elif row.revision.status == 'published' %}View Published Revision{% elif row.revision.status == 'archived' %}View Historical Revision{% else %}View Revision{% endif %}
                         </a>
                     </div>
@@ -70,7 +70,7 @@
             {% endfor %}
         </div>
     {% else %}
-        <section class="review-empty">
+        <section class="review-empty ui-card ui-empty-state">
             <h2>No {{ selected_status|cut:"_" }} revisions</h2>
             <p>There are no project revisions in this status.</p>
         </section>

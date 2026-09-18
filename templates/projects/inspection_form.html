@@ -17,7 +17,7 @@
 </div>
 
 <div class="form-container">
-    <div class="form-card">
+    <div class="form-card ui-form-card">
         <div class="form-heading">
             <div>
                 <p class="form-eyebrow">Engineering Office</p>
@@ -26,12 +26,12 @@
             </div>
         </div>
 
-        <form method="post" enctype="multipart/form-data" novalidate>
+        <form method="post" enctype="multipart/form-data" novalidate class="ui-form">
             {% csrf_token %}
             {% if form.non_field_errors %}
                 {% for error in form.non_field_errors %}<div class="error-message">{{ error }}</div>{% endfor %}
             {% endif %}
-            <div class="fieldset inspection-form-section">
+            <div class="fieldset inspection-form-section ui-form-section">
                 <div class="section-heading">
                     <span class="section-number">1</span>
                     <div><h3>Inspection Details</h3><p>Identify when and why the field inspection took place.</p></div>
@@ -48,7 +48,7 @@
                 </div>
             </div>
 
-            <div class="fieldset inspection-form-section">
+            <div class="fieldset inspection-form-section ui-form-section">
                 <div class="section-heading">
                     <span class="section-number">2</span>
                     <div><h3>Field Observations</h3><p>Summarize what was observed and any context needed for later review.</p></div>
@@ -64,7 +64,7 @@
                 </div>
             </div>
 
-            <div class="fieldset inspection-form-section">
+            <div class="fieldset inspection-form-section ui-form-section">
                 <div class="section-heading">
                     <span class="section-number">3</span>
                     <div><h3>Supporting Evidence</h3><p>Attach field photos and optional PDF reports to this inspection record.</p></div>
@@ -105,8 +105,8 @@
                 {% endif %}
             </div>
             <div class="form-actions">
-                <a class="btn btn-cancel" href="{% url 'engineering_projects:project_detail' infrastructure.pk %}">Cancel</a>
-                <button class="btn btn-submit" type="submit">Save Inspection</button>
+                <a class="btn btn-cancel ui-button ui-button--secondary" href="{% url 'engineering_projects:project_detail' infrastructure.pk %}">Cancel</a>
+                <button class="btn btn-submit ui-button ui-button--primary" type="submit">Save Inspection</button>
             </div>
         </form>
     </div>

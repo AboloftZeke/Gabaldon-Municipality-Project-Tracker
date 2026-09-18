@@ -17,15 +17,15 @@
 </div>
 
 <div class="projects-container">
-    <div class="projects-header">
+    <div class="projects-header ui-page-header">
         <h2>Infrastructure Projects</h2>
-        {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_create' %}" class="btn-create">+ New Project</a>{% endif %}
+        {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_create' %}" class="btn-create ui-button ui-button--primary">+ New Project</a>{% endif %}
     </div>
 
     {% if projects %}
         <div class="projects-grid">
             {% for project in projects %}
-                <div class="project-card">
+                <div class="project-card ui-card ui-card--interactive">
                     <div class="project-card-image">
                         {% if project.cover_image_url %}
                             <img src="{{ project.cover_image_url }}" alt="{{ project.title }} cover">
@@ -48,11 +48,11 @@
                         <div class="project-category">
                             {{ project.category|default:"Uncategorized" }}
                         </div>
-                        <div class="project-status status-{{ project.award_status }}">
+                        <div class="project-status status-{{ project.award_status }} ui-badge ui-badge--info">
                             {{ project.get_award_status_display|default:"Status not specified" }}
                         </div>
                         <div class="publication-card-state">
-                            <span class="publication-badge publication-status-{{ project.publication_state.status_key }}">
+                            <span class="publication-badge publication-status-{{ project.publication_state.status_key }} ui-badge">
                                 Public: {{ project.publication_state.status_label }}
                             </span>
                         </div>
@@ -77,18 +77,18 @@
                         {% endif %}
 
                         <div class="project-actions">
-                            <a href="{% url 'engineering_projects:project_detail' project.pk %}" class="btn-small btn-view">View</a>
-                            {% if can_update_operations %}<a href="{% url 'engineering_projects:project_operations' project.pk %}" class="btn-small btn-edit">Update Status &amp; Progress</a>{% endif %}
-                            {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_update' project.pk %}" class="btn-small btn-edit">Edit</a>{% endif %}
+                            <a href="{% url 'engineering_projects:project_detail' project.pk %}" class="btn-small btn-view ui-button ui-button--primary ui-button--small">View</a>
+                            {% if can_update_operations %}<a href="{% url 'engineering_projects:project_operations' project.pk %}" class="btn-small btn-edit ui-button ui-button--secondary ui-button--small">Update Status &amp; Progress</a>{% endif %}
+                            {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_update' project.pk %}" class="btn-small btn-edit ui-button ui-button--subtle ui-button--small">Edit</a>{% endif %}
                         </div>
                     </div>
                 </div>
             {% endfor %}
         </div>
     {% else %}
-        <div class="empty-state">
+        <div class="empty-state ui-card ui-empty-state">
             <p>No infrastructure projects yet.</p>
-            {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_create' %}" class="btn-create">Create the first project</a>{% endif %}
+            {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_create' %}" class="btn-create ui-button ui-button--primary">Create the first project</a>{% endif %}
         </div>
     {% endif %}
 </div>

@@ -16,7 +16,7 @@
         <span>Individual project</span>
     </nav>
 
-    <header class="head-dashboard__header report-header">
+    <header class="head-dashboard__header report-header ui-page-header">
         <div>
             <p class="head-dashboard__eyebrow">Individual Non-Infrastructure Project Report</p>
             <h1>{{ report.title }}</h1>
@@ -36,9 +36,9 @@
             <div class="report-heading-actions">
                 <form method="post" action="{% url 'reports:non_infrastructure_project_generate' report.record_id %}">
                     {% csrf_token %}
-                    <button class="head-button head-button--primary" type="submit">Generate PDF</button>
+                    <button class="head-button head-button--primary ui-button ui-button--primary" type="submit">Generate PDF</button>
                 </form>
-                <a class="head-button head-button--secondary" href="{% url 'reports:non_infrastructure' %}">Back to Reports</a>
+                <a class="head-button head-button--secondary ui-button ui-button--secondary" href="{% url 'reports:non_infrastructure' %}">Back to Reports</a>
             </div>
         </div>
         <dl class="report-detail-grid">

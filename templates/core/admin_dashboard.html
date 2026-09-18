@@ -53,13 +53,13 @@
         <p class="sidebar-title">Account</p>
         <div class="quick-actions">
             <h4>{{ user.username }}</h4>
-            <a href="{% url 'logout' %}" class="action-button secondary" style="display: block; text-align: center; margin-right: 0;">Sign Out</a>
+            <a href="{% url 'logout' %}" class="action-button secondary ui-button ui-button--secondary" style="display: flex; margin-right: 0;">Sign Out</a>
         </div>
     </div>
 </div>
 
 <div class="dashboard-content">
-    <div class="dashboard-header">
+    <div class="dashboard-header ui-page-header">
         <h2>Administrative Dashboard</h2>
         <div class="user-info">
             <div class="user-avatar">{{ user.username|first|upper }}</div>
@@ -71,7 +71,7 @@
     </div>
 
     <!-- Welcome Section with Gabaldon Seal -->
-    <div class="welcome-section">
+    <div class="welcome-section ui-card ui-card--padded">
         <div class="welcome-seal">
             <img src="{% static 'images/gabaldon-seal.png' %}" alt="Municipality of Gabaldon seal">
         </div>
@@ -84,22 +84,22 @@
     <!-- Statistics Section - Admin Only -->
     {% if user.is_superuser %}
     <div class="dashboard-stats">
-        <div class="stat-card">
+        <div class="stat-card ui-card ui-card--padded">
             <h3>Total Users</h3>
             <p class="stat-value">{{ total_users }}</p>
             <div class="stat-subtitle">All system users</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card ui-card ui-card--padded">
             <h3>Administrators</h3>
             <p class="stat-value">{{ total_admins }}</p>
             <div class="stat-subtitle">System administrators</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card ui-card ui-card--padded">
             <h3>Staff Members</h3>
             <p class="stat-value">{{ total_staff }}</p>
             <div class="stat-subtitle">Active staff accounts</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card ui-card ui-card--padded">
             <h3>Awaiting Publication</h3>
             <p class="stat-value">{{ approved_revisions }}</p>
             <div class="stat-subtitle">Approved by office Heads</div>
@@ -112,17 +112,17 @@
     <div class="dashboard-section">
         <h3><span class="section-icon">■</span>System Access Management</h3>
         <div class="action-grid">
-            <a href="{% url 'user_list' %}" class="action-card">
+            <a href="{% url 'user_list' %}" class="action-card ui-card ui-card--interactive">
                 <div class="action-card-icon">👤</div>
                 <div class="action-card-title">Manage Users</div>
                 <div class="action-card-desc">View, edit, enable or disable system user accounts and permissions</div>
             </a>
-            <a href="{% url 'user_create' %}" class="action-card">
+            <a href="{% url 'user_create' %}" class="action-card ui-card ui-card--interactive">
                 <div class="action-card-icon">✓</div>
                 <div class="action-card-title">Create New User</div>
                 <div class="action-card-desc">Add a new user account to Engineering Office, Mayor's Office, or Admin</div>
             </a>
-            <a href="{% url 'publication_lifecycle' %}" class="action-card">
+            <a href="{% url 'publication_lifecycle' %}" class="action-card ui-card ui-card--interactive">
                 <div class="action-card-icon">✓</div>
                 <div class="action-card-title">Publication Lifecycle</div>
                 <div class="action-card-desc">View publication history and approved revisions</div>
@@ -136,17 +136,17 @@
     <div class="dashboard-section">
         <h3><span class="section-icon"><img src="{% static 'images/infra-icon.png' %}" alt="Infrastructure"></span>Infrastructure Projects</h3>
         <div class="action-grid">
-            <a href="{% url 'engineering_projects:project_dashboard' %}" class="action-card">
+            <a href="{% url 'engineering_projects:project_dashboard' %}" class="action-card ui-card ui-card--interactive">
                 <div class="action-card-icon"><img src="{% static 'images/dashboard-icon.png' %}" alt="Project dashboard"></div>
                 <div class="action-card-title">Project Dashboard</div>
                 <div class="action-card-desc">View project statistics and recent projects</div>
             </a>
-            <a href="{% url 'engineering_projects:project_list' %}" class="action-card">
+            <a href="{% url 'engineering_projects:project_list' %}" class="action-card ui-card ui-card--interactive">
                 <div class="action-card-icon"><img src="{% static 'images/project-icon.png' %}" alt="All projects"></div>
                 <div class="action-card-title">View All Projects</div>
                 <div class="action-card-desc">Browse and manage all infrastructure projects</div>
             </a>
-            <a href="{% url 'engineering_projects:project_create' %}" class="action-card">
+            <a href="{% url 'engineering_projects:project_create' %}" class="action-card ui-card ui-card--interactive">
                 <div class="action-card-icon"><img src="{% static 'images/add-icon.png' %}" alt="Create project"></div>
                 <div class="action-card-title">Create New Project</div>
                 <div class="action-card-desc">Start tracking a new infrastructure project</div>
@@ -160,17 +160,17 @@
     <div class="dashboard-section">
         <h3><span class="section-icon"><img src="{% static 'images/projects-icon.png' %}" alt="Non-Infrastructure"></span>Non-Infrastructure Projects</h3>
         <div class="action-grid">
-            <a href="{% url 'mayor_projects:non_infrastructure_project_dashboard' %}" class="action-card">
+            <a href="{% url 'mayor_projects:non_infrastructure_project_dashboard' %}" class="action-card ui-card ui-card--interactive">
                 <div class="action-card-icon"><img src="{% static 'images/dashboard-icon.png' %}" alt="Project dashboard"></div>
                 <div class="action-card-title">Project Dashboard</div>
                 <div class="action-card-desc">View project statistics and recent projects</div>
             </a>
-            <a href="{% url 'mayor_projects:non_infrastructure_project_list' %}" class="action-card">
+            <a href="{% url 'mayor_projects:non_infrastructure_project_list' %}" class="action-card ui-card ui-card--interactive">
                 <div class="action-card-icon"><img src="{% static 'images/project-icon.png' %}" alt="All projects"></div>
                 <div class="action-card-title">View All Projects</div>
                 <div class="action-card-desc">Browse and manage all non-infrastructure projects</div>
             </a>
-            <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="action-card">
+            <a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="action-card ui-card ui-card--interactive">
                 <div class="action-card-icon"><img src="{% static 'images/add-icon.png' %}" alt="Create project"></div>
                 <div class="action-card-title">Create New Project</div>
                 <div class="action-card-desc">Start tracking a new non-infrastructure project</div>

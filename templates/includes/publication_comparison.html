@@ -1,4 +1,4 @@
-<section class="revision-section comparison-summary">
+<section class="revision-section comparison-summary ui-card ui-card--padded">
     {% if comparison.is_initial %}
         <h2>Initial Publication Submission</h2>
         <p>This project has never been published. Review the submitted values below.</p>
@@ -19,7 +19,7 @@
         <h2>{{ section.label }} {% if section.changed %}<span class="snapshot-change-badge">Changed</span>{% endif %}</h2>
         {% if section.groups %}<div class="snapshot-group-grid">{% endif %}
         {% for group in section.groups %}
-        <section class="snapshot-group-card">
+        <section class="snapshot-group-card ui-card ui-card--padded">
             <h3>{{ group.label }} {% if group.changed %}<span class="snapshot-change-badge">Changed</span>{% endif %}</h3>
             <dl class="snapshot-grid">
                 {% for field in group.fields %}

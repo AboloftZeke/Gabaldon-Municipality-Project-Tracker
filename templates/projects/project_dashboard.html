@@ -50,7 +50,7 @@
                 <h4>{{ request.user.username }}</h4>
 
                 <a href="{% url 'logout' %}"
-                   class="action-button secondary">
+                   class="action-button secondary ui-button ui-button--secondary">
                     Sign Out
                 </a>
             </div>
@@ -66,7 +66,7 @@
 
     <div class="dashboard-container">
 
-        <h1 class="dashboard-title">
+        <h1 class="dashboard-title ui-page-title">
             Project Dashboard
         </h1>
 
@@ -76,7 +76,7 @@
              ========================================= -->
         <div class="stats-grid">
 
-            <div class="stat-card">
+            <div class="stat-card ui-card ui-card--padded">
                 <div class="stat-label">
                     Total Projects
                 </div>
@@ -87,7 +87,7 @@
             </div>
 
 
-            <div class="stat-card">
+            <div class="stat-card ui-card ui-card--padded">
                 <div class="stat-label">
                     Awarded
                 </div>
@@ -98,7 +98,7 @@
             </div>
 
 
-            <div class="stat-card">
+            <div class="stat-card ui-card ui-card--padded">
                 <div class="stat-label">
                     Ongoing
                 </div>
@@ -109,7 +109,7 @@
             </div>
 
 
-            <div class="stat-card">
+            <div class="stat-card ui-card ui-card--padded">
                 <div class="stat-label">
                     Completed
                 </div>
@@ -129,7 +129,7 @@
 
         <div class="stats-grid">
 
-            <div class="stat-card">
+            <div class="stat-card ui-card ui-card--padded">
                 <div class="stat-label">
                     Total Investment
                 </div>
@@ -147,7 +147,7 @@
         <!-- =========================================
              RECENT PROJECTS
              ========================================= -->
-        <div class="recent-section">
+        <div class="recent-section ui-card ui-card--padded">
 
             <div class="recent-header">
 
@@ -157,12 +157,12 @@
 
                 <div class="btn-group">
                     <a href="{% url 'engineering_projects:project_list' %}"
-                       class="btn-small btn-primary">
+                       class="btn-small btn-primary ui-button ui-button--primary ui-button--small">
                         View All Projects
                     </a>
 
                     {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_create' %}"
-                       class="btn-small btn-primary">
+                       class="btn-small btn-primary ui-button ui-button--primary ui-button--small">
                         + New Project
                     </a>{% endif %}
                 </div>
@@ -174,7 +174,7 @@
 
                 {% for project in recent_projects %}
 
-                <div class="project-item">
+                <div class="project-item ui-card">
 
                     <!-- Project Image -->
                     <div class="project-thumb">
@@ -216,7 +216,7 @@
 
                         <a
                             href="{% url 'engineering_projects:project_detail' project.pk %}"
-                            class="btn-small btn-primary"
+                            class="btn-small btn-primary ui-button ui-button--primary ui-button--small"
                         >
                             View
                         </a>
@@ -224,7 +224,7 @@
 
                         {% if not account_navigation.is_head %}<a
                             href="{% url 'engineering_projects:project_update' project.pk %}"
-                            class="btn-small btn-edit"
+                            class="btn-small btn-edit ui-button ui-button--subtle ui-button--small"
                         >
                             Edit
                         </a>{% endif %}
@@ -239,7 +239,7 @@
             {% else %}
 
                 <!-- Empty State -->
-                <div class="empty-state">
+                <div class="empty-state ui-empty-state">
 
                     <p>
                         No projects yet. Create your first infrastructure project.
@@ -247,7 +247,7 @@
 
                     {% if not account_navigation.is_head %}<a
                         href="{% url 'engineering_projects:project_create' %}"
-                        class="btn-small btn-primary"
+                        class="btn-small btn-primary ui-button ui-button--primary ui-button--small"
                     >
                         Create Project
                     </a>{% endif %}

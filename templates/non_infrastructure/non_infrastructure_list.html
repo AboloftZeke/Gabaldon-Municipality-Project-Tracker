@@ -20,15 +20,15 @@
 </div>
 
 <div class="projects-container">
-    <div class="projects-header">
+    <div class="projects-header ui-page-header">
         <h2>Non-Infrastructure Projects</h2>
-        {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create">+ New Project</a>{% endif %}
+        {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create ui-button ui-button--primary">+ New Project</a>{% endif %}
     </div>
 
     {% if projects %}
         <div class="projects-grid">
             {% for project in projects %}
-                <div class="project-card">
+                <div class="project-card ui-card ui-card--interactive">
                     <div class="project-card-image">
                         {% if project.project.images.first.image_url %}
                             <img src="{{ project.project.images.first.image_url }}" alt="{{ project.title }} cover">
@@ -47,30 +47,30 @@
                             </div>
                         {% endif %}
 
-                        <div class="project-status {% if project.get_status_display == 'Completed' %}status-completed{% elif project.get_status_display == 'Planned' %}status-planning{% else %}status-ongoing{% endif %}">
+                        <div class="project-status ui-badge {% if project.get_status_display == 'Completed' %}status-completed ui-badge--success{% elif project.get_status_display == 'Planned' %}status-planning ui-badge--neutral{% else %}status-ongoing ui-badge--info{% endif %}">
                             {{ project.get_status_display }}
                         </div>
                         {% if project.publication_state %}
                             <div class="publication-card-state">
-                                <span class="publication-badge publication-status-{{ project.publication_state.status_key }}">
+                                <span class="publication-badge publication-status-{{ project.publication_state.status_key }} ui-badge">
                                     Public: {{ project.publication_state.status_label }}
                                 </span>
                             </div>
                         {% endif %}
 
                         <div class="project-actions">
-                            <a href="{% url 'mayor_projects:non_infrastructure_project_detail' project.pk %}" class="btn-small btn-view">View</a>
-                            {% if can_update_operations %}<a href="{% url 'mayor_projects:non_infrastructure_project_operations' project.pk %}" class="btn-small btn-edit">Update Status</a>{% endif %}
-                            {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}" class="btn-small btn-edit">Edit</a>{% endif %}
+                            <a href="{% url 'mayor_projects:non_infrastructure_project_detail' project.pk %}" class="btn-small btn-view ui-button ui-button--primary ui-button--small">View</a>
+                            {% if can_update_operations %}<a href="{% url 'mayor_projects:non_infrastructure_project_operations' project.pk %}" class="btn-small btn-edit ui-button ui-button--secondary ui-button--small">Update Status</a>{% endif %}
+                            {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}" class="btn-small btn-edit ui-button ui-button--subtle ui-button--small">Edit</a>{% endif %}
                         </div>
                     </div>
                 </div>
             {% endfor %}
         </div>
     {% else %}
-        <div class="empty-state">
+        <div class="empty-state ui-card ui-empty-state">
             <p>No non-infrastructure projects yet.</p>
-            {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create">Create the first project</a>{% endif %}
+            {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create ui-button ui-button--primary">Create the first project</a>{% endif %}
         </div>
     {% endif %}
 </div>

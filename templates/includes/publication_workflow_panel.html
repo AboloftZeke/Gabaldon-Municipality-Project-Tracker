@@ -1,11 +1,11 @@
 {% if publication %}
-<section class="publication-panel" aria-labelledby="publication-panel-title">
+<section class="publication-panel ui-card ui-card--padded" aria-labelledby="publication-panel-title">
     <div class="publication-panel__heading">
         <div>
             <p class="publication-panel__eyebrow">Public Dashboard</p>
             <h3 id="publication-panel-title">Publication Review</h3>
         </div>
-        <span class="publication-badge publication-status-{{ publication.status_key }}">
+        <span class="publication-badge publication-status-{{ publication.status_key }} ui-badge">
             {{ publication.status_label }}
         </span>
     </div>
@@ -44,7 +44,7 @@
     {% if publication.can_submit and can_manage_publication %}
         <form method="post" action="{{ publication_submit_url }}" class="publication-panel__action">
             {% csrf_token %}
-            <button type="submit" class="publication-submit-button">
+            <button type="submit" class="publication-submit-button ui-button ui-button--primary">
                 {{ publication.action_label }}
             </button>
             <small>A snapshot of the current project details and images will be sent for confirmation.</small>

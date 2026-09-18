@@ -17,7 +17,7 @@
 
 {% block content %}
 <div class="confirm-container">
-    <div class="confirm-card">
+    <div class="confirm-card ui-card ui-card--padded">
         <div class="confirm-header">
             <h2>Confirm User Changes</h2>
             <p style="margin: 8px 0 0; opacity: 0.9; font-size: 0.95rem;">{{ user.username }}</p>
@@ -26,7 +26,7 @@
         <div class="confirm-content">
             {% if error %}
                 <div class="error-message">{{ error }}</div>
-                <a href="{% url 'user_edit' pk=user_pk %}" class="btn btn-primary">Return to Form</a>
+                <a href="{% url 'user_edit' pk=user_pk %}" class="btn btn-primary ui-button ui-button--primary">Return to Form</a>
             {% else %}
                 <div class="info-box">
                     <p><strong>ℹ Review your changes below.</strong> Fields highlighted in yellow have been modified.</p>
@@ -126,8 +126,8 @@
                 <form method="post" style="margin-bottom: 0;">
                     {% csrf_token %}
                     <div class="confirm-actions">
-                        <button type="submit" class="btn btn-primary">Confirm & Save Changes</button>
-                        <a href="{% url 'user_edit' pk=user_pk %}" class="btn btn-secondary">Go Back & Edit</a>
+                        <button type="submit" class="btn btn-primary ui-button ui-button--primary">Confirm &amp; Save Changes</button>
+                        <a href="{% url 'user_edit' pk=user_pk %}" class="btn btn-secondary ui-button ui-button--secondary">Go Back &amp; Edit</a>
                     </div>
                 </form>
             {% endif %}
