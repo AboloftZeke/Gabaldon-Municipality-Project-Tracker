@@ -96,29 +96,18 @@ def account_navigation(request):
             ])
 
         if name == 'admin_dashboard':
-            groups.extend([
-                {
-                    'label': 'Review & Publication',
-                    'items': [item(
-                        'Publication Lifecycle',
-                        'publication_lifecycle',
-                        'review',
-                        active_names=('publication_lifecycle',),
-                    )],
-                },
-                {
-                    'label': 'Administration',
-                    'items': [item(
-                        'User Management', 'user_list', 'users',
-                        active_names=(
-                            'user_list', 'user_create', 'user_create_confirm',
-                            'user_edit', 'user_edit_confirm',
-                            'user_deactivate', 'user_activate',
-                            'user_resend_account_setup',
-                        ),
-                    )],
-                },
-            ])
+            groups.append({
+                'label': 'Administration',
+                'items': [item(
+                    'User Management', 'user_list', 'users',
+                    active_names=(
+                        'user_list', 'user_create', 'user_create_confirm',
+                        'user_edit', 'user_edit_confirm',
+                        'user_deactivate', 'user_activate',
+                        'user_resend_account_setup',
+                    ),
+                )],
+            })
 
         groups.append({
             'label': 'Account',

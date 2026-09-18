@@ -131,9 +131,12 @@ class HeadDashboardTests(TestCase):
                 'excluded': ['Infrastructure Projects', 'User Management'],
             },
             ('admin', 'admin'): {
-                'groups': ['Overview', 'Review & Publication', 'Administration', 'Account'],
+                'groups': ['Overview', 'Administration', 'Account'],
                 'project': None,
-                'excluded': ['Infrastructure Projects', 'Non-Infrastructure Projects', 'Publication Review', 'Reports'],
+                'excluded': [
+                    'Infrastructure Projects', 'Non-Infrastructure Projects',
+                    'Publication Review', 'Publication Lifecycle', 'Reports',
+                ],
             },
         }
         for assignment, expected in expectations.items():
@@ -182,6 +185,37 @@ class HeadDashboardTests(TestCase):
             if group['label'] == 'Administration'
         )
         self.assertTrue(administration['items'][0]['active'])
+
+    def test_admin_user_management_pages_use_shared_sidebar_layout(self):
+        admin, _ = self.users['admin', 'admin']
+        editable_user, _ = self.users['engineer', 'staff']
+        self.client.force_login(admin)
+
+        for url, content_class in [
+            (reverse('user_list'), 'user-management-content'),
+            (reverse('user_create'), 'user-management-form-content'),
+            (reverse('user_edit', kwargs={'pk': editable_user.pk}), 'user-management-form-content'),
+        ]:
+            response = self.client.get(url)
+            navigation = response.context['account_navigation']
+            labels = [
+                item['label']
+                for group in navigation['groups']
+                for item in group['items']
+            ]
+            with self.subTest(url=url):
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(
+                    [group['label'] for group in navigation['groups']],
+                    ['Overview', 'Administration', 'Account'],
+                )
+                self.assertEqual(
+                    labels,
+                    ['Dashboard', 'User Management', 'Profile & Password', 'Logout'],
+                )
+                self.assertContains(response, 'aria-label="Account navigation"')
+                self.assertContains(response, content_class)
+                self.assertNotContains(response, '>Publication Lifecycle<')
 
     def test_admin_lifecycle_navigation_excludes_review_queue(self):
         admin, _ = self.users['admin', 'admin']
