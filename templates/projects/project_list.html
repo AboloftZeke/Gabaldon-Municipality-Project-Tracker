@@ -28,8 +28,8 @@
     {% if projects %}
         <div class="projects-grid">
             {% for project in projects %}
-                <div class="project-card ui-card ui-card--interactive">
-                    <div class="project-card-image">
+                <div class="project-card project-card--infrastructure ui-card ui-card--interactive">
+                    <div class="project-card-image ui-card-media">
                         {% if project.cover_image_url %}
                             <img src="{{ project.cover_image_url }}" alt="{{ project.title }} cover">
                         {% else %}
@@ -48,40 +48,41 @@
                                 Location not specified
                             {% endif %}
                         </div>
-                        <div class="project-category">
-                            {{ project.category|default:"Uncategorized" }}
-                        </div>
-                        <div class="project-status status-{{ project.award_status }} ui-badge ui-table__status {% if project.award_status == 'completed' or project.award_status == 'awarded' %}ui-badge--success{% elif project.award_status == 'cancelled' %}ui-badge--danger{% elif project.award_status == 'rebid' %}ui-badge--warning{% else %}ui-badge--info{% endif %}">
-                            {{ project.get_award_status_display|default:"Status not specified" }}
-                        </div>
-                        <div class="publication-card-state">
-                            <span class="publication-badge publication-status-{{ project.publication_state.status_key }} ui-badge">
-                                Public: {{ project.publication_state.status_label }}
-                            </span>
-                        </div>
-
-                        {% if project.planned_start_date or project.planned_end_date %}
-                            <div class="project-dates">
-                                {% if project.planned_start_date %}
-                                    <strong>Start:</strong>
-                                    {{ project.planned_start_date|date:"M d, Y" }}<br>
-                                {% endif %}
-                                {% if project.planned_end_date %}
-                                    <strong>End:</strong>
-                                    {{ project.planned_end_date|date:"M d, Y" }}
-                                {% endif %}
+                        <div class="project-card__meta">
+                            <div class="project-category">
+                                {{ project.category|default:"Uncategorized" }}
                             </div>
-                        {% endif %}
-
-                        {% if project.financial_records.first.approved_budget is not None %}
-                            <div class="project-card__number ui-table__number">
-                                ₱{{ project.financial_records.first.approved_budget|floatformat:2 }}
+                            <div class="project-status status-{{ project.award_status }} ui-badge ui-table__status {% if project.award_status == 'completed' or project.award_status == 'awarded' %}ui-badge--success{% elif project.award_status == 'cancelled' %}ui-badge--danger{% elif project.award_status == 'rebid' %}ui-badge--warning{% else %}ui-badge--info{% endif %}">
+                                {{ project.get_award_status_display|default:"Status not specified" }}
                             </div>
-                        {% endif %}
+                            <div class="publication-card-state">
+                                <span class="publication-badge publication-status-{{ project.publication_state.status_key }} ui-badge">
+                                    Public: {{ project.publication_state.status_label }}
+                                </span>
+                            </div>
 
-                        <div class="project-actions ui-list-actions">
+                            {% if project.planned_start_date or project.planned_end_date %}
+                                <div class="project-dates">
+                                    {% if project.planned_start_date %}
+                                        <span><strong>Start:</strong> {{ project.planned_start_date|date:"M d, Y" }}</span>
+                                    {% endif %}
+                                    {% if project.planned_end_date %}
+                                        <span><strong>End:</strong> {{ project.planned_end_date|date:"M d, Y" }}</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+
+                            {% if project.financial_records.first.approved_budget is not None %}
+                                <div class="project-card__amount ui-table__number">
+                                    <span>Approved budget</span>
+                                    <strong>₱{{ project.financial_records.first.approved_budget|floatformat:"2g" }}</strong>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="project-actions project-card__actions ui-list-actions">
                             <a href="{% url 'engineering_projects:project_detail' project.pk %}" class="btn-small btn-view ui-button ui-button--primary ui-button--small">View</a>
-                            {% if can_update_operations %}<a href="{% url 'engineering_projects:project_operations' project.pk %}" class="btn-small btn-edit ui-button ui-button--secondary ui-button--small">Update Status &amp; Progress</a>{% endif %}
+                            {% if can_update_operations %}<a href="{% url 'engineering_projects:project_operations' project.pk %}" class="btn-small btn-edit project-card__action--wide ui-button ui-button--secondary ui-button--small">Update Status &amp; Progress</a>{% endif %}
                             {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_update' project.pk %}" class="btn-small btn-edit ui-button ui-button--subtle ui-button--small">Edit</a>{% endif %}
                         </div>
                     </div>
