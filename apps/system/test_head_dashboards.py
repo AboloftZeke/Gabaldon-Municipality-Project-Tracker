@@ -187,6 +187,15 @@ class HeadDashboardTests(TestCase):
         admin, _ = self.users['admin', 'admin']
         self.client.force_login(admin)
         response = self.client.get(reverse('admin_dashboard'))
+        self.assertContains(response, 'class="ui-sidebar-layout admin-dashboard-layout"')
+        self.assertContains(response, 'class="dashboard-content admin-dashboard-content"')
+        self.assertContains(response, 'class="welcome-section ui-card ui-card--padded"')
+        self.assertContains(response, 'class="dashboard-stats"')
+        self.assertContains(response, 'class="action-grid"')
+        header_markup = response.content.decode().split('</header>', 1)[0]
+        self.assertNotIn(reverse('user_list'), header_markup)
+        self.assertNotIn(reverse('publication_lifecycle'), header_markup)
+        self.assertNotIn(reverse('logout'), header_markup)
         self.assertContains(response, reverse('publication_lifecycle'))
         self.assertNotContains(response, reverse('publication_review_queue'))
         response = self.client.get(reverse('publication_lifecycle'))

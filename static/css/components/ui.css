@@ -918,6 +918,7 @@
 .ui-sidebar-layout {
     display: grid;
     grid-template-columns: 240px minmax(0, 1fr);
+    column-gap: clamp(1.5rem, 2vw, 2rem);
     min-height: calc(100vh - 72px);
 }
 
@@ -1106,6 +1107,7 @@
 @media (max-width: 800px) {
     .ui-sidebar-layout {
         grid-template-columns: minmax(0, 1fr);
+        column-gap: 0;
     }
 
     .ui-sidebar-layout > .sidebar.ui-sidebar {
