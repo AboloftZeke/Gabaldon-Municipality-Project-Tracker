@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -30,7 +32,59 @@ class ReportAccessTests(TestCase):
         self.non_infrastructure_revision = self.create_published_revision(
             'non_infrastructure', self.non_infrastructure_snapshot(),
         )
+        second_infrastructure = deepcopy(self.infrastructure_snapshot())
+        second_infrastructure['project'].update({'id': 3})
+        second_infrastructure['infrastructure'].update({
+            'id': 102,
+            'code': 'INF-ROAD-102',
+            'title': 'Completed Farm Road',
+            'category': {'id': 2, 'code': 'road', 'name': 'Roads'},
+            'address': {
+                'street': '', 'barangay': 'Bagting',
+                'municipality': 'Gabaldon', 'province': 'Nueva Ecija',
+            },
+            'award_status': 'completed',
+            'award_status_label': 'Completed',
+            'planned_start_date': '2025-01-15',
+            'planned_end_date': '2025-08-30',
+            'physical_progress_percentage': '100.00',
+        })
+        second_infrastructure['financial'].update({
+            'contract_price': '5000000.00',
+            'actual_expenditure': '4900000.00',
+        })
+        second_infrastructure['inspection'] = None
+        second_infrastructure['images'] = []
+        self.create_published_revision(
+            'infrastructure', second_infrastructure,
+        )
+
+        second_non_infrastructure = deepcopy(self.non_infrastructure_snapshot())
+        second_non_infrastructure['project'].update({'id': 4})
+        second_non_infrastructure['non_infrastructure'].update({
+            'id': 203,
+            'code': 'NINF-00203',
+            'title': 'Youth Skills Training',
+            'category': {
+                'id': 3, 'code': 'education', 'name': 'Education',
+            },
+            'status': 'completed',
+            'status_label': 'Completed',
+            'proponent': 'Municipal Youth Office',
+            'beneficiaries': 100,
+            'event_date': '2025-11-10',
+            'venue_name': 'Barangay Hall',
+            'address': {
+                'street': '', 'barangay': 'Bagting',
+                'municipality': 'Gabaldon', 'province': 'Nueva Ecija',
+            },
+        })
+        second_non_infrastructure['images'] = []
+        self.create_published_revision(
+            'non_infrastructure', second_non_infrastructure,
+        )
         self.create_unpublished_revision()
+        self.create_non_current_published_revision()
 
     def infrastructure_snapshot(self):
         return {
@@ -138,6 +192,20 @@ class ReportAccessTests(TestCase):
                 'infrastructure': {
                     'id': 303, 'code': 'INF-PRIVATE-303',
                     'title': 'Unpublished Internal Project',
+                },
+            },
+        )
+
+    def create_non_current_published_revision(self):
+        project = Project.objects.create(project_type='infrastructure')
+        return ProjectRevision.objects.create(
+            project=project, revision_number=1, status='published',
+            is_current_public=False,
+            snapshot={
+                'project': {'id': project.pk, 'type': 'infrastructure'},
+                'infrastructure': {
+                    'id': 304, 'code': 'INF-OLD-304',
+                    'title': 'Superseded Published Project',
                 },
             },
         )
@@ -308,4 +376,164 @@ class ReportAccessTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, reverse('reports:dashboard'))
                 self.assertContains(response, 'Reports')
+
+    def test_summary_pages_enforce_office_head_permissions(self):
+        summary_pages = {
+            'reports:infrastructure_summary': ('engineer', 'head'),
+            'reports:non_infrastructure_summary': ('mayor', 'head'),
+        }
+        for route, allowed_assignment in summary_pages.items():
+            for assignment, user in self.users.items():
+                with self.subTest(route=route, assignment=assignment):
+                    self.client.force_login(user)
+                    response = self.client.get(reverse(route))
+                    self.assertEqual(
+                        response.status_code,
+                        200 if assignment == allowed_assignment else 403,
+                    )
+
+    def test_empty_summary_filters_return_all_disclosed_projects_in_scope(self):
+        for assignment, route, expected, excluded in [
+            (
+                ('engineer', 'head'), 'reports:infrastructure_summary',
+                ['Barangay Bridge Improvement', 'Completed Farm Road'],
+                ['Community Health Day', 'Unpublished Internal Project'],
+            ),
+            (
+                ('mayor', 'head'), 'reports:non_infrastructure_summary',
+                ['Community Health Day', 'Youth Skills Training'],
+                ['Barangay Bridge Improvement', 'Unpublished Internal Project'],
+            ),
+        ]:
+            with self.subTest(route=route):
+                self.client.force_login(self.users[assignment])
+                response = self.client.get(reverse(route))
+                self.assertEqual(response.context['summary']['total_projects'], 2)
+                for title in expected:
+                    self.assertContains(response, title)
+                for title in excluded:
+                    self.assertNotContains(response, title)
+                self.assertNotContains(response, 'Superseded Published Project')
+
+    def test_report_dashboards_link_to_the_correct_summary_scope(self):
+        for assignment, report_type in [
+            (('engineer', 'head'), 'infrastructure'),
+            (('mayor', 'head'), 'non_infrastructure'),
+        ]:
+            with self.subTest(report_type=report_type):
+                self.client.force_login(self.users[assignment])
+                response = self.client.get(reverse(f'reports:{report_type}'))
+                self.assertContains(
+                    response,
+                    reverse(f'reports:{report_type}_summary'),
+                )
+                self.assertContains(response, 'Project Summary Report')
+
+    def test_infrastructure_filters_work_individually(self):
+        self.client.force_login(self.users['engineer', 'head'])
+        route = reverse('reports:infrastructure_summary')
+        cases = [
+            ({'barangay': 'Calabasa'}, 'Barangay Bridge Improvement'),
+            ({'category': 'road'}, 'Completed Farm Road'),
+            ({'status': 'completed'}, 'Completed Farm Road'),
+            ({'date_from': '2026-01-01'}, 'Barangay Bridge Improvement'),
+            ({'date_to': '2025-12-31'}, 'Completed Farm Road'),
+        ]
+        for filters, expected in cases:
+            with self.subTest(filters=filters):
+                response = self.client.get(route, filters)
+                self.assertEqual(response.context['summary']['total_projects'], 1)
+                self.assertContains(response, expected)
+
+    def test_combined_infrastructure_filters_and_aggregates(self):
+        self.client.force_login(self.users['engineer', 'head'])
+        response = self.client.get(
+            reverse('reports:infrastructure_summary'),
+            {
+                'barangay': 'Calabasa',
+                'category': 'bridge',
+                'status': 'awarded',
+                'date_from': '2026-01-01',
+                'date_to': '2026-12-31',
+            },
+        )
+        summary = response.context['summary']
+        self.assertEqual(summary['total_projects'], 1)
+        self.assertEqual(summary['status_counts'], {'Awarded': 1})
+        self.assertEqual(summary['total_contract_value'], 11900000)
+        self.assertEqual(summary['average_physical_progress'], 55)
+        self.assertContains(response, 'Barangay Bridge Improvement')
+        self.assertNotContains(response, 'Completed Farm Road')
+        self.assertEqual(response.context['form']['barangay'].value(), 'Calabasa')
+
+    def test_infrastructure_unfiltered_aggregates_are_correct(self):
+        self.client.force_login(self.users['engineer', 'head'])
+        response = self.client.get(reverse('reports:infrastructure_summary'))
+        summary = response.context['summary']
+        self.assertEqual(summary['status_counts'], {'Awarded': 1, 'Completed': 1})
+        self.assertEqual(summary['total_contract_value'], 16900000)
+        self.assertEqual(summary['average_physical_progress'], 77.5)
+        self.assertNotContains(response, '4900000.00')
+
+    def test_non_infrastructure_filters_work_individually(self):
+        self.client.force_login(self.users['mayor', 'head'])
+        route = reverse('reports:non_infrastructure_summary')
+        cases = [
+            ({'barangay': 'North Poblacion'}, 'Community Health Day'),
+            ({'category': 'education'}, 'Youth Skills Training'),
+            ({'status': 'completed'}, 'Youth Skills Training'),
+            ({'date_from': '2026-01-01'}, 'Community Health Day'),
+            ({'date_to': '2025-12-31'}, 'Youth Skills Training'),
+        ]
+        for filters, expected in cases:
+            with self.subTest(filters=filters):
+                response = self.client.get(route, filters)
+                self.assertEqual(response.context['summary']['total_projects'], 1)
+                self.assertContains(response, expected)
+
+    def test_combined_non_infrastructure_filters_and_aggregates(self):
+        self.client.force_login(self.users['mayor', 'head'])
+        response = self.client.get(
+            reverse('reports:non_infrastructure_summary'),
+            {
+                'barangay': 'North Poblacion',
+                'category': 'health',
+                'status': 'ongoing',
+                'date_from': '2026-01-01',
+                'date_to': '2026-12-31',
+            },
+        )
+        summary = response.context['summary']
+        self.assertEqual(summary['total_projects'], 1)
+        self.assertEqual(summary['status_counts'], {'Ongoing': 1})
+        self.assertEqual(summary['category_counts'], {'Health Services': 1})
+        self.assertEqual(summary['total_beneficiaries'], 350)
+        self.assertContains(response, 'Community Health Day')
+        self.assertNotContains(response, 'Youth Skills Training')
+
+    def test_non_infrastructure_unfiltered_aggregates_are_correct(self):
+        self.client.force_login(self.users['mayor', 'head'])
+        response = self.client.get(reverse(
+            'reports:non_infrastructure_summary',
+        ))
+        summary = response.context['summary']
+        self.assertEqual(summary['status_counts'], {'Ongoing': 1, 'Completed': 1})
+        self.assertEqual(
+            summary['category_counts'],
+            {'Health Services': 1, 'Education': 1},
+        )
+        self.assertEqual(summary['total_beneficiaries'], 450)
+
+    def test_summary_no_result_filter_shows_empty_state(self):
+        self.client.force_login(self.users['engineer', 'head'])
+        response = self.client.get(
+            reverse('reports:infrastructure_summary'),
+            {'barangay': 'Calabasa', 'status': 'completed'},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['summary']['total_projects'], 0)
+        self.assertContains(
+            response,
+            'No disclosed infrastructure projects match these filters.',
+        )
 

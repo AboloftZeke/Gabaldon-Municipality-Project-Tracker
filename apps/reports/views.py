@@ -1,13 +1,20 @@
 from django.shortcuts import redirect, resolve_url
+from django.urls import reverse
 from django.views.generic import FormView, RedirectView, TemplateView
 
 from apps.system.permissions import review_project_type
 from apps.system.publication_views import OfficeHeadRequiredMixin
 
-from .forms import IndividualProjectReportRequestForm
+from .forms import (
+    IndividualProjectReportRequestForm,
+    InfrastructureSummaryReportFilterForm,
+    NonInfrastructureSummaryReportFilterForm,
+)
 from .services import (
     get_infrastructure_project_report_data,
+    get_infrastructure_summary_report_data,
     get_non_infrastructure_project_report_data,
+    get_non_infrastructure_summary_report_data,
 )
 
 
@@ -36,6 +43,21 @@ REPORT_PREVIEW_TEMPLATES = {
     'non_infrastructure': 'reports/non_infrastructure_project_report.html',
 }
 
+SUMMARY_FORMS = {
+    'infrastructure': InfrastructureSummaryReportFilterForm,
+    'non_infrastructure': NonInfrastructureSummaryReportFilterForm,
+}
+
+SUMMARY_DATA_GETTERS = {
+    'infrastructure': get_infrastructure_summary_report_data,
+    'non_infrastructure': get_non_infrastructure_summary_report_data,
+}
+
+SUMMARY_TEMPLATES = {
+    'infrastructure': 'reports/infrastructure_summary_report.html',
+    'non_infrastructure': 'reports/non_infrastructure_summary_report.html',
+}
+
 
 class ReportDashboardRedirectView(OfficeHeadRequiredMixin, RedirectView):
     permanent = False
@@ -57,6 +79,9 @@ class ScopedReportDashboardView(OfficeHeadRequiredMixin, FormView):
         context = super().get_context_data(**kwargs)
         context['report_type'] = self.report_type
         context['report_type_label'] = REPORT_LABELS[self.report_type]
+        context['summary_url'] = reverse(
+            f'reports:{self.report_type}_summary',
+        )
         return context
 
     def get_form_kwargs(self):
@@ -89,6 +114,33 @@ class ScopedIndividualProjectReportView(
         context['report_type_label'] = REPORT_LABELS[self.report_type]
         context['report'] = REPORT_DATA_GETTERS[self.report_type](
             self.kwargs['project_id'],
+        )
+        return context
+
+
+class ScopedSummaryReportView(OfficeHeadRequiredMixin, TemplateView):
+    report_type = None
+
+    def test_func(self):
+        return review_project_type(self.request.user) == self.report_type
+
+    def get_template_names(self):
+        return [SUMMARY_TEMPLATES[self.report_type]]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form = SUMMARY_FORMS[self.report_type](self.request.GET)
+        context['report_type'] = self.report_type
+        context['report_type_label'] = REPORT_LABELS[self.report_type]
+        context['form'] = form
+        context['active_filters'] = [
+            (field.label, field.value())
+            for field in form
+            if field.value()
+        ]
+        context['summary'] = (
+            SUMMARY_DATA_GETTERS[self.report_type](form.cleaned_data)
+            if form.is_valid() else None
         )
         return context
 

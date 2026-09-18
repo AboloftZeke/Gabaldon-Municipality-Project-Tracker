@@ -4,6 +4,7 @@ from .views import (
     ReportDashboardRedirectView,
     ScopedIndividualProjectReportView,
     ScopedReportDashboardView,
+    ScopedSummaryReportView,
 )
 
 
@@ -24,6 +25,11 @@ urlpatterns = [
         name='infrastructure_project',
     ),
     path(
+        'infrastructure/summary/',
+        ScopedSummaryReportView.as_view(report_type='infrastructure'),
+        name='infrastructure_summary',
+    ),
+    path(
         'non-infrastructure/',
         ScopedReportDashboardView.as_view(report_type='non_infrastructure'),
         name='non_infrastructure',
@@ -34,6 +40,11 @@ urlpatterns = [
             report_type='non_infrastructure',
         ),
         name='non_infrastructure_project',
+    ),
+    path(
+        'non-infrastructure/summary/',
+        ScopedSummaryReportView.as_view(report_type='non_infrastructure'),
+        name='non_infrastructure_summary',
     ),
 ]
 

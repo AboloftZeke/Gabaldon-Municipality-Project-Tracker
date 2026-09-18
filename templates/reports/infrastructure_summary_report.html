@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Infrastructure Project Summary Report{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
+{% endblock %}
+
+{% block content %}
+<div class="head-dashboard" data-report-scope="infrastructure">
+    <header class="head-dashboard__header">
+        <div>
+            <p class="head-dashboard__eyebrow">Project Summary Report</p>
+            <h1>Infrastructure Projects</h1>
+            <p>Compiled from current published project revisions only.</p>
+        </div>
+    </header>
+
+    <section class="head-section">
+        <div class="head-section__heading head-section__heading--with-action">
+            <div><h2>Filters</h2></div>
+            <a class="head-button head-button--secondary" href="{% url 'reports:infrastructure' %}">Back to Reports</a>
+        </div>
+        <form method="get">
+            {{ form.as_p }}
+            <button class="head-button head-button--primary" type="submit">Apply Filters</button>
+        </form>
+        {% if form.is_bound and form.is_valid %}
+            <p><strong>Active filters:</strong>
+                {% for label, value in active_filters %}{{ label }}: {{ value }}{% if not forloop.last %}; {% endif %}{% empty %}None{% endfor %}
+            </p>
+        {% endif %}
+    </section>
+
+    {% if summary %}
+    <section class="head-section">
+        <div class="head-section__heading"><h2>Summary</h2></div>
+        <p><strong>Total projects:</strong> {{ summary.total_projects }}</p>
+        <p><strong>Total disclosed contract value:</strong> PHP {{ summary.total_contract_value|floatformat:2 }}</p>
+        <p><strong>Average physical progress:</strong> {% if summary.average_physical_progress is not None %}{{ summary.average_physical_progress|floatformat:1 }}%{% else %}N/A{% endif %}</p>
+        <p><strong>Counts by status:</strong>
+            {% for label, count in summary.status_counts.items %}{{ label }}: {{ count }}{% if not forloop.last %}; {% endif %}{% empty %}None{% endfor %}
+        </p>
+    </section>
+
+    <section class="head-section">
+        <div class="head-section__heading"><h2>Projects</h2></div>
+        {% if summary.rows %}
+        <table>
+            <thead><tr><th>Code</th><th>Title</th><th>Barangay</th><th>Category</th><th>Status</th><th>Physical Progress</th><th>Planned Start</th><th>Planned End</th><th>Contract Price</th></tr></thead>
+            <tbody>
+            {% for project in summary.rows %}
+                <tr>
+                    <td>{{ project.code }}</td><td>{{ project.title }}</td>
+                    <td>{{ project.address.barangay|default:"N/A" }}</td>
+                    <td>{{ project.category.name|default:"N/A" }}</td>
+                    <td>{{ project.award_status_label|default:"N/A" }}</td>
+                    <td>{% if project.physical_progress_percentage is not None %}{{ project.physical_progress_percentage|floatformat:1 }}%{% else %}N/A{% endif %}</td>
+                    <td>{{ project.planned_start_date|date:"M j, Y"|default:"N/A" }}</td>
+                    <td>{{ project.planned_end_date|date:"M j, Y"|default:"N/A" }}</td>
+                    <td>{% if project.financial.contract_price is not None %}PHP {{ project.financial.contract_price|floatformat:2 }}{% else %}N/A{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}<div class="head-empty"><strong>No disclosed infrastructure projects match these filters.</strong></div>{% endif %}
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+
