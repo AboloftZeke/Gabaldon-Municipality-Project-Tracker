@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ project_report.report_name }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
+<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20260918-2">
+{% endblock %}
+
+{% block content %}
+<div class="head-dashboard">
+    <nav class="report-breadcrumb" aria-label="Breadcrumb">
+        <a href="{% url 'reports:dashboard' %}">Reports</a>
+        <span aria-hidden="true">/</span>
+        <span>Generated PDF</span>
+    </nav>
+
+    <header class="head-dashboard__header report-header">
+        <div>
+            <p class="head-dashboard__eyebrow">Generated Public Project Report</p>
+            <h1>{{ project_report.report_name }}</h1>
+            <p>Your PDF is stored and ready to view, download, or print.</p>
+        </div>
+    </header>
+
+    <section class="head-section" aria-labelledby="delivery-heading">
+        <div class="head-section__heading">
+            <p class="head-section__eyebrow">Report Delivery</p>
+            <h2 id="delivery-heading">PDF Ready</h2>
+            <p>Opening the PDF uses your browser's PDF viewer, where you can also print it.</p>
+        </div>
+
+        <dl class="report-detail-grid">
+            <div><dt>Report Type</dt><dd>{{ project_report.get_report_type_display }}</dd></div>
+            <div><dt>Generated</dt><dd>{{ project_report.created_at|date:"F j, Y, g:i A" }}</dd></div>
+            <div><dt>Related Project</dt><dd>{% if project_report.project_id %}Project #{{ project_report.project_id }}{% else %}Summary of multiple projects{% endif %}</dd></div>
+            <div><dt>File</dt><dd>PDF document</dd></div>
+        </dl>
+
+        <div class="report-delivery-actions">
+            <a class="head-button head-button--primary" href="{% url 'reports:generated_report_view' project_report.report_id %}" target="_blank" rel="noopener">Open PDF</a>
+            <a class="head-button head-button--secondary" href="{% url 'reports:generated_report_download' project_report.report_id %}">Download PDF</a>
+            <a class="head-button head-button--secondary" href="{% url 'reports:generated_report_print' project_report.report_id %}" target="_blank" rel="noopener">Open for Printing</a>
+            <a class="head-button head-button--secondary" href="{% url 'reports:dashboard' %}">Back to Reports</a>
+        </div>
+    </section>
+</div>
+{% endblock %}

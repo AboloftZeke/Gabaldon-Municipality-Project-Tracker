@@ -5,7 +5,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
-<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20260918-1">
+<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20260918-2">
 {% endblock %}
 
 {% block content %}
@@ -33,7 +33,13 @@
                 <p class="head-section__eyebrow">Overview</p>
                 <h2 id="project-information-heading">Project Information</h2>
             </div>
-            <a class="head-button head-button--secondary" href="{% url 'reports:infrastructure' %}">Back to Reports</a>
+            <div class="report-heading-actions">
+                <form method="post" action="{% url 'reports:infrastructure_project_generate' report.record_id %}">
+                    {% csrf_token %}
+                    <button class="head-button head-button--primary" type="submit">Generate PDF</button>
+                </form>
+                <a class="head-button head-button--secondary" href="{% url 'reports:infrastructure' %}">Back to Reports</a>
+            </div>
         </div>
         <dl class="report-detail-grid">
             <div><dt>Category</dt><dd>{{ report.category.name|default:"N/A" }}</dd></div>
@@ -122,4 +128,3 @@
     {% endif %}
 </div>
 {% endblock %}
-

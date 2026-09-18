@@ -5,7 +5,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
-<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20260918-1">
+<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20260918-2">
 {% endblock %}
 
 {% block content %}
@@ -58,6 +58,35 @@
             </article>
         </div>
     </section>
+
+    <section class="head-section" aria-labelledby="generated-reports-heading">
+        <div class="head-section__heading">
+            <p class="head-section__eyebrow">Saved PDFs</p>
+            <h2 id="generated-reports-heading">Recently Generated Reports</h2>
+            <p>Open, download, or print reports previously generated for your office.</p>
+        </div>
+        {% if generated_reports %}
+            <div class="report-file-list">
+                {% for generated_report in generated_reports %}
+                    <article class="report-file-row">
+                        <div class="report-file-row__icon" aria-hidden="true">PDF</div>
+                        <div>
+                            <h3>{{ generated_report.report_name }}</h3>
+                            <p>{{ generated_report.get_report_type_display }} · {{ generated_report.created_at|date:"M j, Y, g:i A" }}</p>
+                        </div>
+                        <a class="head-button head-button--secondary" href="{% url 'reports:generated_report_detail' generated_report.report_id %}">Open Report</a>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="report-empty report-empty--compact">
+                <div>
+                    <span class="report-empty__icon" aria-hidden="true">PDF</span>
+                    <strong>No generated reports yet.</strong>
+                    <p>Generate an individual or summary PDF and it will appear here.</p>
+                </div>
+            </div>
+        {% endif %}
+    </section>
 </div>
 {% endblock %}
-

@@ -2,3 +2,4 @@ Django==6.0.4
 psycopg2-binary==2.9.12
 python-decouple==3.8
 Pillow
+reportlab==5.0.1

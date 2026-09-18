@@ -717,10 +717,39 @@ class ProjectImage(models.Model):
 
 class ProjectReport(models.Model):
     """Project report metadata for the normalized ERD."""
+    class ReportType(models.TextChoices):
+        INFRASTRUCTURE_INDIVIDUAL = (
+            'infrastructure_individual',
+            'Infrastructure Individual',
+        )
+        NON_INFRASTRUCTURE_INDIVIDUAL = (
+            'non_infrastructure_individual',
+            'Non-Infrastructure Individual',
+        )
+        INFRASTRUCTURE_SUMMARY = (
+            'infrastructure_summary',
+            'Infrastructure Summary',
+        )
+        NON_INFRASTRUCTURE_SUMMARY = (
+            'non_infrastructure_summary',
+            'Non-Infrastructure Summary',
+        )
+
     report_id = models.BigAutoField(primary_key=True)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='reports')
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='reports',
+        null=True,
+        blank=True,
+    )
     report_name = models.CharField(max_length=255)
-    report_type = models.CharField(max_length=100, blank=True, null=True)
+    report_type = models.CharField(
+        max_length=100,
+        choices=ReportType.choices,
+        blank=True,
+        null=True,
+    )
     file_url = models.URLField(max_length=500, blank=True, null=True)
     notes = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)

@@ -1,14 +1,29 @@
 from copy import deepcopy
+from tempfile import TemporaryDirectory
 
+from django.core.files.storage import default_storage
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from apps.system.models import Project, ProjectRevision, UserRole
+from apps.system.models import (
+    Project,
+    ProjectReport,
+    ProjectRevision,
+    UserRole,
+)
 
 
 class ReportAccessTests(TestCase):
     def setUp(self):
+        self.media_directory = TemporaryDirectory()
+        self.addCleanup(self.media_directory.cleanup)
+        self.media_override = self.settings(
+            MEDIA_ROOT=self.media_directory.name,
+        )
+        self.media_override.enable()
+        self.addCleanup(self.media_override.disable)
+
         self.users = {}
         for department, role in [
             ('admin', 'admin'),
@@ -537,3 +552,151 @@ class ReportAccessTests(TestCase):
             'No disclosed infrastructure projects match these filters.',
         )
 
+    def test_individual_pdf_generation_persists_file_and_project_relation(self):
+        cases = [
+            (
+                ('engineer', 'head'),
+                'reports:infrastructure_project_generate',
+                101,
+                ProjectReport.ReportType.INFRASTRUCTURE_INDIVIDUAL,
+                self.infrastructure_revision.project,
+            ),
+            (
+                ('mayor', 'head'),
+                'reports:non_infrastructure_project_generate',
+                202,
+                ProjectReport.ReportType.NON_INFRASTRUCTURE_INDIVIDUAL,
+                self.non_infrastructure_revision.project,
+            ),
+        ]
+        for assignment, route, project_id, report_type, project in cases:
+            with self.subTest(report_type=report_type):
+                self.client.force_login(self.users[assignment])
+                response = self.client.post(reverse(route, args=[project_id]))
+                generated = ProjectReport.objects.get(report_type=report_type)
+                self.assertRedirects(
+                    response,
+                    reverse(
+                        'reports:generated_report_detail',
+                        args=[generated.report_id],
+                    ),
+                )
+                self.assertEqual(generated.project, project)
+                self.assertTrue(default_storage.exists(generated.file_url))
+                with default_storage.open(generated.file_url, 'rb') as pdf:
+                    content = pdf.read()
+                self.assertTrue(content.startswith(b'%PDF-'))
+                self.assertGreater(len(content), 1000)
+                self.assertNotIn(b'5432100.00', content)
+
+    def test_summary_pdf_generation_persists_without_project_relation(self):
+        cases = [
+            (
+                ('engineer', 'head'),
+                'reports:infrastructure_summary_generate',
+                {'barangay': 'Calabasa'},
+                ProjectReport.ReportType.INFRASTRUCTURE_SUMMARY,
+                b'Barangay Bridge Improvement',
+                b'Completed Farm Road',
+            ),
+            (
+                ('mayor', 'head'),
+                'reports:non_infrastructure_summary_generate',
+                {'category': 'health'},
+                ProjectReport.ReportType.NON_INFRASTRUCTURE_SUMMARY,
+                b'Community Health Day',
+                b'Youth Skills Training',
+            ),
+        ]
+        for assignment, route, filters, report_type, included, excluded in cases:
+            with self.subTest(report_type=report_type):
+                self.client.force_login(self.users[assignment])
+                response = self.client.post(reverse(route), filters)
+                generated = ProjectReport.objects.get(report_type=report_type)
+                self.assertEqual(response.status_code, 302)
+                self.assertIsNone(generated.project)
+                self.assertTrue(default_storage.exists(generated.file_url))
+                with default_storage.open(generated.file_url, 'rb') as pdf:
+                    content = pdf.read()
+                self.assertTrue(content.startswith(b'%PDF-'))
+                self.assertIn(included, content)
+                self.assertNotIn(excluded, content)
+                self.assertNotIn(b'4900000.00', content)
+
+    def test_generation_endpoints_preserve_office_head_permissions(self):
+        routes = [
+            ('reports:infrastructure_project_generate', [101], ('engineer', 'head')),
+            ('reports:infrastructure_summary_generate', [], ('engineer', 'head')),
+            ('reports:non_infrastructure_project_generate', [202], ('mayor', 'head')),
+            ('reports:non_infrastructure_summary_generate', [], ('mayor', 'head')),
+        ]
+        for route, args, allowed_assignment in routes:
+            for assignment, user in self.users.items():
+                with self.subTest(route=route, assignment=assignment):
+                    self.client.force_login(user)
+                    response = self.client.post(reverse(route, args=args))
+                    self.assertEqual(
+                        response.status_code,
+                        302 if assignment == allowed_assignment else 403,
+                    )
+
+    def test_generated_report_view_download_and_print_delivery(self):
+        self.client.force_login(self.users['engineer', 'head'])
+        self.client.post(reverse(
+            'reports:infrastructure_project_generate',
+            args=[101],
+        ))
+        generated = ProjectReport.objects.get()
+        delivery_routes = [
+            ('reports:generated_report_view', 'inline'),
+            ('reports:generated_report_print', 'inline'),
+            ('reports:generated_report_download', 'attachment'),
+        ]
+        for route, disposition in delivery_routes:
+            with self.subTest(route=route):
+                response = self.client.get(reverse(route, args=[generated.report_id]))
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response['Content-Type'], 'application/pdf')
+                self.assertTrue(
+                    response['Content-Disposition'].startswith(disposition),
+                )
+                content = b''.join(response.streaming_content)
+                self.assertTrue(content.startswith(b'%PDF-'))
+
+    def test_generated_report_delivery_rejects_other_roles_and_office(self):
+        self.client.force_login(self.users['engineer', 'head'])
+        self.client.post(reverse(
+            'reports:infrastructure_summary_generate',
+        ))
+        generated = ProjectReport.objects.get()
+        for assignment in [
+            ('mayor', 'head'), ('engineer', 'staff'),
+            ('mayor', 'staff'), ('admin', 'admin'),
+        ]:
+            for route in [
+                'reports:generated_report_detail',
+                'reports:generated_report_view',
+                'reports:generated_report_download',
+                'reports:generated_report_print',
+            ]:
+                with self.subTest(assignment=assignment, route=route):
+                    self.client.force_login(self.users[assignment])
+                    response = self.client.get(reverse(
+                        route,
+                        args=[generated.report_id],
+                    ))
+                    self.assertEqual(response.status_code, 403)
+
+    def test_missing_generated_file_returns_404(self):
+        generated = ProjectReport.objects.create(
+            project=None,
+            report_name='Missing Infrastructure Summary',
+            report_type=ProjectReport.ReportType.INFRASTRUCTURE_SUMMARY,
+            file_url='reports/missing.pdf',
+        )
+        self.client.force_login(self.users['engineer', 'head'])
+        response = self.client.get(reverse(
+            'reports:generated_report_view',
+            args=[generated.report_id],
+        ))
+        self.assertEqual(response.status_code, 404)

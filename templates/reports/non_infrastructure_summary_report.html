@@ -5,7 +5,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
-<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20260918-1">
+<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20260918-2">
 {% endblock %}
 
 {% block content %}
@@ -71,6 +71,17 @@
             <p class="head-section__eyebrow">At a glance</p>
             <h2 id="summary-heading">Summary</h2>
         </div>
+        <form class="report-generate-form" method="post" action="{% url 'reports:non_infrastructure_summary_generate' %}">
+            {% csrf_token %}
+            {% for field in form %}
+                <input type="hidden" name="{{ field.name }}" value="{{ field.value|default_if_none:'' }}">
+            {% endfor %}
+            <div>
+                <strong>Ready to create this report?</strong>
+                <span>The PDF will use the filters and public data shown below.</span>
+            </div>
+            <button class="head-button head-button--primary" type="submit">Generate Summary PDF</button>
+        </form>
         <div class="report-metrics">
             <article class="report-metric">
                 <span class="report-metric__label">Total Programs / Projects</span>
@@ -147,4 +158,3 @@
     {% endif %}
 </div>
 {% endblock %}
-

@@ -1,9 +1,13 @@
 from django.urls import path
 
 from .views import (
+    GeneratedReportDetailView,
+    GeneratedReportFileView,
     ReportDashboardRedirectView,
+    ScopedIndividualReportGenerateView,
     ScopedIndividualProjectReportView,
     ScopedReportDashboardView,
+    ScopedSummaryReportGenerateView,
     ScopedSummaryReportView,
 )
 
@@ -25,9 +29,23 @@ urlpatterns = [
         name='infrastructure_project',
     ),
     path(
+        'infrastructure/individual/<int:project_id>/generate/',
+        ScopedIndividualReportGenerateView.as_view(
+            report_type='infrastructure',
+        ),
+        name='infrastructure_project_generate',
+    ),
+    path(
         'infrastructure/summary/',
         ScopedSummaryReportView.as_view(report_type='infrastructure'),
         name='infrastructure_summary',
+    ),
+    path(
+        'infrastructure/summary/generate/',
+        ScopedSummaryReportGenerateView.as_view(
+            report_type='infrastructure',
+        ),
+        name='infrastructure_summary_generate',
     ),
     path(
         'non-infrastructure/',
@@ -42,9 +60,42 @@ urlpatterns = [
         name='non_infrastructure_project',
     ),
     path(
+        'non-infrastructure/individual/<int:project_id>/generate/',
+        ScopedIndividualReportGenerateView.as_view(
+            report_type='non_infrastructure',
+        ),
+        name='non_infrastructure_project_generate',
+    ),
+    path(
         'non-infrastructure/summary/',
         ScopedSummaryReportView.as_view(report_type='non_infrastructure'),
         name='non_infrastructure_summary',
     ),
+    path(
+        'non-infrastructure/summary/generate/',
+        ScopedSummaryReportGenerateView.as_view(
+            report_type='non_infrastructure',
+        ),
+        name='non_infrastructure_summary_generate',
+    ),
+    path(
+        'generated/<int:report_id>/',
+        GeneratedReportDetailView.as_view(),
+        name='generated_report_detail',
+    ),
+    path(
+        'generated/<int:report_id>/view/',
+        GeneratedReportFileView.as_view(),
+        name='generated_report_view',
+    ),
+    path(
+        'generated/<int:report_id>/print/',
+        GeneratedReportFileView.as_view(),
+        name='generated_report_print',
+    ),
+    path(
+        'generated/<int:report_id>/download/',
+        GeneratedReportFileView.as_view(as_attachment=True),
+        name='generated_report_download',
+    ),
 ]
-
