@@ -330,8 +330,8 @@
 
     <!-- Inspection History Section -->
     <section class="detail-section workflow-history-section">
-        <div class="workflow-section-heading workflow-section-heading--actions">
-            <div><p class="workflow-eyebrow">Field records</p><h3>Inspection History</h3><p>Newest inspections appear first. Observed completion supports review but does not set official physical progress.</p></div>
+        <div class="workflow-section-heading workflow-section-heading--actions ui-list-header">
+            <div><p class="workflow-eyebrow">Field records</p><h3>Inspection History</h3><p>Newest inspections appear first. Observed completion supports review but does not set official physical progress.</p><span class="ui-result-count">{{ inspection_history|length }} inspection{{ inspection_history|length|pluralize }}</span></div>
             {% if can_manage_inspections %}<a class="btn btn-edit workflow-add-button ui-button ui-button--primary" href="{{ inspection_create_url }}">Add Inspection</a>{% endif %}
         </div>
         <div class="inspection-timeline">
@@ -351,10 +351,10 @@
                     {% empty %}<div class="workflow-empty-inline">No supporting evidence attached.</div>{% endfor %}
                     </div>
                 </div>
-                {% if can_manage_inspections %}<footer class="inspection-card__actions"><a href="{% url 'engineering_projects:inspection_update' project_details.pk inspection.pk %}">Edit Inspection</a></footer>{% endif %}
+                {% if can_manage_inspections %}<footer class="inspection-card__actions ui-list-actions"><a class="ui-button ui-button--secondary ui-button--small" href="{% url 'engineering_projects:inspection_update' project_details.pk inspection.pk %}">Edit Inspection</a></footer>{% endif %}
             </article>
         {% empty %}
-            <div class="workflow-empty-state"><strong>No inspections recorded</strong><p>Field inspections and their supporting evidence will appear here.</p>{% if can_manage_inspections %}<a href="{{ inspection_create_url }}">Add the first inspection</a>{% endif %}</div>
+            <div class="workflow-empty-state ui-empty-state"><strong>No inspections recorded</strong><p>Field inspections and their supporting evidence will appear here.</p>{% if can_manage_inspections %}<a class="ui-button ui-button--primary ui-button--small" href="{{ inspection_create_url }}">Add the first inspection</a>{% endif %}</div>
         {% endfor %}
         </div>
     </section>

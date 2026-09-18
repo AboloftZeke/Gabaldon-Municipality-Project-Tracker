@@ -36,10 +36,14 @@
         {% endfor %}
     </nav>
 
+    <div class="ui-list-header">
+        <p class="ui-result-count">Showing {{ revision_rows|length }} of {{ page_obj.paginator.count }} revision{{ page_obj.paginator.count|pluralize }}</p>
+    </div>
+
     {% if revision_rows %}
         <div class="review-list">
             {% for row in revision_rows %}
-                <article class="review-card ui-card ui-card--interactive">
+                <article class="review-card ui-card ui-card--interactive ui-list-row">
                     <div class="review-card__image">
                         {% if row.preview.cover_image_url %}
                             <img src="{{ row.preview.cover_image_url }}" alt="">
@@ -62,9 +66,11 @@
                             <div><dt>Submitted by</dt><dd>{% if row.revision.submitted_by %}{{ row.revision.submitted_by.get_full_name|default:row.revision.submitted_by.username }}{% else %}Unknown{% endif %}</dd></div>
                             <div><dt>Submitted</dt><dd>{{ row.revision.submitted_at|date:"M d, Y g:i A"|default:"Not recorded" }}</dd></div>
                         </dl>
-                        <a href="{% url 'publication_revision_detail' row.revision.pk %}" class="review-primary-link ui-button ui-button--primary ui-button--small">
-                            {% if row.revision.status == 'pending_review' %}Review Submission{% elif row.revision.status == 'approved' and not row.readiness.is_complete %}Complete Operational Information{% elif row.revision.status == 'approved' %}Preview &amp; Publish{% elif row.revision.status == 'published' %}View Published Revision{% elif row.revision.status == 'archived' %}View Historical Revision{% else %}View Revision{% endif %}
-                        </a>
+                        <div class="ui-list-actions">
+                            <a href="{% url 'publication_revision_detail' row.revision.pk %}" class="review-primary-link ui-button ui-button--primary ui-button--small">
+                                {% if row.revision.status == 'pending_review' %}Review Submission{% elif row.revision.status == 'approved' and not row.readiness.is_complete %}Complete Operational Information{% elif row.revision.status == 'approved' %}Preview &amp; Publish{% elif row.revision.status == 'published' %}View Published Revision{% elif row.revision.status == 'archived' %}View Historical Revision{% else %}View Revision{% endif %}
+                            </a>
+                        </div>
                     </div>
                 </article>
             {% endfor %}
@@ -77,7 +83,7 @@
     {% endif %}
 
     {% if is_paginated %}
-        <nav class="review-pagination" aria-label="Pagination">
+        <nav class="review-pagination ui-pagination" aria-label="Pagination">
             {% if page_obj.has_previous %}<a href="?status={{ selected_status }}&page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
             <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
             {% if page_obj.has_next %}<a href="?status={{ selected_status }}&page={{ page_obj.next_page_number }}">Next</a>{% endif %}

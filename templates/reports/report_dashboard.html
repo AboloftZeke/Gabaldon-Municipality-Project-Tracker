@@ -60,21 +60,24 @@
     </section>
 
     <section class="head-section" aria-labelledby="generated-reports-heading">
-        <div class="head-section__heading">
-            <p class="head-section__eyebrow">Saved PDFs</p>
-            <h2 id="generated-reports-heading">Recently Generated Reports</h2>
-            <p>Open, download, or print reports previously generated for your office.</p>
+        <div class="head-section__heading ui-list-header">
+            <div>
+                <p class="head-section__eyebrow">Saved PDFs</p>
+                <h2 id="generated-reports-heading">Recently Generated Reports</h2>
+                <p>Open, download, or print reports previously generated for your office.</p>
+            </div>
+            <p class="ui-result-count">{{ generated_reports|length }} recent report{{ generated_reports|length|pluralize }}</p>
         </div>
         {% if generated_reports %}
             <div class="report-file-list">
                 {% for generated_report in generated_reports %}
-                    <article class="report-file-row">
+                    <article class="report-file-row ui-list-row">
                         <div class="report-file-row__icon" aria-hidden="true">PDF</div>
                         <div>
                             <h3>{{ generated_report.report_name }}</h3>
                             <p>{{ generated_report.get_report_type_display }} · {{ generated_report.created_at|date:"M j, Y, g:i A" }}</p>
                         </div>
-                        <a class="head-button head-button--secondary ui-button ui-button--secondary ui-button--small" href="{% url 'reports:generated_report_detail' generated_report.report_id %}">Open Report</a>
+                        <div class="ui-list-actions"><a class="head-button head-button--secondary ui-button ui-button--secondary ui-button--small" href="{% url 'reports:generated_report_detail' generated_report.report_id %}">Open Report</a></div>
                     </article>
                 {% endfor %}
             </div>
