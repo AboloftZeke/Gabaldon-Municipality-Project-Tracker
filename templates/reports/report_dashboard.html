@@ -30,11 +30,19 @@
         <div class="attention-grid">
             <article class="attention-card">
                 <div class="attention-card__topline">
-                    <span class="attention-badge attention-badge--update">Coming in Phase 2</span>
+                    <span class="attention-badge attention-badge--ready">Available</span>
                 </div>
                 <h4>Individual Project Report</h4>
-                <p>Request a report for one {{ report_type_label|lower }} project.</p>
-                <span class="head-button head-button--secondary" aria-disabled="true">Coming in Phase 2</span>
+                <p>Select one currently disclosed {{ report_type_label|lower }} project to open its basic report preview.</p>
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.project_id.label_tag }}
+                    {{ form.project_id }}
+                    {% if form.project_id.errors %}
+                        <div class="errorlist">{{ form.project_id.errors }}</div>
+                    {% endif %}
+                    <button class="head-button head-button--primary" type="submit">View Individual Report</button>
+                </form>
             </article>
 
             <article class="attention-card">
@@ -49,3 +57,4 @@
     </section>
 </div>
 {% endblock %}
+

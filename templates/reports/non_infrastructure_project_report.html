@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ report.title }} — Individual Non-Infrastructure Project Report{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
+{% endblock %}
+
+{% block content %}
+<div class="head-dashboard" data-report-scope="non_infrastructure">
+    <header class="head-dashboard__header">
+        <div>
+            <p class="head-dashboard__eyebrow">Individual Non-Infrastructure Project Report</p>
+            <h1>{{ report.title }}</h1>
+            <p>{{ report.code }} · Current published revision {{ report.revision.revision_number }}</p>
+        </div>
+    </header>
+
+    <section class="head-section">
+        <div class="head-section__heading head-section__heading--with-action">
+            <div><h2>Project Information</h2></div>
+            <a class="head-button head-button--secondary" href="{% url 'reports:non_infrastructure' %}">Back to Reports</a>
+        </div>
+        <dl>
+            <dt>Category</dt><dd>{{ report.category.name|default:"N/A" }}</dd>
+            <dt>Status</dt><dd>{{ report.status_label|default:"N/A" }}</dd>
+            <dt>Proponent</dt><dd>{{ report.proponent|default:"N/A" }}</dd>
+            <dt>Beneficiaries</dt><dd>{{ report.beneficiaries|default_if_none:"N/A" }}</dd>
+            <dt>Published By</dt><dd>{{ report.created_by_name|default:"N/A" }}</dd>
+            <dt>Last Updated</dt><dd>{{ report.updated_at|date:"F j, Y"|default:"N/A" }}</dd>
+        </dl>
+    </section>
+
+    <section class="head-section">
+        <div class="head-section__heading"><h2>Location and Venue</h2></div>
+        <dl>
+            <dt>Venue</dt><dd>{{ report.venue_name|default:"N/A" }}</dd>
+            <dt>Street</dt><dd>{{ report.address.street|default:"N/A" }}</dd>
+            <dt>Barangay</dt><dd>{{ report.address.barangay|default:"N/A" }}</dd>
+            <dt>Municipality</dt><dd>{{ report.address.municipality|default:"N/A" }}</dd>
+            <dt>Province</dt><dd>{{ report.address.province|default:"N/A" }}</dd>
+        </dl>
+    </section>
+
+    <section class="head-section">
+        <div class="head-section__heading"><h2>Schedule</h2></div>
+        <dl>
+            <dt>Event or Service Date</dt><dd>{{ report.event_date|date:"F j, Y"|default:"N/A" }}</dd>
+            <dt>Start Time</dt><dd>{{ report.start_time|time:"g:i A"|default:"N/A" }}</dd>
+            <dt>End Time</dt><dd>{{ report.end_time|time:"g:i A"|default:"N/A" }}</dd>
+        </dl>
+    </section>
+
+    <section class="head-section">
+        <div class="head-section__heading"><h2>Description</h2></div>
+        <p>{{ report.description|default:"No description provided." }}</p>
+    </section>
+
+    {% if report.images %}
+    <section class="head-section">
+        <div class="head-section__heading"><h2>Disclosed Project Images</h2></div>
+        {% for image in report.images %}
+            <img src="{{ image.image_url }}" alt="{{ report.title }} image {{ forloop.counter }}" width="240">
+        {% endfor %}
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+

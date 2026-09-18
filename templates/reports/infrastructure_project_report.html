@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ report.title }} — Individual Infrastructure Project Report{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
+{% endblock %}
+
+{% block content %}
+<div class="head-dashboard" data-report-scope="infrastructure">
+    <header class="head-dashboard__header">
+        <div>
+            <p class="head-dashboard__eyebrow">Individual Infrastructure Project Report</p>
+            <h1>{{ report.title }}</h1>
+            <p>{{ report.code }} · Current published revision {{ report.revision.revision_number }}</p>
+        </div>
+    </header>
+
+    <section class="head-section">
+        <div class="head-section__heading head-section__heading--with-action">
+            <div><h2>Project Information</h2></div>
+            <a class="head-button head-button--secondary" href="{% url 'reports:infrastructure' %}">Back to Reports</a>
+        </div>
+        <dl>
+            <dt>Category</dt><dd>{{ report.category.name|default:"N/A" }}</dd>
+            <dt>Status</dt><dd>{{ report.award_status_label|default:"N/A" }}</dd>
+            <dt>Implementing Office</dt><dd>{{ report.implementing_office.name|default:"N/A" }}</dd>
+            <dt>Published By</dt><dd>{{ report.created_by_name|default:"N/A" }}</dd>
+            <dt>Last Updated</dt><dd>{{ report.updated_at|date:"F j, Y"|default:"N/A" }}</dd>
+        </dl>
+    </section>
+
+    <section class="head-section">
+        <div class="head-section__heading"><h2>Location</h2></div>
+        <dl>
+            <dt>Street</dt><dd>{{ report.address.street|default:"N/A" }}</dd>
+            <dt>Barangay</dt><dd>{{ report.address.barangay|default:"N/A" }}</dd>
+            <dt>Municipality</dt><dd>{{ report.address.municipality|default:"N/A" }}</dd>
+            <dt>Province</dt><dd>{{ report.address.province|default:"N/A" }}</dd>
+        </dl>
+    </section>
+
+    <section class="head-section">
+        <div class="head-section__heading"><h2>Procurement and Financial Information</h2></div>
+        <dl>
+            <dt>Contractor</dt><dd>{{ report.contractor.name|default:"N/A" }}</dd>
+            <dt>Procurement Method</dt><dd>{{ report.procurement_method_label|default:"N/A" }}</dd>
+            <dt>Source of Fund</dt><dd>{{ report.financial.fund_source.name|default:"N/A" }}</dd>
+            <dt>Approved Budget for the Contract</dt><dd>{% if report.financial.approved_budget is not None %}PHP {{ report.financial.approved_budget|floatformat:2 }}{% else %}N/A{% endif %}</dd>
+            <dt>Contract Price</dt><dd>{% if report.financial.contract_price is not None %}PHP {{ report.financial.contract_price|floatformat:2 }}{% else %}N/A{% endif %}</dd>
+        </dl>
+    </section>
+
+    <section class="head-section">
+        <div class="head-section__heading"><h2>Schedule and Progress</h2></div>
+        <dl>
+            <dt>Planned Start</dt><dd>{{ report.planned_start_date|date:"F j, Y"|default:"N/A" }}</dd>
+            <dt>Planned End</dt><dd>{{ report.planned_end_date|date:"F j, Y"|default:"N/A" }}</dd>
+            <dt>Actual Start</dt><dd>{{ report.schedule.actual_start_date|date:"F j, Y"|default:"N/A" }}</dd>
+            <dt>Actual Completion</dt><dd>{{ report.schedule.actual_completion_date|date:"F j, Y"|default:"N/A" }}</dd>
+            <dt>Cost Progress</dt><dd>{% if report.cost_progress_percentage is not None %}{{ report.cost_progress_percentage|floatformat:1 }}%{% else %}N/A{% endif %}</dd>
+            <dt>Physical Progress</dt><dd>{% if report.physical_progress_percentage is not None %}{{ report.physical_progress_percentage|floatformat:1 }}%{% else %}N/A{% endif %}</dd>
+        </dl>
+    </section>
+
+    <section class="head-section">
+        <div class="head-section__heading"><h2>Description</h2></div>
+        <p>{{ report.description|default:"No description provided." }}</p>
+    </section>
+
+    {% if report.inspection %}
+    <section class="head-section">
+        <div class="head-section__heading"><h2>Latest Disclosed Inspection</h2></div>
+        <dl>
+            <dt>Inspection Date</dt><dd>{{ report.inspection.inspection_date|date:"F j, Y"|default:"N/A" }}</dd>
+            <dt>Completion</dt><dd>{% if report.inspection.completion_percentage is not None %}{{ report.inspection.completion_percentage|floatformat:1 }}%{% else %}N/A{% endif %}</dd>
+            <dt>Findings</dt><dd>{{ report.inspection.findings|default:"N/A" }}</dd>
+            <dt>Remarks</dt><dd>{{ report.inspection.remarks|default:"N/A" }}</dd>
+            <dt>Inspected By</dt><dd>{{ report.inspection.inspected_by.display_name|default:"N/A" }}</dd>
+        </dl>
+    </section>
+    {% endif %}
+
+    {% if report.images %}
+    <section class="head-section">
+        <div class="head-section__heading"><h2>Disclosed Project Images</h2></div>
+        {% for image in report.images %}
+            <img src="{{ image.image_url }}" alt="{{ report.title }} image {{ forloop.counter }}" width="240">
+        {% endfor %}
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+

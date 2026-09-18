@@ -1,6 +1,10 @@
 from django.urls import path
 
-from .views import ReportDashboardRedirectView, ScopedReportDashboardView
+from .views import (
+    ReportDashboardRedirectView,
+    ScopedIndividualProjectReportView,
+    ScopedReportDashboardView,
+)
 
 
 app_name = 'reports'
@@ -13,8 +17,23 @@ urlpatterns = [
         name='infrastructure',
     ),
     path(
+        'infrastructure/individual/<int:project_id>/',
+        ScopedIndividualProjectReportView.as_view(
+            report_type='infrastructure',
+        ),
+        name='infrastructure_project',
+    ),
+    path(
         'non-infrastructure/',
         ScopedReportDashboardView.as_view(report_type='non_infrastructure'),
         name='non_infrastructure',
     ),
+    path(
+        'non-infrastructure/individual/<int:project_id>/',
+        ScopedIndividualProjectReportView.as_view(
+            report_type='non_infrastructure',
+        ),
+        name='non_infrastructure_project',
+    ),
 ]
+
