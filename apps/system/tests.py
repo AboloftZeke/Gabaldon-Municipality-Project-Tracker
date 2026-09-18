@@ -1182,7 +1182,7 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             registry_response,
             'label="Infrastructure Categories"',
         )
-        self.assertContains(
+        self.assertNotContains(
             registry_response,
             'label="Non-Infrastructure Categories"',
         )
@@ -1190,6 +1190,60 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             registry_response,
             'data-project-category-type="infra"',
         )
+
+    def test_view_all_registries_are_isolated_by_project_type(self):
+        noninfra_project = Project.objects.create(
+            project_type='non_infrastructure',
+            created_by_user=self.user,
+            updated_by_user=self.user,
+        )
+        noninfra_category = NonInfrastructureCategory.objects.create(
+            type_code='community-test',
+            type_name='Community Test',
+        )
+        NonInfrastructureProject.objects.create(
+            project=noninfra_project,
+            title='Published Community Program',
+            category=noninfra_category,
+            status='planned',
+        )
+        publish_current_snapshot(noninfra_project)
+
+        infrastructure = self.client.get(
+            reverse('public_dashboard'),
+            {'type': 'infra'},
+        )
+        noninfrastructure = self.client.get(
+            reverse('public_dashboard'),
+            {'type': 'noninfra'},
+        )
+
+        self.assertEqual(
+            {row['category'] for row in infrastructure.context['project_rows']},
+            {'infra'},
+        )
+        self.assertContains(infrastructure, 'data-project-type="infra"')
+        self.assertContains(infrastructure, 'label="Infrastructure Categories"')
+        self.assertNotContains(infrastructure, 'label="Non-Infrastructure Categories"')
+        self.assertNotContains(infrastructure, 'class="tab-buttons"')
+        self.assertNotContains(infrastructure, 'Published Community Program')
+
+        self.assertEqual(
+            {row['category'] for row in noninfrastructure.context['project_rows']},
+            {'noninfra'},
+        )
+        self.assertContains(noninfrastructure, 'data-project-type="noninfra"')
+        self.assertContains(noninfrastructure, 'label="Non-Infrastructure Categories"')
+        self.assertNotContains(noninfrastructure, 'label="Infrastructure Categories"')
+        self.assertNotContains(noninfrastructure, 'class="tab-buttons"')
+        self.assertNotContains(noninfrastructure, 'Normalized Road Project')
+
+        for response in (infrastructure, noninfrastructure):
+            self.assertContains(response, 'data-dashboard-view="detail"')
+            self.assertContains(response, 'data-dashboard-view="card"')
+            self.assertContains(response, 'id="project-search"')
+            self.assertContains(response, 'id="location-filter"')
+            self.assertContains(response, 'class="status-buttons"')
 
     def test_public_infrastructure_detail_is_available_without_login(self):
         detail_url = reverse(

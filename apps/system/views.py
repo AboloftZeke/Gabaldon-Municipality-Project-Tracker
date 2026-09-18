@@ -337,6 +337,11 @@ class PublicDashboardView(TemplateView):
         public_project_type = self.request.GET.get('type', '')
         if public_project_type not in {'infra', 'noninfra'}:
             public_project_type = ''
+        registry_rows = rows
+        if public_project_type == 'infra':
+            registry_rows = infrastructure_rows
+        elif public_project_type == 'noninfra':
+            registry_rows = noninfrastructure_rows
 
         context.update({
             'total_projects': total_projects,
@@ -347,7 +352,7 @@ class PublicDashboardView(TemplateView):
             'planned_projects': noninfra_planned,
             'portfolio_progress': portfolio_progress,
             'total_budget': total_budget,
-            'project_rows': rows,
+            'project_rows': registry_rows,
             'recent_rows': rows[:8],
             'infrastructure_preview_rows': infrastructure_rows[:6],
             'noninfrastructure_preview_rows': noninfrastructure_rows[:6],

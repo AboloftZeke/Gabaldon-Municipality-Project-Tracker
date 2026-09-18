@@ -107,14 +107,15 @@
     </section>
 
     {% if show_project_registry %}
-    <section class="panel" id="project-registry" data-public-registry data-initial-category="{{ public_project_type }}" aria-labelledby="registry-heading">
+    <a class="public-registry-back ui-button ui-button--subtle ui-button--small" href="{% url 'public_dashboard' %}">← Back to Public Dashboard</a>
+    <section class="panel" id="project-registry" data-public-registry data-project-type="{{ public_project_type }}" aria-labelledby="registry-heading">
       <div class="panel-head top-copy">
         <div>
           <p class="section-kicker">Public Project Registry</p>
           <h2 id="registry-heading">{% if public_project_type == 'infra' %}Infrastructure Projects{% else %}Non-Infrastructure Projects{% endif %}</h2>
           <p>Browse all currently published projects. Use search, filters, or the card/table view switcher to explore the records.</p>
         </div>
-        <div class="live-badge"><span id="visible-count">{% if public_project_type == 'infra' %}{{ infra_total }}{% else %}{{ noninfra_total }}{% endif %}</span> records shown</div>
+        <div class="live-badge"><span id="visible-count">{{ project_rows|length }}</span> records shown</div>
       </div>
 
       <div class="toolbar" role="search">
@@ -138,25 +139,22 @@
         </div>
 
         <div class="toolbar-filter-row">
-        <div class="tab-buttons">
-          <button type="button" class="tab-btn" data-category="all">All Projects</button>
-          <button type="button" class="tab-btn{% if public_project_type == 'infra' %} is-active{% endif %}" data-category="infra">Infrastructure</button>
-          <button type="button" class="tab-btn{% if public_project_type == 'noninfra' %} is-active{% endif %}" data-category="noninfra">Non-Infrastructure</button>
-        </div>
-
         <div class="filter-group">
           <select id="category-filter" aria-label="Filter by project category">
-            <option value="all">All Categories</option>
+            <option value="all">All {% if public_project_type == 'infra' %}Infrastructure{% else %}Non-Infrastructure{% endif %} Categories</option>
+            {% if public_project_type == 'infra' %}
             <optgroup label="Infrastructure Categories" data-project-category-type="infra">
               {% for code, label in infrastructure_categories %}
               <option value="{{ code }}">{{ label }}</option>
               {% endfor %}
             </optgroup>
+            {% else %}
             <optgroup label="Non-Infrastructure Categories" data-project-category-type="noninfra">
               {% for code, label in noninfrastructure_categories %}
               <option value="{{ code }}">{{ label }}</option>
               {% endfor %}
             </optgroup>
+            {% endif %}
           </select>
 
           <select id="location-filter" aria-label="Filter by location">
