@@ -40,7 +40,7 @@ class HeadOperationalUpdateTests(TestCase):
         fixture = InfrastructureProjectFormTests()
         fixture.setUp()
         self.infrastructure = fixture.create_project()
-        self.infrastructure.award_status = 'awarded'
+        self.infrastructure.award_status = 'pre_construction'
         self.infrastructure.physical_progress_percentage = Decimal('25')
         self.infrastructure.cost_progress_percentage = Decimal('20')
         self.infrastructure.planned_start_date = date.today() - timedelta(days=5)
@@ -136,7 +136,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertTrue(self.public_revision.is_current_public)
         progress_update = InfrastructureProgressUpdate.objects.get()
         self.assertEqual(progress_update.infrastructure, self.infrastructure)
-        self.assertEqual(progress_update.previous_official_status, 'awarded')
+        self.assertEqual(progress_update.previous_official_status, 'pre_construction')
         self.assertEqual(progress_update.new_official_status, 'completed')
         self.assertEqual(
             progress_update.previous_physical_progress,
@@ -160,7 +160,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.client.force_login(self.users['engineer', 'head'])
 
         response = self.client.post(self.infra_url(), {
-            'award_status': 'awarded',
+            'award_status': 'pre_construction',
             'physical_progress_percentage': '25',
             'cost_progress_percentage': '35',
             'inspection_completion_percentage': '45',
@@ -260,7 +260,7 @@ class HeadOperationalUpdateTests(TestCase):
         )
         self.assertFalse(InfrastructureProgressUpdate.objects.exists())
         self.infrastructure.refresh_from_db()
-        self.assertEqual(self.infrastructure.award_status, 'awarded')
+        self.assertEqual(self.infrastructure.award_status, 'pre_construction')
         self.assertEqual(
             self.infrastructure.physical_progress_percentage,
             Decimal('25'),
@@ -274,7 +274,7 @@ class HeadOperationalUpdateTests(TestCase):
             record_progress_update(
                 self.infrastructure,
                 self.users['engineer', 'head'],
-                previous_status='awarded',
+                previous_status='pre_construction',
                 previous_physical_progress=Decimal('25'),
                 supporting_inspections=[other_inspection],
             )
@@ -283,8 +283,8 @@ class HeadOperationalUpdateTests(TestCase):
     def test_progress_history_is_read_only_for_staff_and_head(self):
         older = InfrastructureProgressUpdate.objects.create(
             infrastructure=self.infrastructure,
-            previous_official_status='ongoing_bidding',
-            new_official_status='awarded',
+            previous_official_status='pre_construction',
+            new_official_status='pre_construction',
             previous_physical_progress=Decimal('10'),
             new_physical_progress=Decimal('25'),
             head_remarks='Earlier decision',
@@ -292,7 +292,7 @@ class HeadOperationalUpdateTests(TestCase):
         )
         newest = InfrastructureProgressUpdate.objects.create(
             infrastructure=self.infrastructure,
-            previous_official_status='awarded',
+            previous_official_status='pre_construction',
             new_official_status='completed',
             previous_physical_progress=Decimal('25'),
             new_physical_progress=Decimal('100'),
@@ -413,7 +413,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.infrastructure.refresh_from_db()
         self.inspection.refresh_from_db()
         self.assertEqual(self.infrastructure.title, 'Changed by Engineering Staff')
-        self.assertEqual(self.infrastructure.award_status, 'awarded')
+        self.assertEqual(self.infrastructure.award_status, 'pre_construction')
         self.assertEqual(self.infrastructure.physical_progress_percentage, Decimal('25'))
         self.assertEqual(self.infrastructure.cost_progress_percentage, Decimal('20'))
         self.assertEqual(self.inspection.completion_percentage, Decimal('30'))
@@ -448,7 +448,7 @@ class HeadOperationalUpdateTests(TestCase):
         before = self.infrastructure.physical_progress_percentage
         for value in ['-0.01', '100.01']:
             response = self.client.post(self.infra_url(), {
-                'award_status': 'awarded',
+                'award_status': 'pre_construction',
                 'physical_progress_percentage': value,
                 'cost_progress_percentage': value,
                 'inspection_completion_percentage': value,

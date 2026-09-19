@@ -55,7 +55,7 @@ class PublicationOperationalUITests(TestCase):
         self.infrastructure = InfrastructureProject.objects.create(
             project=infrastructure_base,
             title='Municipal Hall Rehabilitation',
-            award_status='awarded',
+            award_status='pre_construction',
             planned_start_date=date.today() - timedelta(days=5),
             planned_end_date=date.today() + timedelta(days=5),
         )
@@ -161,7 +161,7 @@ class PublicationOperationalUITests(TestCase):
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
         ), {
-            'award_status': 'awarded',
+            'award_status': 'pre_construction',
             'physical_progress_percentage': '45',
             'cost_progress_percentage': '30',
             'inspection_completion_percentage': '50',
@@ -227,7 +227,7 @@ class PublicationOperationalUITests(TestCase):
         self.assertNotContains(response, 'name="calculated_cost_progress"')
 
         response = self.client.post(operational_url, {
-            'award_status': 'awarded',
+            'award_status': 'pre_construction',
             'physical_progress_percentage': '45',
             'cost_progress_percentage': '',
             'inspection_completion_percentage': '50',

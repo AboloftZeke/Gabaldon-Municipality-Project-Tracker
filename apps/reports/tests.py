@@ -125,7 +125,7 @@ class ReportAccessTests(TestCase):
                 },
                 'procurement_method': 'competitive_bidding',
                 'procurement_method_label': 'Competitive Bidding / Public Bidding',
-                'award_status': 'awarded', 'award_status_label': 'Awarded',
+                'award_status': 'pre_construction', 'award_status_label': 'Awarded',
                 'planned_start_date': '2026-02-01',
                 'planned_end_date': '2026-10-31',
                 'cost_progress_percentage': '48.50',
@@ -467,7 +467,7 @@ class ReportAccessTests(TestCase):
             {
                 'barangay': 'Calabasa',
                 'category': 'bridge',
-                'status': 'awarded',
+                'status': 'pre_construction',
                 'date_from': '2026-01-01',
                 'date_to': '2026-12-31',
             },

@@ -253,7 +253,7 @@ def build_individual_report_pdf(report_type, report):
     if report_type == 'infrastructure':
         _section(story, 'Project Information', [
             ('Category', report['category'].get('name')),
-            ('Status', report['award_status_label']),
+            ('Official Status', report['award_status_label']),
             ('Implementing Office', report['implementing_office'].get('name')),
             ('Published By', report['created_by_name']),
             ('Last Updated', report['updated_at']),

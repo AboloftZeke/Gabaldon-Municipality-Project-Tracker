@@ -21,9 +21,17 @@
   };
 
   const STATUS_COLORS = {
-    completed: "#2ecc71",
-    ongoing: "#3498db",
-    planned: "#f1c40f",
+    not_yet_started: "#64748b",
+    pre_construction: "#2563eb",
+    ongoing: "#d97706",
+    on_hold: "#b7791f",
+    suspended: "#c2410c",
+    completed: "#15803d",
+    for_inspection: "#7e22ce",
+    for_turnover: "#0f766e",
+    turned_over: "#166534",
+    cancelled: "#b91c1c",
+    planned: "#64748b",
     delayed: "#e74c3c",
     unknown: "#95a5a6",
   };

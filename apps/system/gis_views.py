@@ -98,14 +98,17 @@ def static_layer_geojson(request, layer_name):
 
 def _status_color_key(status):
     value = (status or "").strip().lower()
-    if value in ("completed", "done"):
-        return "completed"
-    if value in ("ongoing", "in progress", "in_progress", "ongoing_bidding", "awarded"):
-        return "ongoing"
+    official_statuses = {
+        "not_yet_started", "pre_construction", "ongoing", "on_hold",
+        "suspended", "completed", "for_inspection", "for_turnover",
+        "turned_over", "cancelled",
+    }
+    if value in official_statuses:
+        return value
     if value in ("planned", "proposed", "pending", "planning"):
         return "planned"
-    if value in ("delayed", "suspended", "on hold", "on_hold", "rebid", "cancelled"):
-        return "delayed"
+    if value in ("in progress", "in_progress"):
+        return "ongoing"
     return "unknown"
 
 
@@ -130,7 +133,7 @@ def projects_geojson(request):
         if not address or address.get("latitude") is None or address.get("longitude") is None:
             continue
 
-        status_label = infra["award_status_label"] or "Planned"
+        status_label = infra["award_status_label"] or "Not Yet Started"
         status_key = _status_color_key(status_label)
         office_name = infra["implementing_office"].get("name") or ""
         financial = infra["financial"]

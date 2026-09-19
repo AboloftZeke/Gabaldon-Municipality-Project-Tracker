@@ -52,7 +52,7 @@
                             <div class="project-category">
                                 {{ project.category|default:"Uncategorized" }}
                             </div>
-                            <div class="project-status status-{{ project.award_status }} ui-badge ui-table__status {% if project.award_status == 'completed' or project.award_status == 'awarded' %}ui-badge--success{% elif project.award_status == 'cancelled' %}ui-badge--danger{% elif project.award_status == 'rebid' %}ui-badge--warning{% else %}ui-badge--info{% endif %}">
+                            <div class="project-status status-{{ project.award_status }} ui-badge ui-table__status">
                                 {{ project.get_award_status_display|default:"Status not specified" }}
                             </div>
                             <div class="publication-card-state">

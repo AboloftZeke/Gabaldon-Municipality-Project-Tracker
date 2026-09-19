@@ -59,10 +59,7 @@ def _location_key(value):
 
 
 def _status_key(value):
-    return {
-        'ongoing_bidding': 'ongoing',
-        'awarded': 'ongoing',
-    }.get(value, value or 'planned')
+    return value or 'not_yet_started'
 
 
 def _creator_name(snapshot):
@@ -121,7 +118,7 @@ def infrastructure_public_data(revision):
         ),
         'award_status': infrastructure.get('award_status') or '',
         'award_status_label': (
-            infrastructure.get('award_status_label') or 'Planned'
+            infrastructure.get('award_status_label') or 'Not Yet Started'
         ),
         'planned_start_date': _date(
             infrastructure.get('planned_start_date'),

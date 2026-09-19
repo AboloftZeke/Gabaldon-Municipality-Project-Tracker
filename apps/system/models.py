@@ -358,13 +358,21 @@ class InfrastructureProject(models.Model):
         ('force_account', 'Force Account'),
     ]
 
-    AWARD_STATUS_CHOICES = [
-        ('awarded', 'Awarded'),
-        ('ongoing_bidding', 'Ongoing Bidding'),
-        ('cancelled', 'Cancelled'),
-        ('rebid', 'Re-bid'),
+    OFFICIAL_STATUS_CHOICES = [
+        ('not_yet_started', 'Not Yet Started'),
+        ('pre_construction', 'Pre-Construction'),
+        ('ongoing', 'Ongoing'),
+        ('on_hold', 'On Hold'),
+        ('suspended', 'Suspended'),
         ('completed', 'Completed'),
+        ('for_inspection', 'For Inspection'),
+        ('for_turnover', 'For Turnover'),
+        ('turned_over', 'Turned Over'),
+        ('cancelled', 'Cancelled'),
     ]
+
+    # The database column retains its legacy name for schema compatibility.
+    AWARD_STATUS_CHOICES = OFFICIAL_STATUS_CHOICES
 
     infrastructure_id = models.BigAutoField(primary_key=True)
     project = models.OneToOneField(
@@ -411,7 +419,7 @@ class InfrastructureProject(models.Model):
     )
     award_status = models.CharField(
         max_length=50,
-        choices=AWARD_STATUS_CHOICES,
+        choices=OFFICIAL_STATUS_CHOICES,
         null=True,
         blank=True,
     )
@@ -442,13 +450,13 @@ class InfrastructureProgressUpdate(models.Model):
     )
     previous_official_status = models.CharField(
         max_length=50,
-        choices=InfrastructureProject.AWARD_STATUS_CHOICES,
+        choices=InfrastructureProject.OFFICIAL_STATUS_CHOICES,
         blank=True,
         default='',
     )
     new_official_status = models.CharField(
         max_length=50,
-        choices=InfrastructureProject.AWARD_STATUS_CHOICES,
+        choices=InfrastructureProject.OFFICIAL_STATUS_CHOICES,
         blank=True,
         default='',
     )

@@ -47,7 +47,7 @@
         </div>
       </div>
       <div class="public-detail__summary" aria-label="Project summary">
-        <div class="summary-item"><span>Status</span><strong>{{ public_project.award_status_label|default:"N/A" }}</strong></div>
+        <div class="summary-item"><span>Official Status</span><strong>{{ public_project.award_status_label|default:"N/A" }}</strong></div>
         <div class="summary-item"><span>Approved Budget</span><strong>{% if financial.approved_budget is not None %}P{{ financial.approved_budget|floatformat:2 }}{% else %}N/A{% endif %}</strong></div>
         <div class="summary-item"><span>Physical Progress</span><strong>{% if public_project.physical_progress_percentage is not None %}{{ public_project.physical_progress_percentage|floatformat:1 }}%{% else %}N/A{% endif %}</strong></div>
         <div class="summary-item"><span>Target Completion</span><strong>{{ public_project.planned_end_date|date:"F j, Y"|default:"N/A" }}</strong></div>
