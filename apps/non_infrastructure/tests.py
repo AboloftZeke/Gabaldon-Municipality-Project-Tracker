@@ -87,7 +87,10 @@ class NonInfrastructureProjectFormTests(TestCase):
             self.assertIn(f'data-wizard-step="{step}"', content)
         self.assertIn('Review &amp; Save', content)
         self.assertIn('data-wizard-back', content)
-        self.assertIn('data-wizard-next', content)
+        self.assertIn(
+            '<button type="button" class="btn btn-next ui-button ui-button--primary" data-wizard-next>Next</button>',
+            content,
+        )
         self.assertIn('data-wizard-submit', content)
         self.assertIn('js/templates/projects/project_form.js', content)
 
@@ -215,6 +218,40 @@ class NonInfrastructureProjectFormTests(TestCase):
             form.errors['end_time'],
             ['End time must be later than the start time.'],
         )
+
+    def test_program_is_valid_without_event_schedule_or_venue(self):
+        form = NonInfrastructureProjectForm(data={
+            'title': 'Educational Assistance Program',
+            'project_type': 'PROGRAM',
+            'description': 'Assistance for qualified students of Gabaldon.',
+            'category': str(self.category.non_infrastructure_category_id),
+            'proponent': "Mayor's Office",
+            'target_beneficiaries': 'Qualified students of Gabaldon',
+            'beneficiaries': '300',
+            'implementation_start_date': '2026-10-01',
+            'implementation_end_date': '2026-12-15',
+            'barangay': 'bagting',
+        })
+
+        self.assertTrue(form.is_valid(), form.errors)
+        project = form.save(user=self.user)
+        self.assertEqual(project.project_type, 'PROGRAM')
+        self.assertIsNone(project.event_date)
+        self.assertEqual(project.target_beneficiaries, 'Qualified students of Gabaldon')
+
+    def test_event_requires_its_schedule_and_venue_on_the_server(self):
+        form = NonInfrastructureProjectForm(data={
+            'title': 'Community Event',
+            'project_type': 'EVENT',
+            'description': 'An event record.',
+            'category': str(self.category.non_infrastructure_category_id),
+            'proponent': "Mayor's Office",
+            'barangay': 'bagting',
+        })
+
+        self.assertFalse(form.is_valid())
+        for field_name in ('event_date', 'start_time', 'end_time', 'venue_name'):
+            self.assertIn(field_name, form.errors)
 
     def test_form_updates_existing_project_and_images(self):
         proj = Project.objects.create(project_type='non_infrastructure', created_by_user=self.user, updated_by_user=self.user)

@@ -126,17 +126,18 @@
         <div class="report-table-wrap" tabindex="0" role="region" aria-label="Non-infrastructure project summary table">
             <table class="report-table">
                 <thead>
-                    <tr><th>Code</th><th>Title</th><th>Category</th><th>Status</th><th>Barangay / Venue</th><th>Event or Service Date</th><th>Proponent</th><th>Beneficiaries</th></tr>
+                    <tr><th>Code</th><th>Title</th><th>Project Type</th><th>Category</th><th>Status</th><th>Barangay / Venue</th><th>Implementation / Event Date</th><th>Proponent</th><th>Beneficiaries</th></tr>
                 </thead>
                 <tbody>
                 {% for project in summary.rows %}
                     <tr>
                         <td>{{ project.code }}</td>
                         <td class="report-table__title">{{ project.title }}</td>
+                        <td>{{ project.project_type_label }}</td>
                         <td>{{ project.category.name|default:"N/A" }}</td>
                         <td>{{ project.status_label|default:"N/A" }}</td>
                         <td>{{ project.address.barangay|default:project.venue_name|default:"N/A" }}</td>
-                        <td>{{ project.event_date|date:"M j, Y"|default:"N/A" }}</td>
+                        <td>{{ project.report_date|date:"M j, Y"|default:"N/A" }}</td>
                         <td>{{ project.proponent|default:"N/A" }}</td>
                         <td class="report-table__number">{{ project.beneficiaries|default_if_none:"N/A" }}</td>
                     </tr>

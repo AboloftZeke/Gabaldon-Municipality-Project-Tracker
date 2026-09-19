@@ -38,7 +38,7 @@
         </div>
         <div class="public-detail__hero-overlay"></div>
         <div class="public-detail__heading-content">
-          <p class="public-detail__eyebrow">Public Non-Infrastructure Program · {{ project_code }}</p>
+          <p class="public-detail__eyebrow">Public {{ public_project.project_type_label }} · {{ project_code }}</p>
           <h1>{{ public_project.title }}</h1>
           <p>{{ project_category|default:"Uncategorized" }}</p>
         </div>
@@ -46,8 +46,9 @@
       <div class="public-detail__summary" aria-label="Program summary">
         <div class="summary-item"><span>Status</span><strong>{{ public_project.status_label|default:"N/A" }}</strong></div>
         <div class="summary-item"><span>Beneficiaries</span><strong>{{ public_project.beneficiaries|default_if_none:"N/A" }}</strong></div>
-        <div class="summary-item"><span>Event Date</span><strong>{{ public_project.event_date|date:"F j, Y"|default:"N/A" }}</strong></div>
-        <div class="summary-item"><span>Venue</span><strong>{{ public_project.venue_name|default:"N/A" }}</strong></div>
+        {% if public_project.event_date %}<div class="summary-item"><span>Event Date</span><strong>{{ public_project.event_date|date:"F j, Y" }}</strong></div>{% endif %}
+        {% if public_project.implementation_start_date or public_project.implementation_end_date %}<div class="summary-item"><span>Implementation</span><strong>{{ public_project.implementation_start_date|date:"M j, Y"|default:"TBA" }} – {{ public_project.implementation_end_date|date:"M j, Y"|default:"TBA" }}</strong></div>{% endif %}
+        {% if public_project.venue_name %}<div class="summary-item"><span>Venue</span><strong>{{ public_project.venue_name }}</strong></div>{% endif %}
       </div>
     </section>
 
@@ -61,15 +62,29 @@
       </div>
     </section>
 
+    {% if public_project.event_date or public_project.start_time or public_project.end_time or public_project.venue_name or public_project.implementation_start_date or public_project.implementation_end_date %}
     <section class="public-detail__section">
-      <h2>Schedule and Venue</h2>
+      <h2>{% if public_project.project_type == 'EVENT' %}Schedule and Venue{% else %}Implementation Details{% endif %}</h2>
       <div class="detail-grid">
-        <div class="detail-item"><span>Event Date</span><strong>{{ public_project.event_date|date:"F j, Y"|default:"N/A" }}</strong></div>
-        <div class="detail-item"><span>Start Time</span><strong>{{ public_project.start_time|time:"g:i A"|default:"N/A" }}</strong></div>
-        <div class="detail-item"><span>End Time</span><strong>{{ public_project.end_time|time:"g:i A"|default:"N/A" }}</strong></div>
-        <div class="detail-item"><span>Venue</span><strong>{{ public_project.venue_name|default:"N/A" }}</strong></div>
+        {% if public_project.event_date %}<div class="detail-item"><span>Event Date</span><strong>{{ public_project.event_date|date:"F j, Y" }}</strong></div>{% endif %}
+        {% if public_project.start_time %}<div class="detail-item"><span>Start Time</span><strong>{{ public_project.start_time|time:"g:i A" }}</strong></div>{% endif %}
+        {% if public_project.end_time %}<div class="detail-item"><span>End Time</span><strong>{{ public_project.end_time|time:"g:i A" }}</strong></div>{% endif %}
+        {% if public_project.venue_name %}<div class="detail-item"><span>Venue</span><strong>{{ public_project.venue_name }}</strong></div>{% endif %}
+        {% if public_project.implementation_start_date %}<div class="detail-item"><span>Implementation Start</span><strong>{{ public_project.implementation_start_date|date:"F j, Y" }}</strong></div>{% endif %}
+        {% if public_project.implementation_end_date %}<div class="detail-item"><span>Implementation End</span><strong>{{ public_project.implementation_end_date|date:"F j, Y" }}</strong></div>{% endif %}
       </div>
     </section>
+    {% endif %}
+
+    {% if public_project.target_beneficiaries or public_project.project_cost or public_project.procurement_description %}
+    <section class="public-detail__section"><h2>Project-Specific Information</h2><div class="detail-grid">
+      {% if public_project.target_beneficiaries %}<div class="detail-item"><span>Target Beneficiaries / Participants</span><strong>{{ public_project.target_beneficiaries }}</strong></div>{% endif %}
+      {% if public_project.procurement_description %}<div class="detail-item"><span>Procurement Description</span><strong>{{ public_project.procurement_description }}</strong></div>{% endif %}
+      {% if public_project.quantity %}<div class="detail-item"><span>Quantity</span><strong>{{ public_project.quantity }}</strong></div>{% endif %}
+      {% if public_project.project_cost %}<div class="detail-item"><span>Project Cost</span><strong>₱{{ public_project.project_cost }}</strong></div>{% endif %}
+      {% if public_project.fund_source %}<div class="detail-item"><span>Fund Source</span><strong>{{ public_project.fund_source }}</strong></div>{% endif %}
+    </div></section>
+    {% endif %}
 
     <section class="public-detail__section">
       <h2>Location</h2>

@@ -66,15 +66,16 @@
     font-weight: 700;
 }
 
-.status-planning { background: #fef3c7; color: #92400e; }
-.status-ongoing { background: #dbeafe; color: #1e3a8a; }
+.status-not_yet_started { background: #eef2f7; color: #334155; }
+.status-pre_construction { background: #dbeafe; color: #1e3a8a; }
+.status-ongoing { background: #fff4cc; color: #854d0e; }
+.status-on_hold { background: #fef3c7; color: #854d0e; }
+.status-suspended { background: #fee2e2; color: #9a3412; }
 .status-completed { background: #dcfce7; color: #166534; }
-.status-on_hold { background: #fecaca; color: #7c2d12; }
-.status-cancelled { background: #e0e7ff; color: #3730a3; }
-.status-awarded { background: #dbeafe; color: #1e3a8a; }
-.status-ongoing_bidding { background: #dbeafe; color: #1e3a8a; }
-.status-rebid { background: #e9d5ff; color: #6b21a8; }
-.status-delayed { background: #fecaca; color: #991b1b; }
+.status-for_inspection { background: #f3e8ff; color: #6b21a8; }
+.status-for_turnover { background: #ccfbf1; color: #115e59; }
+.status-turned_over { background: #d1fae5; color: #065f46; }
+.status-cancelled { background: #fee2e2; color: #991b1b; }
 
 .project-info-grid {
     display: grid;

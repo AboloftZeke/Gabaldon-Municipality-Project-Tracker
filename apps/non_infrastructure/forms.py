@@ -47,6 +47,13 @@ NON_INFRA_CATEGORY_DEFAULTS = [
 
 class NonInfrastructureProjectForm(forms.Form):
     title = forms.CharField(required=True, max_length=255)
+    project_type = forms.ChoiceField(
+        # Defaults preserve compatibility with older form posts and records.
+        required=False,
+        choices=NonInfrastructureProject.ProjectType.choices,
+        initial=NonInfrastructureProject.ProjectType.EVENT,
+        label='Project Type',
+    )
     description = forms.CharField(required=True, widget=forms.Textarea(attrs={'rows': 4}), max_length=2000)
     category = forms.ModelChoiceField(
         queryset=NonInfrastructureCategory.objects.none(),
@@ -54,12 +61,24 @@ class NonInfrastructureProjectForm(forms.Form):
         empty_label='Select Category',
     )
 
-    proponent = forms.CharField(required=True, max_length=255)
-    beneficiaries = forms.IntegerField(required=True, min_value=0)
-    event_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
-    start_time = forms.TimeField(required=True, widget=forms.TimeInput(attrs={'type': 'time'}))
-    end_time = forms.TimeField(required=True, widget=forms.TimeInput(attrs={'type': 'time'}))
-    venue_name = forms.CharField(required=True, max_length=255)
+    proponent = forms.CharField(required=True, max_length=255, label='Implementing Office')
+    target_beneficiaries = forms.CharField(
+        required=False, max_length=2000, widget=forms.Textarea(attrs={'rows': 3}),
+    )
+    beneficiaries = forms.IntegerField(required=False, min_value=0, label='Number of Beneficiaries')
+    implementation_start_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    implementation_end_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    event_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    start_time = forms.TimeField(required=False, widget=forms.TimeInput(attrs={'type': 'time'}))
+    end_time = forms.TimeField(required=False, widget=forms.TimeInput(attrs={'type': 'time'}))
+    venue_name = forms.CharField(required=False, max_length=255)
+    project_cost = forms.DecimalField(required=False, min_value=0, max_digits=15, decimal_places=2, label='Budget / Project Cost')
+    fund_source = forms.CharField(required=False, max_length=255)
+    contractor_supplier = forms.CharField(required=False, max_length=255, label='Contractor / Supplier')
+    procurement_description = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={'rows': 3}), label='Item / Procurement Description')
+    quantity = forms.IntegerField(required=False, min_value=1)
+    expected_delivery_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    remarks = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={'rows': 3}))
     street = forms.CharField(required=False, max_length=500)
     barangay = forms.ChoiceField(
         required=True,
@@ -120,14 +139,25 @@ class NonInfrastructureProjectForm(forms.Form):
                         f'existing:{existing_cover.pk}'
                     )
                 self.fields['title'].initial = normalized.title
+                self.fields['project_type'].initial = normalized.project_type
                 self.fields['description'].initial = normalized.description
                 self.fields['category'].initial = normalized.category_id
                 self.fields['proponent'].initial = normalized.proponent
                 self.fields['beneficiaries'].initial = normalized.beneficiaries
+                self.fields['target_beneficiaries'].initial = normalized.target_beneficiaries
+                self.fields['implementation_start_date'].initial = normalized.implementation_start_date
+                self.fields['implementation_end_date'].initial = normalized.implementation_end_date
                 self.fields['event_date'].initial = normalized.event_date
                 self.fields['start_time'].initial = normalized.start_time
                 self.fields['end_time'].initial = normalized.end_time
                 self.fields['venue_name'].initial = normalized.venue_name
+                self.fields['project_cost'].initial = normalized.project_cost
+                self.fields['fund_source'].initial = normalized.fund_source
+                self.fields['contractor_supplier'].initial = normalized.contractor_supplier
+                self.fields['procurement_description'].initial = normalized.procurement_description
+                self.fields['quantity'].initial = normalized.quantity
+                self.fields['expected_delivery_date'].initial = normalized.expected_delivery_date
+                self.fields['remarks'].initial = normalized.remarks
                 if normalized.address:
                     self.fields['street'].initial = normalized.address.street
                     self.fields['barangay'].initial = normalized.address.barangay
@@ -150,8 +180,42 @@ class NonInfrastructureProjectForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        project_type = (
+            cleaned_data.get('project_type')
+            or NonInfrastructureProject.ProjectType.EVENT
+        )
+        cleaned_data['project_type'] = project_type
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
+
+        if project_type == NonInfrastructureProject.ProjectType.EVENT:
+            for field_name in ('event_date', 'start_time', 'end_time', 'venue_name'):
+                if not cleaned_data.get(field_name):
+                    self.add_error(field_name, 'This field is required for an Event / Activity project.')
+        elif project_type == NonInfrastructureProject.ProjectType.TRAINING:
+            if not (
+                cleaned_data.get('event_date')
+                or cleaned_data.get('implementation_start_date')
+            ):
+                self.add_error(
+                    'event_date',
+                    'Provide a training date or an implementation start date.',
+                )
+            if not cleaned_data.get('venue_name'):
+                self.add_error('venue_name', 'Venue is required for a Training / Seminar project.')
+            if not cleaned_data.get('target_beneficiaries'):
+                self.add_error(
+                    'target_beneficiaries',
+                    'Target participants are required for a Training / Seminar project.',
+                )
+
+        implementation_start = cleaned_data.get('implementation_start_date')
+        implementation_end = cleaned_data.get('implementation_end_date')
+        if implementation_start and implementation_end and implementation_end < implementation_start:
+            self.add_error(
+                'implementation_end_date',
+                'Implementation end date cannot be earlier than the start date.',
+            )
 
         if start_time and end_time and end_time <= start_time:
             self.add_error(
@@ -268,14 +332,25 @@ class NonInfrastructureProjectForm(forms.Form):
                 non = NonInfrastructureProject(project=project)
 
         non.title = data.get('title') or non.title
+        non.project_type = data.get('project_type') or non.project_type
         non.description = data.get('description') or ''
         non.category = data.get('category')
         non.proponent = data.get('proponent') or ''
         non.beneficiaries = data.get('beneficiaries')
+        non.target_beneficiaries = data.get('target_beneficiaries') or ''
+        non.implementation_start_date = data.get('implementation_start_date')
+        non.implementation_end_date = data.get('implementation_end_date')
         non.event_date = data.get('event_date')
         non.start_time = data.get('start_time')
         non.end_time = data.get('end_time')
         non.venue_name = data.get('venue_name') or ''
+        non.project_cost = data.get('project_cost')
+        non.fund_source = data.get('fund_source') or ''
+        non.contractor_supplier = data.get('contractor_supplier') or ''
+        non.procurement_description = data.get('procurement_description') or ''
+        non.quantity = data.get('quantity')
+        non.expected_delivery_date = data.get('expected_delivery_date')
+        non.remarks = data.get('remarks') or ''
 
         street = data.get('street') or ''
         barangay = data.get('barangay') or ''

@@ -28,6 +28,39 @@
         {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create ui-button ui-button--primary">+ New Project</a>{% endif %}
     </div>
 
+    <form class="ui-form" method="get" aria-label="Filter non-infrastructure projects">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="project-type-filter">Project Type</label>
+                <select id="project-type-filter" name="project_type">
+                    <option value="">All project types</option>
+                    {% for value, label in project_types %}
+                        <option value="{{ value }}" {% if request.GET.project_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="category-filter">Category</label>
+                <select id="category-filter" name="category">
+                    <option value="">All categories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.pk }}" {% if request.GET.category == category.pk|stringformat:'s' %}selected{% endif %}>{{ category.type_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="location-filter">Barangay</label>
+                <select id="location-filter" name="location">
+                    <option value="">All barangays</option>
+                    {% for location in locations %}
+                        {% if location %}<option value="{{ location }}" {% if request.GET.location == location %}selected{% endif %}>{{ location }}</option>{% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-actions"><button class="ui-button ui-button--secondary" type="submit">Apply Filters</button></div>
+        </div>
+    </form>
+
     {% if projects %}
         <div class="projects-grid">
             {% for project in projects %}
@@ -43,10 +76,16 @@
                         <div class="project-title">{{ project.title }}</div>
                         <div class="project-location">📍 {{ project.address.barangay|default:'Barangay not specified' }}</div>
                         <div class="project-category">{{ project.category|default:'Uncategorized' }}</div>
+                        <div class="project-category">{{ project.get_project_type_display }}</div>
 
-                        {% if project.event_date %}
+                        {% if project.project_type == 'EVENT' and project.event_date %}
                             <div class="project-dates">
                                 <strong>Date:</strong> {{ project.event_date|date:"M d, Y" }}
+                            </div>
+                        {% elif project.implementation_start_date or project.implementation_end_date %}
+                            <div class="project-dates">
+                                <strong>Implementation:</strong>
+                                {{ project.implementation_start_date|date:"M d, Y"|default:"TBA" }} – {{ project.implementation_end_date|date:"M d, Y"|default:"TBA" }}
                             </div>
                         {% endif %}
 

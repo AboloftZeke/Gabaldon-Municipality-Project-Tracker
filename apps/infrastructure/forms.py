@@ -819,8 +819,8 @@ class SupportingInspectionChoiceField(forms.ModelMultipleChoiceField):
 
 class InfrastructureOperationalForm(forms.Form):
     award_status = forms.ChoiceField(
-        label='Status',
-        choices=InfrastructureProject.AWARD_STATUS_CHOICES,
+        label='Official Status',
+        choices=InfrastructureProject.OFFICIAL_STATUS_CHOICES,
     )
     physical_progress_percentage = forms.DecimalField(
         label='Physical Progress', max_digits=5, decimal_places=2,

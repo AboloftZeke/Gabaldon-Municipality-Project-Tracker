@@ -358,13 +358,21 @@ class InfrastructureProject(models.Model):
         ('force_account', 'Force Account'),
     ]
 
-    AWARD_STATUS_CHOICES = [
-        ('awarded', 'Awarded'),
-        ('ongoing_bidding', 'Ongoing Bidding'),
-        ('cancelled', 'Cancelled'),
-        ('rebid', 'Re-bid'),
+    OFFICIAL_STATUS_CHOICES = [
+        ('not_yet_started', 'Not Yet Started'),
+        ('pre_construction', 'Pre-Construction'),
+        ('ongoing', 'Ongoing'),
+        ('on_hold', 'On Hold'),
+        ('suspended', 'Suspended'),
         ('completed', 'Completed'),
+        ('for_inspection', 'For Inspection'),
+        ('for_turnover', 'For Turnover'),
+        ('turned_over', 'Turned Over'),
+        ('cancelled', 'Cancelled'),
     ]
+
+    # The database column retains its legacy name for schema compatibility.
+    AWARD_STATUS_CHOICES = OFFICIAL_STATUS_CHOICES
 
     infrastructure_id = models.BigAutoField(primary_key=True)
     project = models.OneToOneField(
@@ -411,7 +419,7 @@ class InfrastructureProject(models.Model):
     )
     award_status = models.CharField(
         max_length=50,
-        choices=AWARD_STATUS_CHOICES,
+        choices=OFFICIAL_STATUS_CHOICES,
         null=True,
         blank=True,
     )
@@ -442,13 +450,13 @@ class InfrastructureProgressUpdate(models.Model):
     )
     previous_official_status = models.CharField(
         max_length=50,
-        choices=InfrastructureProject.AWARD_STATUS_CHOICES,
+        choices=InfrastructureProject.OFFICIAL_STATUS_CHOICES,
         blank=True,
         default='',
     )
     new_official_status = models.CharField(
         max_length=50,
-        choices=InfrastructureProject.AWARD_STATUS_CHOICES,
+        choices=InfrastructureProject.OFFICIAL_STATUS_CHOICES,
         blank=True,
         default='',
     )
@@ -491,6 +499,15 @@ class InfrastructureProgressUpdate(models.Model):
 
 class NonInfrastructureProject(models.Model):
     """Normalized non-infrastructure project details linked to the base Project model."""
+    class ProjectType(models.TextChoices):
+        EVENT = 'EVENT', 'Event / Activity'
+        PROGRAM = 'PROGRAM', 'Program'
+        SERVICE = 'SERVICE', 'Service'
+        PROCUREMENT = 'PROCUREMENT', 'Procurement / Acquisition'
+        TRAINING = 'TRAINING', 'Training / Seminar'
+        CAMPAIGN = 'CAMPAIGN', 'Campaign / Initiative'
+        OTHER = 'OTHER', 'Other'
+
     non_infra_id = models.BigAutoField(primary_key=True)
     project = models.OneToOneField(
         Project,
@@ -505,12 +522,33 @@ class NonInfrastructureProject(models.Model):
         blank=True,
         related_name='non_infrastructure_projects'
     )
+    # Existing records were created through the event-oriented form.  Keep
+    # them compatible by treating their unspecified type as an event.
+    project_type = models.CharField(
+        max_length=20,
+        choices=ProjectType.choices,
+        default=ProjectType.EVENT,
+    )
     event_date = models.DateField(null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     venue_name = models.CharField(max_length=255, blank=True, null=True)
     proponent = models.CharField(max_length=255, blank=True, default='')
     beneficiaries = models.IntegerField(null=True, blank=True)
+    target_beneficiaries = models.TextField(blank=True, default='')
+    implementation_start_date = models.DateField(null=True, blank=True)
+    implementation_end_date = models.DateField(null=True, blank=True)
+    project_cost = models.DecimalField(
+        max_digits=15, decimal_places=2, null=True, blank=True,
+    )
+    fund_source = models.CharField(max_length=255, blank=True, default='')
+    contractor_supplier = models.CharField(
+        max_length=255, blank=True, default='',
+    )
+    procurement_description = models.TextField(blank=True, default='')
+    quantity = models.PositiveIntegerField(null=True, blank=True)
+    expected_delivery_date = models.DateField(null=True, blank=True)
+    remarks = models.TextField(blank=True, default='')
     address = models.ForeignKey(
         Address,
         on_delete=models.SET_NULL,
@@ -538,6 +576,39 @@ class NonInfrastructureProject(models.Model):
     ]
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
+
+    def clean(self):
+        """Keep event-only schedule requirements consistent outside the form."""
+        errors = {}
+        if self.project_type == self.ProjectType.EVENT:
+            for field_name in ('event_date', 'start_time', 'end_time', 'venue_name'):
+                if not getattr(self, field_name):
+                    errors[field_name] = (
+                        'This field is required for an Event / Activity project.'
+                    )
+        elif self.project_type == self.ProjectType.TRAINING:
+            if not (self.event_date or self.implementation_start_date):
+                errors['event_date'] = (
+                    'Provide a training date or an implementation start date.'
+                )
+            if not self.venue_name:
+                errors['venue_name'] = (
+                    'Venue is required for a Training / Seminar project.'
+                )
+            if not self.target_beneficiaries:
+                errors['target_beneficiaries'] = (
+                    'Target participants are required for a Training / Seminar project.'
+                )
+        if (
+            self.implementation_start_date
+            and self.implementation_end_date
+            and self.implementation_end_date < self.implementation_start_date
+        ):
+            errors['implementation_end_date'] = (
+                'Implementation end date cannot be earlier than the start date.'
+            )
+        if errors:
+            raise ValidationError(errors)
 
 
 

@@ -101,11 +101,11 @@ class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
         )
 
         context['total_projects'] = projects.count()
-        context['awarded_projects'] = projects.filter(
-            award_status='awarded'
+        context['pre_construction_projects'] = projects.filter(
+            award_status='pre_construction'
         ).count()
         context['ongoing_projects'] = projects.filter(
-            award_status='ongoing_bidding'
+            award_status='ongoing'
         ).count()
         context['completed_projects'] = projects.filter(
             award_status='completed'
@@ -465,10 +465,8 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
             status_value = getattr(project, 'award_status', '') or ''
 
         status_class_map = {
-            'ongoing_bidding': 'ongoing',
-            'awarded': 'awarded',
-            'completed': 'completed',
-            'cancelled': 'cancelled',
+            value: value
+            for value, _label in InfrastructureProject.OFFICIAL_STATUS_CHOICES
         }
         context['project_status_class'] = status_class_map.get(
             status_value,

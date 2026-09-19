@@ -45,7 +45,7 @@ class HeadOperationalRevisionTests(TestCase):
         fixture = InfrastructureProjectFormTests()
         fixture.setUp()
         self.infrastructure = fixture.create_project()
-        self.infrastructure.award_status = 'awarded'
+        self.infrastructure.award_status = 'pre_construction'
         self.infrastructure.physical_progress_percentage = Decimal('25')
         self.infrastructure.cost_progress_percentage = Decimal('20')
         self.infrastructure.planned_start_date = date.today() - timedelta(days=5)
@@ -140,7 +140,7 @@ class HeadOperationalRevisionTests(TestCase):
         ))
         self.assertEqual(public_response.status_code, 200)
         public_project = public_response.context['public_project']
-        self.assertEqual(public_project['award_status'], 'awarded')
+        self.assertEqual(public_project['award_status'], 'pre_construction')
         self.assertEqual(public_project['physical_progress_percentage'], Decimal('25.00'))
 
         preview = self.client.get(reverse(
@@ -278,7 +278,7 @@ class HeadOperationalRevisionTests(TestCase):
         ))
         self.assertEqual(
             public_response.context['public_project']['award_status'],
-            'awarded',
+            'pre_construction',
         )
 
         retained_snapshot = deepcopy(revision.snapshot)
@@ -349,7 +349,7 @@ class HeadOperationalRevisionTests(TestCase):
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
         ), {
-            'award_status': 'awarded',
+            'award_status': 'pre_construction',
             'physical_progress_percentage': '30',
             'cost_progress_percentage': '20',
             'inspection_completion_percentage': '35',
@@ -579,7 +579,7 @@ class HeadOperationalRevisionTests(TestCase):
         self.infrastructure.refresh_from_db()
         self.inspection.refresh_from_db()
         pending.refresh_from_db()
-        self.assertEqual(self.infrastructure.award_status, 'awarded')
+        self.assertEqual(self.infrastructure.award_status, 'pre_construction')
         self.assertEqual(self.infrastructure.physical_progress_percentage, Decimal('25'))
         self.assertEqual(self.infrastructure.cost_progress_percentage, Decimal('20'))
         self.assertEqual(self.inspection.completion_percentage, Decimal('30'))
