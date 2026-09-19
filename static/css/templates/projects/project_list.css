@@ -185,13 +185,3 @@
     .btn-edit:hover {
         background: #4b5563;
     }
-
-    .empty-state {
-        text-align: center;
-        padding: 3rem;
-    }
-
-    .empty-state p {
-        color: #6b7280;
-        margin-bottom: 1.5rem;
-    }

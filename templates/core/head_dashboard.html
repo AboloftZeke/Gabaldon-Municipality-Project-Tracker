@@ -115,9 +115,10 @@
         {% endif %}
 
         {% if not pending_review_items and not needs_operational_items and not ready_to_publish_items and not operational_update_items %}
-            <div class="head-empty head-empty--attention">
-                <strong>No publication tasks need attention.</strong>
-                <p>New submissions and approved updates will appear here.</p>
+            <div class="head-empty head-empty--attention ui-empty-state">
+                <span class="ui-empty-state__icon ui-empty-state__icon--success" aria-hidden="true">✓</span>
+                <h3>You're all caught up.</h3>
+                <p>There are currently no submissions or publication updates requiring attention.</p>
             </div>
         {% endif %}
     </section>

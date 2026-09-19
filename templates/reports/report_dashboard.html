@@ -82,12 +82,11 @@
                 {% endfor %}
             </div>
         {% else %}
-            <div class="report-empty report-empty--compact">
-                <div>
-                    <span class="report-empty__icon" aria-hidden="true">PDF</span>
-                    <strong>No generated reports yet.</strong>
-                    <p>Generate an individual or summary PDF and it will appear here.</p>
-                </div>
+            <div class="ui-empty-state">
+                <span class="ui-empty-state__icon" aria-hidden="true">PDF</span>
+                <h3>No generated reports yet</h3>
+                <p>Generate an individual or summary PDF and it will appear here.</p>
+                <a class="ui-button ui-button--primary" href="#report-options-heading">Generate Report</a>
             </div>
         {% endif %}
     </section>

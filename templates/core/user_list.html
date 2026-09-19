@@ -113,8 +113,17 @@
                     <tr>
                         <td colspan="5">
                             <div class="empty-state ui-empty-state">
-                                <p>No user accounts found in the system.</p>
-                                <a href="{% url 'user_create' %}" class="create-btn ui-button ui-button--primary">Create First User</a>
+                                {% if has_active_filters and has_any_users %}
+                                    <span class="ui-empty-state__icon" aria-hidden="true">⌕</span>
+                                    <h3>No matching user accounts</h3>
+                                    <p>No results match your current filters.</p>
+                                    <a href="{% url 'user_list' %}" class="ui-button ui-button--secondary">Reset Search</a>
+                                {% else %}
+                                    <span class="ui-empty-state__icon" aria-hidden="true">＋</span>
+                                    <h3>No user accounts yet</h3>
+                                    <p>Create an account to give a team member access to the system.</p>
+                                    <a href="{% url 'user_create' %}" class="create-btn ui-button ui-button--primary">Create User</a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

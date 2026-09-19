@@ -264,6 +264,7 @@ class PublicationReviewQueueView(OfficeHeadRequiredMixin, ListView):
                 for value, label in PublicationStatus.choices
             ],
             'status_counts': counts,
+            'has_any_revisions': bool(counts),
             'pending_count': counts.get(PublicationStatus.PENDING_REVIEW, 0),
             'approved_count': counts.get(PublicationStatus.APPROVED, 0),
         })

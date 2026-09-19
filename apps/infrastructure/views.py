@@ -184,6 +184,11 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
             is_active=True
         ).order_by('category_name')
         context['statuses'] = InfrastructureProject.AWARD_STATUS_CHOICES
+        context['has_any_projects'] = InfrastructureProject.objects.exists()
+        context['has_active_filters'] = any(
+            self.request.GET.get(name, '').strip()
+            for name in ('location', 'category', 'status')
+        )
         context['can_update_operations'] = (
             can_update_infrastructure_operations(self.request.user)
         )

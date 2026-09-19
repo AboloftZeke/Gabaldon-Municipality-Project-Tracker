@@ -133,6 +133,11 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
             project.publication_state = publication_state(project.project)
         context['locations'] = NonInfrastructureProject.objects.values_list('address__barangay', flat=True).distinct()
         context['categories'] = NonInfrastructureCategory.objects.all()
+        context['has_any_projects'] = NonInfrastructureProject.objects.exists()
+        context['has_active_filters'] = any(
+            self.request.GET.get(name, '').strip()
+            for name in ('location', 'category')
+        )
         context['can_update_operations'] = (
             can_update_non_infrastructure_operations(self.request.user)
         )

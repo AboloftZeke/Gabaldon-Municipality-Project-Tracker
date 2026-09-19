@@ -505,6 +505,11 @@ class UserListView(AdminRequiredMixin, ListView):
             }.get(assignment, '')
         context['filter_form'] = UserListFilterForm(self.request.GET)
         context['current_department'] = self.request.GET.get('department', '')
+        context['has_any_users'] = User.objects.exists()
+        context['has_active_filters'] = bool(
+            self.request.GET.get('search', '').strip()
+            or context['current_department']
+        )
         return context
 
 

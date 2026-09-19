@@ -344,15 +344,6 @@
         background: rgba(168, 85, 247, 0.25);
     }
 
-    .empty-state {
-        padding: 3rem 2rem;
-        text-align: center;
-        color: var(--ink-600);
-    }
-
-    .empty-state p {
-        margin-bottom: 1.5rem;
-    }
 
     .pagination {
         display: flex;

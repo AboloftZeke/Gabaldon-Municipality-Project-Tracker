@@ -77,8 +77,20 @@
         </div>
     {% else %}
         <section class="review-empty ui-card ui-empty-state">
-            <h2>No {{ selected_status|cut:"_" }} revisions</h2>
-            <p>There are no project revisions in this status.</p>
+            {% if selected_status == 'pending_review' %}
+                <span class="ui-empty-state__icon ui-empty-state__icon--success" aria-hidden="true">✓</span>
+                <h2>You're all caught up.</h2>
+                <p>There are currently no submissions waiting for review.</p>
+            {% elif has_any_revisions %}
+                <span class="ui-empty-state__icon" aria-hidden="true">⌕</span>
+                <h2>No revisions in this view</h2>
+                <p>No results match your current filters.</p>
+                <a href="{% url 'publication_review_queue' %}" class="ui-button ui-button--secondary">Clear Filters</a>
+            {% else %}
+                <span class="ui-empty-state__icon" aria-hidden="true">○</span>
+                <h2>No publication submissions yet</h2>
+                <p>Submitted project revisions will appear here for review.</p>
+            {% endif %}
         </section>
     {% endif %}
 
