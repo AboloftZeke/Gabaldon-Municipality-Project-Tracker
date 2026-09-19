@@ -30,9 +30,8 @@ class OfficialStatusChoicesTests(SimpleTestCase):
         )
 
     def test_operational_form_and_history_use_official_status_choices(self):
-        form = InfrastructureOperationalForm()
         self.assertEqual(
-            list(form.fields["award_status"].choices),
+            list(InfrastructureOperationalForm.base_fields["award_status"].choices),
             EXPECTED_OFFICIAL_STATUS_CHOICES,
         )
         self.assertEqual(
