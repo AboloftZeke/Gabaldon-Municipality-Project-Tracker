@@ -476,42 +476,36 @@
 
 .form-actions {
     display: flex;
-
     gap: 1rem;
-
     margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e3e9e5;
 }
 
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
-    flex: 1;
-
-    padding: 0.8rem 1.5rem;
-
+    padding: 0.85rem 1.5rem;
     border: none;
-    border-radius: 8px;
-
+    border-radius: 9px;
+    font-weight: 700;
     cursor: pointer;
-
-    font-weight: 600;
-
     text-decoration: none;
-
-    transition:
-        background-color 180ms ease,
-        transform 150ms ease;
+    transition: background 180ms ease, transform 160ms ease, box-shadow 160ms ease;
+    flex: 1;
 }
 
 .btn-submit {
     background: #1a5a3a;
-    color: #ffffff;
+    color: white;
+    box-shadow: 0 4px 12px rgba(26, 90, 58, 0.18);
 }
 
 .btn-submit:hover {
     background: #144a30;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(26, 90, 58, 0.23);
 }
 
 .btn-back {
@@ -536,12 +530,12 @@
 }
 
 .btn-cancel {
-    background: #e5e7eb;
-    color: #111827;
+    background: #e7ebe8;
+    color: #25352d;
 }
 
 .btn-cancel:hover {
-    background: #d1d5db;
+    background: #d8dfda;
 }
 
 

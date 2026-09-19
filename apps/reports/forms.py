@@ -97,7 +97,8 @@ class InfrastructureSummaryReportFilterForm(BaseSummaryReportFilterForm):
 
 class NonInfrastructureSummaryReportFilterForm(BaseSummaryReportFilterForm):
     report_type = 'non_infrastructure'
-    date_field_label = 'Event or service date'
+    date_field_label = 'Implementation or event date'
+    project_type = forms.ChoiceField(required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -109,5 +110,14 @@ class NonInfrastructureSummaryReportFilterForm(BaseSummaryReportFilterForm):
         self.fields['status'].choices = [
             ('', 'All statuses'),
             *sorted(statuses.items(), key=lambda item: item[1].casefold()),
+        ]
+        project_types = {
+            project.get('project_type'): project.get('project_type_label')
+            for project in self.projects
+            if project.get('project_type')
+        }
+        self.fields['project_type'].choices = [
+            ('', 'All project types'),
+            *sorted(project_types.items(), key=lambda item: item[1].casefold()),
         ]
 

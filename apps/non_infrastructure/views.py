@@ -125,6 +125,10 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
         if category:
             queryset = queryset.filter(category_id=category)
 
+        project_type = self.request.GET.get('project_type', '').strip()
+        if project_type:
+            queryset = queryset.filter(project_type=project_type)
+
         return queryset.order_by('-created_at')
 
     def get_context_data(self, **kwargs):
@@ -133,10 +137,11 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
             project.publication_state = publication_state(project.project)
         context['locations'] = NonInfrastructureProject.objects.values_list('address__barangay', flat=True).distinct()
         context['categories'] = NonInfrastructureCategory.objects.all()
+        context['project_types'] = NonInfrastructureProject.ProjectType.choices
         context['has_any_projects'] = NonInfrastructureProject.objects.exists()
         context['has_active_filters'] = any(
             self.request.GET.get(name, '').strip()
-            for name in ('location', 'category')
+            for name in ('location', 'category', 'project_type')
         )
         context['can_update_operations'] = (
             can_update_non_infrastructure_operations(self.request.user)
@@ -204,7 +209,7 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
             )
 
         context['project_code'] = f'NINF-{project_record.pk:05d}'
-        context['project_type_label'] = 'Non-Infrastructure'
+        context['project_type_label'] = project.get_project_type_display()
         context['project_name'] = project_name
         context['project_manager'] = project_manager
 
@@ -230,6 +235,16 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
             'beneficiaries',
             None
         )
+        context['project_target_beneficiaries'] = project.target_beneficiaries or ''
+        context['project_implementation_start'] = project.implementation_start_date
+        context['project_implementation_end'] = project.implementation_end_date
+        context['project_cost'] = project.project_cost
+        context['project_fund_source'] = project.fund_source or ''
+        context['project_contractor_supplier'] = project.contractor_supplier or ''
+        context['project_procurement_description'] = project.procurement_description or ''
+        context['project_quantity'] = project.quantity
+        context['project_expected_delivery_date'] = project.expected_delivery_date
+        context['project_remarks'] = project.remarks or ''
 
         context['project_event_date'] = getattr(
             project,

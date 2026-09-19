@@ -85,6 +85,10 @@
                         {{ project_category|default:"N/A" }}
                     </div>
                 </div>
+                <div class="meta-item">
+                    <div class="meta-label">Project Type</div>
+                    <div class="meta-value">{{ project_type_label }}</div>
+                </div>
 
             </div>
         </div>
@@ -96,11 +100,11 @@
     <section class="project-section information-card information-card--wide ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Non-Infrastructure</span>
-            <h3>Program Information</h3>
+            <h3>Project Information</h3>
         </div>
         <div class="section-content">
             <div class="content-item">
-                <div class="content-label">Program Name</div>
+                <div class="content-label">Project Name</div>
                 <div class="content-value">{{ project_name }}</div>
             </div>
             <div class="content-item">
@@ -114,52 +118,47 @@
         </div>
     </section>
 
+    {% if project_event_date or project_start_time or project_end_time or project_implementation_start or project_implementation_end %}
     <section class="project-section information-card ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Timeline</span>
-            <h3>Schedule</h3>
+            <h3>{% if project.project_type == 'EVENT' %}Event Schedule{% else %}Implementation Period{% endif %}</h3>
         </div>
 
         <div class="section-content">
 
-            <!-- Event Date -->
+            {% if project_event_date %}
             <div class="content-item">
                 <div class="content-label">Event Date</div>
                 <div class="content-value">
-                    {% if project_event_date %}
-                        {{ project_event_date|date:"F d, Y" }}
-                    {% else %}
-                        N/A
-                    {% endif %}
+                    {{ project_event_date|date:"F d, Y" }}
                 </div>
             </div>
+            {% endif %}
 
-            <!-- Start Time -->
+            {% if project_start_time %}
             <div class="content-item">
                 <div class="content-label">Start Time</div>
                 <div class="content-value">
-                    {% if project_start_time %}
-                        {{ project_start_time|time:"g:i A" }}
-                    {% else %}
-                        N/A
-                    {% endif %}
+                    {{ project_start_time|time:"g:i A" }}
                 </div>
             </div>
+            {% endif %}
 
-            <!-- End Time -->
+            {% if project_end_time %}
             <div class="content-item">
                 <div class="content-label">End Time</div>
                 <div class="content-value">
-                    {% if project_end_time %}
-                        {{ project_end_time|time:"g:i A" }}
-                    {% else %}
-                        N/A
-                    {% endif %}
+                    {{ project_end_time|time:"g:i A" }}
                 </div>
             </div>
+            {% endif %}
+            {% if project_implementation_start %}<div class="content-item"><div class="content-label">Implementation Start</div><div class="content-value">{{ project_implementation_start|date:"F d, Y" }}</div></div>{% endif %}
+            {% if project_implementation_end %}<div class="content-item"><div class="content-label">Implementation End</div><div class="content-value">{{ project_implementation_end|date:"F d, Y" }}</div></div>{% endif %}
 
         </div>
     </section>
+    {% endif %}
 
     <section class="project-section information-card ui-card">
         <div class="information-card__heading">
@@ -168,10 +167,11 @@
         </div>
 
         <div class="section-content">
-            <div class="content-item information-card__full-row">
+            {% if project_venue %}<div class="content-item information-card__full-row">
                 <div class="content-label">Venue</div>
-                <div class="content-value">{{ project_venue|default:"Not assigned" }}</div>
+                <div class="content-value">{{ project_venue }}</div>
             </div>
+            {% endif %}
 
         {% if project_address %}
                 {% if project_address.street %}
@@ -232,8 +232,25 @@
                 <div class="content-label">Beneficiaries</div>
                 <div class="content-value content-value--long">{{ project_beneficiaries|default:"Not specified" }}</div>
             </div>
+            {% if project_target_beneficiaries %}<div class="content-item information-card__full-row"><div class="content-label">Target Beneficiaries / Participants</div><div class="content-value content-value--long">{{ project_target_beneficiaries }}</div></div>{% endif %}
         </div>
     </section>
+
+    {% if project_cost or project_fund_source or project_contractor_supplier or project_procurement_description or project_quantity or project_expected_delivery_date %}
+    <section class="project-section information-card ui-card">
+        <div class="information-card__heading"><span class="information-card__eyebrow">Funding and delivery</span><h3>Procurement &amp; Financial Information</h3></div>
+        <div class="section-content">
+            {% if project_procurement_description %}<div class="content-item information-card__full-row"><div class="content-label">Item / Procurement Description</div><div class="content-value">{{ project_procurement_description }}</div></div>{% endif %}
+            {% if project_quantity %}<div class="content-item"><div class="content-label">Quantity</div><div class="content-value">{{ project_quantity }}</div></div>{% endif %}
+            {% if project_contractor_supplier %}<div class="content-item"><div class="content-label">Contractor / Supplier</div><div class="content-value">{{ project_contractor_supplier }}</div></div>{% endif %}
+            {% if project_expected_delivery_date %}<div class="content-item"><div class="content-label">Expected Delivery</div><div class="content-value">{{ project_expected_delivery_date|date:"F d, Y" }}</div></div>{% endif %}
+            {% if project_cost %}<div class="content-item"><div class="content-label">Budget / Project Cost</div><div class="content-value">₱{{ project_cost }}</div></div>{% endif %}
+            {% if project_fund_source %}<div class="content-item"><div class="content-label">Fund Source</div><div class="content-value">{{ project_fund_source }}</div></div>{% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if project_remarks %}<section class="project-section information-card ui-card"><div class="information-card__heading"><span class="information-card__eyebrow">Notes</span><h3>Remarks</h3></div><div class="section-content"><div class="content-item information-card__full-row"><div class="content-value content-value--long">{{ project_remarks }}</div></div></div></section>{% endif %}
 
     <section class="project-section information-card ui-card">
         <div class="information-card__heading">

@@ -1514,7 +1514,9 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
         self.assertContains(response, 'class="public-image-grid"')
         self.assertContains(response, 'class="public-image-card"', count=2)
         self.assertContains(response, 'Cover photo')
-        self.assertContains(response, '<h2>Schedule and Venue</h2>', html=True)
+        # A legacy record without schedule data must not render empty
+        # event-only fields on the public detail page.
+        self.assertNotContains(response, '<h2>Schedule and Venue</h2>', html=True)
         self.assertNotContains(
             response,
             '/static/css/templates/non_infrastructure/non_infrastructure_detail.css',

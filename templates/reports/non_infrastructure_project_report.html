@@ -43,6 +43,7 @@
         </div>
         <dl class="report-detail-grid">
             <div><dt>Category</dt><dd>{{ report.category.name|default:"N/A" }}</dd></div>
+            <div><dt>Project Type</dt><dd>{{ report.project_type_label }}</dd></div>
             <div><dt>Status</dt><dd>{{ report.status_label|default:"N/A" }}</dd></div>
             <div><dt>Proponent</dt><dd>{{ report.proponent|default:"N/A" }}</dd></div>
             <div><dt>Beneficiaries</dt><dd>{{ report.beneficiaries|default_if_none:"N/A" }}</dd></div>
@@ -51,25 +52,31 @@
         </dl>
     </section>
 
+    {% if report.venue_name or report.address.street or report.address.barangay %}
     <section class="head-section" aria-labelledby="location-heading">
         <div class="head-section__heading"><p class="head-section__eyebrow">Where</p><h2 id="location-heading">Location and Venue</h2></div>
         <dl class="report-detail-grid">
-            <div><dt>Venue</dt><dd>{{ report.venue_name|default:"N/A" }}</dd></div>
+            {% if report.venue_name %}<div><dt>Venue</dt><dd>{{ report.venue_name }}</dd></div>{% endif %}
             <div><dt>Street</dt><dd>{{ report.address.street|default:"N/A" }}</dd></div>
             <div><dt>Barangay</dt><dd>{{ report.address.barangay|default:"N/A" }}</dd></div>
             <div><dt>Municipality</dt><dd>{{ report.address.municipality|default:"N/A" }}</dd></div>
             <div><dt>Province</dt><dd>{{ report.address.province|default:"N/A" }}</dd></div>
         </dl>
     </section>
+    {% endif %}
 
+    {% if report.event_date or report.start_time or report.end_time or report.implementation_start_date or report.implementation_end_date %}
     <section class="head-section" aria-labelledby="schedule-heading">
         <div class="head-section__heading"><p class="head-section__eyebrow">When</p><h2 id="schedule-heading">Schedule</h2></div>
         <dl class="report-detail-grid">
-            <div><dt>Event or Service Date</dt><dd>{{ report.event_date|date:"F j, Y"|default:"N/A" }}</dd></div>
-            <div><dt>Start Time</dt><dd>{{ report.start_time|time:"g:i A"|default:"N/A" }}</dd></div>
-            <div><dt>End Time</dt><dd>{{ report.end_time|time:"g:i A"|default:"N/A" }}</dd></div>
+            {% if report.event_date %}<div><dt>Event Date</dt><dd>{{ report.event_date|date:"F j, Y" }}</dd></div>{% endif %}
+            {% if report.start_time %}<div><dt>Start Time</dt><dd>{{ report.start_time|time:"g:i A" }}</dd></div>{% endif %}
+            {% if report.end_time %}<div><dt>End Time</dt><dd>{{ report.end_time|time:"g:i A" }}</dd></div>{% endif %}
+            {% if report.implementation_start_date %}<div><dt>Implementation Start</dt><dd>{{ report.implementation_start_date|date:"F j, Y" }}</dd></div>{% endif %}
+            {% if report.implementation_end_date %}<div><dt>Implementation End</dt><dd>{{ report.implementation_end_date|date:"F j, Y" }}</dd></div>{% endif %}
         </dl>
     </section>
+    {% endif %}
 
     <section class="head-section" aria-labelledby="description-heading">
         <div class="head-section__heading"><p class="head-section__eyebrow">About the program</p><h2 id="description-heading">Description</h2></div>

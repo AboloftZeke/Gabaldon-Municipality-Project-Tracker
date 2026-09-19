@@ -272,6 +272,8 @@ def build_non_infrastructure_snapshot(non_infrastructure):
         'code': f'NINF-{non_infrastructure.pk:05d}',
         'title': non_infrastructure.title,
         'description': non_infrastructure.description or '',
+        'project_type': non_infrastructure.project_type,
+        'project_type_label': non_infrastructure.get_project_type_display(),
         'category': (
             {
                 'id': non_infrastructure.category_id,
@@ -284,10 +286,26 @@ def build_non_infrastructure_snapshot(non_infrastructure):
         'status_label': non_infrastructure.get_status_display(),
         'proponent': non_infrastructure.proponent or '',
         'beneficiaries': non_infrastructure.beneficiaries,
+        'target_beneficiaries': non_infrastructure.target_beneficiaries or '',
+        'implementation_start_date': _isoformat(
+            non_infrastructure.implementation_start_date,
+        ),
+        'implementation_end_date': _isoformat(
+            non_infrastructure.implementation_end_date,
+        ),
         'event_date': _isoformat(non_infrastructure.event_date),
         'start_time': _isoformat(non_infrastructure.start_time),
         'end_time': _isoformat(non_infrastructure.end_time),
         'venue_name': non_infrastructure.venue_name or '',
+        'project_cost': _decimal_string(non_infrastructure.project_cost),
+        'fund_source': non_infrastructure.fund_source or '',
+        'contractor_supplier': non_infrastructure.contractor_supplier or '',
+        'procurement_description': non_infrastructure.procurement_description or '',
+        'quantity': non_infrastructure.quantity,
+        'expected_delivery_date': _isoformat(
+            non_infrastructure.expected_delivery_date,
+        ),
+        'remarks': non_infrastructure.remarks or '',
         'address': _address_data(non_infrastructure.address),
     }
     return snapshot

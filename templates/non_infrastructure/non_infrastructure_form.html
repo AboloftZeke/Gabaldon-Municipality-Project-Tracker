@@ -45,9 +45,9 @@
                 </div>
                 <ol class="wizard-steps">
                     <li data-wizard-indicator="0"><span>1</span><strong>Project details</strong></li>
-                    <li data-wizard-indicator="1"><span>2</span><strong>Program details</strong></li>
-                    <li data-wizard-indicator="2"><span>3</span><strong>Event schedule</strong></li>
-                    <li data-wizard-indicator="3"><span>4</span><strong>Activity location</strong></li>
+                    <li data-wizard-indicator="1"><span>2</span><strong>Project details</strong></li>
+                    <li data-wizard-indicator="2"><span>3</span><strong>Schedule &amp; type details</strong></li>
+                    <li data-wizard-indicator="3"><span>4</span><strong>Location</strong></li>
                     <li data-wizard-indicator="4"><span>5</span><strong>Project photos</strong></li>
                     <li data-wizard-indicator="5"><span>6</span><strong>Review &amp; save</strong></li>
                 </ol>
@@ -63,6 +63,12 @@
                         {% if form.title.errors %}
                             <div class="error-message">{{ form.title.errors.0 }}</div>
                         {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.project_type.id_for_label }}">Project Type</label>
+                        {{ form.project_type }}
+                        {% if form.project_type.errors %}<div class="error-message">{{ form.project_type.errors.0 }}</div>{% endif %}
                     </div>
 
                     <div class="form-group full-span">
@@ -85,8 +91,8 @@
             </div>
 
             <div class="fieldset wizard-panel ui-form-section" data-wizard-step="1" hidden>
-                <legend>Program Details</legend>
-                <p class="section-description">Identify the program proponent and intended number of beneficiaries.</p>
+                <legend>Project Details</legend>
+                <p class="section-description">Record the implementing office, intended beneficiaries, budget, and information relevant to the selected project type.</p>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="{{ form.proponent.id_for_label }}">Proponent</label>
@@ -103,14 +109,66 @@
                             <div class="error-message">{{ form.beneficiaries.errors.0 }}</div>
                         {% endif %}
                     </div>
+
+                    <div class="form-group full-span" data-project-types="PROGRAM SERVICE TRAINING CAMPAIGN">
+                        <label for="{{ form.target_beneficiaries.id_for_label }}">Target Beneficiaries / Participants</label>
+                        {{ form.target_beneficiaries }}
+                        {% if form.target_beneficiaries.errors %}<div class="error-message">{{ form.target_beneficiaries.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.project_cost.id_for_label }}">Budget / Project Cost</label>
+                        {{ form.project_cost }}
+                        {% if form.project_cost.errors %}<div class="error-message">{{ form.project_cost.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.fund_source.id_for_label }}">Fund Source</label>
+                        {{ form.fund_source }}
+                        {% if form.fund_source.errors %}<div class="error-message">{{ form.fund_source.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-group" data-project-types="PROCUREMENT">
+                        <label for="{{ form.contractor_supplier.id_for_label }}">Contractor / Supplier</label>
+                        {{ form.contractor_supplier }}
+                        {% if form.contractor_supplier.errors %}<div class="error-message">{{ form.contractor_supplier.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-group full-span" data-project-types="PROCUREMENT">
+                        <label for="{{ form.procurement_description.id_for_label }}">Item / Procurement Description</label>
+                        {{ form.procurement_description }}
+                        {% if form.procurement_description.errors %}<div class="error-message">{{ form.procurement_description.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-group" data-project-types="PROCUREMENT">
+                        <label for="{{ form.quantity.id_for_label }}">Quantity</label>
+                        {{ form.quantity }}
+                        {% if form.quantity.errors %}<div class="error-message">{{ form.quantity.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-group" data-project-types="PROCUREMENT">
+                        <label for="{{ form.expected_delivery_date.id_for_label }}">Expected Delivery Date</label>
+                        {{ form.expected_delivery_date }}
+                        {% if form.expected_delivery_date.errors %}<div class="error-message">{{ form.expected_delivery_date.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-group full-span">
+                        <label for="{{ form.remarks.id_for_label }}">Remarks</label>
+                        {{ form.remarks }}
+                        {% if form.remarks.errors %}<div class="error-message">{{ form.remarks.errors.0 }}</div>{% endif %}
+                    </div>
                 </div>
             </div>
 
             <div class="fieldset wizard-panel ui-form-section" data-wizard-step="2" hidden>
-                <legend>Event Schedule</legend>
-                <p class="section-description">Set when the program or activity will take place.</p>
+                <legend>Schedule &amp; Type-Specific Details</legend>
+                <p class="section-description">Set the implementation period for the project. Event date and time are only needed for events and activities.</p>
                 <div class="form-grid">
                     <div class="form-group">
+                        <label for="{{ form.implementation_start_date.id_for_label }}">Implementation Start Date</label>
+                        {{ form.implementation_start_date }}
+                        {% if form.implementation_start_date.errors %}<div class="error-message">{{ form.implementation_start_date.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.implementation_end_date.id_for_label }}">Implementation End Date</label>
+                        {{ form.implementation_end_date }}
+                        {% if form.implementation_end_date.errors %}<div class="error-message">{{ form.implementation_end_date.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-group" data-project-types="EVENT TRAINING">
                         <label for="{{ form.event_date.id_for_label }}">Event Date</label>
                         {{ form.event_date }}
                         {% if form.event_date.errors %}
@@ -118,7 +176,7 @@
                         {% endif %}
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group" data-project-types="EVENT TRAINING">
                         <label for="{{ form.start_time.id_for_label }}">Start Time</label>
                         {{ form.start_time }}
                         {% if form.start_time.errors %}
@@ -126,7 +184,7 @@
                         {% endif %}
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group" data-project-types="EVENT TRAINING">
                         <label for="{{ form.end_time.id_for_label }}">End Time</label>
                         {{ form.end_time }}
                         {% if form.end_time.errors %}
@@ -148,7 +206,7 @@
 
     <div class="form-grid">
 
-        <div class="form-group full-span">
+        <div class="form-group full-span" data-project-types="EVENT TRAINING">
             <label for="{{ form.venue_name.id_for_label }}">Venue Name</label>
             {{ form.venue_name }}
             {% if form.venue_name.errors %}
@@ -490,6 +548,7 @@
             <h4>Program</h4>
             <dl>
                 <div><dt>Title</dt><dd data-review-value="{{ form.title.id_for_label }}">—</dd></div>
+                <div><dt>Type</dt><dd data-review-value="{{ form.project_type.id_for_label }}">—</dd></div>
                 <div><dt>Category</dt><dd data-review-value="{{ form.category.id_for_label }}">—</dd></div>
                 <div><dt>Proponent</dt><dd data-review-value="{{ form.proponent.id_for_label }}">—</dd></div>
                 <div><dt>Beneficiaries</dt><dd data-review-value="{{ form.beneficiaries.id_for_label }}">—</dd></div>
@@ -498,6 +557,8 @@
         <section class="review-card">
             <h4>Schedule</h4>
             <dl>
+                <div><dt>Implementation start</dt><dd data-review-value="{{ form.implementation_start_date.id_for_label }}">—</dd></div>
+                <div><dt>Implementation end</dt><dd data-review-value="{{ form.implementation_end_date.id_for_label }}">—</dd></div>
                 <div><dt>Event date</dt><dd data-review-value="{{ form.event_date.id_for_label }}">—</dd></div>
                 <div><dt>Start time</dt><dd data-review-value="{{ form.start_time.id_for_label }}">—</dd></div>
                 <div><dt>End time</dt><dd data-review-value="{{ form.end_time.id_for_label }}">—</dd></div>
@@ -521,36 +582,12 @@
 </div>
 
 
-<!-- =========================================================
-     FORM ACTIONS
-     ========================================================= -->
-
-<div class="form-actions wizard-actions">
-
-    <button
-        type="button"
-        class="btn btn-back ui-button ui-button--subtle"
-        data-wizard-back
-        hidden
-    >
-        Back
-    </button>
-
-
-    <a
-        href="{% url 'mayor_projects:non_infrastructure_project_list' %}"
-        class="btn btn-cancel ui-button ui-button--secondary"
-    >
-        Cancel
-    </a>
-
-    <button type="button" class="btn btn-next ui-button ui-button--primary" data-wizard-next>Next</button>
-
-    <button type="submit" class="btn btn-submit ui-button ui-button--primary" data-wizard-submit data-saving-text="Saving..." hidden>
-        {{ action }} Project
-    </button>
-
-</div>
+            <div class="form-actions wizard-actions">
+                <button type="button" class="btn btn-back ui-button ui-button--subtle" data-wizard-back hidden>Back</button>
+                <a href="{% url 'mayor_projects:non_infrastructure_project_list' %}" class="btn btn-cancel ui-button ui-button--secondary">Cancel</a>
+                <button type="button" class="btn btn-next ui-button ui-button--primary" data-wizard-next>Next</button>
+                <button type="submit" class="btn btn-submit ui-button ui-button--primary" data-wizard-submit data-saving-text="Saving..." hidden>{{ action }} Project</button>
+            </div>
 
         </form>
     </div>
@@ -564,6 +601,47 @@
 document.addEventListener('DOMContentLoaded', function () {
 
     const projectForm = document.querySelector('.form-card form');
+
+    const projectTypeInput = document.getElementById(
+        '{{ form.project_type.id_for_label }}'
+    );
+
+    function setRequiredState(field, required) {
+        if (!field) return;
+        field.required = required;
+        const label = projectForm.querySelector(`label[for="${field.id}"]`);
+        if (!label) return;
+        const indicator = label.querySelector('.optional-badge, .required-marker');
+        if (!indicator) return;
+        indicator.className = required ? 'required-marker' : 'optional-badge';
+        indicator.textContent = required ? '*' : 'Optional';
+        indicator.setAttribute('aria-label', required ? 'required' : 'optional');
+    }
+
+    function updateProjectTypeFields() {
+        if (!projectTypeInput) return;
+        const selectedType = projectTypeInput.value;
+        projectForm.querySelectorAll('[data-project-types]').forEach(function (group) {
+            const applicableTypes = group.dataset.projectTypes.split(' ');
+            const visible = applicableTypes.includes(selectedType);
+            group.hidden = !visible;
+            group.querySelectorAll('input, select, textarea').forEach(function (field) {
+                field.disabled = !visible;
+            });
+        });
+
+        const isEvent = selectedType === 'EVENT';
+        const isTraining = selectedType === 'TRAINING';
+        setRequiredState(document.getElementById('{{ form.event_date.id_for_label }}'), isEvent);
+        setRequiredState(document.getElementById('{{ form.start_time.id_for_label }}'), isEvent);
+        setRequiredState(document.getElementById('{{ form.end_time.id_for_label }}'), isEvent);
+        setRequiredState(document.getElementById('{{ form.venue_name.id_for_label }}'), isEvent || isTraining);
+        setRequiredState(document.getElementById('{{ form.target_beneficiaries.id_for_label }}'), isTraining);
+    }
+
+    if (projectTypeInput) {
+        projectTypeInput.addEventListener('change', updateProjectTypeFields);
+    }
 
     projectForm.querySelectorAll(
         '.form-group label[for]:not(.image-upload-button)'
@@ -585,6 +663,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         label.appendChild(indicator);
     });
+
+    updateProjectTypeFields();
 
     projectForm.querySelectorAll('.error-message').forEach(function (message) {
         const group = message.closest('.form-group');
