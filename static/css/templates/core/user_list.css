@@ -21,7 +21,7 @@
     .user-management-content {
         width: min(100%, 1280px);
         min-width: 0;
-        padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1.25rem, 3vw, 2.5rem) 3rem 0;
+        padding: clamp(1.5rem, 3vw, 2.5rem) var(--ui-sidebar-content-gutter) 3rem;
         justify-self: start;
     }
 

@@ -961,9 +961,10 @@
 
 /* Shared role-aware sidebar navigation */
 .ui-sidebar-layout {
+    --ui-sidebar-content-gutter: clamp(1.5rem, 2vw, 2rem);
     display: grid;
     grid-template-columns: 240px minmax(0, 1fr);
-    column-gap: clamp(1.5rem, 2vw, 2rem);
+    column-gap: 0;
     min-height: calc(100vh - 72px);
 }
 
@@ -1118,7 +1119,7 @@
 }
 
 .ui-sidebar-layout > .head-dashboard {
-    width: min(1180px, calc(100% - 3rem));
+    width: min(1180px, calc(100% - var(--ui-sidebar-content-gutter) - var(--ui-sidebar-content-gutter)));
 }
 
 /* Lightweight breadcrumbs for the main project flows. */
@@ -1151,6 +1152,7 @@
 
 @media (max-width: 800px) {
     .ui-sidebar-layout {
+        --ui-sidebar-content-gutter: 1rem;
         grid-template-columns: minmax(0, 1fr);
         column-gap: 0;
     }

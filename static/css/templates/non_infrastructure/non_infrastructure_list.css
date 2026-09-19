@@ -24,7 +24,7 @@
     .projects-container {
         max-width: 1200px;
         margin: 2rem auto;
-        padding: 0 1.5rem;
+        padding: 0 var(--ui-sidebar-content-gutter);
     }
 
     .projects-header {

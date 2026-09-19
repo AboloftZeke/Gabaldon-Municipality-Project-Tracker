@@ -10,7 +10,7 @@
 }
 
 .head-dashboard {
-    width: min(1180px, calc(100% - 3rem));
+    width: min(1180px, calc(100% - var(--ui-sidebar-content-gutter) - var(--ui-sidebar-content-gutter)));
     margin: 0 auto;
     padding: 2.25rem 0 4rem;
     color: var(--head-text);

@@ -1,4 +1,4 @@
-    .dashboard-container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+    .dashboard-container { max-width: 1200px; margin: 2rem auto; padding: 0 var(--ui-sidebar-content-gutter); }
     .dashboard-title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; color: #111827; }
 
     .stats-grid {
