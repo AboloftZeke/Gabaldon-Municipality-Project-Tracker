@@ -81,6 +81,8 @@ class LoginView(View):
     template_name = 'core/login.html'
 
     def get(self, request):
+        if request.user.is_authenticated:
+            return _redirect_authenticated_user(request.user)
         return render(request, self.template_name)
 
     def post(self, request):
