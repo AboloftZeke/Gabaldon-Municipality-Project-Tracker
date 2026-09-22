@@ -22,7 +22,7 @@ IGNORED = {
     'supporting_inspections',
 }
 LABELS = {
-    'creator': 'Published By Attribution', 'award_status': 'Status',
+    'creator': 'Published By Attribution', 'status': 'Status',
     'status': 'Status', 'procurement_method': 'Procurement Method',
     'inspected_by': 'Inspected By', 'duration_days': 'Duration (days)',
     'official_physical_progress': 'Official Physical Progress',
@@ -44,7 +44,7 @@ INFORMATION_GROUPS = {
         ('Location', {'address'}),
         ('Schedule', {'planned_start_date', 'planned_end_date'}),
         ('Procurement & Contractor', {
-            'contractor', 'procurement_method', 'award_status',
+            'contractor', 'procurement_method', 'status',
         }),
         ('Status & Progress', {
             'cost_progress_percentage', 'physical_progress_percentage',

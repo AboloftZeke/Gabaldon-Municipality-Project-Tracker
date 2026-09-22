@@ -132,7 +132,7 @@ class HeadDashboardView(OfficeHeadRequiredMixin, TemplateView):
                 {
                     'title': snapshot.get('title') or 'Untitled project',
                     'status': (
-                        snapshot.get('award_status_label')
+                        snapshot.get('status_label')
                         or 'Status not set'
                     ),
                     'update_url': reverse(

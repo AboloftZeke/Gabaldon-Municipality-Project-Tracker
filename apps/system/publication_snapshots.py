@@ -182,9 +182,9 @@ def build_infrastructure_snapshot(infrastructure):
             'procurement_method_label': (
                 infrastructure.get_procurement_method_display() or ''
             ),
-            'award_status': infrastructure.award_status or '',
-            'award_status_label': (
-                infrastructure.get_award_status_display() or ''
+            'status': infrastructure.status or '',
+            'status_label': (
+                infrastructure.get_status_display() or ''
             ),
             'planned_start_date': _isoformat(
                 infrastructure.planned_start_date,

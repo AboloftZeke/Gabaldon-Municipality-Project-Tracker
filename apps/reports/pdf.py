@@ -253,7 +253,7 @@ def build_individual_report_pdf(report_type, report):
     if report_type == 'infrastructure':
         _section(story, 'Project Information', [
             ('Category', report['category'].get('name')),
-            ('Official Status', report['award_status_label']),
+            ('Official Status', report['status_label']),
             ('Implementing Office', report['implementing_office'].get('name')),
             ('Published By', report['created_by_name']),
             ('Last Updated', report['updated_at']),
@@ -339,7 +339,7 @@ def _summary_table(report_type, rows, styles):
             project['code'], project['title'],
             project['address'].get('barangay') or 'N/A',
             project['category'].get('name') or 'N/A',
-            project['award_status_label'] or 'N/A',
+            project['status_label'] or 'N/A',
             _percent(project['physical_progress_percentage']),
             _text(project['planned_start_date']),
             _text(project['planned_end_date']),

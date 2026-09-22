@@ -282,8 +282,8 @@ class PublicDashboardView(TemplateView):
         infra_total = len(infra_projects)
         noninfra_total = len(noninfra_projects)
         total_projects = infra_total + noninfra_total
-        infra_completed = sum(p['award_status'] == 'completed' for p in infra_projects)
-        infra_ongoing = sum(p['award_status'] == 'ongoing' for p in infra_projects)
+        infra_completed = sum(p['status'] == 'completed' for p in infra_projects)
+        infra_ongoing = sum(p['status'] == 'ongoing' for p in infra_projects)
         noninfra_completed = sum(p['status'] == 'completed' for p in noninfra_projects)
         noninfra_ongoing = sum(p['status'] == 'ongoing' for p in noninfra_projects)
         noninfra_planned = sum(p['status'] == 'planned' for p in noninfra_projects)
@@ -423,13 +423,13 @@ class EngineeringDashboardView(StaffRequiredMixin, TemplateView):
         
         user_projects = InfrastructureProject.objects.all()
         context['total_projects'] = user_projects.count()
-        context['pre_construction_projects'] = user_projects.filter(
-            award_status='pre_construction',
+        context['not_yet_started_projects'] = user_projects.filter(
+            status='not_yet_started',
         ).count()
         context['ongoing_projects'] = user_projects.filter(
-            award_status='ongoing',
+            status='ongoing',
         ).count()
-        context['completed_projects'] = user_projects.filter(award_status='completed').count()
+        context['completed_projects'] = user_projects.filter(status='completed').count()
         
         return context
 

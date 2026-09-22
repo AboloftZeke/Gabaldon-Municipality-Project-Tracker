@@ -34,10 +34,10 @@
         </select>
         <select id="gis-filter-status" class="gis-select">
             <option value="">All Statuses</option>
+            <option value="not_yet_started">Not Yet Started</option>
             <option value="completed">Completed</option>
             <option value="ongoing">Ongoing</option>
-            <option value="planned">Planned</option>
-            <option value="delayed">Delayed / Suspended</option>
+            <option value="on_hold">On Hold</option>
         </select>
         <button type="button" id="gis-fullscreen-btn" class="gis-btn" title="Fullscreen">⛶</button>
     </div>
@@ -48,7 +48,7 @@
         <div class="gis-stat"><span class="gis-stat-value" id="stat-noninfra">0</span><span class="gis-stat-label">Non-Infrastructure</span></div>
         <div class="gis-stat"><span class="gis-stat-value" id="stat-ongoing">0</span><span class="gis-stat-label">Ongoing</span></div>
         <div class="gis-stat"><span class="gis-stat-value" id="stat-completed">0</span><span class="gis-stat-label">Completed</span></div>
-        <div class="gis-stat"><span class="gis-stat-value" id="stat-planned">0</span><span class="gis-stat-label">Planned</span></div>
+        <div class="gis-stat"><span class="gis-stat-value" id="stat-not-yet-started">0</span><span class="gis-stat-label">Not Yet Started</span></div>
     </div>
 
     <div class="gis-map-shell">
@@ -56,10 +56,10 @@
 
         <div class="gis-legend" id="gis-legend">
             <div class="gis-legend-title">Project Status</div>
+            <div><span class="gis-dot" style="background:#64748b"></span> Not Yet Started</div>
             <div><span class="gis-dot" style="background:#2ecc71"></span> Completed</div>
             <div><span class="gis-dot" style="background:#3498db"></span> Ongoing</div>
-            <div><span class="gis-dot" style="background:#f1c40f"></span> Planned</div>
-            <div><span class="gis-dot" style="background:#e74c3c"></span> Delayed / Suspended</div>
+            <div><span class="gis-dot" style="background:#b7791f"></span> On Hold</div>
             <div class="gis-legend-title">Facilities</div>
             <div>🏫 School &nbsp; 🏥 Health &nbsp; 🏛 Gov't</div>
             <div>🚒 Fire &nbsp; 🚓 Police &nbsp; ⛪ Church</div>

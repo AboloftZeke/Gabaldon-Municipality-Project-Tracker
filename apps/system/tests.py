@@ -220,7 +220,7 @@ class PublicationServiceTests(TestCase):
         self.infrastructure = InfrastructureProject.objects.create(
             project=self.project,
             title='Working Project Title',
-            award_status='pre_construction',
+            status='not_yet_started',
         )
 
     def _approve_and_publish(self, revision):
@@ -378,7 +378,7 @@ class EmployeePublicationWorkflowViewTests(TestCase):
         self.infrastructure = InfrastructureProject.objects.create(
             project=infra_base,
             title='Employee Submission Road',
-            award_status='pre_construction',
+            status='not_yet_started',
         )
         noninfra_base = Project.objects.create(
             project_type='non_infrastructure',
@@ -513,7 +513,7 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
             project=project,
             title='Submitted Admin Preview Project',
             description='Snapshot reviewed by the administrator.',
-            award_status='pre_construction',
+            status='not_yet_started',
         )
         ProjectImage.objects.create(
             project=project,
@@ -654,7 +654,7 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
                 args=[self.infrastructure.pk],
             ),
             {
-                'award_status': 'pre_construction',
+                'status': 'not_yet_started',
                 'physical_progress_percentage': '0',
                 'cost_progress_percentage': '',
                 'from_review': str(self.revision.pk),
@@ -793,7 +793,7 @@ class ProjectPublicationSnapshotTests(TestCase):
             contractor=contractor,
             implementing_office=office,
             procurement_method='competitive_bidding',
-            award_status='pre_construction',
+            status='not_yet_started',
             planned_start_date=date(2026, 1, 15),
             planned_end_date=date(2026, 8, 30),
             cost_progress_percentage=Decimal('42.50'),
@@ -1051,7 +1051,7 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             contractor=contractor,
             implementing_office=office,
             procurement_method='competitive_bidding',
-            award_status='pre_construction',
+            status='not_yet_started',
             planned_start_date='2026-01-15',
             planned_end_date='2026-08-30',
             cost_progress_percentage=42,

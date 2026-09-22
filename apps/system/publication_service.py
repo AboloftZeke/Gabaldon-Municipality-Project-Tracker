@@ -54,8 +54,8 @@ def _synchronize_head_operational_snapshot(
         submitted = snapshot.setdefault('infrastructure', {})
         operational = current.get('infrastructure') or {}
         for key in (
-            'award_status',
-            'award_status_label',
+            'status',
+            'status_label',
             'physical_progress_percentage',
             'cost_progress_percentage',
         ):
@@ -109,7 +109,7 @@ def _missing_first_publication_requirements(revision):
             missing.append(
                 'Engineering Head must explicitly confirm the official status',
             )
-        if not infrastructure.get('award_status'):
+        if not infrastructure.get('status'):
             missing.append('official status is required')
         if infrastructure.get('physical_progress_percentage') in (None, ''):
             missing.append('actual physical progress is required')

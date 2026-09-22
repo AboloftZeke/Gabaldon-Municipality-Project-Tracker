@@ -129,7 +129,7 @@
                         <td class="report-table__title">{{ project.title }}</td>
                         <td>{{ project.address.barangay|default:"N/A" }}</td>
                         <td>{{ project.category.name|default:"N/A" }}</td>
-                        <td>{{ project.award_status_label|default:"N/A" }}</td>
+                        <td>{{ project.status_label|default:"N/A" }}</td>
                         <td class="report-table__number">{% if project.physical_progress_percentage is not None %}{{ project.physical_progress_percentage|floatformat:1 }}%{% else %}N/A{% endif %}</td>
                         <td>{{ project.planned_start_date|date:"M j, Y"|default:"N/A" }}</td>
                         <td>{{ project.planned_end_date|date:"M j, Y"|default:"N/A" }}</td>

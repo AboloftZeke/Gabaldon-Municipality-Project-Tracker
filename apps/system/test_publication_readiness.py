@@ -30,10 +30,10 @@ class FirstPublicationReadinessTests(TestCase):
         )
 
     def test_infrastructure_first_publication_reports_all_missing_requirements(self):
-        self.infrastructure.award_status = None
+        self.infrastructure.status = None
         self.infrastructure.physical_progress_percentage = None
         self.infrastructure.save(update_fields=[
-            'award_status',
+            'status',
             'physical_progress_percentage',
         ])
         revision = self.approved_revision(self.infrastructure.project)
@@ -68,7 +68,7 @@ class FirstPublicationReadinessTests(TestCase):
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
         ), {
-            'award_status': 'completed',
+            'status': 'completed',
             'physical_progress_percentage': '45',
             'cost_progress_percentage': '',
             'inspection_completion_percentage': '65',
@@ -78,7 +78,7 @@ class FirstPublicationReadinessTests(TestCase):
         revision.refresh_from_db()
         infrastructure = revision.snapshot['infrastructure']
         self.assertEqual(infrastructure['title'], reviewed_title)
-        self.assertEqual(infrastructure['award_status'], 'completed')
+        self.assertEqual(infrastructure['status'], 'completed')
         self.assertEqual(infrastructure['physical_progress_percentage'], '45.00')
         self.assertIsNone(infrastructure['cost_progress_percentage'])
         self.assertEqual(
@@ -97,7 +97,7 @@ class FirstPublicationReadinessTests(TestCase):
         ))
         public_project = public_response.context['public_project']
         self.assertEqual(public_project['title'], reviewed_title)
-        self.assertEqual(public_project['award_status'], 'completed')
+        self.assertEqual(public_project['status'], 'completed')
         self.assertEqual(
             public_project['physical_progress_percentage'],
             Decimal('45.00'),

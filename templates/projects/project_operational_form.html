@@ -46,7 +46,7 @@
                     {% if field.name != 'supporting_inspections' %}
                     <div class="operational-field {% if field.name == 'head_remarks' %}operational-field--wide operational-field--remarks{% endif %}">
                         <label for="{{ field.id_for_label }}">
-                            {% if field.name == 'award_status' %}Official Status{% elif field.name == 'physical_progress_percentage' %}Official Physical Progress{% elif field.name == 'inspection_completion_percentage' %}Latest Inspection Observed Progress{% else %}{{ field.label }}{% endif %}
+                            {% if field.name == 'status' %}Official Status{% elif field.name == 'physical_progress_percentage' %}Official Physical Progress{% elif field.name == 'inspection_completion_percentage' %}Latest Inspection Observed Progress{% else %}{{ field.label }}{% endif %}
                             {% if field.name == 'cost_progress_percentage' or field.name == 'head_remarks' %}<span class="operational-optional">Optional</span>{% endif %}
                         </label>
                         {{ field }}

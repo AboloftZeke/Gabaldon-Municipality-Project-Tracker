@@ -85,9 +85,9 @@ class InfrastructureSummaryReportFilterForm(BaseSummaryReportFilterForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         statuses = {
-            project['award_status']: project['award_status_label']
+            project['status']: project['status_label']
             for project in self.projects
-            if project['award_status']
+            if project['status']
         }
         self.fields['status'].choices = [
             ('', 'All statuses'),

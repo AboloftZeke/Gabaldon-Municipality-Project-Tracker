@@ -432,22 +432,14 @@ class Command(BaseCommand):
         duration = 120 + (index % 5) * 30
         end_date = start_date + timedelta(days=duration)
         statuses = [
-            'not_yet_started', 'pre_construction', 'ongoing', 'on_hold',
-            'suspended', 'completed', 'for_inspection', 'for_turnover',
-            'turned_over', 'cancelled',
+            'not_yet_started', 'ongoing', 'on_hold', 'completed',
         ]
         status = statuses[index % len(statuses)]
         progress_by_status = {
             'not_yet_started': Decimal('0.00'),
-            'pre_construction': Decimal('0.00'),
             'ongoing': Decimal('25.00') + Decimal(index % 4) * Decimal('10.00'),
             'on_hold': Decimal('35.00'),
-            'suspended': Decimal('35.00'),
             'completed': Decimal('100.00'),
-            'for_inspection': Decimal('95.00'),
-            'for_turnover': Decimal('100.00'),
-            'turned_over': Decimal('100.00'),
-            'cancelled': Decimal('0.00'),
         }
         progress = progress_by_status[status]
 
@@ -469,7 +461,7 @@ class Command(BaseCommand):
                     index % len(InfrastructureProject.PROCUREMENT_METHOD_CHOICES)
                 ][0]
             ),
-            award_status=status,
+            status=status,
             planned_start_date=start_date,
             planned_end_date=end_date,
             cost_progress_percentage=progress,
@@ -493,7 +485,7 @@ class Command(BaseCommand):
         )
 
         posting_date = start_date - timedelta(days=60)
-        actual_start = start_date if status in {'ongoing', 'on_hold', 'suspended', 'completed', 'for_inspection', 'for_turnover', 'turned_over'} else None
+        actual_start = start_date if status in {'ongoing', 'on_hold', 'completed'} else None
         actual_completion = end_date if status == 'completed' else None
         InfrastructureSchedule.objects.create(
             infrastructure=infrastructure,

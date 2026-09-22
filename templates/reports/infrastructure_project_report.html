@@ -43,7 +43,7 @@
         </div>
         <dl class="report-detail-grid">
             <div><dt>Category</dt><dd>{{ report.category.name|default:"N/A" }}</dd></div>
-            <div><dt>Official Status</dt><dd>{{ report.award_status_label|default:"N/A" }}</dd></div>
+            <div><dt>Official Status</dt><dd>{{ report.status_label|default:"N/A" }}</dd></div>
             <div><dt>Implementing Office</dt><dd>{{ report.implementing_office.name|default:"N/A" }}</dd></div>
             <div><dt>Published By</dt><dd>{{ report.created_by_name|default:"N/A" }}</dd></div>
             <div><dt>Last Updated</dt><dd>{{ report.updated_at|date:"F j, Y"|default:"N/A" }}</dd></div>

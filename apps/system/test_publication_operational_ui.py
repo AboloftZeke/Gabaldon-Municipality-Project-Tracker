@@ -55,7 +55,7 @@ class PublicationOperationalUITests(TestCase):
         self.infrastructure = InfrastructureProject.objects.create(
             project=infrastructure_base,
             title='Municipal Hall Rehabilitation',
-            award_status='pre_construction',
+            status='not_yet_started',
             planned_start_date=date.today() - timedelta(days=5),
             planned_end_date=date.today() + timedelta(days=5),
         )
@@ -161,7 +161,7 @@ class PublicationOperationalUITests(TestCase):
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
         ), {
-            'award_status': 'pre_construction',
+            'status': 'not_yet_started',
             'physical_progress_percentage': '45',
             'cost_progress_percentage': '30',
             'inspection_completion_percentage': '50',
@@ -227,7 +227,7 @@ class PublicationOperationalUITests(TestCase):
         self.assertNotContains(response, 'name="calculated_cost_progress"')
 
         response = self.client.post(operational_url, {
-            'award_status': 'pre_construction',
+            'status': 'not_yet_started',
             'physical_progress_percentage': '45',
             'cost_progress_percentage': '',
             'inspection_completion_percentage': '50',
@@ -370,10 +370,10 @@ class PublicationOperationalUITests(TestCase):
             'is_current_public',
         ])
         self.infrastructure.title = 'Unpublished Staff Title'
-        self.infrastructure.award_status = 'completed'
+        self.infrastructure.status = 'completed'
         self.infrastructure.save(update_fields=[
             'title',
-            'award_status',
+            'status',
         ])
         self.client.force_login(self.users['engineer', 'head'])
 

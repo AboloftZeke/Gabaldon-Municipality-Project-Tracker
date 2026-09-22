@@ -81,7 +81,7 @@ def get_infrastructure_summary_report_data(filters):
     rows = _apply_common_filters(
         projects,
         filters,
-        status_key='award_status',
+        status_key='status',
         date_key='planned_start_date',
     )
     contract_values = [
@@ -98,7 +98,7 @@ def get_infrastructure_summary_report_data(filters):
         'rows': rows,
         'total_projects': len(rows),
         'status_counts': dict(Counter(
-            project['award_status_label'] or 'Unspecified'
+            project['status_label'] or 'Unspecified'
             for project in rows
         )),
         'total_contract_value': sum(contract_values, Decimal('0')),

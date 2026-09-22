@@ -22,7 +22,7 @@ class HeadPublishTests(TestCase):
         project_type = revision.project.project_type
         if project_type == 'infrastructure':
             snapshot.setdefault('infrastructure', {}).update({
-                'award_status': 'not_yet_started',
+                'status': 'not_yet_started',
                 'physical_progress_percentage': '0.00',
             })
         else:

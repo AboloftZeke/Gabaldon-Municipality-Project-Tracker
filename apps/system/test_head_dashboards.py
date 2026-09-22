@@ -436,8 +436,8 @@ class HeadDashboardTests(TestCase):
             'infrastructure': {
                 'id': 1,
                 'title': 'Ready Infrastructure Project',
-                'award_status': 'pre_construction',
-                'award_status_label': 'Awarded',
+                'status': 'not_yet_started',
+                'status_label': 'Not Yet Started',
                 'physical_progress_percentage': '0.00',
             },
             '_head_operational_confirmation': {

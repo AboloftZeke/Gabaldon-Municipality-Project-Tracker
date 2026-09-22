@@ -45,7 +45,7 @@ class HeadOperationalRevisionTests(TestCase):
         fixture = InfrastructureProjectFormTests()
         fixture.setUp()
         self.infrastructure = fixture.create_project()
-        self.infrastructure.award_status = 'pre_construction'
+        self.infrastructure.status = 'not_yet_started'
         self.infrastructure.physical_progress_percentage = Decimal('25')
         self.infrastructure.cost_progress_percentage = Decimal('20')
         self.infrastructure.planned_start_date = date.today() - timedelta(days=5)
@@ -93,7 +93,7 @@ class HeadOperationalRevisionTests(TestCase):
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
         ), {
-            'award_status': 'completed',
+            'status': 'completed',
             'physical_progress_percentage': '60',
             'cost_progress_percentage': '55',
             'inspection_completion_percentage': '70',
@@ -114,7 +114,7 @@ class HeadOperationalRevisionTests(TestCase):
         self.assertFalse(revision.is_current_public)
         self.assertIsNone(revision.published_at)
         self.assertEqual(
-            revision.snapshot['infrastructure']['award_status'],
+            revision.snapshot['infrastructure']['status'],
             'completed',
         )
         self.assertEqual(
@@ -140,7 +140,7 @@ class HeadOperationalRevisionTests(TestCase):
         ))
         self.assertEqual(public_response.status_code, 200)
         public_project = public_response.context['public_project']
-        self.assertEqual(public_project['award_status'], 'pre_construction')
+        self.assertEqual(public_project['status'], 'not_yet_started')
         self.assertEqual(public_project['physical_progress_percentage'], Decimal('25.00'))
 
         preview = self.client.get(reverse(
@@ -155,7 +155,7 @@ class HeadOperationalRevisionTests(TestCase):
             for field in section['fields']
             if field['changed']
         }
-        self.assertIn(('Project Information', 'award_status'), changed)
+        self.assertIn(('Project Information', 'status'), changed)
         self.assertIn(
             ('Project Information', 'physical_progress_percentage'),
             changed,
@@ -187,7 +187,7 @@ class HeadOperationalRevisionTests(TestCase):
             args=[self.infrastructure.pk],
         ))
         public_project = public_response.context['public_project']
-        self.assertEqual(public_project['award_status'], 'completed')
+        self.assertEqual(public_project['status'], 'completed')
         self.assertEqual(public_project['physical_progress_percentage'], Decimal('60.00'))
         self.assertEqual(public_project['cost_progress_percentage'], Decimal('55.00'))
         self.assertEqual(
@@ -221,7 +221,7 @@ class HeadOperationalRevisionTests(TestCase):
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
         ), {
-            'award_status': 'completed',
+            'status': 'completed',
             'physical_progress_percentage': '62',
             'cost_progress_percentage': '55',
             'inspection_completion_percentage': '70',
@@ -277,8 +277,8 @@ class HeadOperationalRevisionTests(TestCase):
             args=[self.infrastructure.pk],
         ))
         self.assertEqual(
-            public_response.context['public_project']['award_status'],
-            'pre_construction',
+            public_response.context['public_project']['status'],
+            'not_yet_started',
         )
 
         retained_snapshot = deepcopy(revision.snapshot)
@@ -349,7 +349,7 @@ class HeadOperationalRevisionTests(TestCase):
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
         ), {
-            'award_status': 'pre_construction',
+            'status': 'not_yet_started',
             'physical_progress_percentage': '30',
             'cost_progress_percentage': '20',
             'inspection_completion_percentage': '35',
@@ -406,7 +406,7 @@ class HeadOperationalRevisionTests(TestCase):
         self.assertContains(form, '40.00%')
 
         response = self.client.post(operational_url, {
-            'award_status': 'completed',
+            'status': 'completed',
             'physical_progress_percentage': '60',
             'cost_progress_percentage': '',
             'inspection_completion_percentage': '70',
@@ -570,7 +570,7 @@ class HeadOperationalRevisionTests(TestCase):
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
         ), {
-            'award_status': 'completed',
+            'status': 'completed',
             'physical_progress_percentage': '80',
             'cost_progress_percentage': '75',
             'inspection_completion_percentage': '90',
@@ -579,7 +579,7 @@ class HeadOperationalRevisionTests(TestCase):
         self.infrastructure.refresh_from_db()
         self.inspection.refresh_from_db()
         pending.refresh_from_db()
-        self.assertEqual(self.infrastructure.award_status, 'pre_construction')
+        self.assertEqual(self.infrastructure.status, 'not_yet_started')
         self.assertEqual(self.infrastructure.physical_progress_percentage, Decimal('25'))
         self.assertEqual(self.infrastructure.cost_progress_percentage, Decimal('20'))
         self.assertEqual(self.inspection.completion_percentage, Decimal('30'))

@@ -98,15 +98,9 @@
       <div class="gis-legend" aria-label="Project status map legend">
         <span class="gis-legend__title">Project status</span>
         <span><i class="gis-legend__dot gis-legend__dot--not_yet_started"></i>Not Yet Started</span>
-        <span><i class="gis-legend__dot gis-legend__dot--pre_construction"></i>Pre-Construction</span>
         <span><i class="gis-legend__dot gis-legend__dot--ongoing"></i>Ongoing</span>
         <span><i class="gis-legend__dot gis-legend__dot--on_hold"></i>On Hold</span>
-        <span><i class="gis-legend__dot gis-legend__dot--suspended"></i>Suspended</span>
         <span><i class="gis-legend__dot gis-legend__dot--completed"></i>Completed</span>
-        <span><i class="gis-legend__dot gis-legend__dot--for_inspection"></i>For Inspection</span>
-        <span><i class="gis-legend__dot gis-legend__dot--for_turnover"></i>For Turnover</span>
-        <span><i class="gis-legend__dot gis-legend__dot--turned_over"></i>Turned Over</span>
-        <span><i class="gis-legend__dot gis-legend__dot--cancelled"></i>Cancelled</span>
       </div>
     </section>
 
@@ -172,15 +166,9 @@
             <button type="button" class="status-btn is-active" data-status="all">All</button>
             {% if public_project_type == 'infra' %}
             <button type="button" class="status-btn" data-status="not_yet_started">Not Yet Started</button>
-            <button type="button" class="status-btn" data-status="pre_construction">Pre-Construction</button>
             <button type="button" class="status-btn" data-status="ongoing">Ongoing</button>
             <button type="button" class="status-btn" data-status="on_hold">On Hold</button>
-            <button type="button" class="status-btn" data-status="suspended">Suspended</button>
             <button type="button" class="status-btn" data-status="completed">Completed</button>
-            <button type="button" class="status-btn" data-status="for_inspection">For Inspection</button>
-            <button type="button" class="status-btn" data-status="for_turnover">For Turnover</button>
-            <button type="button" class="status-btn" data-status="turned_over">Turned Over</button>
-            <button type="button" class="status-btn" data-status="cancelled">Cancelled</button>
             {% else %}
             <button type="button" class="status-btn" data-status="planned">Planned</button>
             <button type="button" class="status-btn" data-status="ongoing">Ongoing</button>

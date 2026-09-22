@@ -105,7 +105,7 @@ def _operational_information(revision, project_type, preview, user):
         controlled.extend([
             {
                 'label': 'Official Status',
-                'value': infrastructure.get('award_status_label'),
+                'value': infrastructure.get('status_label'),
                 'is_percentage': False,
             },
             {

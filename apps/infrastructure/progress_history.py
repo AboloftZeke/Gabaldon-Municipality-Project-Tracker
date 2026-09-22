@@ -25,7 +25,7 @@ def record_progress_update(
         )
 
     if (
-        previous_status == infrastructure.award_status
+        previous_status == infrastructure.status
         and previous_physical_progress
         == infrastructure.physical_progress_percentage
     ):
@@ -34,7 +34,7 @@ def record_progress_update(
     progress_update = InfrastructureProgressUpdate.objects.create(
         infrastructure=infrastructure,
         previous_official_status=previous_status or '',
-        new_official_status=infrastructure.award_status or '',
+        new_official_status=infrastructure.status or '',
         previous_physical_progress=previous_physical_progress,
         new_physical_progress=infrastructure.physical_progress_percentage,
         head_remarks=(remarks or '').strip(),

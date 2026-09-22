@@ -25,6 +25,66 @@
         {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_create' %}" class="btn-create ui-button ui-button--primary">+ New Project</a>{% endif %}
     </div>
 
+    <form class="ui-form" method="get" aria-label="Filter infrastructure projects">
+        <div class="form-grid">
+
+            <div class="form-group">
+                <label for="category-filter">Category</label>
+                <select id="category-filter" name="category">
+                    <option value="">All categories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.pk }}"
+                            {% if request.GET.category == category.pk|stringformat:'s' %}selected{% endif %}>
+                            {{ category.category_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="location-filter">Barangay</label>
+                <select id="location-filter" name="location">
+                    <option value="">All barangays</option>
+
+                    {% for location in locations %}
+                        {% if location %}
+                            <option value="{{ location }}"
+                                {% if request.GET.location == location %}selected{% endif %}>
+                                {{ location }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="status-filter">Status</label>
+                <select id="status-filter" name="status">
+                    <option value="">All statuses</option>
+                    {% for value, label in statuses %}
+                        <option value="{{ value }}"
+                            {% if request.GET.status == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <button class="ui-button ui-button--secondary" type="submit">
+                    Apply Filters
+                </button>
+
+                {% if has_active_filters %}
+                    <a href="{% url 'engineering_projects:project_list' %}"
+                    class="ui-button ui-button--secondary">
+                        Clear Filters
+                    </a>
+                {% endif %}
+            </div>
+
+        </div>
+    </form>
     {% if projects %}
         <div class="projects-grid">
             {% for project in projects %}
@@ -52,8 +112,8 @@
                             <div class="project-category">
                                 {{ project.category|default:"Uncategorized" }}
                             </div>
-                            <div class="project-status status-{{ project.award_status }} ui-badge ui-table__status">
-                                {{ project.get_award_status_display|default:"Status not specified" }}
+                            <div class="project-status status-{{ project.status }} ui-badge ui-table__status">
+                                {{ project.get_status_display|default:"Status not specified" }}
                             </div>
                             <div class="publication-card-state">
                                 <span class="publication-badge publication-status-{{ project.publication_state.status_key }} ui-badge">

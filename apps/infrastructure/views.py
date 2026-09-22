@@ -101,14 +101,14 @@ class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
         )
 
         context['total_projects'] = projects.count()
-        context['pre_construction_projects'] = projects.filter(
-            award_status='pre_construction'
+        context['not_yet_started_projects'] = projects.filter(
+            status='not_yet_started'
         ).count()
         context['ongoing_projects'] = projects.filter(
-            award_status='ongoing'
+            status='ongoing'
         ).count()
         context['completed_projects'] = projects.filter(
-            award_status='completed'
+            status='completed'
         ).count()
 
         recent_projects = list(projects.order_by('-created_at')[:5])
@@ -157,7 +157,7 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
 
         status = self.request.GET.get('status', '').strip()
         if status:
-            queryset = queryset.filter(award_status=status)
+            queryset = queryset.filter(status=status)
 
         return queryset.order_by('-created_at')
 
@@ -183,7 +183,7 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
         context['categories'] = InfrastructureCategory.objects.filter(
             is_active=True
         ).order_by('category_name')
-        context['statuses'] = InfrastructureProject.AWARD_STATUS_CHOICES
+        context['statuses'] = InfrastructureProject.STATUS_CHOICES
         context['has_any_projects'] = InfrastructureProject.objects.exists()
         context['has_active_filters'] = any(
             self.request.GET.get(name, '').strip()
@@ -453,20 +453,20 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
         status_label = 'Not specified'
         status_value = ''
 
-        if hasattr(project, 'get_award_status_display'):
+        if hasattr(project, 'get_status_display'):
             status_label = (
-                project.get_award_status_display()
+            project.get_status_display()
                 or 'Not specified'
             )
 
         if infra:
-            status_value = infra.award_status or ''
+            status_value = infra.status or ''
         else:
-            status_value = getattr(project, 'award_status', '') or ''
+            status_value = getattr(project, 'status', '') or ''
 
         status_class_map = {
             value: value
-            for value, _label in InfrastructureProject.OFFICIAL_STATUS_CHOICES
+            for value, _label in InfrastructureProject.STATUS_CHOICES
         }
         context['project_status_class'] = status_class_map.get(
             status_value,
@@ -604,7 +604,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
                 if infra else getattr(project, 'description', '')
             ),
             'get_status_display': status_label,
-            'get_award_status_display': status_label,
+            'get_status_display': status_label,
             'get_category_display': category_name,
             'implementing_office': implementing_office_name,
             'street': street,
@@ -859,7 +859,7 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
                 Project.objects.select_for_update().get(
                     pk=infrastructure.project_id,
                 )
-                previous_status = infrastructure.award_status
+                previous_status = infrastructure.status
                 previous_physical_progress = (
                     infrastructure.physical_progress_percentage
                 )

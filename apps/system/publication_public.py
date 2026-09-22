@@ -116,9 +116,9 @@ def infrastructure_public_data(revision):
         'procurement_method_label': (
             infrastructure.get('procurement_method_label') or ''
         ),
-        'award_status': infrastructure.get('award_status') or '',
-        'award_status_label': (
-            infrastructure.get('award_status_label') or 'Not Yet Started'
+        'status': infrastructure.get('status') or '',
+        'status_label': (
+            infrastructure.get('status_label') or 'Not Yet Started'
         ),
         'planned_start_date': _date(
             infrastructure.get('planned_start_date'),
@@ -270,8 +270,8 @@ def infrastructure_dashboard_row(data):
         'cover_image_url': data['cover_image_url'],
         'location_key': _location_key(address.get('barangay')),
         'location': address.get('barangay') or '',
-        'status_key': _status_key(data['award_status']),
-        'status_label': data['award_status_label'],
+        'status_key': _status_key(data['status']),
+        'status_label': data['status_label'],
         'office': data['implementing_office'].get('name') or '',
         'implementing_office': data['implementing_office'].get('name') or '',
         'category_label': category.get('name') or '',

@@ -818,9 +818,9 @@ class SupportingInspectionChoiceField(forms.ModelMultipleChoiceField):
 
 
 class InfrastructureOperationalForm(forms.Form):
-    award_status = forms.ChoiceField(
+    status = forms.ChoiceField(
         label='Official Status',
-        choices=InfrastructureProject.OFFICIAL_STATUS_CHOICES,
+        choices=InfrastructureProject.STATUS_CHOICES,
     )
     physical_progress_percentage = forms.DecimalField(
         label='Physical Progress', max_digits=5, decimal_places=2,
@@ -854,7 +854,7 @@ class InfrastructureOperationalForm(forms.Form):
         ).first()
         initial = kwargs.setdefault('initial', {})
         initial.update({
-            'award_status': instance.award_status,
+            'status': instance.status,
             'physical_progress_percentage': instance.physical_progress_percentage,
             'cost_progress_percentage': instance.cost_progress_percentage,
         })
@@ -873,11 +873,11 @@ class InfrastructureOperationalForm(forms.Form):
 
     @transaction.atomic
     def save(self):
-        self.instance.award_status = self.cleaned_data['award_status']
+        self.instance.status = self.cleaned_data['status']
         self.instance.physical_progress_percentage = self.cleaned_data['physical_progress_percentage']
         self.instance.cost_progress_percentage = self.cleaned_data['cost_progress_percentage']
         self.instance.save(update_fields=[
-            'award_status', 'physical_progress_percentage',
+            'status', 'physical_progress_percentage',
             'cost_progress_percentage', 'updated_at',
         ])
         if self.inspection:

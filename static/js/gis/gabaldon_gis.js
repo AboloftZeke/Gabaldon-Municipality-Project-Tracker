@@ -22,17 +22,9 @@
 
   const STATUS_COLORS = {
     not_yet_started: "#64748b",
-    pre_construction: "#2563eb",
     ongoing: "#d97706",
     on_hold: "#b7791f",
-    suspended: "#c2410c",
     completed: "#15803d",
-    for_inspection: "#7e22ce",
-    for_turnover: "#0f766e",
-    turned_over: "#166534",
-    cancelled: "#b91c1c",
-    planned: "#64748b",
-    delayed: "#e74c3c",
     unknown: "#95a5a6",
   };
 
@@ -451,7 +443,7 @@
     document.getElementById("stat-noninfra").textContent = nonInfra;
     document.getElementById("stat-ongoing").textContent = byStatus("ongoing");
     document.getElementById("stat-completed").textContent = byStatus("completed");
-    document.getElementById("stat-planned").textContent = byStatus("planned");
+    document.getElementById("stat-not-yet-started").textContent = byStatus("not_yet_started");
   }
 
   // ---------------------------------------------------------------

@@ -17,7 +17,7 @@
         venue: modal.querySelector('[data-project-modal-field="venue"]'),
         contractor: modal.querySelector('[data-project-modal-field="contractor"]'),
         procurement_method: modal.querySelector('[data-project-modal-field="procurement_method"]'),
-        award_status: modal.querySelector('[data-project-modal-field="award_status"]'),
+        status: modal.querySelector('[data-project-modal-field="status"]'),
         source_of_fund: modal.querySelector('[data-project-modal-field="source_of_fund"]'),
         budget_amount: modal.querySelector('[data-project-modal-field="budget_amount"]'),
         abc_amount: modal.querySelector('[data-project-modal-field="abc_amount"]'),
@@ -51,7 +51,7 @@
         venue: modal.querySelector('[data-project-modal-group="venue"]'),
         contractor: modal.querySelector('[data-project-modal-group="contractor"]'),
         procurement_method: modal.querySelector('[data-project-modal-group="procurement_method"]'),
-        award_status: modal.querySelector('[data-project-modal-group="award_status"]'),
+        status: modal.querySelector('[data-project-modal-group="status"]'),
         source_of_fund: modal.querySelector('[data-project-modal-group="source_of_fund"]'),
         budget_amount: modal.querySelector('[data-project-modal-group="budget_amount"]'),
         abc_amount: modal.querySelector('[data-project-modal-group="abc_amount"]'),
@@ -114,7 +114,7 @@
         setField('venue', trigger.dataset.projectVenue);
         setField('contractor', trigger.dataset.projectContractor);
         setField('procurement_method', trigger.dataset.projectProcurementMethod);
-        setField('award_status', trigger.dataset.projectStatusLabel || trigger.dataset.projectAwardStatus);
+        setField('status', trigger.dataset.projectStatusLabel || trigger.dataset.projectStatus);
         setField('source_of_fund', trigger.dataset.projectSourceOfFund);
         setField('budget_amount', trigger.dataset.projectBudgetAmount);
         setField('abc_amount', trigger.dataset.projectAbcAmount);
