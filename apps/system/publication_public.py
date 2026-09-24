@@ -2,11 +2,13 @@
 
 from datetime import date, datetime, time
 from decimal import Decimal, InvalidOperation
+from pathlib import PurePosixPath
 
+from django.core.files.storage import default_storage
 from django.http import Http404
 from django.urls import reverse
 
-from .models import ProjectRevision
+from .models import NonInfrastructureProject, ProjectRevision
 from .publication_workflow import PublicationStatus
 
 
@@ -247,6 +249,62 @@ def get_public_project(project_type, record_id):
         if data and data['record_id'] == record_id:
             return data
     raise Http404('Published project revision not found.')
+
+
+def non_infrastructure_public_update_history(current_revision):
+    """Read frozen Mayor updates from this project's published revisions only."""
+    revisions = ProjectRevision.objects.filter(
+        project_id=current_revision.project_id,
+        status__in=[PublicationStatus.PUBLISHED, PublicationStatus.ARCHIVED],
+        published_at__isnull=False,
+        revision_number__lte=current_revision.revision_number,
+    ).only('revision_id', 'snapshot', 'published_at', 'revision_number').order_by(
+        '-revision_number',
+    )
+    status_labels = dict(NonInfrastructureProject.STATUS_CHOICES)
+    history = []
+    for revision in revisions:
+        snapshot = revision.snapshot or {}
+        if (snapshot.get('project') or {}).get('type') != 'non_infrastructure':
+            continue
+        update = snapshot.get('non_infrastructure_progress_update')
+        if not isinstance(update, dict) or update.get('review_status') != 'approved':
+            continue
+        evidence = []
+        for item in update.get('evidence') or []:
+            if not isinstance(item, dict):
+                continue
+            path = item.get('file_path') or ''
+            parts = PurePosixPath(path).parts if isinstance(path, str) else ()
+            safe_path = (
+                len(parts) >= 3 and parts[:2] == ('non_infrastructure', 'evidence')
+                and '..' not in parts and '\\' not in path
+            )
+            url = ''
+            if safe_path:
+                try:
+                    if default_storage.exists(path):
+                        url = default_storage.url(path)
+                except (OSError, ValueError):
+                    pass
+            evidence.append({
+                'description': item.get('description') or '',
+                'filename': parts[-1] if safe_path else 'Supporting file',
+                'url': url,
+                'is_image': bool(url and PurePosixPath(path).suffix.lower() in {
+                    '.jpg', '.jpeg', '.png', '.gif', '.webp',
+                }),
+            })
+        previous = update.get('previous_status') or 'Unknown'
+        proposed = update.get('proposed_status') or 'Unknown'
+        history.append({
+            'published_at': revision.published_at,
+            'previous_status': status_labels.get(previous, previous),
+            'new_status': status_labels.get(proposed, proposed),
+            'remarks': update.get('remarks') or '',
+            'evidence': evidence,
+        })
+    return history
 
 
 def infrastructure_dashboard_row(data):

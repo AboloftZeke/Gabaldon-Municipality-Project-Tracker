@@ -131,7 +131,7 @@ class ApplyApprovedProgressUpdateTests(TestCase):
             reverse('publication_revision_publish', args=[revision.pk]),
         ).status_code, 302)
         self.assertEqual(self.client.get(self.public_detail_url).context['public_project']['status'], 'ongoing')
-        self.assertNotContains(self.client.get(self.public_detail_url), 'support.pdf')
+        self.assertContains(self.client.get(self.public_detail_url), 'support.pdf')
 
     def test_second_application_is_rejected_even_after_publication(self):
         apply_approved_progress_update(self.update.pk, self.head)

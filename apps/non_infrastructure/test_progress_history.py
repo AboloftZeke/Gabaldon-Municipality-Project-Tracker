@@ -132,7 +132,7 @@ class MayorPublicationHistoryTests(TestCase):
         publish_publication_revision(revision, self.head)
         response = self.client.get(self.public_url)
         self.assertEqual(response.context['public_project']['status'], 'ongoing')
-        self.assertNotContains(response, 'attendance.pdf')
+        self.assertContains(response, 'attendance.pdf')
         self.assertNotContains(response, 'Reviewed supporting records.')
         self.assertNotIn('non_infrastructure_progress_update', response.context['public_project'])
         from apps.reports.services import get_non_infrastructure_project_report_data

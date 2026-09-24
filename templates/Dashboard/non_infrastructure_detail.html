@@ -101,6 +101,38 @@
       <p class="public-detail__description">{{ public_project.description|default:"No description provided." }}</p>
     </section>
 
+    {% if published_update_history %}
+    <section class="public-detail__section" aria-labelledby="published-updates-title">
+      <h2 id="published-updates-title">Project Updates and Supporting Evidence</h2>
+      {% for update in published_update_history %}
+      <article class="detail-item">
+        <h3>{{ update.previous_status }} → {{ update.new_status }}</h3>
+        <p>Published: {{ update.published_at|date:"F j, Y" }}</p>
+        {% if update.remarks %}<p>{{ update.remarks }}</p>{% endif %}
+        {% if update.evidence %}
+        <ul>
+          {% for file in update.evidence %}
+          <li>
+            {{ file.description|default:file.filename }}
+            {% if file.url %}
+              {% if file.is_image %}
+                <a href="{{ file.url }}">View Evidence</a>
+                <br><img src="{{ file.url }}" alt="{{ file.description|default:file.filename }}" loading="lazy" style="max-width: 220px; height: auto;">
+              {% else %}
+                <a href="{{ file.url }}">View Evidence ({{ file.filename }})</a>
+              {% endif %}
+            {% else %}
+              <span>File unavailable</span>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </section>
+    {% endif %}
+
     {% if project_images %}
     <section class="public-detail__section">
       <h2>Program Images</h2>
