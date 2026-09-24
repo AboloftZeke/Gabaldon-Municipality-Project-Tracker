@@ -17,6 +17,7 @@ urlpatterns = [
     path('progress-updates/review/<int:update_pk>/', views.NonInfrastructureProgressReviewDetailView.as_view(), name='non_infrastructure_progress_review_detail'),
     path('progress-updates/review/<int:update_pk>/approve/', views.NonInfrastructureProgressApproveView.as_view(), name='non_infrastructure_progress_approve'),
     path('progress-updates/review/<int:update_pk>/return/', views.NonInfrastructureProgressReturnView.as_view(), name='non_infrastructure_progress_return'),
+    path('progress-updates/review/<int:update_pk>/apply/', views.NonInfrastructureProgressApplyView.as_view(), name='non_infrastructure_progress_apply'),
     path('<int:pk>/submit-for-review/', views.NonInfrastructureProjectSubmitForReviewView.as_view(), name='non_infrastructure_project_submit_for_review'),
     path('<int:pk>/delete/', views.NonInfrastructureProjectDeleteView.as_view(), name='non_infrastructure_project_delete'),
 ]

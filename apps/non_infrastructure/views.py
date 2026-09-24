@@ -11,6 +11,7 @@ from django.db.models import Prefetch, Q, Sum
 from django.templatetags.static import static
 from django.utils import timezone
 from .forms import NonInfrastructureOperationalForm, NonInfrastructureProgressReturnForm, NonInfrastructureProgressUpdateForm, NonInfrastructureProjectForm
+from .progress_application import apply_approved_progress_update
 from apps.system.models import NonInfrastructureCategory, NonInfrastructureProgressUpdate, NonInfrastructureProject, Project, ProjectImage
 from apps.system.publication_service import (
     create_head_operational_revision,
@@ -461,6 +462,22 @@ class NonInfrastructureProgressApproveView(NonInfrastructureProgressReviewDecisi
 
 class NonInfrastructureProgressReturnView(NonInfrastructureProgressReviewDecisionView):
     decision = NonInfrastructureProgressUpdate.ReviewStatus.RETURNED
+
+
+class NonInfrastructureProgressApplyView(MayorHeadOnlyMixin, View):
+    """Apply a Head-approved update to the working status and create a revision."""
+
+    http_method_names = ['post']
+
+    def post(self, request, update_pk):
+        get_object_or_404(NonInfrastructureProgressUpdate, pk=update_pk)
+        try:
+            update = apply_approved_progress_update(update_pk, request.user)
+        except ValidationError as exc:
+            messages.error(request, '; '.join(exc.messages))
+            return redirect('mayor_projects:non_infrastructure_progress_review_detail', update_pk=update_pk)
+        messages.success(request, 'Approved status applied. The publication revision is ready for review.')
+        return redirect('publication_revision_detail', revision_id=update.publication_revision_id)
 
 
 class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):

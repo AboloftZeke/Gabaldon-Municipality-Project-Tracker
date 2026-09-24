@@ -652,6 +652,21 @@ class NonInfrastructureProgressUpdate(models.Model):
     )
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_notes = models.TextField(blank=True, default='')
+    applied_at = models.DateTimeField(null=True, blank=True)
+    applied_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='non_infrastructure_progress_applications',
+    )
+    publication_revision = models.OneToOneField(
+        ProjectRevision,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='source_non_infrastructure_progress_update',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
