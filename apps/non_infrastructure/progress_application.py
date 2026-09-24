@@ -53,12 +53,16 @@ def apply_approved_progress_update(update_id, actor):
 
     project.status = update.proposed_status
     project.save(update_fields=['status', 'updated_at'])
-    revision = create_head_operational_revision(base_project, actor)
+    # Set these before snapshot creation so the retained version contains the
+    # same application decision that is saved to the update below.
+    update.applied_at = timezone.now()
+    update.applied_by = actor
+    revision = create_head_operational_revision(
+        base_project, actor, progress_update=update,
+    )
     if revision is None:
         raise ValidationError('An operational publication revision could not be created.')
 
-    update.applied_at = timezone.now()
-    update.applied_by = actor
     update.publication_revision = revision
     update.save(update_fields=['applied_at', 'applied_by', 'publication_revision', 'updated_at'])
     return update

@@ -116,6 +116,37 @@ def build_progress_update_snapshot(progress_update):
     }
 
 
+def build_non_infrastructure_progress_update_snapshot(progress_update):
+    """Freeze one Mayor Head decision and its evidence as JSON-safe metadata."""
+    evidence = [
+        {
+            'id': item.pk,
+            'file_path': item.evidence_file.name,
+            'description': item.description or '',
+            'uploaded_by': _user_data(item.uploaded_by),
+            'uploaded_at': _isoformat(item.uploaded_at),
+        }
+        for item in progress_update.evidence.select_related('uploaded_by').order_by(
+            'created_at', 'evidence_id',
+        )
+    ]
+    return {
+        'id': progress_update.pk,
+        'previous_status': progress_update.previous_status,
+        'proposed_status': progress_update.proposed_status,
+        'remarks': progress_update.remarks or '',
+        'review_status': progress_update.review_status,
+        'review_notes': progress_update.review_notes or '',
+        'submitted_by': _user_data(progress_update.submitted_by),
+        'submitted_at': _isoformat(progress_update.submitted_at),
+        'reviewed_by': _user_data(progress_update.reviewed_by),
+        'reviewed_at': _isoformat(progress_update.reviewed_at),
+        'applied_by': _user_data(progress_update.applied_by),
+        'applied_at': _isoformat(progress_update.applied_at),
+        'evidence': evidence,
+    }
+
+
 def _base_snapshot(project, images):
     cover = next((image for image in images if image['is_cover']), None)
     return {
