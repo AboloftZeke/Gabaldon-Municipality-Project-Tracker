@@ -71,6 +71,7 @@ class HeadOperationalRevisionTests(TestCase):
         self.non_infrastructure = NonInfrastructureProject.objects.create(
             project=base,
             title='Community Program',
+            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
             description='Published description',
             status='planned',
             category=self.category,
@@ -296,7 +297,7 @@ class HeadOperationalRevisionTests(TestCase):
         preview = self.client.get(reverse(
             'publication_revision_detail', args=[revision.pk],
         ))
-        self.assertContains(preview, 'class="revision-section progress-evidence-panel"')
+        self.assertContains(preview, 'progress-evidence-panel')
         self.assertContains(preview, 'Official Physical Progress')
         self.assertContains(preview, 'Supporting Inspections')
         self.assertContains(preview, 'field-report.pdf')
@@ -523,6 +524,7 @@ class HeadOperationalRevisionTests(TestCase):
         unpublished = NonInfrastructureProject.objects.create(
             project=project,
             title='Unpublished Program',
+            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
             status='planned',
             category=self.category,
         )

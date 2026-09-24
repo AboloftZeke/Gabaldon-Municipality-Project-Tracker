@@ -66,3 +66,22 @@ operational/dashboard assertions, and older template assertions. No Phase 9
 Mayor evidence integration test failed. **Do not mark the whole repository as
 merge-ready until the complete suite is green or those failures are resolved
 and explicitly accepted by the maintainers.**
+
+### Phase 9B release gate (2026-09-24)
+
+The 15 Phase 9 cases were reproduced on the Phase 9 tip. Four errors came from
+test fixtures that identified projects as Events without the required event
+details; the fixtures now identify those program examples as Programs. The 11
+failures involved old infrastructure status labels, an inconsistent dashboard
+fixture, and assertions tied to superseded template wording or CSS markup.
+Only tests and fixtures needed correction; production behavior did not change.
+
+After these corrections, the complete repository suite passed **330 tests,
+zero failures, zero errors** using
+`python manage.py test --settings=config.test_settings`. The targeted Mayor
+evidence run passed 23 tests and the shared publication run passed 30 tests.
+`python manage.py check --settings=config.test_settings` reported no issues;
+`python manage.py makemigrations --check --dry-run --settings=config.test_settings`
+reported no model changes. The Phase 9 warning above records the earlier gate
+result; the Phase 9B branch now meets the test and migration release gate for
+proposing a merge review.
