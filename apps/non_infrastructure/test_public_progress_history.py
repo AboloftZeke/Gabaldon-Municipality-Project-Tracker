@@ -8,6 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.formats import date_format
 
 from apps.non_infrastructure.progress_application import apply_approved_progress_update
 from apps.system.models import (
@@ -68,15 +69,24 @@ class PublicMayorHistoryTests(TestCase):
         before = self.client.get(self.url)
         self.assertContains(before, 'Planned')
         self.assertNotContains(before, 'attendance.pdf')
+        self.assertNotContains(before, 'public-updates__timeline')
         self.assertNotContains(before, 'Public activity: attendance.pdf')
         publish_publication_revision(revision, self.head)
+        revision.refresh_from_db()
         response = self.client.get(self.url)
         self.assertEqual(response.context['public_project']['status'], 'ongoing')
         self.assertContains(response, 'Project Updates and Supporting Evidence')
         self.assertContains(response, 'Planned → Ongoing')
+        self.assertContains(response, 'Published:')
+        self.assertContains(response, date_format(timezone.localtime(revision.published_at), 'F j, Y'))
         self.assertContains(response, 'Public activity: attendance.pdf')
         self.assertContains(response, 'Proof for attendance.pdf')
         self.assertContains(response, default_storage.url(evidence.evidence_file.name))
+        self.assertContains(response, 'class="public-updates__timeline"')
+        self.assertContains(response, 'class="public-updates__file-type">Document</span>')
+        self.assertContains(response, 'class="public-updates__filename">attendance.pdf</strong>')
+        self.assertContains(response, 'View Evidence')
+        self.assertNotContains(response, 'max-width: 220px')
         self.assertNotContains(response, 'CONFIDENTIAL HEAD NOTE')
         self.assertNotContains(response, 'Approve</button>')
         self.assertNotContains(response, 'Return for Correction')
@@ -89,6 +99,7 @@ class PublicMayorHistoryTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.context['public_project']['status'], 'planned')
         self.assertEqual(response.context['published_update_history'], [])
+        self.assertNotContains(response, 'public-updates__timeline')
         for name in ('draft', 'pending_review', 'returned', 'approved', 'waiting'):
             self.assertNotContains(response, f'private-{name}.pdf')
         self.assertNotContains(response, 'waiting.pdf')
@@ -113,12 +124,20 @@ class PublicMayorHistoryTests(TestCase):
         response = self.client.get(self.url)
         history = response.context['published_update_history']
         self.assertEqual(len(history), 2)
+        self.assertLess(
+            response.content.index(b'Proof for finish.jpg'),
+            response.content.index(b'Proof for attendance.pdf'),
+        )
         self.assertEqual(history[0]['new_status'], 'Completed')
         self.assertEqual(history[0]['evidence'][0]['filename'], 'finish.jpg')
         self.assertTrue(history[0]['evidence'][0]['is_image'])
         self.assertEqual(history[1]['new_status'], 'Ongoing')
         self.assertEqual(history[1]['evidence'][0]['filename'], 'attendance.pdf')
         self.assertEqual(history[1]['evidence'][0]['description'], 'Proof for attendance.pdf')
+        self.assertContains(response, 'class="public-updates__entry"', count=2)
+        self.assertContains(response, 'class="public-updates__preview"')
+        self.assertContains(response, 'alt="Evidence for Skills training: Proof for finish.jpg"')
+        self.assertContains(response, 'class="public-updates__file-type">Image</span>')
         self.assertNotContains(response, 'Changed after publication')
         self.assertContains(response, default_storage.url(second_file.evidence_file.name))
         self.assertEqual(response.context['public_project']['status'], 'completed')
@@ -132,6 +151,7 @@ class PublicMayorHistoryTests(TestCase):
         response = self.client.get(self.url)
         self.assertContains(response, 'Proof for attendance.pdf')
         self.assertContains(response, 'File unavailable')
+        self.assertContains(response, 'class="public-updates__unavailable">File unavailable</span>')
         self.assertNotContains(response, default_storage.url(path))
         self.assertEqual(response.context['published_update_history'][0]['evidence'][0]['url'], '')
 
