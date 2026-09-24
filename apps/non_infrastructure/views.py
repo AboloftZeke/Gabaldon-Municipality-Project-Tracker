@@ -2,15 +2,15 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
-from django.core.exceptions import ValidationError
+from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.views import View
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, FormView
 from django.urls import reverse_lazy, reverse, NoReverseMatch
 from django.db import models, transaction
 from django.db.models import Prefetch, Q, Sum
 from django.templatetags.static import static
 from django.utils import timezone
-from .forms import NonInfrastructureOperationalForm, NonInfrastructureProjectForm
+from .forms import NonInfrastructureOperationalForm, NonInfrastructureProgressUpdateForm, NonInfrastructureProjectForm
 from apps.system.models import NonInfrastructureCategory, NonInfrastructureProject, Project, ProjectImage
 from apps.system.publication_service import (
     create_head_operational_revision,
@@ -282,6 +282,7 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
             is_system_admin(self.request.user)
             or can_manage_non_infrastructure(self.request.user)
         )
+        context['can_create_progress_update'] = can_manage_non_infrastructure(self.request.user)
 
         context['project_placeholder_image'] = static(
             'images/project-placeholder.svg'
@@ -296,6 +297,31 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
             context['can_manage_publication'] = can_manage_non_infrastructure(self.request.user)
 
         return context
+
+
+class NonInfrastructureProgressUpdateCreateView(MayorsOfficeOnlyMixin, FormView):
+    """Let Mayor's Office Staff save a proposed update as a private draft."""
+
+    form_class = NonInfrastructureProgressUpdateForm
+    template_name = 'non_infrastructure/non_infrastructure_progress_update_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.project = get_object_or_404(NonInfrastructureProject, pk=kwargs['pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['project'] = self.project
+        return context
+
+    def form_valid(self, form):
+        try:
+            form.save(project=self.project, user=self.request.user)
+        except (OSError, SuspiciousFileOperation):
+            form.add_error('evidence_files', 'The file could not be saved. Please try again.')
+            return self.form_invalid(form)
+        messages.success(self.request, 'Project update saved as a draft.')
+        return redirect('mayor_projects:non_infrastructure_project_detail', pk=self.project.pk)
 
 
 class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):

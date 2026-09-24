@@ -2,11 +2,14 @@ import os
 
 from django import forms
 from django.core.files.storage import default_storage
+from django.db import transaction
 
 from apps.system.choices import BARANGAY_CHOICES
 from apps.system.models import (
     Address,
     NonInfrastructureCategory,
+    NonInfrastructureEvidence,
+    NonInfrastructureProgressUpdate,
     NonInfrastructureProject,
     Project,
     ProjectImage,
@@ -29,6 +32,82 @@ class MultipleFileField(forms.FileField):
                 continue
             cleaned.append(super().clean(item, initial))
         return cleaned
+
+
+class NonInfrastructureProgressUpdateForm(forms.Form):
+    """Save a staff proposal and its evidence without changing official status."""
+
+    IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+    IMAGE_CONTENT_TYPES = {'image/jpeg', 'image/png', 'image/gif', 'image/webp'}
+    DOCUMENT_EXTENSIONS = {'.pdf'}
+    DOCUMENT_CONTENT_TYPES = {'application/pdf'}
+    MAX_EVIDENCE_SIZE = 10 * 1024 * 1024
+
+    proposed_status = forms.ChoiceField(
+        choices=NonInfrastructureProject.STATUS_CHOICES,
+        label='Proposed Status',
+    )
+    remarks = forms.CharField(widget=forms.Textarea(attrs={'rows': 4}))
+    evidence_files = MultipleFileField(
+        required=False,
+        label='Supporting Evidence',
+        widget=MultipleFileInput(attrs={'accept': '.jpg,.jpeg,.png,.gif,.webp,.pdf'}),
+    )
+    evidence_description = forms.CharField(
+        required=False,
+        max_length=2000,
+        label='Evidence Description',
+        widget=forms.Textarea(attrs={'rows': 2}),
+    )
+
+    def clean_evidence_files(self):
+        uploads = self.cleaned_data['evidence_files']
+        if not uploads:
+            raise forms.ValidationError('Upload at least one supporting file.')
+        for upload in uploads:
+            extension = os.path.splitext(upload.name)[1].lower()
+            content_type = (getattr(upload, 'content_type', '') or '').lower()
+            if not (
+                (extension in self.IMAGE_EXTENSIONS and content_type in self.IMAGE_CONTENT_TYPES)
+                or (extension in self.DOCUMENT_EXTENSIONS and content_type in self.DOCUMENT_CONTENT_TYPES)
+            ):
+                raise forms.ValidationError('Only JPG, PNG, GIF, WebP, and PDF files are supported.')
+            if upload.size > self.MAX_EVIDENCE_SIZE:
+                raise forms.ValidationError('Each supporting file must be 10 MB or smaller.')
+        return uploads
+
+    def save(self, *, project, user):
+        if not self.is_valid():
+            raise ValueError('Cannot save an invalid progress update form.')
+
+        stored_files = []
+        try:
+            with transaction.atomic():
+                # Capture the official status at save time, even if another user
+                # changed it after this form was opened.
+                project = NonInfrastructureProject.objects.select_for_update().get(pk=project.pk)
+                update = NonInfrastructureProgressUpdate.objects.create(
+                    non_infrastructure=project,
+                    previous_status=project.status,
+                    proposed_status=self.cleaned_data['proposed_status'],
+                    remarks=self.cleaned_data['remarks'],
+                    submitted_by=user,
+                    review_status=NonInfrastructureProgressUpdate.ReviewStatus.DRAFT,
+                )
+                for upload in self.cleaned_data['evidence_files']:
+                    evidence = NonInfrastructureEvidence.objects.create(
+                        progress_update=update,
+                        evidence_file=upload,
+                        description=self.cleaned_data['evidence_description'],
+                        uploaded_by=user,
+                    )
+                    stored_files.append(evidence.evidence_file.name)
+        except Exception:
+            # Database rollback does not automatically remove saved media files.
+            for name in stored_files:
+                default_storage.delete(name)
+            raise
+        return update
 
 
 NON_INFRA_CATEGORY_DEFAULTS = [

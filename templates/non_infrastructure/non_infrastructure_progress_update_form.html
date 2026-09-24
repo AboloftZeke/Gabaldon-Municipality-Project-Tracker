@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Add Project Progress Update{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/core/operational_update.css' %}?v=20260913-1">
+{% endblock %}
+
+{% block content %}
+<div class="operational-workspace operational-workspace--compact">
+    <nav class="operational-back" aria-label="Back navigation">
+        <a href="{% url 'mayor_projects:non_infrastructure_project_detail' project.pk %}">← Back to Project</a>
+    </nav>
+
+    <header class="operational-header ui-page-header">
+        <p class="operational-eyebrow">Mayor's Office Staff · Draft Progress Update</p>
+        <h1>Add Project Progress Update</h1>
+        <p class="operational-project-title">{{ project.title }}</p>
+        <p class="operational-intro">Current official status: {{ project.get_status_display }}. This draft will not change that status.</p>
+    </header>
+
+    <form method="post" enctype="multipart/form-data" class="operational-form ui-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="operational-alert" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <section class="operational-card ui-card" aria-labelledby="progress-update-heading">
+            <div class="operational-section-heading">
+                <span class="operational-section-number">01</span>
+                <div>
+                    <h2 id="progress-update-heading">Proposed Update</h2>
+                    <p>Save a draft for a later review phase.</p>
+                </div>
+            </div>
+            <div class="operational-field-grid operational-field-grid--single">
+                <div class="operational-field">
+                    <label for="{{ form.proposed_status.id_for_label }}">Proposed Status</label>
+                    {{ form.proposed_status }}
+                    {% for error in form.proposed_status.errors %}<p class="operational-error">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="operational-field">
+                    <label for="{{ form.remarks.id_for_label }}">Remarks</label>
+                    {{ form.remarks }}
+                    {% for error in form.remarks.errors %}<p class="operational-error">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="operational-field">
+                    <label for="{{ form.evidence_files.id_for_label }}">Supporting Evidence</label>
+                    {{ form.evidence_files }}
+                    <p>Upload one or more JPG, PNG, GIF, WebP, or PDF files (up to 10 MB each).</p>
+                    {% for error in form.evidence_files.errors %}<p class="operational-error">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="operational-field">
+                    <label for="{{ form.evidence_description.id_for_label }}">Evidence Description (optional)</label>
+                    {{ form.evidence_description }}
+                    <p>This description applies to all files in this update.</p>
+                    {% for error in form.evidence_description.errors %}<p class="operational-error">{{ error }}</p>{% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <div class="operational-actions">
+            <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Save Draft</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
