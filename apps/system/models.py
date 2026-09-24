@@ -604,6 +604,96 @@ class NonInfrastructureProject(models.Model):
 
 
 
+class NonInfrastructureProgressUpdate(models.Model):
+    """Proposed status change; publication behavior belongs to later phases."""
+
+    class ReviewStatus(models.TextChoices):
+        DRAFT = 'draft', 'Draft'
+        PENDING_REVIEW = 'pending_review', 'Pending Review'
+        RETURNED = 'returned', 'Returned'
+        APPROVED = 'approved', 'Approved'
+
+    progress_update_id = models.BigAutoField(primary_key=True)
+    non_infrastructure = models.ForeignKey(
+        NonInfrastructureProject,
+        on_delete=models.PROTECT,
+        related_name='progress_updates',
+    )
+    previous_status = models.CharField(
+        max_length=20,
+        choices=NonInfrastructureProject.STATUS_CHOICES,
+        blank=True,
+        default='',
+    )
+    proposed_status = models.CharField(
+        max_length=20,
+        choices=NonInfrastructureProject.STATUS_CHOICES,
+    )
+    remarks = models.TextField(blank=True, default='')
+    submitted_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='non_infrastructure_progress_submissions',
+    )
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    review_status = models.CharField(
+        max_length=20,
+        choices=ReviewStatus.choices,
+        default=ReviewStatus.DRAFT,
+    )
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='non_infrastructure_progress_reviews',
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'system_non_infrastructure_progress_update'
+        ordering = ('-created_at', '-progress_update_id')
+
+    def __str__(self):
+        return f'{self.non_infrastructure} progress update {self.progress_update_id}'
+
+
+class NonInfrastructureEvidence(models.Model):
+    """File proof attached to a single proposed status change."""
+
+    evidence_id = models.BigAutoField(primary_key=True)
+    progress_update = models.ForeignKey(
+        NonInfrastructureProgressUpdate,
+        on_delete=models.PROTECT,
+        related_name='evidence',
+    )
+    evidence_file = models.FileField(
+        upload_to='non_infrastructure/evidence/%Y/%m/',
+        max_length=500,
+    )
+    description = models.TextField(blank=True, default='')
+    uploaded_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='non_infrastructure_evidence_uploads',
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'system_non_infrastructure_evidence'
+        ordering = ('created_at', 'evidence_id')
+
+    def __str__(self):
+        return self.description or self.evidence_file.name
+
+
 class InfrastructureSchedule(models.Model):
     """Normalized schedule/timeline data for infrastructure projects."""
     schedule_id = models.BigAutoField(primary_key=True)
