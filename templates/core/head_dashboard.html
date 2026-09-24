@@ -6,6 +6,7 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}?v=20260821-1">
 <link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
+<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/mayor_evidence.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -39,8 +40,9 @@
         </div>
 
         {% if pending_progress_updates %}
-            <div class="attention-group" id="pending-progress-updates">
+            <div class="attention-group mayor-evidence" id="pending-progress-updates">
                 <h3>Non-Infrastructure Progress Updates <span>{{ pending_progress_update_count }}</span></h3>
+                <p>Mayor's Office staff submitted these updates with evidence for your review.</p>
                 <div class="attention-grid">
                     {% for update in pending_progress_updates %}
                         <article class="attention-card ui-card ui-card--padded">
@@ -49,13 +51,19 @@
                             </div>
                             <h4>{{ update.non_infrastructure.title }}</h4>
                             <p>Proposed status: {{ update.get_proposed_status_display }}</p>
-                            <p>Submitted by: {{ update.submitted_by.get_full_name|default:update.submitted_by.username|default:"Former staff member" }}</p>
-                            <p>Submitted: {{ update.submitted_at|date:"M d, Y · g:i A" }}</p>
+                            <p><strong>Submitted by:</strong> {{ update.submitted_by.get_full_name|default:update.submitted_by.username|default:"Former staff member" }}</p>
+                            <p><strong>Submitted:</strong> {{ update.submitted_at|date:"M d, Y · g:i A" }}</p>
                             <a class="head-button head-button--primary ui-button ui-button--primary" href="{% url 'mayor_projects:non_infrastructure_progress_review_detail' update.pk %}">Review Progress Update</a>
                         </article>
                     {% endfor %}
                 </div>
                 <a class="head-button head-button--secondary ui-button ui-button--secondary" href="{% url 'mayor_projects:non_infrastructure_progress_review_queue' %}">View All Progress Updates Awaiting Review</a>
+            </div>
+        {% elif account_navigation.dashboard == 'mayor_head_dashboard' %}
+            <div class="attention-group mayor-evidence" id="pending-progress-updates">
+                <h3>Non-Infrastructure Progress Updates</h3>
+                <p>No staff progress updates are waiting for review.</p>
+                <a class="head-button head-button--secondary ui-button ui-button--secondary" href="{% url 'mayor_projects:non_infrastructure_progress_review_queue' %}">Open Progress Review Queue</a>
             </div>
         {% endif %}
 

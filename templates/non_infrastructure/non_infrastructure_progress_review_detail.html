@@ -1,89 +1,69 @@
 {% extends "base.html" %}
 {% load static %}
-
 {% block title %}Review Progress Update · {{ progress_update.non_infrastructure.title }}{% endblock %}
-
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/operational_update.css' %}?v=20260913-1">
+<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/mayor_evidence.css' %}">
 {% endblock %}
-
 {% block content %}
-<div class="operational-workspace operational-workspace--compact">
-    <nav class="operational-back" aria-label="Back navigation">
-        <a href="{% url 'mayor_projects:non_infrastructure_progress_review_queue' %}">← Back to Progress Review Queue</a>
-    </nav>
+<div class="operational-workspace operational-workspace--compact mayor-evidence">
+    <nav class="operational-back" aria-label="Back navigation"><a href="{% url 'mayor_projects:non_infrastructure_progress_review_queue' %}">← Back to Progress Review Queue</a></nav>
     <header class="operational-header ui-page-header">
         <p class="operational-eyebrow">Mayor's Office Head · Progress Update Review</p>
         <h1>{{ progress_update.non_infrastructure.title }}</h1>
-        <p class="operational-project-title">Review status: {{ progress_update.get_review_status_display }}</p>
-        <p class="operational-intro">Reviewing this update does not change the official project status or publish evidence.</p>
+        <div class="operational-header__meta"><span class="mayor-status mayor-status--{{ progress_update.review_status }}">Review status: {{ progress_update.get_review_status_display }}</span>
+        {% if progress_update.publication_revision_id %}
+            {% if progress_update.publication_revision.status == 'published' %}<span class="mayor-status mayor-status--published">Published</span>
+            {% elif progress_update.publication_revision.status == 'archived' %}<span class="mayor-status mayor-status--published">Previously published</span>
+            {% else %}<span class="mayor-status mayor-status--awaiting">Applied · Awaiting Publication</span>{% endif %}
+        {% endif %}</div>
+        <p class="operational-intro">Review the status change, staff remarks, and files. A review decision does not publish this update.</p>
     </header>
 
-    <section class="operational-card ui-card">
-        <div class="operational-section-heading"><span class="operational-section-number">01</span><h2>Submitted Update</h2></div>
-        <div class="operational-field-grid operational-field-grid--single">
-            <div class="operational-field"><strong>Current official status:</strong> {{ progress_update.non_infrastructure.get_status_display }}</div>
-            <div class="operational-field"><strong>Previous status at draft creation:</strong> {{ progress_update.get_previous_status_display|default:"Not recorded" }}</div>
-            <div class="operational-field"><strong>Proposed status:</strong> {{ progress_update.get_proposed_status_display }}</div>
-            <div class="operational-field"><strong>Remarks:</strong> {{ progress_update.remarks|linebreaksbr }}</div>
-            <div class="operational-field"><strong>Submitted by:</strong> {{ progress_update.submitted_by.get_full_name|default:progress_update.submitted_by.username|default:"Former staff member" }}</div>
-            <div class="operational-field"><strong>Submitted date:</strong> {{ progress_update.submitted_at|date:"M d, Y, g:i A"|default:"Not submitted" }}</div>
-            {% if progress_update.reviewed_at %}
-                <div class="operational-field"><strong>Reviewed by:</strong> {{ progress_update.reviewed_by.get_full_name|default:progress_update.reviewed_by.username|default:"Former Head" }}</div>
-                <div class="operational-field"><strong>Reviewed date:</strong> {{ progress_update.reviewed_at|date:"M d, Y, g:i A" }}</div>
-            {% endif %}
-            {% if progress_update.review_notes %}<div class="operational-field"><strong>Review note:</strong> {{ progress_update.review_notes|linebreaksbr }}</div>{% endif %}
-        </div>
+    <section class="operational-card ui-card" aria-labelledby="head-update-heading">
+        <div class="operational-section-heading"><span class="operational-section-number">01</span><h2 id="head-update-heading">Submitted Update</h2></div>
+        <p class="mayor-transition"><span>{{ progress_update.get_previous_status_display|default:"Not recorded" }}</span><span aria-hidden="true">→</span><span>{{ progress_update.get_proposed_status_display }}</span></p>
+        <dl class="mayor-summary">
+            <div><dt>Current official status:</dt><dd>{{ progress_update.non_infrastructure.get_status_display }}</dd></div>
+            <div><dt>Previous status at draft creation:</dt><dd>{{ progress_update.get_previous_status_display|default:"Not recorded" }}</dd></div>
+            <div><dt>Proposed status:</dt><dd>{{ progress_update.get_proposed_status_display }}</dd></div>
+            <div><dt>Submitted by</dt><dd>{{ progress_update.submitted_by.get_full_name|default:progress_update.submitted_by.username|default:"Former staff member" }}</dd></div>
+            <div><dt>Submitted date:</dt><dd>{{ progress_update.submitted_at|date:"M d, Y, g:i A"|default:"Not submitted" }}</dd></div>
+            {% if progress_update.reviewed_at %}<div><dt>Reviewed by</dt><dd>{{ progress_update.reviewed_by.get_full_name|default:progress_update.reviewed_by.username|default:"Former Head" }}</dd></div><div><dt>Reviewed date</dt><dd>{{ progress_update.reviewed_at|date:"M d, Y, g:i A" }}</dd></div>{% endif %}
+            <div class="mayor-summary__wide"><dt>Staff remarks</dt><dd>{{ progress_update.remarks|linebreaksbr }}</dd></div>
+            {% if progress_update.review_notes %}<div class="mayor-summary__wide"><dt>Review note</dt><dd>{{ progress_update.review_notes|linebreaksbr }}</dd></div>{% endif %}
+        </dl>
     </section>
 
-    <section class="operational-card ui-card">
-        <div class="operational-section-heading"><span class="operational-section-number">02</span><h2>Supporting Evidence</h2></div>
-        <ul>
-            {% for item in progress_update.evidence.all %}
-                <li>
-                    <a href="{{ item.evidence_file.url }}" download>{{ item.evidence_file.name }}</a>
-                    {% if item.description %}— {{ item.description }}{% endif %}
-                </li>
-            {% empty %}
-                <li>No supporting evidence attached.</li>
-            {% endfor %}
-        </ul>
+    <section class="operational-card ui-card" aria-labelledby="head-evidence-heading">
+        <div class="operational-section-heading"><span class="operational-section-number">02</span><h2 id="head-evidence-heading">Supporting Evidence</h2></div>
+        {% include 'non_infrastructure/includes/mayor_evidence_files.html' %}
     </section>
 
     {% if progress_update.review_status == 'pending_review' %}
-        <section class="operational-card ui-card">
-            <div class="operational-section-heading"><span class="operational-section-number">03</span><h2>Review Decision</h2></div>
-            <form method="post" action="{% url 'mayor_projects:non_infrastructure_progress_approve' progress_update.pk %}" class="operational-actions">
-                {% csrf_token %}
-                <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Approve</button>
-            </form>
-            <form method="post" action="{% url 'mayor_projects:non_infrastructure_progress_return' progress_update.pk %}" class="operational-form ui-form">
-                {% csrf_token %}
-                <div class="operational-field">
-                    <label for="{{ return_form.review_notes.id_for_label }}">Reason for correction</label>
-                    {{ return_form.review_notes }}
-                    {% for error in return_form.review_notes.errors %}<p class="operational-error">{{ error }}</p>{% endfor %}
-                </div>
-                <div class="operational-actions">
-                    <button type="submit" class="operational-button ui-button ui-button--secondary">Return for Correction</button>
-                </div>
-            </form>
+        <section class="operational-card ui-card" aria-labelledby="head-decision-heading">
+            <div class="operational-section-heading"><span class="operational-section-number">03</span><div><h2 id="head-decision-heading">Review Decision</h2><p>Choose one decision for this submitted update.</p></div></div>
+            <div class="mayor-decision">
+                <form method="post" action="{% url 'mayor_projects:non_infrastructure_progress_approve' progress_update.pk %}">
+                    {% csrf_token %}<h3>Approve update</h3><p>Mark the update as reviewed and approved. Applying it is a separate step.</p>
+                    <div class="operational-actions"><button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Approve</button></div>
+                </form>
+                <form method="post" action="{% url 'mayor_projects:non_infrastructure_progress_return' progress_update.pk %}" class="operational-form ui-form">
+                    {% csrf_token %}<h3>Return for correction</h3><p>Explain what the staff member needs to correct.</p>
+                    <div class="operational-field"><label for="{{ return_form.review_notes.id_for_label }}">Reason for correction (required)</label>{{ return_form.review_notes }}
+                        {% for error in return_form.review_notes.errors %}<p class="operational-error" role="alert">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="operational-actions"><button type="submit" class="operational-button ui-button ui-button--secondary">Return for Correction</button></div>
+                </form>
+            </div>
         </section>
     {% endif %}
     {% if progress_update.review_status == 'approved' and not progress_update.applied_at %}
-        <section class="operational-card ui-card">
-            <h2>Apply Approved Update</h2>
-            <p>This changes the working official status and creates an approved publication revision. The public status stays unchanged until that revision is published.</p>
-            <form method="post" action="{% url 'mayor_projects:non_infrastructure_progress_apply' progress_update.pk %}" class="operational-actions">
-                {% csrf_token %}
-                <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Apply Approved Update</button>
-            </form>
+        <section class="operational-card ui-card"><h2>Apply Approved Update</h2><p>This changes the working official status and creates an approved publication revision. The public status stays unchanged until that revision is published.</p>
+            <form method="post" action="{% url 'mayor_projects:non_infrastructure_progress_apply' progress_update.pk %}" class="operational-actions">{% csrf_token %}<button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Apply Approved Update</button></form>
         </section>
     {% elif progress_update.publication_revision_id %}
-        <section class="operational-card ui-card">
-            <p>Applied by {{ progress_update.applied_by.get_full_name|default:progress_update.applied_by.username|default:"Former Head" }} on {{ progress_update.applied_at|date:"M d, Y, g:i A" }}.</p>
-            <a class="ui-button ui-button--primary" href="{% url 'publication_revision_detail' progress_update.publication_revision_id %}">View Publication Revision</a>
-        </section>
+        <section class="operational-card ui-card"><h2>Publication status</h2><p>Applied by {{ progress_update.applied_by.get_full_name|default:progress_update.applied_by.username|default:"Former Head" }} on {{ progress_update.applied_at|date:"M d, Y, g:i A" }}.</p><a class="ui-button ui-button--primary" href="{% url 'publication_revision_detail' progress_update.publication_revision_id %}">View Publication Revision</a></section>
     {% endif %}
 </div>
 {% endblock %}

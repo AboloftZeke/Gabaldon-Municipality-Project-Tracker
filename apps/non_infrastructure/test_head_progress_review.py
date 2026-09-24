@@ -111,6 +111,11 @@ class MayorHeadProgressReviewTests(TestCase):
 
     def test_review_detail_shows_all_information_and_evidence(self):
         response = self.client.get(self.detail_url)
+        self.assertContains(response, 'id="head-update-heading"')
+        self.assertContains(response, 'id="head-evidence-heading"')
+        self.assertContains(response, 'id="head-decision-heading"')
+        self.assertContains(response, 'PDF document')
+        self.assertContains(response, 'download')
         self.assertContains(response, 'Community Health Program')
         self.assertContains(response, 'Current official status:')
         self.assertContains(response, 'Previous status at draft creation:')

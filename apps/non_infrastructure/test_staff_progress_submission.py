@@ -73,6 +73,34 @@ class MayorStaffProgressSubmissionTests(TestCase):
             args=[self.project.pk, update.pk],
         )
 
+    def test_internal_form_and_draft_show_evidence_actions(self):
+        form = self.client.get(self.create_url)
+        self.assertContains(form, 'id="mayor-selected-files"')
+        self.assertContains(form, 'id="id_proposed_status"')
+        self.assertContains(form, 'id="id_remarks"')
+        self.assertContains(form, 'id="id_evidence_files"')
+        self.assertContains(form, 'id="id_evidence_description"')
+        self.assertContains(form, 'Save Draft')
+        detail = self.client.get(self.detail_url)
+        self.assertContains(detail, 'Submit for Review')
+        self.assertContains(detail, 'PDF document')
+        self.assertContains(detail, 'Open file')
+        self.assertContains(detail, 'Download file')
+
+    def test_internal_evidence_image_has_preview_and_return_note_is_visible(self):
+        NonInfrastructureEvidence.objects.create(
+            progress_update=self.update,
+            evidence_file=SimpleUploadedFile('activity.png', b'image', content_type='image/png'),
+            description='Activity photo', uploaded_by=self.staff,
+        )
+        self.update.review_status = 'returned'
+        self.update.review_notes = 'Add the attendance sheet.'
+        self.update.save(update_fields=['review_status', 'review_notes'])
+        detail = self.client.get(self.detail_url)
+        self.assertContains(detail, 'Evidence preview: Activity photo')
+        self.assertContains(detail, 'Add the attendance sheet.')
+        self.assertNotContains(detail, 'Submit for Review')
+
     def test_staff_can_find_and_review_saved_draft_with_evidence(self):
         project_page = self.client.get(reverse(
             'mayor_projects:non_infrastructure_project_detail',
