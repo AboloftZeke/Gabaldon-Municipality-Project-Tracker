@@ -270,6 +270,27 @@
     </div>
 
 
+    {% if can_create_progress_update %}
+    <section class="project-section information-card ui-card">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Mayor's Office Staff</span>
+            <h3>My Progress Updates</h3>
+        </div>
+        <div class="section-content">
+            {% for update in staff_progress_updates %}
+                <div class="content-item information-card__full-row">
+                    <a href="{% url 'mayor_projects:non_infrastructure_progress_update_detail' project.pk update.pk %}">
+                        {{ update.get_proposed_status_display }} — {{ update.get_review_status_display }}
+                    </a>
+                    <div class="content-value">Created {{ update.created_at|date:"M d, Y, g:i A" }}</div>
+                </div>
+            {% empty %}
+                <div class="content-item information-card__full-row">No progress updates saved yet.</div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
     <!-- Project Images -->
     {% if project_images %}
 

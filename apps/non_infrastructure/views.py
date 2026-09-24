@@ -11,7 +11,7 @@ from django.db.models import Prefetch, Q, Sum
 from django.templatetags.static import static
 from django.utils import timezone
 from .forms import NonInfrastructureOperationalForm, NonInfrastructureProgressUpdateForm, NonInfrastructureProjectForm
-from apps.system.models import NonInfrastructureCategory, NonInfrastructureProject, Project, ProjectImage
+from apps.system.models import NonInfrastructureCategory, NonInfrastructureProgressUpdate, NonInfrastructureProject, Project, ProjectImage
 from apps.system.publication_service import (
     create_head_operational_revision,
     publication_state,
@@ -283,6 +283,10 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
             or can_manage_non_infrastructure(self.request.user)
         )
         context['can_create_progress_update'] = can_manage_non_infrastructure(self.request.user)
+        if context['can_create_progress_update']:
+            context['staff_progress_updates'] = project.progress_updates.filter(
+                submitted_by=self.request.user,
+            ).order_by('-created_at', '-progress_update_id')
 
         context['project_placeholder_image'] = static(
             'images/project-placeholder.svg'
@@ -316,12 +320,65 @@ class NonInfrastructureProgressUpdateCreateView(MayorsOfficeOnlyMixin, FormView)
 
     def form_valid(self, form):
         try:
-            form.save(project=self.project, user=self.request.user)
+            update = form.save(project=self.project, user=self.request.user)
         except (OSError, SuspiciousFileOperation):
             form.add_error('evidence_files', 'The file could not be saved. Please try again.')
             return self.form_invalid(form)
         messages.success(self.request, 'Project update saved as a draft.')
-        return redirect('mayor_projects:non_infrastructure_project_detail', pk=self.project.pk)
+        return redirect(
+            'mayor_projects:non_infrastructure_progress_update_detail',
+            pk=self.project.pk,
+            update_pk=update.pk,
+        )
+
+
+class NonInfrastructureProgressUpdateDetailView(MayorsOfficeOnlyMixin, DetailView):
+    """Show a staff member only their own saved progress updates."""
+
+    model = NonInfrastructureProgressUpdate
+    pk_url_kwarg = 'update_pk'
+    context_object_name = 'progress_update'
+    template_name = 'non_infrastructure/non_infrastructure_progress_update_detail.html'
+
+    def get_queryset(self):
+        return NonInfrastructureProgressUpdate.objects.filter(
+            non_infrastructure_id=self.kwargs['pk'],
+            submitted_by=self.request.user,
+        ).select_related('non_infrastructure').prefetch_related('evidence')
+
+
+class NonInfrastructureProgressUpdateSubmitView(MayorsOfficeOnlyMixin, View):
+    """Move an owned draft with evidence to pending review exactly once."""
+
+    http_method_names = ['post']
+
+    def post(self, request, pk, update_pk):
+        with transaction.atomic():
+            update = get_object_or_404(
+                NonInfrastructureProgressUpdate.objects.select_for_update(),
+                pk=update_pk,
+                non_infrastructure_id=pk,
+                submitted_by=request.user,
+            )
+            if update.review_status != NonInfrastructureProgressUpdate.ReviewStatus.DRAFT:
+                messages.error(request, 'Only Draft updates can be submitted for review.')
+            elif (
+                update.proposed_status not in dict(NonInfrastructureProject.STATUS_CHOICES)
+                or not update.remarks.strip()
+            ):
+                messages.error(request, 'Add a valid proposed status and remarks before submitting.')
+            elif not update.evidence.exists():
+                messages.error(request, 'Add supporting evidence before submitting this update.')
+            else:
+                update.review_status = NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW
+                update.submitted_at = timezone.now()
+                update.save(update_fields=['review_status', 'submitted_at', 'updated_at'])
+                messages.success(request, 'Progress update submitted for Mayor Head review.')
+        return redirect(
+            'mayor_projects:non_infrastructure_progress_update_detail',
+            pk=pk,
+            update_pk=update_pk,
+        )
 
 
 class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):

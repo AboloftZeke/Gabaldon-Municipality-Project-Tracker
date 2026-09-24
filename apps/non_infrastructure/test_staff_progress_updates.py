@@ -97,11 +97,11 @@ class MayorStaffProgressUpdateTests(TestCase):
     def test_one_evidence_file_saves_draft_and_leaves_official_status_unchanged(self):
         self.client.force_login(self.staff)
         response = self.client.post(self.url, self.form_data())
-        self.assertRedirects(response, reverse(
-            'mayor_projects:non_infrastructure_project_detail',
-            args=[self.project.pk],
-        ))
         update = NonInfrastructureProgressUpdate.objects.get()
+        self.assertRedirects(response, reverse(
+            'mayor_projects:non_infrastructure_progress_update_detail',
+            args=[self.project.pk, update.pk],
+        ))
         evidence = update.evidence.get()
         self.assertEqual(update.non_infrastructure, self.project)
         self.assertEqual(update.previous_status, 'planned')
