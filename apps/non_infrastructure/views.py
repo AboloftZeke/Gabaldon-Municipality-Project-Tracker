@@ -10,7 +10,7 @@ from django.db import models, transaction
 from django.db.models import Prefetch, Q, Sum
 from django.templatetags.static import static
 from django.utils import timezone
-from .forms import NonInfrastructureOperationalForm, NonInfrastructureProgressUpdateForm, NonInfrastructureProjectForm
+from .forms import NonInfrastructureOperationalForm, NonInfrastructureProgressReturnForm, NonInfrastructureProgressUpdateForm, NonInfrastructureProjectForm
 from apps.system.models import NonInfrastructureCategory, NonInfrastructureProgressUpdate, NonInfrastructureProject, Project, ProjectImage
 from apps.system.publication_service import (
     create_head_operational_revision,
@@ -379,6 +379,88 @@ class NonInfrastructureProgressUpdateSubmitView(MayorsOfficeOnlyMixin, View):
             pk=pk,
             update_pk=update_pk,
         )
+
+
+class NonInfrastructureProgressReviewQueueView(MayorHeadOnlyMixin, ListView):
+    """List all pending staff progress updates for the Mayor Head."""
+
+    template_name = 'non_infrastructure/non_infrastructure_progress_review_queue.html'
+    context_object_name = 'progress_updates'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return NonInfrastructureProgressUpdate.objects.filter(
+            review_status=NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW,
+        ).select_related('non_infrastructure', 'submitted_by').order_by(
+            '-submitted_at', '-progress_update_id',
+        )
+
+
+class NonInfrastructureProgressReviewDetailView(MayorHeadOnlyMixin, DetailView):
+    """Let the Mayor Head inspect evidence before recording a decision."""
+
+    model = NonInfrastructureProgressUpdate
+    pk_url_kwarg = 'update_pk'
+    context_object_name = 'progress_update'
+    template_name = 'non_infrastructure/non_infrastructure_progress_review_detail.html'
+
+    def get_queryset(self):
+        return NonInfrastructureProgressUpdate.objects.select_related(
+            'non_infrastructure', 'submitted_by', 'reviewed_by',
+        ).prefetch_related('evidence')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['return_form'] = kwargs.get('return_form') or NonInfrastructureProgressReturnForm()
+        return context
+
+
+class NonInfrastructureProgressReviewDecisionView(MayorHeadOnlyMixin, View):
+    """Lock a pending update and record exactly one Head review decision."""
+
+    http_method_names = ['post']
+    decision = None
+
+    def post(self, request, update_pk):
+        with transaction.atomic():
+            update = get_object_or_404(
+                NonInfrastructureProgressUpdate.objects.select_for_update().prefetch_related('evidence'),
+                pk=update_pk,
+            )
+            if update.review_status != NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW:
+                messages.error(request, 'Only Pending Review updates can be reviewed.')
+                return redirect('mayor_projects:non_infrastructure_progress_review_detail', update_pk=update_pk)
+
+            notes = ''
+            if self.decision == NonInfrastructureProgressUpdate.ReviewStatus.RETURNED:
+                form = NonInfrastructureProgressReturnForm(request.POST)
+                if not form.is_valid():
+                    return render(request, 'non_infrastructure/non_infrastructure_progress_review_detail.html', {
+                        'progress_update': update,
+                        'return_form': form,
+                    }, status=400)
+                notes = form.cleaned_data['review_notes']
+            elif not update.evidence.exists():
+                messages.error(request, 'A progress update needs supporting evidence before approval.')
+                return redirect('mayor_projects:non_infrastructure_progress_review_detail', update_pk=update_pk)
+
+            update.review_status = self.decision
+            update.review_notes = notes
+            update.reviewed_by = request.user
+            update.reviewed_at = timezone.now()
+            update.save(update_fields=[
+                'review_status', 'review_notes', 'reviewed_by', 'reviewed_at', 'updated_at',
+            ])
+            messages.success(request, f'Progress update {update.get_review_status_display().lower()}.')
+        return redirect('mayor_projects:non_infrastructure_progress_review_detail', update_pk=update_pk)
+
+
+class NonInfrastructureProgressApproveView(NonInfrastructureProgressReviewDecisionView):
+    decision = NonInfrastructureProgressUpdate.ReviewStatus.APPROVED
+
+
+class NonInfrastructureProgressReturnView(NonInfrastructureProgressReviewDecisionView):
+    decision = NonInfrastructureProgressUpdate.ReviewStatus.RETURNED
 
 
 class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):

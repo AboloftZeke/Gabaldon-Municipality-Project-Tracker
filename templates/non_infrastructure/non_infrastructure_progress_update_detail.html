@@ -32,6 +32,8 @@
             <div class="operational-field"><strong>Remarks:</strong> {{ progress_update.remarks|linebreaksbr }}</div>
             <div class="operational-field"><strong>Created:</strong> {{ progress_update.created_at|date:"M d, Y, g:i A" }}</div>
             <div class="operational-field"><strong>Submitted:</strong> {% if progress_update.submitted_at %}{{ progress_update.submitted_at|date:"M d, Y, g:i A" }}{% else %}Not submitted{% endif %}</div>
+            {% if progress_update.reviewed_at %}<div class="operational-field"><strong>Reviewed:</strong> {{ progress_update.reviewed_at|date:"M d, Y, g:i A" }}</div>{% endif %}
+            {% if progress_update.review_notes %}<div class="operational-field"><strong>Reason for correction:</strong> {{ progress_update.review_notes|linebreaksbr }}</div>{% endif %}
         </div>
     </section>
 

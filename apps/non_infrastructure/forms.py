@@ -110,6 +110,15 @@ class NonInfrastructureProgressUpdateForm(forms.Form):
         return update
 
 
+class NonInfrastructureProgressReturnForm(forms.Form):
+    review_notes = forms.CharField(
+        label='Reason for correction',
+        max_length=2000,
+        widget=forms.Textarea(attrs={'rows': 3}),
+        error_messages={'required': 'Explain what needs correction before returning.'},
+    )
+
+
 NON_INFRA_CATEGORY_DEFAULTS = [
     ('social_services', 'Social Services'),
     ('community_development', 'Community Development'),

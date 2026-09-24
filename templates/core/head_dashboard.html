@@ -38,6 +38,27 @@
             </div>
         </div>
 
+        {% if pending_progress_updates %}
+            <div class="attention-group" id="pending-progress-updates">
+                <h3>Non-Infrastructure Progress Updates <span>{{ pending_progress_update_count }}</span></h3>
+                <div class="attention-grid">
+                    {% for update in pending_progress_updates %}
+                        <article class="attention-card ui-card ui-card--padded">
+                            <div class="attention-card__topline">
+                                <span class="publication-badge publication-status-pending_review ui-badge">{{ update.get_review_status_display }}</span>
+                            </div>
+                            <h4>{{ update.non_infrastructure.title }}</h4>
+                            <p>Proposed status: {{ update.get_proposed_status_display }}</p>
+                            <p>Submitted by: {{ update.submitted_by.get_full_name|default:update.submitted_by.username|default:"Former staff member" }}</p>
+                            <p>Submitted: {{ update.submitted_at|date:"M d, Y · g:i A" }}</p>
+                            <a class="head-button head-button--primary ui-button ui-button--primary" href="{% url 'mayor_projects:non_infrastructure_progress_review_detail' update.pk %}">Review Progress Update</a>
+                        </article>
+                    {% endfor %}
+                </div>
+                <a class="head-button head-button--secondary ui-button ui-button--secondary" href="{% url 'mayor_projects:non_infrastructure_progress_review_queue' %}">View All Progress Updates Awaiting Review</a>
+            </div>
+        {% endif %}
+
         {% if pending_review_items %}
             <div class="attention-group" id="pending-reviews">
                 <h3>Pending Reviews <span>{{ pending_review_items|length }}</span></h3>
@@ -114,7 +135,7 @@
             </div>
         {% endif %}
 
-        {% if not pending_review_items and not needs_operational_items and not ready_to_publish_items and not operational_update_items %}
+        {% if not pending_progress_updates and not pending_review_items and not needs_operational_items and not ready_to_publish_items and not operational_update_items %}
             <div class="head-empty head-empty--attention ui-empty-state">
                 <span class="ui-empty-state__icon ui-empty-state__icon--success" aria-hidden="true">✓</span>
                 <h3>You're all caught up.</h3>

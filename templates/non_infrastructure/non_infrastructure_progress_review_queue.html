@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Progress Updates Awaiting Review{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/core/operational_update.css' %}?v=20260913-1">
+{% endblock %}
+
+{% block content %}
+<div class="operational-workspace operational-workspace--compact">
+    <nav class="operational-back" aria-label="Back navigation">
+        <a href="{% url 'mayor_head_dashboard' %}">← Back to Mayor Head Dashboard</a>
+    </nav>
+    <header class="operational-header ui-page-header">
+        <p class="operational-eyebrow">Mayor's Office Head · Progress Update Review</p>
+        <h1>Progress Updates Awaiting Review</h1>
+    </header>
+    {% for update in progress_updates %}
+        <section class="operational-card ui-card">
+            <h2>{{ update.non_infrastructure.title }}</h2>
+            <p>Proposed status: {{ update.get_proposed_status_display }}</p>
+            <p>Submitted by: {{ update.submitted_by.get_full_name|default:update.submitted_by.username|default:"Former staff member" }}</p>
+            <p>Submitted: {{ update.submitted_at|date:"M d, Y, g:i A" }}</p>
+            <p>Review status: {{ update.get_review_status_display }}</p>
+            <a class="ui-button ui-button--primary" href="{% url 'mayor_projects:non_infrastructure_progress_review_detail' update.pk %}">Review Progress Update</a>
+        </section>
+    {% empty %}
+        <section class="operational-card ui-card"><p>No progress updates are waiting for review.</p></section>
+    {% endfor %}
+    {% if is_paginated %}
+        <nav aria-label="Review queue pages" class="operational-actions">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+            <span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}

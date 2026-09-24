@@ -651,6 +651,7 @@ class NonInfrastructureProgressUpdate(models.Model):
         related_name='non_infrastructure_progress_reviews',
     )
     reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_notes = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
