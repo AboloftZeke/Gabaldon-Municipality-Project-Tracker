@@ -452,7 +452,24 @@ class NonInfrastructureProgressReviewDecisionView(MayorHeadOnlyMixin, View):
             update.save(update_fields=[
                 'review_status', 'review_notes', 'reviewed_by', 'reviewed_at', 'updated_at',
             ])
-            messages.success(request, f'Progress update {update.get_review_status_display().lower()}.')
+            if self.decision == NonInfrastructureProgressUpdate.ReviewStatus.APPROVED:
+                try:
+                    update = apply_approved_progress_update(update.pk, request.user)
+                except ValidationError as exc:
+                    messages.error(request, '; '.join(exc.messages))
+                    return redirect(
+                        'mayor_projects:non_infrastructure_progress_review_detail',
+                        update_pk=update_pk,
+                    )
+                messages.success(
+                    request,
+                    'Progress update approved and applied. The publication is ready to publish.',
+                )
+                return redirect(
+                    'publication_revision_detail',
+                    revision_id=update.publication_revision_id,
+                )
+            messages.success(request, 'Progress update returned for correction.')
         return redirect('mayor_projects:non_infrastructure_progress_review_detail', update_pk=update_pk)
 
 

@@ -849,49 +849,6 @@
     background: var(--review-surface);
 }
 
-.progress-evidence-status-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 0.8rem;
-    margin-top: 1rem;
-}
-
-.progress-evidence-status-card {
-    padding: 0.8rem 0.9rem;
-    border: 1px solid var(--review-border);
-    border-radius: 10px;
-    background: #f6faf7;
-}
-
-.progress-evidence-status-card--wide {
-    grid-column: 1 / -1;
-}
-
-.progress-evidence-status-card span {
-    display: block;
-    color: var(--review-muted);
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.progress-evidence-status-card strong {
-    display: block;
-    margin-top: 0.45rem;
-    font-size: 1.05rem;
-    line-height: 1.35;
-}
-
-.progress-evidence-document-list {
-    margin: 1rem 0 0;
-    padding-left: 1.25rem;
-    color: var(--review-muted);
-}
-
-.progress-evidence-document-list li + li {
-    margin-top: 0.45rem;
-}
-
 .progress-evidence-files {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));

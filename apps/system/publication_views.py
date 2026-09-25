@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import DetailView, ListView
 
-from .models import NonInfrastructureProgressUpdate, NonInfrastructureProject, ProjectRevision
+from .models import NonInfrastructureProject, ProjectRevision
 from .publication_forms import PublicationReviewForm
 from .publication_diff import revision_comparison
 from .publication_public import (
@@ -189,44 +189,6 @@ def _revision_page_context(revision, user, review_form=None):
         preview,
         user,
     )
-    mayor_progress_update = (revision.snapshot or {}).get(
-        'non_infrastructure_progress_update',
-    )
-    mayor_evidence_items = []
-    source = None
-    if mayor_progress_update:
-        source = NonInfrastructureProgressUpdate.objects.filter(
-            pk=mayor_progress_update.get('id'),
-            publication_revision=revision,
-        ).first()
-        current_evidence = {
-            item.pk: item
-            for item in source.evidence.all()
-        } if source else {}
-        for frozen in mayor_progress_update.get('evidence', []):
-            item = current_evidence.get(frozen.get('id'))
-            mayor_evidence_items.append({
-                **frozen,
-                # A stored file path is durable; resolve a download link only
-                # when the same evidence record still has that exact path.
-                'url': (
-                    item.evidence_file.url
-                    if item and item.evidence_file.name == frozen.get('file_path')
-                    else None
-                ),
-            })
-        labels = dict(NonInfrastructureProject.STATUS_CHOICES)
-        mayor_progress_update = {
-            **mayor_progress_update,
-            'previous_status_label': labels.get(
-                mayor_progress_update.get('previous_status'),
-                mayor_progress_update.get('previous_status'),
-            ),
-            'proposed_status_label': labels.get(
-                mayor_progress_update.get('proposed_status'),
-                mayor_progress_update.get('proposed_status'),
-            ),
-        }
     return {
         'project_type': project_type,
         'preview': preview,
@@ -237,17 +199,6 @@ def _revision_page_context(revision, user, review_form=None):
         'operational': operational,
         'progress_update': (
             (revision.snapshot or {}).get('progress_update')
-        ),
-        'mayor_progress_update': mayor_progress_update,
-        'mayor_evidence_items': mayor_evidence_items,
-        'mayor_progress_detail_url': (
-            reverse(
-                'mayor_projects:non_infrastructure_progress_review_detail',
-                args=[mayor_progress_update['id']],
-            )
-            if source
-            and can_update_non_infrastructure_operations(user)
-            else None
         ),
         'can_review': (
             revision.status == PublicationStatus.PENDING_REVIEW

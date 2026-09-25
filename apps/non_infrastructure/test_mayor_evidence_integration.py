@@ -100,7 +100,7 @@ class MayorEvidenceLifecycleTests(TestCase):
         self.assertEqual(update.review_status, 'pending_review')
         self.assertIsNotNone(update.submitted_at)
 
-    def approve_and_apply(self, update, review_note=None):
+    def approve_and_apply(self, update):
         self.client.force_login(self.head)
         self.assertContains(self.client.get(reverse(
             'mayor_projects:non_infrastructure_progress_review_queue',
@@ -108,20 +108,15 @@ class MayorEvidenceLifecycleTests(TestCase):
         detail = reverse('mayor_projects:non_infrastructure_progress_review_detail',
                          args=[update.pk])
         self.assertContains(self.client.get(detail), update.evidence.first().description)
-        self.assertEqual(self.client.post(self.action('approve', update)).status_code, 302)
+        response = self.client.post(self.action('approve', update))
         update.refresh_from_db()
         self.assertEqual(update.review_status, 'approved')
         self.assertEqual(update.reviewed_by, self.head)
         self.assertIsNotNone(update.reviewed_at)
-        if review_note:
-            # The frozen snapshot can contain internal Head notes; the public
-            # adapter must not display them even after publication.
-            update.review_notes = review_note
-            update.save(update_fields=['review_notes'])
-        self.project.refresh_from_db()
-        self.assertEqual(self.project.status, update.previous_status)
-        self.assertIsNone(update.publication_revision_id)
-        self.assertEqual(self.client.post(self.action('apply', update)).status_code, 302)
+        self.assertRedirects(
+            response,
+            reverse('publication_revision_detail', args=[update.publication_revision_id]),
+        )
         update.refresh_from_db()
         self.project.refresh_from_db()
         self.assertEqual(self.project.status, update.proposed_status)
@@ -153,6 +148,21 @@ class MayorEvidenceLifecycleTests(TestCase):
 
         self.submit(update)
         self.assertNotContains(self.client.get(self.staff_url(update)), 'Submit for Review')
+        self.client.force_login(self.head)
+        review = self.client.get(reverse(
+            'mayor_projects:non_infrastructure_progress_review_detail',
+            args=[update.pk],
+        ))
+        self.assertContains(review, 'Current official status:')
+        self.assertContains(review, 'Proposed status:')
+        self.assertContains(review, 'Planned')
+        self.assertContains(review, 'Ongoing')
+        self.assertContains(review, update.remarks)
+        self.assertContains(review, 'Staff activity proof')
+        for name in ('attendance.pdf', 'start.jpg', 'activity.jpeg', 'photo.png', long_name):
+            self.assertContains(review, name)
+        self.assertContains(review, 'Approve and Prepare Publication')
+        self.assertContains(review, 'Return for Correction')
         revision = self.approve_and_apply(update)
         self.assertEqual(revision.source_non_infrastructure_progress_update, update)
         frozen = revision.snapshot['non_infrastructure_progress_update']
@@ -186,14 +196,9 @@ class MayorEvidenceLifecycleTests(TestCase):
         revision = self.approve_and_apply(update)
         response = self.client.get(reverse('publication_revision_detail', args=[revision.pk]))
 
-        self.assertContains(response, 'Progress Update Being Published')
-        self.assertContains(response, 'Current Official Status')
-        self.assertContains(response, 'Currently Published Public Status')
-        self.assertContains(response, 'Pending Public Change')
-        self.assertContains(response, 'Source of this revision')
-        self.assertContains(response, 'Mayor Evidence Progress Update')
-        self.assertContains(response, 'attachment.pdf')
-        self.assertContains(response, 'Staff activity proof')
+        self.assertContains(response, 'Publish Update to Public Dashboard')
+        self.assertNotContains(response, 'Approve and Prepare Publication')
+        self.assertNotContains(response, 'Evidence for this update')
 
     def test_returned_update_stays_internal_and_requires_reason(self):
         update = self.create_draft(names=('private.pdf',))
@@ -222,13 +227,12 @@ class MayorEvidenceLifecycleTests(TestCase):
     def test_applied_revision_is_private_until_published_and_notes_stay_private(self):
         update = self.create_draft(names=('unpublished.png',))
         self.submit(update)
-        revision = self.approve_and_apply(update, review_note='INTERNAL ONLY')
+        revision = self.approve_and_apply(update)
+        update.review_notes = 'INTERNAL ONLY'
+        update.save(update_fields=['review_notes'])
         self.assertEqual(self.client.get(self.public_url).context['public_project']['status'], 'planned')
         self.assertNotContains(self.client.get(self.public_url), 'unpublished.png')
-        self.assertEqual(
-            revision.snapshot['non_infrastructure_progress_update']['review_notes'],
-            'INTERNAL ONLY',
-        )
+        self.assertEqual(revision.snapshot['non_infrastructure_progress_update']['review_notes'], '')
         self.publish(revision)
         self.client.logout()
         self.assertContains(self.client.get(self.public_url), 'unpublished.png')
@@ -284,10 +288,9 @@ class MayorEvidenceLifecycleTests(TestCase):
         update = self.create_draft()
         self.submit(update)
         self.client.force_login(self.head)
-        self.client.post(self.action('approve', update))
         with patch('apps.non_infrastructure.progress_application.create_head_operational_revision',
                    return_value=None):
-            self.assertContains(self.client.post(self.action('apply', update), follow=True),
+            self.assertContains(self.client.post(self.action('approve', update), follow=True),
                                 'could not be created')
         update.refresh_from_db()
         self.project.refresh_from_db()
@@ -305,11 +308,12 @@ class MayorEvidenceLifecycleTests(TestCase):
         update = self.create_draft()
         self.submit(update)
         self.client.force_login(self.head)
-        self.client.post(self.action('approve', update))
         self.project.status = 'completed'
         self.project.save(update_fields=['status'])
-        self.assertContains(self.client.post(self.action('apply', update), follow=True),
-                            'official status changed')
+        self.assertContains(self.client.post(self.action('approve', update), follow=True),
+                    'official status changed')
+        self.project.status = 'completed'
+        self.project.save(update_fields=['status'])
         update.refresh_from_db()
         self.project.refresh_from_db()
         self.assertEqual(self.project.status, 'completed')

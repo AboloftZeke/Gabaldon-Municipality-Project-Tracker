@@ -101,7 +101,7 @@ class ApplyApprovedProgressUpdateTests(TestCase):
 
     def test_apply_creates_one_linked_revision_without_changing_public_snapshot(self):
         baseline = deepcopy(self.public_revision.snapshot)
-        self.assertContains(self.client.get(self.head_detail_url), 'Apply Approved Update')
+        self.assertContains(self.client.get(self.head_detail_url), 'Retry Publication Preparation')
         response = self.client.post(self.apply_url)
         self.update.refresh_from_db()
         revision = self.update.publication_revision

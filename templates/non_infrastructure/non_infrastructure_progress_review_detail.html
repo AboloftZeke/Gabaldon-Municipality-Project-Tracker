@@ -45,8 +45,8 @@
             <div class="operational-section-heading"><span class="operational-section-number">03</span><div><h2 id="head-decision-heading">Review Decision</h2><p>Choose one decision for this submitted update.</p></div></div>
             <div class="mayor-decision">
                 <form method="post" action="{% url 'mayor_projects:non_infrastructure_progress_approve' progress_update.pk %}">
-                    {% csrf_token %}<h3>Approve update</h3><p>Mark the update as reviewed and approved. Applying it is a separate step.</p>
-                    <div class="operational-actions"><button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Approve</button></div>
+                    {% csrf_token %}<h3>Approve status change</h3><p>Approve the submitted status change and its supporting evidence. This applies the official status and prepares the publication; it does not publish the update.</p>
+                    <div class="operational-actions"><button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Approve and Prepare Publication</button></div>
                 </form>
                 <form method="post" action="{% url 'mayor_projects:non_infrastructure_progress_return' progress_update.pk %}" class="operational-form ui-form">
                     {% csrf_token %}<h3>Return for correction</h3><p>Explain what the staff member needs to correct.</p>
@@ -59,8 +59,8 @@
         </section>
     {% endif %}
     {% if progress_update.review_status == 'approved' and not progress_update.applied_at %}
-        <section class="operational-card ui-card"><h2>Apply Approved Update</h2><p>This changes the working official status and creates an approved publication revision. The public status stays unchanged until that revision is published.</p>
-            <form method="post" action="{% url 'mayor_projects:non_infrastructure_progress_apply' progress_update.pk %}" class="operational-actions">{% csrf_token %}<button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Apply Approved Update</button></form>
+        <section class="operational-card ui-card"><h2>Publication preparation incomplete</h2><p>The update was approved, but the official status has not been applied yet. Retry the application before publication can proceed.</p>
+            <form method="post" action="{% url 'mayor_projects:non_infrastructure_progress_apply' progress_update.pk %}" class="operational-actions">{% csrf_token %}<button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Retry Publication Preparation</button></form>
         </section>
     {% elif progress_update.publication_revision_id %}
         <section class="operational-card ui-card"><h2>Publication status</h2><p>Applied by {{ progress_update.applied_by.get_full_name|default:progress_update.applied_by.username|default:"Former Head" }} on {{ progress_update.applied_at|date:"M d, Y, g:i A" }}.</p><a class="ui-button ui-button--primary" href="{% url 'publication_revision_detail' progress_update.publication_revision_id %}">View Publication Revision</a></section>

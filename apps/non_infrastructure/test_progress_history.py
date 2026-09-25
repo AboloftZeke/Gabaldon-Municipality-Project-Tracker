@@ -110,16 +110,13 @@ class MayorPublicationHistoryTests(TestCase):
         detail = reverse('publication_revision_detail', args=[revision.pk])
         response = self.client.get(detail)
         self.assertContains(response, f'Revision {revision.revision_number}')
-        self.assertContains(response, 'Previous status')
+        self.assertContains(response, 'Status')
         self.assertContains(response, 'Planned')
         self.assertContains(response, 'Ongoing')
-        self.assertContains(response, 'Reviewed supporting records.')
-        self.assertContains(response, 'attendance.pdf')
-        self.assertContains(response, 'photo.jpg')
-        self.assertContains(response, 'Not published')
-        self.assertContains(response, reverse(
-            'mayor_projects:non_infrastructure_progress_review_detail', args=[update.pk],
-        ))
+        self.assertContains(response, 'Approved')
+        self.assertNotContains(response, 'Reviewed supporting records.')
+        self.assertNotContains(response, 'attendance.pdf')
+        self.assertNotContains(response, 'photo.jpg')
         self.client.force_login(self.engineer)
         self.assertEqual(self.client.get(detail).status_code, 403)
 
@@ -171,7 +168,7 @@ class MayorPublicationHistoryTests(TestCase):
         self.client.force_login(self.head)
         history = self.client.get(reverse('publication_review_queue') + '?status=archived')
         self.assertContains(history, f'Revision {first_revision.revision_number}')
-        self.assertContains(
+        self.assertNotContains(
             self.client.get(reverse('publication_revision_detail', args=[first_revision.pk])),
             'attendance.pdf',
         )
@@ -188,7 +185,7 @@ class MayorPublicationHistoryTests(TestCase):
         self.assertEqual(revision.snapshot['non_infrastructure_progress_update'], frozen)
         self.client.force_login(self.head)
         detail = self.client.get(reverse('publication_revision_detail', args=[revision.pk]))
-        self.assertContains(detail, 'Proof: proof.pdf')
+        self.assertNotContains(detail, 'Proof: proof.pdf')
         self.assertNotContains(detail, 'Later edited description')
 
     def test_direct_head_update_does_not_inherit_previous_evidence_history(self):
