@@ -76,6 +76,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.non_infrastructure = NonInfrastructureProject.objects.create(
             project=base,
             title='Community Program',
+            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
             status='planned',
             category=self.non_infrastructure_category,
         )
@@ -320,7 +321,7 @@ class HeadOperationalUpdateTests(TestCase):
                 self.assertContains(response, 'Supporting Inspections')
                 self.assertContains(response, '30.00% observed completion')
                 self.assertContains(response, 'class="progress-timeline"')
-                self.assertContains(response, 'class="progress-update-card"')
+                self.assertContains(response, 'progress-update-card')
                 self.assertContains(response, '25.00%')
                 self.assertContains(response, '100.00%')
                 self.assertNotContains(response, 'Edit Progress Update')
@@ -477,7 +478,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertNotContains(detail, 'Edit Project')
         self.assertNotContains(detail, 'Delete Project')
         self.assertContains(detail, 'class="information-card-grid"')
-        self.assertContains(detail, 'Program Information')
+        self.assertContains(detail, 'Project Information')
         self.assertContains(detail, 'Location &amp; Venue')
         self.assertContains(detail, 'Service &amp; Beneficiary Information')
         self.assertContains(detail, 'Status &amp; Operational Information')

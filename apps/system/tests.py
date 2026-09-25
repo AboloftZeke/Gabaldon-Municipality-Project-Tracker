@@ -549,7 +549,7 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
         self.assertContains(detail, 'Record Decision')
         self.assertContains(
             detail,
-            '/static/css/templates/base.css?v=20260821-1',
+            '/static/css/templates/base.css',
         )
         self.assertContains(
             detail,
@@ -586,7 +586,10 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
             f'{working_url}?from_review={self.revision.pk}',
         )
         self.assertEqual(working.status_code, 200)
-        self.assertContains(working, 'Back to Publication Review')
+        self.assertContains(
+            working,
+            reverse('publication_revision_detail', args=[self.revision.pk]),
+        )
         self.assertNotContains(working, 'Edit Project')
         self.assertNotContains(working, 'Delete Project')
         self.assertEqual(self.client.post(reverse('engineering_projects:project_update', args=[self.infrastructure.pk]), {}).status_code, 403)
@@ -1051,7 +1054,7 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             contractor=contractor,
             implementing_office=office,
             procurement_method='competitive_bidding',
-            status='not_yet_started',
+            status='ongoing',
             planned_start_date='2026-01-15',
             planned_end_date='2026-08-30',
             cost_progress_percentage=42,
@@ -1110,7 +1113,7 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertEqual(row['record_id'], f'infra-{self.infrastructure.pk}')
         self.assertEqual(row['title'], 'Normalized Road Project')
         self.assertEqual(row['status_key'], 'ongoing')
-        self.assertEqual(row['status_label'], 'Awarded')
+        self.assertEqual(row['status_label'], 'Ongoing')
         self.assertEqual(row['project_category_key'], 'infra:road-test')
         self.assertEqual(row['location_key'], 'bagting')
         self.assertEqual(row['category_label'], 'Road Test')

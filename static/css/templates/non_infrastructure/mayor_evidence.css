@@ -1,0 +1,57 @@
+/* Mayor evidence screens share the existing operational cards and buttons. */
+.mayor-evidence { min-width: 0; }
+.mayor-evidence .operational-card + .operational-card { margin-top: 1.2rem; }
+.mayor-evidence .operational-field-grid--single { grid-template-columns: minmax(0, 1fr); }
+.mayor-evidence .operational-card, .mayor-evidence .operational-field { min-width: 0; }
+.mayor-evidence .operational-header__meta { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-top: .9rem; }
+.mayor-evidence .operational-header__meta p { margin: 0; }
+.mayor-evidence .mayor-status { display: inline-flex; align-items: center; border-radius: 999px; padding: .3rem .7rem; font-size: .83rem; font-weight: 750; border: 1px solid #bdcec2; color: #254b36; background: #eaf4ec; }
+.mayor-evidence .mayor-status--draft { background: #f0f2f3; border-color: #ccd3d7; color: #34424a; }
+.mayor-evidence .mayor-status--pending_review { background: #e6f0ff; border-color: #bad1f2; color: #173d75; }
+.mayor-evidence .mayor-status--returned { background: #fff0d8; border-color: #e1c48e; color: #684316; }
+.mayor-evidence .mayor-status--approved { background: #e7f5eb; border-color: #b6dcc3; color: #195332; }
+.mayor-evidence .mayor-status--applied { background: #e9f2ee; border-color: #add1be; color: #15452c; }
+.mayor-evidence .mayor-status--published { background: #e1f3e7; border-color: #9bd1ad; color: #124a29; }
+.mayor-evidence .mayor-status--awaiting { background: #fff5dd; border-color: #dfc784; color: #62460b; }
+.mayor-evidence .mayor-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: 0; }
+.mayor-evidence .mayor-summary > div { min-width: 0; padding: .85rem 1rem; border: 1px solid #dae5dd; border-radius: 10px; background: #f8faf9; }
+.mayor-evidence .mayor-summary dt { color: #425d4d; font-size: .8rem; font-weight: 750; }
+.mayor-evidence .mayor-summary dd { margin: .35rem 0 0; overflow-wrap: anywhere; }
+.mayor-evidence .mayor-summary__wide { grid-column: 1 / -1; }
+.mayor-evidence .mayor-transition { display: flex; flex-wrap: wrap; gap: .55rem; align-items: center; margin: 0 0 1rem; font-weight: 750; }
+.mayor-evidence .mayor-transition span { padding: .55rem .75rem; border-radius: 9px; background: #edf6f0; overflow-wrap: anywhere; }
+.mayor-evidence .mayor-upload { padding: 1rem; border: 2px dashed #a5c5ae; border-radius: 12px; background: #f8fbf8; }
+.mayor-evidence .mayor-upload input[type="file"] { max-width: 100%; background: #fff; }
+.mayor-evidence .mayor-upload__selection { margin-top: .75rem; color: #334a39; font-size: .84rem; overflow-wrap: anywhere; }
+.mayor-evidence .mayor-upload__selection ul { margin: .4rem 0 0; padding-left: 1.3rem; }
+.mayor-evidence .mayor-evidence-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .85rem; }
+.mayor-evidence .mayor-evidence-file { min-width: 0; padding: .9rem; border: 1px solid #d9e5db; border-radius: 10px; background: #f9fbfa; }
+.mayor-evidence .mayor-evidence-file__title { display: block; overflow-wrap: anywhere; }
+.mayor-evidence .mayor-evidence-file__type { display: inline-block; margin-bottom: .4rem; color: #375742; font-size: .78rem; font-weight: 700; text-transform: uppercase; }
+.mayor-evidence .mayor-evidence-file__description { margin: .4rem 0 .7rem; overflow-wrap: anywhere; }
+.mayor-evidence .mayor-evidence-file__preview { display: block; max-width: min(100%, 280px); max-height: 190px; object-fit: contain; margin: .7rem 0; border-radius: 8px; }
+.mayor-evidence .mayor-evidence-file a, .mayor-evidence a { overflow-wrap: anywhere; }
+.mayor-evidence .mayor-queue { display: grid; gap: 1rem; }
+.mayor-evidence .mayor-queue__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; }
+.mayor-evidence .mayor-queue h2 { margin: .6rem 0; overflow-wrap: anywhere; }
+.mayor-evidence .mayor-queue p { margin: .35rem 0; }
+.mayor-evidence.attention-group > p { margin: .4rem 0 1rem; color: #425d4d; }
+.mayor-evidence.attention-group .attention-card { min-width: 0; }
+.mayor-evidence.attention-group .attention-card h4 { overflow-wrap: anywhere; }
+.mayor-evidence.information-card .section-content { min-width: 0; }
+.mayor-evidence.information-card .content-item { min-width: 0; overflow-wrap: anywhere; }
+.mayor-evidence.information-card .mayor-status { margin-bottom: .45rem; }
+.mayor-evidence .mayor-decision { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.mayor-evidence .mayor-decision > form { min-width: 0; padding: 1rem; border: 1px solid #d9e5db; border-radius: 10px; }
+.mayor-evidence .mayor-decision > form:last-child { border-color: #e4c8a4; background: #fffaf2; }
+.mayor-evidence .mayor-decision h3 { margin: 0 0 .4rem; }
+.mayor-evidence .mayor-decision .operational-actions { margin-top: .8rem; }
+.mayor-evidence .operational-error { display: block; }
+.mayor-evidence [aria-invalid="true"] { border-color: #a51d2d; }
+.mayor-evidence :is(a, button, input, select, textarea):focus-visible { outline: 3px solid #e3a940; outline-offset: 3px; }
+.mayor-evidence .operational-actions { flex-wrap: wrap; }
+@media (max-width: 720px) {
+    .mayor-evidence .mayor-summary, .mayor-evidence .mayor-decision { grid-template-columns: minmax(0, 1fr); }
+    .mayor-evidence .mayor-summary__wide { grid-column: auto; }
+    .mayor-evidence .mayor-decision .operational-button, .mayor-evidence .operational-actions .ui-button { width: 100%; }
+}

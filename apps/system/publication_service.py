@@ -10,6 +10,7 @@ from django.utils import timezone
 from .models import Project, ProjectRevision
 from .publication_snapshots import (
     build_progress_update_snapshot,
+    build_non_infrastructure_progress_update_snapshot,
     build_project_publication_snapshot,
 )
 from .permissions import (
@@ -85,6 +86,22 @@ def _synchronize_head_operational_snapshot(
         operational = current.get('non_infrastructure') or {}
         submitted['status'] = operational.get('status')
         submitted['status_label'] = operational.get('status_label')
+        # A new operational revision must not inherit another update's evidence
+        # from the previous published snapshot used as its starting point.
+        snapshot.pop('non_infrastructure_progress_update', None)
+        if progress_update is not None:
+            if progress_update.non_infrastructure.project_id != project.pk:
+                raise ValidationError(
+                    'Progress update evidence must belong to this project.',
+                )
+            if (
+                progress_update.review_status != progress_update.ReviewStatus.APPROVED
+                or not progress_update.applied_at
+            ):
+                raise ValidationError('Only an applied, approved update can be snapshotted.')
+            snapshot['non_infrastructure_progress_update'] = (
+                build_non_infrastructure_progress_update_snapshot(progress_update)
+            )
 
     snapshot[OPERATIONAL_CONFIRMATION_KEY] = _operational_confirmation(
         project,

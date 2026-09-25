@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Add Project Progress Update{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/templates/core/operational_update.css' %}?v=20260913-1">
+<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/mayor_evidence.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="operational-workspace operational-workspace--compact mayor-evidence">
+    <nav class="operational-back" aria-label="Back navigation">
+        <a href="{% url 'mayor_projects:non_infrastructure_project_detail' project.pk %}">← Back to Project</a>
+    </nav>
+
+    <header class="operational-header ui-page-header">
+        <p class="operational-eyebrow">Mayor's Office Staff · Draft Progress Update</p>
+        <h1>Add Project Progress Update</h1>
+        <p class="operational-project-title">{{ project.title }}</p>
+        <div class="operational-header__meta"><span class="mayor-status mayor-status--draft">Draft</span><p>Current official status: {{ project.get_status_display }}</p></div>
+        <p class="operational-intro">Save your proposed status and evidence as a draft. You can review it before submitting it to the Mayor Head. The official status stays the same.</p>
+    </header>
+
+    <form method="post" enctype="multipart/form-data" class="operational-form ui-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="operational-alert" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <section class="operational-card ui-card" aria-labelledby="progress-update-heading">
+            <div class="operational-section-heading">
+                <span class="operational-section-number">01</span>
+                <div>
+                    <h2 id="progress-update-heading">Proposed Update</h2>
+                    <p>Describe what changed and the status you are proposing.</p>
+                </div>
+            </div>
+            <div class="operational-field-grid operational-field-grid--single">
+                <div class="operational-field">
+                    <label for="{{ form.proposed_status.id_for_label }}">Proposed Status</label>
+                    {{ form.proposed_status }}
+                    <p class="operational-help">Select the status you want the Mayor Head to review.</p>
+                    {% for error in form.proposed_status.errors %}<p class="operational-error" role="alert">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="operational-field">
+                    <label for="{{ form.remarks.id_for_label }}">Remarks</label>
+                    {{ form.remarks }}
+                    <p class="operational-help">Explain the work or activity behind this proposed change.</p>
+                    {% for error in form.remarks.errors %}<p class="operational-error" role="alert">{{ error }}</p>{% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section class="operational-card ui-card" aria-labelledby="progress-evidence-heading">
+            <div class="operational-section-heading"><span class="operational-section-number">02</span><div><h2 id="progress-evidence-heading">Supporting Evidence</h2><p>Attach proof for this specific update.</p></div></div>
+            <div class="operational-field-grid operational-field-grid--single">
+                <div class="operational-field mayor-upload">
+                    <label for="{{ form.evidence_files.id_for_label }}">Supporting Evidence</label>
+                    {{ form.evidence_files }}
+                    <p class="operational-help">Choose one or more JPG, PNG, GIF, WebP, or PDF files (up to 10 MB per file). Evidence is required to save a draft.</p>
+                    <div id="mayor-selected-files" class="mayor-upload__selection" aria-live="polite">No files selected.</div>
+                    {% for error in form.evidence_files.errors %}<p class="operational-error" role="alert">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="operational-field">
+                    <label for="{{ form.evidence_description.id_for_label }}">Evidence Description (optional)</label>
+                    {{ form.evidence_description }}
+                    <p class="operational-help">This description applies to every selected file.</p>
+                    {% for error in form.evidence_description.errors %}<p class="operational-error" role="alert">{{ error }}</p>{% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <div class="operational-actions">
+            <p>Your draft and files stay internal until review and publication.</p>
+            <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Save Draft</button>
+        </div>
+    </form>
+</div>
+<script defer src="{% static 'js/templates/non_infrastructure/mayor_evidence_upload.js' %}"></script>
+{% endblock %}

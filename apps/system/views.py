@@ -253,7 +253,9 @@ class PublicNonInfrastructureProjectDetailView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from .publication_public import get_public_project
+        from .publication_public import (
+            get_public_project, non_infrastructure_public_update_history,
+        )
 
         project = get_public_project('non_infrastructure', self.kwargs['pk'])
 
@@ -263,6 +265,9 @@ class PublicNonInfrastructureProjectDetailView(TemplateView):
             'project_category': project['category'].get('name') or '',
             'project_images': project['images'],
             'created_by_name': project['created_by_name'],
+            'published_update_history': non_infrastructure_public_update_history(
+                project['revision'],
+            ),
         })
         return context
 

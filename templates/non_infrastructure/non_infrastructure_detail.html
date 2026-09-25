@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_detail.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/head_information_cards.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/mayor_evidence.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -54,6 +55,9 @@
             <h2>{{ project_name }}</h2>
             {% if can_update_operations %}
                 <a href="{% url 'mayor_projects:non_infrastructure_project_operations' project.pk %}" class="btn btn-edit ui-button ui-button--primary">Update Project Status</a>
+            {% endif %}
+            {% if can_create_progress_update %}
+                <a href="{% url 'mayor_projects:non_infrastructure_progress_update_create' project.pk %}" class="btn btn-edit ui-button ui-button--secondary">Add Progress Update</a>
             {% endif %}
             {% if can_manage_project %}
                 <a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}" class="btn btn-edit ui-button ui-button--secondary">Edit Project</a>
@@ -266,6 +270,27 @@
     </section>
     </div>
 
+
+    {% if can_create_progress_update %}
+    <section class="project-section information-card ui-card mayor-evidence">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Mayor's Office Staff</span>
+            <h3>My Progress Updates</h3>
+        </div>
+        <p>Open a saved update to review its evidence and see what happens next.</p>
+        <div class="section-content">
+            {% for update in staff_progress_updates %}
+                <div class="content-item information-card__full-row">
+                    <span class="mayor-status mayor-status--{{ update.review_status }}">{{ update.get_review_status_display }}</span>
+                    <div class="content-value">Proposed: {{ update.get_proposed_status_display }} · Created {{ update.created_at|date:"M d, Y, g:i A" }}</div>
+                    <a href="{% url 'mayor_projects:non_infrastructure_progress_update_detail' project.pk update.pk %}">View Progress Update</a>
+                </div>
+            {% empty %}
+                <div class="content-item information-card__full-row">No progress updates saved yet.</div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 
     <!-- Project Images -->
     {% if project_images %}

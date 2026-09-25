@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}">
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/infrastructure_detail.css' %}">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/non_infrastructure_evidence.css' %}">
 </head>
 <body>
   <header class="site-header">
@@ -100,6 +101,54 @@
       <h2>Description</h2>
       <p class="public-detail__description">{{ public_project.description|default:"No description provided." }}</p>
     </section>
+
+    {% if published_update_history %}
+    <section class="public-detail__section public-updates" aria-labelledby="published-updates-title">
+      <h2 id="published-updates-title">Project Updates and Supporting Evidence</h2>
+      <p class="public-updates__intro">Published changes to this project, with the files provided to support each update. Most recent first.</p>
+      <ol class="public-updates__timeline" aria-label="Published updates, most recent first">
+        {% for update in published_update_history %}
+        <li class="public-updates__entry">
+          <article class="public-updates__card" aria-labelledby="update-title-{{ forloop.counter }}">
+            <div class="public-updates__heading">
+              <h3 id="update-title-{{ forloop.counter }}" aria-label="{{ update.previous_status }} to {{ update.new_status }}">{{ update.previous_status }} → {{ update.new_status }}</h3>
+              <time datetime="{{ update.published_at|date:'c' }}">Published: {{ update.published_at|date:"F j, Y" }}</time>
+            </div>
+            {% if update.remarks %}<div class="public-updates__remarks"><h4>What changed</h4><p>{{ update.remarks|linebreaksbr }}</p></div>{% endif %}
+            {% if update.evidence %}
+              <div class="public-updates__evidence">
+                <h4>Supporting evidence</h4>
+                <ul class="public-updates__files">
+                  {% for file in update.evidence %}
+                  <li class="public-updates__file">
+                    {% if file.is_image %}
+                      <span class="public-updates__file-type">Image</span>
+                      <img class="public-updates__preview" src="{{ file.url }}" alt="Evidence for {{ public_project.title }}: {{ file.description|default:file.filename }}" loading="lazy">
+                    {% elif file.url %}
+                      <span class="public-updates__file-type">Document</span>
+                    {% else %}
+                      <span class="public-updates__file-type">Supporting file</span>
+                    {% endif %}
+                    <strong class="public-updates__filename">{{ file.filename }}</strong>
+                    {% if file.description %}<p class="public-updates__file-description">{{ file.description }}</p>{% endif %}
+                    {% if file.url %}
+                      <a class="public-updates__file-link" href="{{ file.url }}" target="_blank" rel="noopener" aria-label="View evidence: {{ file.description|default:file.filename }}">View Evidence <span aria-hidden="true">↗</span></a>
+                    {% else %}
+                      <span class="public-updates__unavailable">File unavailable</span>
+                    {% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% else %}
+              <p class="public-updates__no-files">No supporting files were recorded for this update.</p>
+            {% endif %}
+          </article>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+    {% endif %}
 
     {% if project_images %}
     <section class="public-detail__section">

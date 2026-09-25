@@ -86,6 +86,7 @@ class PublicationOperationalUITests(TestCase):
         self.non_infrastructure = NonInfrastructureProject.objects.create(
             project=non_infrastructure_base,
             title='Community Wellness Program',
+            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
         )
         self.non_infrastructure_revision = (
             ProjectRevision.objects.create(
@@ -380,7 +381,7 @@ class PublicationOperationalUITests(TestCase):
         response = self.client.get(reverse('engineering_head_dashboard'))
 
         self.assertContains(response, 'Municipal Hall Rehabilitation')
-        self.assertContains(response, 'Awarded')
+        self.assertContains(response, 'Not Yet Started')
         self.assertNotContains(response, 'Unpublished Staff Title')
         self.assertNotContains(response, 'Completed')
         self.assertContains(response, 'Update Status &amp; Progress')

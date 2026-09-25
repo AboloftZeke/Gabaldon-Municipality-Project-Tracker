@@ -139,6 +139,41 @@
             </section>
             {% endif %}
 
+            {% if mayor_progress_update %}
+            <section class="revision-section progress-evidence-panel ui-card ui-card--padded">
+                <div class="progress-evidence-panel__heading">
+                    <div><p class="review-eyebrow">Retained Mayor update history</p><h2>Progress Update {{ mayor_progress_update.id }}</h2></div>
+                    <span>Revision {{ revision.revision_number }} · {{ revision.get_status_display }}</span>
+                </div>
+                <dl class="progress-evidence-decision">
+                    <div><dt>Previous status</dt><dd>{{ mayor_progress_update.previous_status_label|default:"Not recorded" }}</dd></div>
+                    <div><dt>New status</dt><dd>{{ mayor_progress_update.proposed_status_label }}</dd></div>
+                    <div><dt>Review decision</dt><dd>{{ mayor_progress_update.review_status|capfirst }}</dd></div>
+                    <div><dt>Submitted by</dt><dd>{{ mayor_progress_update.submitted_by.display_name|default:"Former staff member" }}</dd></div>
+                    <div><dt>Submitted</dt><dd>{{ mayor_progress_update.submitted_at|default:"Not recorded" }}</dd></div>
+                    <div><dt>Reviewed by</dt><dd>{{ mayor_progress_update.reviewed_by.display_name|default:"Former Head" }}</dd></div>
+                    <div><dt>Reviewed</dt><dd>{{ mayor_progress_update.reviewed_at|default:"Not recorded" }}</dd></div>
+                    <div><dt>Applied by</dt><dd>{{ mayor_progress_update.applied_by.display_name|default:"Former Head" }}</dd></div>
+                    <div><dt>Applied</dt><dd>{{ mayor_progress_update.applied_at|default:"Not recorded" }}</dd></div>
+                    <div><dt>Published</dt><dd>{{ revision.published_at|date:"M d, Y g:i A"|default:"Not published" }}</dd></div>
+                </dl>
+                {% if mayor_progress_update.remarks %}<div class="progress-evidence-remarks"><strong>Staff remarks</strong><p>{{ mayor_progress_update.remarks|linebreaksbr }}</p></div>{% endif %}
+                {% if mayor_progress_update.review_notes %}<div class="progress-evidence-remarks"><strong>Head review notes</strong><p>{{ mayor_progress_update.review_notes|linebreaksbr }}</p></div>{% endif %}
+                <h3>Evidence for this update</h3>
+                <ul>
+                    {% for item in mayor_evidence_items %}
+                        <li>
+                            {% if item.url %}<a href="{{ item.url }}" download>{{ item.file_path }}</a>{% else %}{{ item.file_path }}{% endif %}
+                            {% if item.description %} - {{ item.description }}{% endif %}
+                            {% if item.uploaded_by %} · {{ item.uploaded_by.display_name }}{% endif %}
+                            {% if item.uploaded_at %} · {{ item.uploaded_at }}{% endif %}
+                        </li>
+                    {% empty %}<li>No evidence was retained for this update.</li>{% endfor %}
+                </ul>
+                {% if mayor_progress_detail_url %}<a class="review-primary-link ui-button ui-button--secondary" href="{{ mayor_progress_detail_url }}">Open source progress update</a>{% endif %}
+            </section>
+            {% endif %}
+
             {% include "includes/publication_comparison.html" %}
         </div>
 

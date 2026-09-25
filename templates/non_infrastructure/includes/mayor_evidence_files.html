@@ -1,0 +1,19 @@
+{% load mayor_evidence %}
+<ul class="mayor-evidence-list">
+    {% for item in progress_update.evidence.all %}
+        {% with type=item.evidence_file.name|evidence_extension %}
+        <li class="mayor-evidence-file">
+            <span class="mayor-evidence-file__type">{% if type == 'pdf' %}PDF document{% elif type == 'jpg' or type == 'jpeg' or type == 'png' or type == 'gif' or type == 'webp' %}Image{% else %}Supporting file{% endif %}</span>
+            <strong class="mayor-evidence-file__title">{{ item.evidence_file.name|evidence_filename }}</strong>
+            {% if item.description %}<p class="mayor-evidence-file__description">{{ item.description }}</p>{% endif %}
+            {% if type == 'jpg' or type == 'jpeg' or type == 'png' or type == 'gif' or type == 'webp' %}
+                <img class="mayor-evidence-file__preview" src="{{ item.evidence_file.url }}" alt="Evidence preview: {{ item.description|default:item.evidence_file.name|evidence_filename }}" loading="lazy">
+            {% endif %}
+            <a class="ui-button ui-button--secondary" href="{{ item.evidence_file.url }}" target="_blank" rel="noopener">Open file</a>
+            <a class="ui-button ui-button--secondary" href="{{ item.evidence_file.url }}" download>Download file</a>
+        </li>
+        {% endwith %}
+    {% empty %}
+        <li class="operational-empty-state">No supporting evidence attached.</li>
+    {% endfor %}
+</ul>

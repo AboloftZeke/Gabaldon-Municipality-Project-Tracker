@@ -1,0 +1,185 @@
+/* Published Mayor project history on the public non-infrastructure detail page. */
+.public-updates { min-width: 0; }
+
+.public-updates__intro {
+  margin: -0.4rem 0 1.5rem;
+  color: #3f5d4f;
+  line-height: 1.6;
+}
+
+.public-updates__timeline {
+  display: grid;
+  gap: 1.15rem;
+  margin: 0;
+  padding: 0 0 0 1.5rem;
+  border-left: 2px solid #cadccc;
+  list-style: none;
+}
+
+.public-updates__entry { position: relative; min-width: 0; }
+.public-updates__entry::before {
+  position: absolute;
+  top: 1.35rem;
+  left: calc(-1.5rem - 7px);
+  width: 12px;
+  height: 12px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #184f35;
+  box-shadow: 0 0 0 2px #91ba99;
+  content: "";
+}
+
+.public-updates__card {
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid #dbe4dc;
+  border-radius: 10px;
+  background: #f7f9f5;
+}
+
+.public-updates__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.public-updates__heading h3 {
+  min-width: 0;
+  margin: 0;
+  color: #17352a;
+  font-family: "Libre Franklin", sans-serif;
+  font-size: clamp(1.05rem, 2.5vw, 1.3rem);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.public-updates__heading time {
+  color: #3f5d4f;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.public-updates__remarks { margin-top: 1rem; }
+.public-updates__remarks h4,
+.public-updates__evidence h4 {
+  margin: 0 0 0.45rem;
+  color: #17352a;
+  font-size: 0.95rem;
+}
+
+.public-updates__remarks p {
+  margin: 0;
+  color: #344e3d;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.public-updates__evidence {
+  margin-top: 1.15rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid #dbe4dc;
+}
+
+.public-updates__files {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 235px), 1fr));
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.public-updates__file {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid #dbe4dc;
+  border-radius: 9px;
+  background: #ffffff;
+  overflow-wrap: anywhere;
+}
+
+.public-updates__file-type {
+  display: inline-block;
+  margin-bottom: 0.55rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 5px;
+  background: #e8f2e9;
+  color: #184f35;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.public-updates__preview {
+  display: block;
+  width: 100%;
+  height: 150px;
+  margin-bottom: 0.8rem;
+  border-radius: 7px;
+  background: #eef2eb;
+  object-fit: contain;
+}
+
+.public-updates__filename {
+  max-width: 100%;
+  color: #17352a;
+  font-size: 0.93rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.public-updates__file-description {
+  margin: 0.4rem 0 0;
+  color: #3f5d4f;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.public-updates__file-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  min-height: 42px;
+  margin-top: auto;
+  padding: 0.55rem 0;
+  color: #184f35;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.public-updates__file-link:hover { color: #123d2a; }
+.public-updates__file-link:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid #2f8f55;
+  outline-offset: 3px;
+}
+
+.public-updates__unavailable {
+  margin-top: 0.8rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #c8d1ca;
+  border-radius: 6px;
+  background: #f0f2ef;
+  color: #394a3d;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.public-updates__no-files { margin: 1rem 0 0; color: #3f5d4f; }
+
+@media (max-width: 560px) {
+  .public-updates__timeline { padding-left: 1rem; }
+  .public-updates__entry::before { left: calc(-1rem - 7px); }
+  .public-updates__card { padding: 1rem; }
+  .public-updates__files { grid-template-columns: minmax(0, 1fr); }
+  .public-updates__preview { height: 180px; }
+  .public-updates__file-link { min-height: 44px; }
+}

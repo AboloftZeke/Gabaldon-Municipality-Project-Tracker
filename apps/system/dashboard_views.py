@@ -3,7 +3,7 @@ from django.db.models import F
 from django.urls import reverse
 from django.views.generic import TemplateView, ListView
 
-from .models import ProjectRevision
+from .models import NonInfrastructureProgressUpdate, ProjectRevision
 from .permissions import review_project_type
 from .publication_service import publication_readiness
 from .publication_views import OfficeHeadRequiredMixin, SuperuserRequiredMixin
@@ -83,6 +83,14 @@ class HeadDashboardView(OfficeHeadRequiredMixin, TemplateView):
             _revision_dashboard_item(revision, self.project_type)
             for revision in pending_revisions[:6]
         ]
+        if self.project_type == 'non_infrastructure':
+            progress_reviews = NonInfrastructureProgressUpdate.objects.filter(
+                review_status=NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW,
+            ).select_related('non_infrastructure', 'submitted_by').order_by(
+                '-submitted_at', '-progress_update_id',
+            )
+            context['pending_progress_updates'] = progress_reviews[:6]
+            context['pending_progress_update_count'] = progress_reviews.count()
         context['needs_operational_items'] = needs_operational[:6]
         context['ready_to_publish_items'] = ready_to_publish[:6]
         context['operational_update_items'] = [
