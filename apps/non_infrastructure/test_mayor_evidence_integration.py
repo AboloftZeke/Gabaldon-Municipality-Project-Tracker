@@ -180,6 +180,21 @@ class MayorEvidenceLifecycleTests(TestCase):
         self.assertContains(public, 'class="public-updates__file-type">Document</span>')
         self.assertNotContains(public, 'Review Decision')
 
+    def test_publication_review_identifies_applied_update_as_publication_source(self):
+        update = self.create_draft(names=('attachment.pdf',))
+        self.submit(update)
+        revision = self.approve_and_apply(update)
+        response = self.client.get(reverse('publication_revision_detail', args=[revision.pk]))
+
+        self.assertContains(response, 'Progress Update Being Published')
+        self.assertContains(response, 'Current Official Status')
+        self.assertContains(response, 'Currently Published Public Status')
+        self.assertContains(response, 'Pending Public Change')
+        self.assertContains(response, 'Source of this revision')
+        self.assertContains(response, 'Mayor Evidence Progress Update')
+        self.assertContains(response, 'attachment.pdf')
+        self.assertContains(response, 'Staff activity proof')
+
     def test_returned_update_stays_internal_and_requires_reason(self):
         update = self.create_draft(names=('private.pdf',))
         self.submit(update)

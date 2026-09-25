@@ -142,34 +142,69 @@
             {% if mayor_progress_update %}
             <section class="revision-section progress-evidence-panel ui-card ui-card--padded">
                 <div class="progress-evidence-panel__heading">
-                    <div><p class="review-eyebrow">Retained Mayor update history</p><h2>Progress Update {{ mayor_progress_update.id }}</h2></div>
-                    <span>Revision {{ revision.revision_number }} · {{ revision.get_status_display }}</span>
+                    <div><p class="review-eyebrow">Source of this revision</p><h2>Progress Update Being Published</h2></div>
+                    <span>Mayor Evidence Progress Update</span>
                 </div>
+
+                <div class="progress-evidence-status-grid">
+                    <div class="progress-evidence-status-card">
+                        <span>Current Official Status</span>
+                        <strong>{{ revision.snapshot.non_infrastructure.status_label|default:"Not set" }}</strong>
+                    </div>
+                    <div class="progress-evidence-status-card">
+                        <span>Currently Published Public Status</span>
+                        <strong>{{ comparison.baseline.snapshot.non_infrastructure.status_label|default:"Not published yet" }}</strong>
+                    </div>
+                    <div class="progress-evidence-status-card progress-evidence-status-card--wide">
+                        <span>Pending Public Change</span>
+                        <strong>{{ comparison.baseline.snapshot.non_infrastructure.status_label|default:"Not published yet" }} → {{ revision.snapshot.non_infrastructure.status_label|default:mayor_progress_update.proposed_status_label }}</strong>
+                    </div>
+                </div>
+
+                <p class="progress-evidence-remarks"><strong>Public-status note:</strong> This update has already changed the official project status, but the public dashboard will not show the new status until this publication revision is published.</p>
+
                 <dl class="progress-evidence-decision">
+                    <div><dt>Previous public status</dt><dd>{{ comparison.baseline.snapshot.non_infrastructure.status_label|default:"Not published yet" }}</dd></div>
+                    <div><dt>New public status</dt><dd>{{ mayor_progress_update.proposed_status_label|default:"Not recorded" }}</dd></div>
                     <div><dt>Previous status</dt><dd>{{ mayor_progress_update.previous_status_label|default:"Not recorded" }}</dd></div>
-                    <div><dt>New status</dt><dd>{{ mayor_progress_update.proposed_status_label }}</dd></div>
-                    <div><dt>Review decision</dt><dd>{{ mayor_progress_update.review_status|capfirst }}</dd></div>
                     <div><dt>Submitted by</dt><dd>{{ mayor_progress_update.submitted_by.display_name|default:"Former staff member" }}</dd></div>
                     <div><dt>Submitted</dt><dd>{{ mayor_progress_update.submitted_at|default:"Not recorded" }}</dd></div>
+                    <div><dt>Review decision</dt><dd>{{ mayor_progress_update.review_status|capfirst }}</dd></div>
                     <div><dt>Reviewed by</dt><dd>{{ mayor_progress_update.reviewed_by.display_name|default:"Former Head" }}</dd></div>
                     <div><dt>Reviewed</dt><dd>{{ mayor_progress_update.reviewed_at|default:"Not recorded" }}</dd></div>
                     <div><dt>Applied by</dt><dd>{{ mayor_progress_update.applied_by.display_name|default:"Former Head" }}</dd></div>
                     <div><dt>Applied</dt><dd>{{ mayor_progress_update.applied_at|default:"Not recorded" }}</dd></div>
                     <div><dt>Published</dt><dd>{{ revision.published_at|date:"M d, Y g:i A"|default:"Not published" }}</dd></div>
                 </dl>
+
                 {% if mayor_progress_update.remarks %}<div class="progress-evidence-remarks"><strong>Staff remarks</strong><p>{{ mayor_progress_update.remarks|linebreaksbr }}</p></div>{% endif %}
                 {% if mayor_progress_update.review_notes %}<div class="progress-evidence-remarks"><strong>Head review notes</strong><p>{{ mayor_progress_update.review_notes|linebreaksbr }}</p></div>{% endif %}
-                <h3>Evidence for this update</h3>
-                <ul>
+
+                <h3>Supporting Evidence</h3>
+                <div class="progress-evidence-files">
                     {% for item in mayor_evidence_items %}
-                        <li>
-                            {% if item.url %}<a href="{{ item.url }}" download>{{ item.file_path }}</a>{% else %}{{ item.file_path }}{% endif %}
-                            {% if item.description %} - {{ item.description }}{% endif %}
-                            {% if item.uploaded_by %} · {{ item.uploaded_by.display_name }}{% endif %}
-                            {% if item.uploaded_at %} · {{ item.uploaded_at }}{% endif %}
-                        </li>
-                    {% empty %}<li>No evidence was retained for this update.</li>{% endfor %}
-                </ul>
+                        <a class="progress-evidence-file progress-evidence-file--{{ item.type|default:'file' }}" href="{{ item.url|default:'#' }}" target="_blank" rel="noopener">
+                            {% if item.type == 'image' %}<img src="{{ item.url }}" alt="{{ item.file_path }}" loading="lazy">{% else %}<b>{% if item.file_path %}{{ item.file_path|slice:"-3:"|upper }}{% else %}FILE{% endif %}</b>{% endif %}
+                            <span>{{ item.file_path|default:"Supporting file" }}</span>
+                        </a>
+                    {% empty %}
+                        <div class="progress-evidence-empty">No supporting evidence was retained for this update.</div>
+                    {% endfor %}
+                </div>
+
+                {% if mayor_evidence_items %}
+                    <ul class="progress-evidence-document-list">
+                        {% for item in mayor_evidence_items %}
+                            <li>
+                                {% if item.url %}<a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.file_path }}</a>{% else %}{{ item.file_path }}{% endif %}
+                                {% if item.description %} — {{ item.description }}{% endif %}
+                                {% if item.uploaded_by %} · {{ item.uploaded_by.display_name }}{% endif %}
+                                {% if item.uploaded_at %} · {{ item.uploaded_at }}{% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
                 {% if mayor_progress_detail_url %}<a class="review-primary-link ui-button ui-button--secondary" href="{{ mayor_progress_detail_url }}">Open source progress update</a>{% endif %}
             </section>
             {% endif %}
