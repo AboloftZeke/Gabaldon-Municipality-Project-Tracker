@@ -31,7 +31,6 @@ from apps.system.permissions import (
 class MayorsOfficeOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Allow only Mayor's Office users, explicitly exclude admins"""
     login_url = 'login'
-    raise_exception = True
 
     def test_func(self):
         return can_manage_non_infrastructure(self.request.user)
@@ -39,7 +38,6 @@ class MayorsOfficeOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 class MayorHeadOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
     login_url = 'login'
-    raise_exception = True
 
     def test_func(self):
         return can_update_non_infrastructure_operations(self.request.user)
@@ -48,7 +46,6 @@ class MayorHeadOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
 class MayorsOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Allow only Mayor's Office users and admins"""
     login_url = 'login'
-    raise_exception = True
 
     def test_func(self):
         if is_system_admin(self.request.user):
@@ -60,7 +57,6 @@ class MayorsOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 class MayorsOfficeEditMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Allow Mayor's Office and admins to edit, prevent engineering office"""
     login_url = 'login'
-    raise_exception = True
 
     def test_func(self):
         return (

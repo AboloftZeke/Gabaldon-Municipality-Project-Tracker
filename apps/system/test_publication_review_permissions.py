@@ -88,11 +88,27 @@ class OfficeReviewPermissionTests(TestCase):
                     self.client.logout()
                     if user.is_authenticated:
                         self.client.force_login(user)
-                    self.assertEqual(self.client.get(reverse('publication_revision_detail', args=[revision.pk])).status_code, 403)
+                    detail_url = reverse('publication_revision_detail', args=[revision.pk])
+                    detail_response = self.client.get(detail_url)
+                    if user.is_authenticated:
+                        self.assertEqual(detail_response.status_code, 403)
+                    else:
+                        self.assertRedirects(
+                            detail_response, f"{reverse('login')}?next={detail_url}",
+                            fetch_redirect_response=False,
+                        )
                     for decision in ['approved', 'rejected', 'needs_revision']:
-                        self.assertEqual(self.client.post(reverse('publication_revision_review', args=[revision.pk]), {
+                        review_url = reverse('publication_revision_review', args=[revision.pk])
+                        review_response = self.client.post(review_url, {
                             'decision': decision, 'notes': 'Not authorized',
-                        }).status_code, 403)
+                        })
+                        if user.is_authenticated:
+                            self.assertEqual(review_response.status_code, 403)
+                        else:
+                            self.assertRedirects(
+                                review_response, f"{reverse('login')}?next={review_url}",
+                                fetch_redirect_response=False,
+                            )
                         with self.assertRaises(PermissionDenied):
                             review_publication_revision(revision, user, decision, 'Not authorized')
                     revision.refresh_from_db()

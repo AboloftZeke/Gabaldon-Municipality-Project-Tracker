@@ -238,7 +238,11 @@ class MayorHeadProgressReviewTests(TestCase):
                 for url in (self.approve_url, self.return_url):
                     self.assertEqual(self.client.post(url, {'review_notes': 'Fix'}).status_code, 403)
         self.client.logout()
-        self.assertEqual(self.client.post(self.approve_url).status_code, 403)
+        self.assertRedirects(
+            self.client.post(self.approve_url),
+            f"{reverse('login')}?next={self.approve_url}",
+            fetch_redirect_response=False,
+        )
         self.pending.refresh_from_db()
         self.assertEqual(self.pending.review_status, 'pending_review')
 

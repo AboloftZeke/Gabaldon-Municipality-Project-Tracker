@@ -201,6 +201,8 @@ class GeneratedReportAccessMixin(OfficeHeadRequiredMixin):
     project_report = None
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated or review_project_type(request.user) is None:
+            return self.handle_no_permission()
         self.project_report = get_object_or_404(
             ProjectReport,
             report_id=self.kwargs['report_id'],

@@ -91,7 +91,11 @@ class MayorStaffProgressUpdateTests(TestCase):
         self.assertEqual(self.client.get(self.url).status_code, 403)
         self.assertEqual(self.client.post(self.url, self.form_data()).status_code, 403)
         self.client.logout()
-        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.assertRedirects(
+            self.client.get(self.url),
+            f"{reverse('login')}?next={self.url}",
+            fetch_redirect_response=False,
+        )
         self.assertEqual(NonInfrastructureProgressUpdate.objects.count(), 0)
 
     def test_one_evidence_file_saves_draft_and_leaves_official_status_unchanged(self):

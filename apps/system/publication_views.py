@@ -38,7 +38,6 @@ from .permissions import (
 
 class SuperuserRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     login_url = 'login'
-    raise_exception = True
 
     def test_func(self):
         return self.request.user.is_superuser
@@ -46,7 +45,6 @@ class SuperuserRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 class OfficeHeadRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     login_url = 'login'
-    raise_exception = True
 
     def test_func(self):
         return review_project_type(self.request.user) is not None
@@ -322,11 +320,17 @@ class PublicationReviewQueueView(OfficeHeadRequiredMixin, ListView):
 
 class PublicationRevisionDetailView(LoginRequiredMixin, DetailView):
     login_url = 'login'
-    raise_exception = True
     model = ProjectRevision
     pk_url_kwarg = 'revision_id'
     template_name = 'core/publication_revision_detail.html'
     context_object_name = 'revision'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if review_project_type(request.user) is None and not is_system_admin(request.user):
+            raise PermissionDenied('You cannot view publication submissions.')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_object(self, queryset=None):
         revision = super().get_object(queryset)
@@ -427,6 +431,10 @@ class PublicationRevisionPublishView(OfficeHeadRequiredMixin, View):
         )
 
 
-class PublicationRevisionArchiveView(View):
+class PublicationRevisionArchiveView(LoginRequiredMixin, View):
+    login_url = 'login'
+
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
         raise PermissionDenied('Manual publication archival is disabled.')

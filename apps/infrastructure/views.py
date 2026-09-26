@@ -46,7 +46,6 @@ from apps.system.progress import (
 class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Allow only engineering office users and admins"""
     login_url = 'login'
-    raise_exception = True
 
     def test_func(self):
         if is_system_admin(self.request.user):
@@ -58,7 +57,6 @@ class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 class EngineerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Allow only engineering office users, explicitly exclude admins"""
     login_url = 'login'
-    raise_exception = True
 
     def test_func(self):
         return can_manage_infrastructure(self.request.user)
@@ -82,7 +80,6 @@ class EngineerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 class EngineeringHeadOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
     login_url = 'login'
-    raise_exception = True
 
     def test_func(self):
         return can_update_infrastructure_operations(self.request.user)

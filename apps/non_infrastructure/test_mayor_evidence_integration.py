@@ -262,7 +262,11 @@ class MayorEvidenceLifecycleTests(TestCase):
         self.client.force_login(self.head)
         self.assertEqual(self.client.get(self.create_url).status_code, 403)
         self.client.logout()
-        self.assertEqual(self.client.get(review_url).status_code, 403)
+        self.assertRedirects(
+            self.client.get(review_url),
+            f"{reverse('login')}?next={review_url}",
+            fetch_redirect_response=False,
+        )
         self.assertEqual(self.client.get(self.public_url).status_code, 200)
 
     def test_revision_failure_rolls_back_and_retry_applies_only_once(self):

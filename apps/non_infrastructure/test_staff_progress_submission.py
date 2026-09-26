@@ -211,7 +211,11 @@ class MayorStaffProgressSubmissionTests(TestCase):
                 self.assertEqual(self.client.get(self.detail_url).status_code, forbidden_status)
                 self.assertEqual(self.client.post(self.submit_url).status_code, forbidden_status)
         self.client.logout()
-        self.assertEqual(self.client.post(self.submit_url).status_code, 403)
+        self.assertRedirects(
+            self.client.post(self.submit_url),
+            f"{reverse('login')}?next={self.submit_url}",
+            fetch_redirect_response=False,
+        )
         self.update.refresh_from_db()
         self.assertEqual(self.update.review_status, 'draft')
 

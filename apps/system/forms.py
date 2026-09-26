@@ -117,6 +117,10 @@ class CustomUserChangeForm(forms.ModelForm):
 
         self.fields['role'].initial = account_assignment(self.instance)
 
+    def clean_is_active(self):
+        # Only the dedicated activation views may change account state.
+        return self.instance.is_active
+
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip()
         queryset = User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk)

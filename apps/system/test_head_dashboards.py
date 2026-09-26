@@ -84,7 +84,11 @@ class HeadDashboardTests(TestCase):
                         self.assertContains(response, own_list)
                         self.assertNotContains(response, other_list)
             self.client.logout()
-            self.assertEqual(self.client.get(reverse(destination)).status_code, 403)
+            self.assertRedirects(
+                self.client.get(reverse(destination)),
+                f"{reverse('login')}?next={reverse(destination)}",
+                fetch_redirect_response=False,
+            )
 
     def test_staff_navigation_and_head_legacy_dashboard_redirects(self):
         for office, prefix, staff_dashboard in [

@@ -224,7 +224,11 @@ class ApplyApprovedProgressUpdateTests(TestCase):
                 with self.assertRaises(PermissionDenied):
                     apply_approved_progress_update(self.update.pk, user)
         self.client.logout()
-        self.assertEqual(self.client.post(self.apply_url).status_code, 403)
+        self.assertRedirects(
+            self.client.post(self.apply_url),
+            f"{reverse('login')}?next={self.apply_url}",
+            fetch_redirect_response=False,
+        )
         self.assert_not_applied()
 
     def test_get_cannot_apply_and_post_requires_csrf(self):

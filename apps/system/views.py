@@ -57,7 +57,6 @@ class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     Allow only staff users to access a view.
     """
     login_url = 'login'
-    raise_exception = True
 
     def test_func(self):
         return self.request.user.is_staff
@@ -840,6 +839,7 @@ class PasswordChangeView(LoginRequiredMixin, View):
     Used for both mandatory temporary-password changes and normal
     password changes.
     """
+    login_url = 'login'
     template_name = 'core/password_change.html'
 
     def get(self, request):
