@@ -8,7 +8,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from apps.system.models import InspectionEvidence, ProjectInspection, UserRole
+from apps.system.models import (
+    InspectionEvidence, ProjectImage, ProjectInspection, UserRole,
+)
 
 
 class InfrastructureInspectionHistoryTests(TestCase):
@@ -405,3 +407,82 @@ class InfrastructureInspectionHistoryTests(TestCase):
 
         self.assertContains(response, 'Routine')
         self.assertContains(response, 'No supporting evidence attached.')
+
+    def test_head_sees_only_this_projects_inspection_evidence_on_operational_form(self):
+        own = ProjectInspection.objects.create(
+            project=self.infrastructure.project,
+            inspection_date='2026-07-01',
+            inspected_by_user=self.staff,
+            completion_percentage=Decimal('40.00'),
+        )
+        other_project = self.infrastructure.__class__.objects.create(
+            project=self.infrastructure.project.__class__.objects.create(
+                project_type='infrastructure',
+            ),
+            title='Other project',
+        )
+        other = ProjectInspection.objects.create(
+            project=other_project.project,
+            inspection_date='2026-07-02',
+            inspected_by_user=self.staff,
+            completion_percentage=Decimal('55.00'),
+        )
+        for inspection, name, kind in (
+            (own, 'own-photo.webp', 'image'),
+            (own, 'own-report.pdf', 'document'),
+            (other, 'other-project.jpg', 'image'),
+        ):
+            InspectionEvidence.objects.create(
+                inspection=inspection, evidence_type=kind,
+                original_name=name, storage_name=f'inspections/test/{name}',
+                file_url=f'/media/inspections/test/{name}',
+                uploaded_by_user=self.staff,
+            )
+        url = reverse('engineering_projects:project_operations', args=[self.infrastructure.pk])
+        self.client.force_login(self.head)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'own-photo.webp')
+        self.assertContains(response, 'own-report.pdf')
+        self.assertContains(response, 'data-image-viewer-trigger')
+        self.assertContains(response, 'data-image-viewer-image')
+        self.assertContains(response, 'aria-label="Close image preview"')
+        self.assertContains(response, 'href="/media/inspections/test/own-report.pdf"')
+        self.assertNotContains(response, 'other-project.jpg')
+        self.assertNotContains(response, 'target="_blank" rel="noopener" aria-label="Enlarge')
+
+        self.client.force_login(self.staff)
+        self.assertEqual(self.client.get(url).status_code, 403)
+        self.assertContains(self.client.get(self.detail_url), 'own-photo.webp')
+        self.client.force_login(self.mayor_head)
+        self.assertEqual(self.client.get(url).status_code, 403)
+        self.assertEqual(self.client.get(self.detail_url).status_code, 403)
+        self.client.logout()
+        self.assertEqual(self.client.get(url).status_code, 302)
+        self.assertEqual(self.client.get(self.detail_url).status_code, 302)
+
+    def test_project_and_inspection_photo_use_in_page_viewer(self):
+        ProjectImage.objects.create(
+            project=self.infrastructure.project,
+            image_url='/media/projects/test/project.jpg',
+        )
+        inspection = ProjectInspection.objects.create(
+            project=self.infrastructure.project,
+            inspection_date='2026-07-01',
+            inspected_by_user=self.staff,
+            completion_percentage=Decimal('40.00'),
+        )
+        InspectionEvidence.objects.create(
+            inspection=inspection, evidence_type='image',
+            original_name='inspection.jpg', storage_name='inspections/test/inspection.jpg',
+            file_url='/media/inspections/test/inspection.jpg',
+            uploaded_by_user=self.staff,
+        )
+        self.client.force_login(self.head)
+        response = self.client.get(self.detail_url)
+        self.assertContains(response, 'data-image-src="/media/projects/test/project.jpg"')
+        self.assertContains(response, 'data-image-src="/media/inspections/test/inspection.jpg"')
+        self.assertContains(response, 'data-image-viewer-trigger', count=2)
+        self.assertContains(response, 'data-image-viewer-image')
+        self.assertContains(response, 'aria-label="Close image preview"')
+        self.assertNotContains(response, 'href="/media/inspections/test/inspection.jpg" target="_blank"')

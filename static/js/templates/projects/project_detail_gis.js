@@ -201,7 +201,7 @@
     });
 
     document.addEventListener('click', (event) => {
-        const imageButton = event.target.closest('[data-image-src]');
+        const imageButton = event.target.closest('[data-image-src]:not([data-image-viewer-trigger])');
         if (imageButton) {
             const src = imageButton.dataset.imageSrc;
             const caption = imageButton.dataset.imageCaption || '';

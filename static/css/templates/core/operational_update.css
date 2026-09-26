@@ -414,6 +414,16 @@
     overflow-wrap: anywhere;
 }
 
+.inspection-choice-card__selector { display: inline-block; margin-bottom: .4rem; font-weight: 700; cursor: pointer; }
+.inspection-choice-card__files .inspection-choice-file { display: flex; align-items: center; gap: .45rem; max-width: 100%; padding: .35rem; border: 1px solid #d3ddd6; border-radius: 6px; background: white; color: #244c3b; text-decoration: none; font: inherit; overflow-wrap: anywhere; }
+.inspection-choice-file img { width: 5rem; height: 4rem; object-fit: cover; border-radius: 4px; }
+.inspection-choice-file b { flex: none; padding: .25rem; background: #eef3ed; }
+.inspection-choice-card__files .inspection-choice-file span { min-width: 0; border: 0; padding: 0; background: none; }
+.inspection-choice-card__files .inspection-choice-file__meta { align-self: center; border: 0; background: transparent; font-size: .72rem; }
+.inspection-choice-file:focus-visible, .inspection-choice-card__selector:focus-visible { outline: 3px solid #167844; outline-offset: 3px; }
+.inspection-choice-card { cursor: default; }
+.inspection-choice-card > input { cursor: pointer; }
+
 .inspection-choice-card__selected {
     display: none;
     margin-top: 0.7rem;

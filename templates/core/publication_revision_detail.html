@@ -5,6 +5,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}?v=20260912-1">
+<link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}?v=20260821-1">
 {% endblock %}
 
@@ -126,7 +127,7 @@
                         {% if inspection.evidence %}
                             <div class="progress-evidence-files">
                                 {% for item in inspection.evidence %}
-                                    <a class="progress-evidence-file progress-evidence-file--{{ item.type }}" href="{{ item.url }}" target="_blank" rel="noopener">{% if item.type == 'image' %}<img src="{{ item.url }}" alt="{{ item.original_name }}" loading="lazy">{% else %}<b>PDF</b>{% endif %}<span>{{ item.original_name }}</span></a>
+                                    {% if item.type == 'image' %}<button type="button" class="progress-evidence-file progress-evidence-file--image" data-image-viewer-trigger data-image-src="{{ item.url }}" data-image-alt="Inspection photo: {{ item.original_name }}" aria-label="Enlarge inspection photo {{ item.original_name }}"><img src="{{ item.url }}" alt="Inspection photo: {{ item.original_name }}" loading="lazy"><span>{{ item.original_name }}</span></button>{% else %}<a class="progress-evidence-file progress-evidence-file--document" href="{{ item.url }}" target="_blank" rel="noopener"><b>PDF</b><span>{{ item.original_name }}</span></a>{% endif %}
                                 {% endfor %}
                             </div>
                         {% else %}
@@ -222,4 +223,6 @@
         </aside>
     </div>
 </main>
+{% include 'includes/image_viewer.html' %}
+<script src="{% static 'js/components/image_viewer.js' %}" defer></script>
 {% endblock %}

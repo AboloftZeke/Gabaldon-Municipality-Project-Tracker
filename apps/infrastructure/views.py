@@ -815,7 +815,7 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
         inspection_options = list(
             infrastructure.project.inspections.select_related(
                 'inspected_by_user',
-            ).prefetch_related('evidence').order_by(
+            ).prefetch_related('evidence__uploaded_by_user').order_by(
                 '-inspection_date', '-created_at', '-inspection_id',
             )
         )

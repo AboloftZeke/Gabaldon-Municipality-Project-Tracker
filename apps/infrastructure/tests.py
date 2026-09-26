@@ -11,6 +11,7 @@ from apps.system.models import (
     FundSource,
     ImplementingOffice,
     InfrastructureCategory,
+    Project,
     ProjectImage,
     ProjectInspection,
     UserRole,
@@ -105,16 +106,19 @@ class InfrastructureProjectFormTests(TestCase):
             'project-location',
             'funding-contract',
             'project-schedule',
-            'progress-status',
             'project-photos',
             'review-project',
         ):
             self.assertContains(response, f'id="{section_id}"')
         self.assertNotContains(response, 'id="inspection-information"')
+        self.assertNotContains(response, 'id="progress-status"')
+        self.assertNotContains(response, 'name="status"')
+        self.assertNotContains(response, 'name="physical_progress_percentage"')
+        self.assertNotContains(response, 'name="cost_progress_percentage"')
         self.assertContains(response, 'wizard-progress')
         self.assertContains(response, 'data-wizard-step="0"')
         self.assertContains(response, 'data-wizard-step="5"')
-        self.assertContains(response, 'data-wizard-step="6"')
+        self.assertNotContains(response, 'data-wizard-step="6"')
         self.assertContains(response, 'Review &amp; Save')
         self.assertContains(response, 'data-wizard-next')
         self.assertContains(response, 'data-wizard-back')
@@ -140,6 +144,34 @@ class InfrastructureProjectFormTests(TestCase):
         self.assertContains(response, 'Edit Infrastructure Project')
         self.assertContains(response, 'Road Improvement Project')
         self.assertContains(response, 'id="project-photos"')
+
+    def test_staff_creation_keeps_official_operational_values_for_head(self):
+        self.user.is_staff = True
+        self.user.save(update_fields=['is_staff'])
+        UserRole.objects.update_or_create(
+            user=self.user,
+            defaults={'department': 'engineer', 'role': 'staff'},
+        )
+        self.client.force_login(self.user)
+        create_url = reverse('engineering_projects:project_create')
+        response = self.client.post(create_url, self.valid_data(
+            status='completed',
+            physical_progress_percentage='100',
+            cost_progress_percentage='100',
+        ))
+        self.assertEqual(response.status_code, 302)
+        infrastructure = Project.objects.filter(
+            created_by_user=self.user,
+        ).latest('project_id').infrastructure_project
+        # NULL is intentional until the Head explicitly confirms the official
+        # status/progress; it also blocks premature first publication.
+        self.assertIsNone(infrastructure.status)
+        self.assertIsNone(infrastructure.physical_progress_percentage)
+        self.assertIsNone(infrastructure.cost_progress_percentage)
+
+        self.assertEqual(self.client.get(reverse(
+            'engineering_projects:project_update', args=[infrastructure.pk],
+        )).status_code, 200)
 
     def test_save_persists_normalized_relationships_and_financials(self):
         infra = self.create_project()

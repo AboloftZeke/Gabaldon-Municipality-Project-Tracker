@@ -1300,6 +1300,9 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             response,
             'css/templates/Dashboard/infrastructure_detail.css',
         )
+        self.assertContains(response, 'data-image-viewer-trigger')
+        self.assertContains(response, 'data-image-viewer-image')
+        self.assertContains(response, 'aria-label="Close image preview"')
         self.assertContains(response, 'GIS Location')
         self.assertContains(response, 'id="gabaldon-gis-root"')
         self.assertContains(

@@ -5,6 +5,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/operational_update.css' %}?v=20260914-2">
+<link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -78,9 +79,10 @@
             {% for error in form.supporting_inspections.errors %}<p class="operational-error">{{ error }}</p>{% endfor %}
             <div class="inspection-choice-list">
                 {% for inspection in inspection_options %}
-                    <label class="inspection-choice-card">
-                        <input type="checkbox" name="supporting_inspections" value="{{ inspection.pk }}" {% if inspection.is_selected_for_update %}checked{% endif %}>
-                        <span class="inspection-choice-card__body">
+                    <div class="inspection-choice-card">
+                        <input type="checkbox" name="supporting_inspections" id="supporting-inspection-{{ inspection.pk }}" value="{{ inspection.pk }}" {% if inspection.is_selected_for_update %}checked{% endif %}>
+                        <div class="inspection-choice-card__body">
+                            <label for="supporting-inspection-{{ inspection.pk }}" class="inspection-choice-card__selector">Select inspection for this update</label>
                             <span class="inspection-choice-card__header">
                                 <span>
                                     <strong>{{ inspection.inspection_date|date:"M d, Y" }}</strong>
@@ -90,12 +92,21 @@
                             </span>
                             <span class="inspection-choice-card__meta">Inspector: {% if inspection.inspected_by_user %}{{ inspection.inspected_by_user.get_full_name|default:inspection.inspected_by_user.username }}{% else %}Not recorded{% endif %}</span>
                             {% if inspection.findings %}<span class="inspection-choice-card__findings">{{ inspection.findings|truncatechars:180 }}</span>{% endif %}
-                            <span class="inspection-choice-card__files">
-                                {% for item in inspection.evidence.all %}<span>{{ item.get_evidence_type_display }} · {{ item.original_name }}</span>{% empty %}<span>No files attached</span>{% endfor %}
-                            </span>
+                            <div class="inspection-choice-card__files">
+                                {% for item in inspection.evidence.all %}
+                                    {% if item.evidence_type == 'image' %}
+                                        <button type="button" class="inspection-choice-file inspection-choice-file--image" data-image-viewer-trigger data-image-src="{{ item.file_url }}" data-image-alt="Inspection photo: {{ item.original_name }}" aria-label="Enlarge inspection photo {{ item.original_name }}">
+                                            <img src="{{ item.file_url }}" alt="Inspection photo: {{ item.original_name }}" loading="lazy"><span>Photo · {{ item.original_name }}</span>
+                                        </button>
+                                    {% else %}
+                                        <a class="inspection-choice-file inspection-choice-file--document" href="{{ item.file_url }}" target="_blank" rel="noopener" aria-label="Open inspection document {{ item.original_name }}"><b>PDF</b><span>{{ item.original_name }}</span></a>
+                                    {% endif %}
+                                    <span class="inspection-choice-file__meta">Uploaded {{ item.created_at|date:"M d, Y" }}{% if item.uploaded_by_user %} by {{ item.uploaded_by_user.get_full_name|default:item.uploaded_by_user.username }}{% endif %}</span>
+                                {% empty %}<span>No files attached</span>{% endfor %}
+                            </div>
                             <span class="inspection-choice-card__selected">Selected as supporting evidence</span>
-                        </span>
-                    </label>
+                        </div>
+                    </div>
                 {% empty %}
                     <div class="operational-empty-state">
                         <strong>No inspections recorded</strong>
@@ -140,4 +151,6 @@
         </div>
     </form>
 </div>
+{% include 'includes/image_viewer.html' %}
+<script src="{% static 'js/components/image_viewer.js' %}" defer></script>
 {% endblock %}
