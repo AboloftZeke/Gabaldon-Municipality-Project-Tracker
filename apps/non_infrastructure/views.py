@@ -1,3 +1,5 @@
+from calendar import month_name
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -7,7 +9,8 @@ from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, FormView
 from django.urls import reverse_lazy, reverse, NoReverseMatch
 from django.db import models, transaction
-from django.db.models import Prefetch, Q, Sum
+from django.db.models import Case, DateField, F, Prefetch, Q, Sum, When
+from django.db.models.functions import Coalesce, ExtractMonth
 from django.templatetags.static import static
 from django.utils import timezone
 from .forms import NonInfrastructureOperationalForm, NonInfrastructureProgressReturnForm, NonInfrastructureProgressUpdateForm, NonInfrastructureProjectForm
@@ -126,6 +129,30 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
         if project_type:
             queryset = queryset.filter(project_type=project_type)
 
+        raw_month = self.request.GET.get('month', '').strip()
+        self.selected_month = (
+            int(raw_month) if raw_month.isascii() and raw_month.isdecimal()
+            and 1 <= int(raw_month) <= 12 else None
+        )
+        if self.selected_month is not None:
+            # The date describes the activity, not when its record was entered.
+            # Trainings may use an event date or an implementation start;
+            # procurements use delivery first. Other projects use their start.
+            primary_date = Case(
+                When(project_type=NonInfrastructureProject.ProjectType.EVENT,
+                     then=F('event_date')),
+                When(project_type=NonInfrastructureProject.ProjectType.TRAINING,
+                     then=Coalesce('event_date', 'implementation_start_date')),
+                When(project_type=NonInfrastructureProject.ProjectType.PROCUREMENT,
+                     then=Coalesce('expected_delivery_date', 'implementation_start_date')),
+                default=Coalesce('implementation_start_date', 'event_date',
+                                 'expected_delivery_date'),
+                output_field=DateField(),
+            )
+            queryset = queryset.annotate(
+                project_month=ExtractMonth(primary_date),
+            ).filter(project_month=self.selected_month)
+
         return queryset.order_by('-created_at')
 
     def get_context_data(self, **kwargs):
@@ -135,11 +162,18 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
         context['locations'] = NonInfrastructureProject.objects.values_list('address__barangay', flat=True).distinct()
         context['categories'] = NonInfrastructureCategory.objects.all()
         context['project_types'] = NonInfrastructureProject.ProjectType.choices
+        context['months'] = [(str(i), month_name[i]) for i in range(1, 13)]
+        context['selected_month'] = str(self.selected_month or '')
+        query = self.request.GET.copy()
+        query.pop('page', None)
+        if self.selected_month is None:
+            query.pop('month', None)
+        context['filter_query'] = query.urlencode()
         context['has_any_projects'] = NonInfrastructureProject.objects.exists()
         context['has_active_filters'] = any(
             self.request.GET.get(name, '').strip()
             for name in ('location', 'category', 'project_type')
-        )
+        ) or self.selected_month is not None
         context['can_update_operations'] = (
             can_update_non_infrastructure_operations(self.request.user)
         )

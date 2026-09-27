@@ -17,6 +17,7 @@ from .forms import (
 )
 from .inspection_evidence import update_inspection_evidence
 from .progress_history import record_progress_update
+from apps.system.formatting import format_peso
 from apps.system.models import (
     InfrastructureCategory,
     InfrastructureProject,
@@ -525,11 +526,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
                 else '0%'
             ),
 
-            'budget_label': (
-                f'₱ {budget_value:,.2f}'
-                if budget_value is not None
-                else 'N/A'
-            ),
+            'budget_label': format_peso(budget_value),
 
             'project_name': project_name,
 

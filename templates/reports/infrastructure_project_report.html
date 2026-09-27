@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static project_formatting %}
 
 {% block title %}{{ report.title }} — Individual Infrastructure Project Report{% endblock %}
 
@@ -66,8 +66,8 @@
             <div><dt>Contractor</dt><dd>{{ report.contractor.name|default:"N/A" }}</dd></div>
             <div><dt>Procurement Method</dt><dd>{{ report.procurement_method_label|default:"N/A" }}</dd></div>
             <div><dt>Source of Fund</dt><dd>{{ report.financial.fund_source.name|default:"N/A" }}</dd></div>
-            <div><dt>Approved Budget for the Contract</dt><dd>{% if report.financial.approved_budget is not None %}PHP {{ report.financial.approved_budget|floatformat:2 }}{% else %}N/A{% endif %}</dd></div>
-            <div><dt>Contract Price</dt><dd>{% if report.financial.contract_price is not None %}PHP {{ report.financial.contract_price|floatformat:2 }}{% else %}N/A{% endif %}</dd></div>
+            <div><dt>Approved Budget for the Contract</dt><dd>{% if report.financial.approved_budget is not None %}{{ report.financial.approved_budget|peso }}{% else %}N/A{% endif %}</dd></div>
+            <div><dt>Contract Price</dt><dd>{% if report.financial.contract_price is not None %}{{ report.financial.contract_price|peso }}{% else %}N/A{% endif %}</dd></div>
         </dl>
     </section>
 

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static project_formatting %}
 
 {% block title %}Infrastructure Projects - Municipality Project Tracker{% endblock %}
 
@@ -135,7 +135,7 @@
                             {% if project.financial_records.first.approved_budget is not None %}
                                 <div class="project-card__amount ui-table__number">
                                     <span>Approved budget</span>
-                                    <strong>₱{{ project.financial_records.first.approved_budget|floatformat:"2g" }}</strong>
+                                    <strong>{{ project.financial_records.first.approved_budget|peso }}</strong>
                                 </div>
                             {% endif %}
                         </div>

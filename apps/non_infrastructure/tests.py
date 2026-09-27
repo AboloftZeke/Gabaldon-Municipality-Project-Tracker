@@ -239,6 +239,26 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.assertIsNone(project.event_date)
         self.assertEqual(project.target_beneficiaries, 'Qualified students of Gabaldon')
 
+    def test_internal_project_cost_displays_pesos_and_zero(self):
+        self.user.is_staff = True
+        self.user.save(update_fields=['is_staff'])
+        UserRole.objects.create(user=self.user, department='mayor', role='staff')
+        self.client.force_login(self.user)
+        base = Project.objects.create(project_type='non_infrastructure')
+        project = NonInfrastructureProject.objects.create(
+            project=base, title='Health Program', project_type='PROGRAM',
+            project_cost='1250000.50',
+        )
+        url = reverse('mayor_projects:non_infrastructure_project_detail',
+                      args=[project.pk])
+        self.assertContains(self.client.get(url), '₱1,250,000.50')
+        project.project_cost = 0
+        project.save(update_fields=['project_cost'])
+        self.assertContains(self.client.get(url), '₱0.00')
+        project.project_cost = None
+        project.save(update_fields=['project_cost'])
+        self.assertNotContains(self.client.get(url), '₱None')
+
     def test_event_requires_its_schedule_and_venue_on_the_server(self):
         form = NonInfrastructureProjectForm(data={
             'title': 'Community Event',

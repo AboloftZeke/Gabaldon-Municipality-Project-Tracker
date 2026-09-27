@@ -1,4 +1,4 @@
-{% load static %}
+{% load static project_formatting %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -77,12 +77,12 @@
     </section>
     {% endif %}
 
-    {% if public_project.target_beneficiaries or public_project.project_cost or public_project.procurement_description %}
+    {% if public_project.target_beneficiaries or public_project.project_cost is not None or public_project.procurement_description %}
     <section class="public-detail__section"><h2>Project-Specific Information</h2><div class="detail-grid">
       {% if public_project.target_beneficiaries %}<div class="detail-item"><span>Target Beneficiaries / Participants</span><strong>{{ public_project.target_beneficiaries }}</strong></div>{% endif %}
       {% if public_project.procurement_description %}<div class="detail-item"><span>Procurement Description</span><strong>{{ public_project.procurement_description }}</strong></div>{% endif %}
       {% if public_project.quantity %}<div class="detail-item"><span>Quantity</span><strong>{{ public_project.quantity }}</strong></div>{% endif %}
-      {% if public_project.project_cost %}<div class="detail-item"><span>Project Cost</span><strong>₱{{ public_project.project_cost }}</strong></div>{% endif %}
+      {% if public_project.project_cost is not None %}<div class="detail-item"><span>Project Cost</span><strong>{{ public_project.project_cost|peso }}</strong></div>{% endif %}
       {% if public_project.fund_source %}<div class="detail-item"><span>Fund Source</span><strong>{{ public_project.fund_source }}</strong></div>{% endif %}
     </div></section>
     {% endif %}

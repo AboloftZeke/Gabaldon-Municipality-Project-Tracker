@@ -173,6 +173,22 @@ class InfrastructureProjectFormTests(TestCase):
             'engineering_projects:project_update', args=[infrastructure.pk],
         )).status_code, 200)
 
+    def test_infrastructure_detail_displays_grouped_peso_amounts(self):
+        infrastructure = self.create_project()
+        self.user.is_staff = True
+        self.user.save(update_fields=['is_staff'])
+        UserRole.objects.update_or_create(
+            user=self.user, defaults={'department': 'engineer', 'role': 'staff'},
+        )
+        self.client.force_login(self.user)
+        response = self.client.get(reverse(
+            'engineering_projects:project_detail', args=[infrastructure.pk],
+        ))
+        self.assertContains(response, '₱1,500,000.00')
+        self.assertContains(response, '₱1,400,000.00')
+        self.assertContains(response, '₱500,000.00')
+        self.assertNotContains(response, '₱1500000.00')
+
     def test_save_persists_normalized_relationships_and_financials(self):
         infra = self.create_project()
 

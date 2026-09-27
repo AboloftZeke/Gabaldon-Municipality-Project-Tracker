@@ -57,6 +57,16 @@
                     {% endfor %}
                 </select>
             </div>
+            <div class="form-group">
+                <label for="month-filter">Month</label>
+                <select id="month-filter" name="month" aria-describedby="month-filter-help">
+                    <option value="">All Months</option>
+                    {% for value, label in months %}
+                        <option value="{{ value }}" {% if selected_month == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <small id="month-filter-help">Matches the project activity, start, or delivery month in any year.</small>
+            </div>
             <div class="form-actions"><button class="ui-button ui-button--secondary" type="submit">Apply Filters</button></div>
         </div>
     </form>
@@ -81,6 +91,14 @@
                         {% if project.project_type == 'EVENT' and project.event_date %}
                             <div class="project-dates">
                                 <strong>Date:</strong> {{ project.event_date|date:"M d, Y" }}
+                            </div>
+                        {% elif project.project_type == 'PROCUREMENT' and project.expected_delivery_date %}
+                            <div class="project-dates">
+                                <strong>Expected delivery:</strong> {{ project.expected_delivery_date|date:"M d, Y" }}
+                            </div>
+                        {% elif project.project_type == 'TRAINING' and project.event_date %}
+                            <div class="project-dates">
+                                <strong>Training date:</strong> {{ project.event_date|date:"M d, Y" }}
                             </div>
                         {% elif project.implementation_start_date or project.implementation_end_date %}
                             <div class="project-dates">
@@ -123,6 +141,17 @@
                 {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_create' %}" class="btn-create ui-button ui-button--primary">Create Project</a>{% endif %}
             {% endif %}
         </div>
+    {% endif %}
+    {% if page_obj.has_other_pages %}
+        <nav class="project-pagination" aria-label="Project pages">
+            {% if page_obj.has_previous %}
+                <a class="ui-button ui-button--secondary" href="?{% if filter_query %}{{ filter_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a class="ui-button ui-button--secondary" href="?{% if filter_query %}{{ filter_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+            {% endif %}
+        </nav>
     {% endif %}
 </div>
 {% endblock %}

@@ -7,6 +7,8 @@ null and empty strings represent the same cleared value; zero remains a value.
 from datetime import date, time
 from decimal import Decimal, InvalidOperation
 
+from .formatting import format_peso
+
 
 SECTIONS = (
     ('project', 'Publication Attribution'),
@@ -109,9 +111,9 @@ def _display(value, key):
         if not _empty(value.get('percentage')):
             details.append(f'{value["percentage"]}%')
         return f'{name} ({", ".join(details)})' if details else name
-    if key in {'approved_budget', 'contract_price', 'actual_expenditure'}:
+    if key in {'approved_budget', 'contract_price', 'actual_expenditure', 'project_cost'}:
         try:
-            return f'₱{Decimal(str(value)):,.2f}'
+            return format_peso(value)
         except InvalidOperation:
             pass
     if (

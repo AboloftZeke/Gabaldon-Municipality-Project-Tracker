@@ -338,7 +338,7 @@ class ReportAccessTests(TestCase):
             'Barangay Bridge Improvement', 'Calabasa', 'Bridges',
             'Municipal Engineering Office', 'Not Yet Started', '55.0%',
             'Published bridge improvement details.', 'Local Development Fund',
-            '12500000.00', '11900000.00',
+            '₱12,500,000.00', '₱11,900,000.00',
             'Competitive Bidding / Public Bidding', 'Public Works Builder',
             'Work follows the approved plan.',
             '/media/projects/bridge-cover.jpg',

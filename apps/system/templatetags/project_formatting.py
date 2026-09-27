@@ -1,0 +1,11 @@
+from django import template
+
+from apps.system.formatting import format_peso
+
+
+register = template.Library()
+
+
+@register.filter
+def peso(value):
+    return format_peso(value)

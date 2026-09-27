@@ -38,7 +38,16 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateReview() {
         if (!reviewPanel) return;
         reviewPanel.querySelectorAll('[data-review-value]').forEach(function (output) {
-            output.textContent = fieldValue(document.getElementById(output.dataset.reviewValue));
+            const field = document.getElementById(output.dataset.reviewValue);
+            const currencyFields = new Set(['abc_amount', 'contract_price', 'actual_expenditure', 'project_cost']);
+            if (field && currencyFields.has(field.name) && field.value.trim() !== '' &&
+                Number.isFinite(Number(field.value))) {
+                output.textContent = '₱' + Number(field.value).toLocaleString('en-PH', {
+                    minimumFractionDigits: 2, maximumFractionDigits: 2,
+                });
+            } else {
+                output.textContent = fieldValue(field);
+            }
         });
     }
 

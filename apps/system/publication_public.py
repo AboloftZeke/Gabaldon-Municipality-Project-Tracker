@@ -316,7 +316,10 @@ def infrastructure_dashboard_row(data):
     contract_price = financial.get('contract_price')
     cost_progress = data['cost_progress_percentage']
     physical_progress = data['physical_progress_percentage']
-    budget = approved_budget or contract_price or Decimal('0')
+    budget = (
+        approved_budget if approved_budget is not None else
+        contract_price if contract_price is not None else Decimal('0')
+    )
     progress = physical_progress if physical_progress is not None else cost_progress
     return {
         'record_id': f"infra-{data['record_id']}",
@@ -338,7 +341,7 @@ def infrastructure_dashboard_row(data):
         'source_of_fund': fund_source.get('name') or '',
         'budget': budget,
         'has_financial': approved_budget is not None or contract_price is not None,
-        'budget_amount': budget,
+        'budget_amount': budget if approved_budget is not None or contract_price is not None else '',
         'abc_amount': approved_budget if approved_budget is not None else '',
         'contract_price': contract_price if contract_price is not None else '',
         'progress': progress or Decimal('0'),
@@ -380,7 +383,7 @@ def non_infrastructure_dashboard_row(data):
         'category_label': category.get('name') or '',
         'proponent': data['proponent'], 'beneficiaries': data['beneficiaries'],
         'contractor': data['contractor_supplier'], 'procurement_method': '', 'source_of_fund': data['fund_source'],
-        'budget': data['project_cost'] or Decimal('0'), 'has_financial': data['project_cost'] is not None, 'budget_amount': data['project_cost'] or Decimal('0'),
+        'budget': data['project_cost'] if data['project_cost'] is not None else Decimal('0'), 'has_financial': data['project_cost'] is not None, 'budget_amount': data['project_cost'] if data['project_cost'] is not None else '',
         'abc_amount': '', 'contract_price': '', 'progress': 0,
         'has_progress': False, 'progress_percentage': 0,
         'overall_progress_percentage': '', 'cost_progress_percentage': '',

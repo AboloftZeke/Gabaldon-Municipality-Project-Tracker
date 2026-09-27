@@ -1,4 +1,4 @@
-{% load static %}
+{% load static project_formatting %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -44,7 +44,7 @@
             <span>Total Projects</span>
           </div>
           <div>
-            <strong>P{{ total_budget|floatformat:2 }}</strong>
+            <strong>{{ total_budget|peso }}</strong>
             <span>Total Investment</span>
           </div>
           <div>
@@ -68,7 +68,7 @@
       </article>
       <article class="metric-card">
         <span class="metric-label">Programmed Budget</span>
-        <strong class="metric-value">P{{ total_budget|floatformat:2 }}</strong>
+        <strong class="metric-value">{{ total_budget|peso }}</strong>
       </article>
       <article class="metric-card">
         <span class="metric-label">Completed</span>
@@ -217,7 +217,7 @@
               </td>
               <td>{{ row.type_label }}</td>
               <td><span class="status-chip status-{{ row.status_key }}">{{ row.status_label }}</span></td>
-              <td class="financial-cell">{% if row.has_financial %}P{{ row.budget|floatformat:2 }}{% else %}—{% endif %}</td>
+              <td class="financial-cell">{% if row.has_financial %}{{ row.budget|peso }}{% else %}—{% endif %}</td>
               <td class="financial-cell">{% if row.has_progress %}{{ row.progress|floatformat:0 }}%{% else %}—{% endif %}</td>
               <td>
                 {% if row.office %}{{ row.office }}{% else %}—{% endif %}
@@ -257,9 +257,9 @@
                    data-project-contractor="{{ row.contractor }}"
                    data-project-procurement-method="{{ row.procurement_method }}"
                    data-project-source-of-fund="{{ row.source_of_fund }}"
-                   data-project-budget-amount="{% if row.budget_amount %}P{{ row.budget_amount|floatformat:2 }}{% endif %}"
-                   data-project-abc-amount="{% if row.abc_amount %}P{{ row.abc_amount|floatformat:2 }}{% endif %}"
-                   data-project-contract-price="{% if row.contract_price %}P{{ row.contract_price|floatformat:2 }}{% endif %}"
+                   data-project-budget-amount="{% if row.budget_amount is not None and row.budget_amount != '' %}{{ row.budget_amount|peso }}{% endif %}"
+                   data-project-abc-amount="{% if row.abc_amount is not None and row.abc_amount != '' %}{{ row.abc_amount|peso }}{% endif %}"
+                   data-project-contract-price="{% if row.contract_price is not None and row.contract_price != '' %}{{ row.contract_price|peso }}{% endif %}"
                    data-project-progress-percentage="{% if row.progress_percentage is not None %}{{ row.progress_percentage|floatformat:1 }}%{% endif %}"
                    data-project-cost-progress-percentage="{% if row.cost_progress_percentage != '' %}{{ row.cost_progress_percentage|floatformat:1 }}%{% endif %}"
                    data-project-physical-progress-percentage="{% if row.physical_progress_percentage != '' %}{{ row.physical_progress_percentage|floatformat:1 }}%{% endif %}"
@@ -313,7 +313,7 @@
               <h3>{{ row.title }}</h3>
               <p class="public-project-preview__location">{% if row.location %}Barangay {{ row.location }}{% else %}Location not specified{% endif %}</p>
               <dl class="public-project-preview__facts">
-                <div><dt>Budget</dt><dd>{% if row.has_financial %}₱{{ row.budget|floatformat:"2g" }}{% else %}Not disclosed{% endif %}</dd></div>
+                <div><dt>Budget</dt><dd>{% if row.has_financial %}{{ row.budget|peso }}{% else %}Not disclosed{% endif %}</dd></div>
                 <div><dt>Progress</dt><dd>{% if row.has_progress %}{{ row.progress|floatformat:0 }}%{% else %}Not available{% endif %}</dd></div>
               </dl>
               <a href="#"
@@ -329,9 +329,9 @@
                  data-project-contractor="{{ row.contractor }}"
                  data-project-procurement-method="{{ row.procurement_method }}"
                  data-project-source-of-fund="{{ row.source_of_fund }}"
-                 data-project-budget-amount="{% if row.budget_amount %}P{{ row.budget_amount|floatformat:2 }}{% endif %}"
-                 data-project-abc-amount="{% if row.abc_amount %}P{{ row.abc_amount|floatformat:2 }}{% endif %}"
-                 data-project-contract-price="{% if row.contract_price %}P{{ row.contract_price|floatformat:2 }}{% endif %}"
+                 data-project-budget-amount="{% if row.budget_amount is not None and row.budget_amount != '' %}{{ row.budget_amount|peso }}{% endif %}"
+                 data-project-abc-amount="{% if row.abc_amount is not None and row.abc_amount != '' %}{{ row.abc_amount|peso }}{% endif %}"
+                 data-project-contract-price="{% if row.contract_price is not None and row.contract_price != '' %}{{ row.contract_price|peso }}{% endif %}"
                  data-project-progress-percentage="{% if row.progress_percentage is not None %}{{ row.progress_percentage|floatformat:1 }}%{% endif %}"
                  data-project-cost-progress-percentage="{% if row.cost_progress_percentage != '' %}{{ row.cost_progress_percentage|floatformat:1 }}%{% endif %}"
                  data-project-physical-progress-percentage="{% if row.physical_progress_percentage != '' %}{{ row.physical_progress_percentage|floatformat:1 }}%{% endif %}"

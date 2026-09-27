@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static project_formatting %}
 
 {% block title %}Project Dashboard - Infrastructure Projects{% endblock %}
 
@@ -79,7 +79,7 @@
         <!-- =========================================
              TOTAL INVESTMENT
              ========================================= -->
-        {% if total_investment > 0 %}
+        {% if total_investment is not None %}
 
         <div class="stats-grid">
 
@@ -89,7 +89,7 @@
                 </div>
 
                 <div class="stat-value">
-                    ₱{{ total_investment|floatformat:0 }}
+                    {{ total_investment|peso }}
                 </div>
             </div>
 

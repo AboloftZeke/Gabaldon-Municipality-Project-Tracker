@@ -294,9 +294,11 @@ class PublicDashboardView(TemplateView):
         completed_projects = infra_completed + noninfra_completed
         ongoing_projects = infra_ongoing + noninfra_ongoing
         infra_budget_total = sum(
-            p['financial'].get('approved_budget')
-            or p['financial'].get('contract_price')
-            or 0
+            p['financial']['approved_budget']
+            if p['financial'].get('approved_budget') is not None
+            else p['financial']['contract_price']
+            if p['financial'].get('contract_price') is not None
+            else 0
             for p in infra_projects
         )
         total_budget = infra_budget_total

@@ -1085,6 +1085,40 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         )
         self.public_revision = publish_current_snapshot(base_project)
 
+    def test_public_budget_preserves_zero_instead_of_using_contract_price(self):
+        snapshot = self.public_revision.snapshot.copy()
+        snapshot['financial'] = {
+            **snapshot['financial'],
+            'approved_budget': '0.00',
+            'contract_price': '2400000.00',
+        }
+        self.public_revision.snapshot = snapshot
+        self.public_revision.save(update_fields=['snapshot'])
+        response = self.client.get(reverse('public_dashboard'))
+        self.assertEqual(response.context['total_budget'], 0)
+        self.assertContains(response, '₱0.00')
+        self.assertContains(response, 'data-project-budget-amount="₱0.00"')
+        detail = self.client.get(reverse(
+            'public_infrastructure_project_detail', args=[self.infrastructure.pk],
+        ))
+        self.assertContains(detail, '₱0.00')
+
+    def test_missing_public_budget_does_not_display_as_zero(self):
+        snapshot = self.public_revision.snapshot.copy()
+        snapshot['financial'] = {
+            **snapshot['financial'],
+            'approved_budget': None,
+            'contract_price': None,
+        }
+        self.public_revision.snapshot = snapshot
+        self.public_revision.save(update_fields=['snapshot'])
+        response = self.client.get(reverse('public_dashboard'))
+        self.assertNotContains(response, 'data-project-budget-amount="₱0.00"')
+        detail = self.client.get(reverse(
+            'public_infrastructure_project_detail', args=[self.infrastructure.pk],
+        ))
+        self.assertContains(detail, 'N/A')
+
     def test_public_dashboard_reads_normalized_infrastructure_relations(self):
         response = self.client.get(reverse('public_dashboard'))
 
@@ -1173,7 +1207,7 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             '/media/projects/infrastructure-cover.jpg',
         )
         self.assertNotContains(response, 'images/infra-icon.png')
-        self.assertContains(response, 'P2500000.00')
+        self.assertContains(response, '₱2,500,000.00')
         self.assertContains(response, '>55%<', html=False)
         self.assertContains(response, 'Municipal Engineering Office')
         self.assertContains(response, 'Public Works Contractor')
@@ -1269,7 +1303,7 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertContains(response, 'Municipal Engineering Office')
         self.assertContains(response, 'Public Works Contractor')
         self.assertContains(response, 'Local Development Fund')
-        self.assertContains(response, '2500000.00')
+        self.assertContains(response, '₱2,500,000.00')
         self.assertContains(response, '55.0%')
         self.assertContains(response, 'Bagting')
         self.assertContains(response, '<span>Category</span>', html=False)
@@ -1423,6 +1457,7 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
                 project=project,
                 title=name,
                 status=status,
+                project_cost=Decimal('1250000.50') if status == 'ongoing' else None,
             )
 
             if status == 'ongoing':
@@ -1436,6 +1471,14 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
                     image_url='/media/projects/ongoing-other.jpg',
                 )
             publish_current_snapshot(project)
+
+    def test_public_non_infrastructure_detail_formats_published_cost(self):
+        project = NonInfrastructureProject.objects.get(title='Ongoing Program')
+        response = self.client.get(reverse(
+            'public_non_infrastructure_project_detail', args=[project.pk],
+        ))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '₱1,250,000.50')
 
     def test_public_dashboard_uses_saved_non_infrastructure_statuses(self):
         response = self.client.get(reverse('public_dashboard'))

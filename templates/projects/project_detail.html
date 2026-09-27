@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static project_formatting %}
 
 {% block title %}{{ project_details.title }} - Infrastructure Projects{% endblock %}
 
@@ -74,7 +74,7 @@
                 <div class="meta-item">
                     <span class="meta-label">Approved Budget</span>
                     <span class="meta-value">
-                        {% if project_budget_value is not None %}₱{{ project_budget_value|floatformat:2 }}{% else %}Not recorded{% endif %}
+                        {% if project_budget_value is not None %}{{ project_budget_value|peso }}{% else %}Not recorded{% endif %}
                     </span>
                 </div>
                 <div class="meta-item">
@@ -191,15 +191,15 @@
         <div class="detail-grid">
             <div class="detail-item">
                 <span class="detail-label">Approved Budget (ABC)</span>
-                <span class="detail-value">{% if project_details.abc_amount %}₱{{ project_details.abc_amount|floatformat:2 }}{% else %}Not assigned{% endif %}</span>
+                <span class="detail-value">{% if project_details.abc_amount is not None %}{{ project_details.abc_amount|peso }}{% else %}Not assigned{% endif %}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Contract Price</span>
-                <span class="detail-value">{% if project_details.contract_price %}₱{{ project_details.contract_price|floatformat:2 }}{% else %}Not assigned{% endif %}</span>
+                <span class="detail-value">{% if project_details.contract_price is not None %}{{ project_details.contract_price|peso }}{% else %}Not assigned{% endif %}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Actual Expenditure</span>
-                <span class="detail-value">{% if project_details.actual_expenditure %}₱{{ project_details.actual_expenditure|floatformat:2 }}{% else %}Not recorded{% endif %}</span>
+                <span class="detail-value">{% if project_details.actual_expenditure is not None %}{{ project_details.actual_expenditure|peso }}{% else %}Not recorded{% endif %}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Source of Fund</span>

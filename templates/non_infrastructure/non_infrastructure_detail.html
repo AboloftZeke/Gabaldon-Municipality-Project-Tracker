@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static project_formatting %}
 
 {% block title %}{{ project_name }} - Non-Infrastructure Projects{% endblock %}
 
@@ -240,7 +240,7 @@
         </div>
     </section>
 
-    {% if project_cost or project_fund_source or project_contractor_supplier or project_procurement_description or project_quantity or project_expected_delivery_date %}
+    {% if project_cost is not None or project_fund_source or project_contractor_supplier or project_procurement_description or project_quantity or project_expected_delivery_date %}
     <section class="project-section information-card ui-card">
         <div class="information-card__heading"><span class="information-card__eyebrow">Funding and delivery</span><h3>Procurement &amp; Financial Information</h3></div>
         <div class="section-content">
@@ -248,7 +248,7 @@
             {% if project_quantity %}<div class="content-item"><div class="content-label">Quantity</div><div class="content-value">{{ project_quantity }}</div></div>{% endif %}
             {% if project_contractor_supplier %}<div class="content-item"><div class="content-label">Contractor / Supplier</div><div class="content-value">{{ project_contractor_supplier }}</div></div>{% endif %}
             {% if project_expected_delivery_date %}<div class="content-item"><div class="content-label">Expected Delivery</div><div class="content-value">{{ project_expected_delivery_date|date:"F d, Y" }}</div></div>{% endif %}
-            {% if project_cost %}<div class="content-item"><div class="content-label">Budget / Project Cost</div><div class="content-value">₱{{ project_cost }}</div></div>{% endif %}
+            {% if project_cost is not None %}<div class="content-item"><div class="content-label">Budget / Project Cost</div><div class="content-value">{{ project_cost|peso }}</div></div>{% endif %}
             {% if project_fund_source %}<div class="content-item"><div class="content-label">Fund Source</div><div class="content-value">{{ project_fund_source }}</div></div>{% endif %}
         </div>
     </section>
