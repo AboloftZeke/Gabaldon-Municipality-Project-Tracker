@@ -98,7 +98,7 @@
 
         /* Footer Styles */
         footer {
-            background: #1a5a3a !important;
+            background: var(--ui-green-800) !important;
             color: #ffffff !important;
             padding: 3rem clamp(1.5rem, 5vw, 4rem) 0;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
