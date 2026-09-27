@@ -1,5 +1,9 @@
 """Shared dashboard navigation and message presentation contracts."""
 
+import re
+from pathlib import Path
+
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.messages import constants
 from django.contrib.messages.storage.base import Message
@@ -11,6 +15,21 @@ from .models import UserRole
 
 
 class DashboardPresentationTests(TestCase):
+    def test_header_and_sidebar_use_the_same_dark_green_token(self):
+        base_css = (Path(settings.BASE_DIR) / 'static/css/templates/base.css').read_text()
+        ui_css = (Path(settings.BASE_DIR) / 'static/css/components/ui.css').read_text()
+        header = re.search(
+            r'\.site-header\s*\{[^}]*?background:\s*([^;]+);', base_css,
+        )
+        sidebar = re.search(
+            r'\.ui-sidebar-layout > \.sidebar\.ui-sidebar\s*\{[^}]*?background:\s*([^;]+);',
+            ui_css,
+        )
+        self.assertIsNotNone(header)
+        self.assertIsNotNone(sidebar)
+        self.assertEqual(header.group(1), sidebar.group(1))
+        self.assertEqual(header.group(1), 'var(--ui-green-800)')
+
     def setUp(self):
         self.admin = User.objects.create_superuser('ui-admin', 'ui-admin@example.com', 'password')
         self.engineer = User.objects.create_user('ui-engineer', password='password', is_staff=True)
