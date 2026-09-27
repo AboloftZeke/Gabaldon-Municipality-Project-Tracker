@@ -1,0 +1,74 @@
+/* Django messages float above the page and never take space in the sidebar grid. */
+.ui-toasts {
+    position: fixed;
+    z-index: 1000;
+    top: 1rem;
+    right: 1rem;
+    display: grid;
+    gap: 0.65rem;
+    width: min(25rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    pointer-events: none;
+}
+
+.ui-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.9rem 0.85rem 0.9rem 1rem;
+    border: 1px solid #bfdcc8;
+    border-left: 5px solid #17633b;
+    border-radius: var(--ui-radius-sm, 8px);
+    background: #f1faf3;
+    color: #123e2a;
+    box-shadow: 0 12px 30px rgb(0 0 0 / 16%);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    pointer-events: auto;
+}
+
+.ui-toast--error {
+    border-color: #e9b7b0;
+    border-left-color: #b42318;
+    background: #fff1f0;
+    color: #872019;
+}
+
+.ui-toast--warning {
+    border-color: #e6ce87;
+    border-left-color: #986400;
+    background: #fff8e6;
+    color: #694800;
+}
+
+.ui-toast--info {
+    border-color: #b6cee6;
+    border-left-color: #1d4f91;
+    background: #eef5ff;
+    color: #193c70;
+}
+
+.ui-toast__text { flex: 1; min-width: 0; }
+
+.ui-toast__dismiss {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    margin: -0.25rem -0.2rem 0 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font-size: 1.35rem;
+    cursor: pointer;
+}
+
+.ui-toast__dismiss:hover { background: rgb(0 0 0 / 8%); }
+.ui-toast__dismiss:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+
+@media (max-width: 520px) {
+    .ui-toasts { top: 0.5rem; right: 0.5rem; width: min(22rem, calc(100vw - 1rem)); max-height: 45dvh; }
+}

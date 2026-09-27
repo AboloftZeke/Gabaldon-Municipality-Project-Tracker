@@ -114,7 +114,7 @@ def account_navigation(request):
             'is_account': True,
             'items': [
                 item(
-                    'Profile & Password', 'password_change', 'account',
+                    'Change Password', 'password_change', 'account',
                     active_names=('password_change',),
                 ),
                 item('Logout', 'logout', 'logout', active_names=('logout',)),

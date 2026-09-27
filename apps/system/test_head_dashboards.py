@@ -215,7 +215,7 @@ class HeadDashboardTests(TestCase):
                 )
                 self.assertEqual(
                     labels,
-                    ['Dashboard', 'User Management', 'Profile & Password', 'Logout'],
+                    ['Dashboard', 'User Management', 'Change Password', 'Logout'],
                 )
                 self.assertContains(response, 'aria-label="Account navigation"')
                 self.assertContains(response, content_class)
@@ -353,7 +353,7 @@ class HeadDashboardTests(TestCase):
         admin, _ = self.users['admin', 'admin']
         self.client.force_login(admin)
         response = self.client.get(reverse('admin_dashboard'))
-        self.assertContains(response, 'class="ui-sidebar-layout admin-dashboard-layout"')
+        self.assertContains(response, 'class="ui-sidebar-layout ui-dashboard-theme admin-dashboard-layout"')
         self.assertContains(response, 'class="dashboard-content admin-dashboard-content"')
         self.assertContains(response, 'class="welcome-section ui-card ui-card--padded"')
         self.assertContains(response, 'class="dashboard-stats"')

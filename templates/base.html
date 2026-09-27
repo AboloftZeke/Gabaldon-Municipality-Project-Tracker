@@ -8,9 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/templates/base.css' %}?v=20260918-2">
+    <link rel="stylesheet" href="{% static 'css/templates/base.css' %}?v=20260927-1">
     {% block extra_head %}{% endblock %}
-    <link rel="stylesheet" href="{% static 'css/components/ui.css' %}?v=20260919-3">
+    <link rel="stylesheet" href="{% static 'css/components/ui.css' %}?v=20260927-1">
+    <link rel="stylesheet" href="{% static 'css/components/toasts.css' %}?v=20260927-1">
 </head>
 <body>
     {% block show_header %}
@@ -39,15 +40,14 @@
     {% endblock %}
 
 {% block global_messages %}
-{% if messages %}
-<div class="messages-container">
+<div class="ui-toasts" aria-label="Notifications" data-toasts>
     {% for message in messages %}
-        <div class="message {{ message.tags }}">
-            {{ message }}
+        <div class="ui-toast{% if message.level_tag == 'success' %} ui-toast--success{% elif message.level_tag == 'error' %} ui-toast--error{% elif message.level_tag == 'warning' %} ui-toast--warning{% else %} ui-toast--info{% endif %}" {% if message.level_tag == 'error' %}role="alert"{% else %}role="status"{% endif %} data-toast>
+            <span class="ui-toast__text">{{ message }}</span>
+            <button type="button" class="ui-toast__dismiss" aria-label="Dismiss notification" data-toast-dismiss>×</button>
         </div>
     {% endfor %}
 </div>
-{% endif %}
 {% endblock %}
 
     <main{% if account_navigation.render_sidebar_in_base %} class="ui-sidebar-layout"{% endif %}>
@@ -64,6 +64,7 @@
     </main>
 
     {% block extra_scripts %}{% endblock %}
+    <script src="{% static 'js/components/toasts.js' %}?v=20260927-1" defer></script>
 
     {% block show_footer %}
     {% if not account_navigation.is_head %}
