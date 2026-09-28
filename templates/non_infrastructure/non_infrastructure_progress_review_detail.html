@@ -63,7 +63,7 @@
             <form method="post" action="{% url 'mayor_projects:non_infrastructure_progress_apply' progress_update.pk %}" class="operational-actions">{% csrf_token %}<button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Apply Approved Update</button></form>
         </section>
     {% elif progress_update.publication_revision_id %}
-        <section class="operational-card ui-card"><h2>Publication status</h2><p>Applied by {{ progress_update.applied_by.get_full_name|default:progress_update.applied_by.username|default:"Former Head" }} on {{ progress_update.applied_at|date:"M d, Y, g:i A" }}.</p><a class="ui-button ui-button--primary" href="{% url 'publication_revision_detail' progress_update.publication_revision_id %}">View Publication Revision</a></section>
+        <section class="operational-card operational-card--publication-status ui-card"><h2>Publication status</h2><p>Applied by {{ progress_update.applied_by.get_full_name|default:progress_update.applied_by.username|default:"Former Head" }} on {{ progress_update.applied_at|date:"M d, Y, g:i A" }}.</p><a class="ui-button ui-button--primary" href="{% url 'publication_revision_detail' progress_update.publication_revision_id %}">View Publication Revision</a></section>
     {% endif %}
 </div>
 {% endblock %}

@@ -1,6 +1,12 @@
 /* Mayor evidence screens share the existing operational cards and buttons. */
 .mayor-evidence { min-width: 0; }
+.mayor-evidence .operational-header { display: block; }
 .mayor-evidence .operational-card + .operational-card { margin-top: 1.2rem; }
+.mayor-evidence .operational-card--publication-status { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; }
+.mayor-evidence .operational-card--publication-status h2,
+.mayor-evidence .operational-card--publication-status p { margin: 0; }
+.mayor-evidence .operational-card--publication-status p { color: #425d4d; line-height: 1.5; }
+.mayor-evidence .operational-card--publication-status .ui-button { margin-top: .1rem; }
 .mayor-evidence .operational-field-grid--single { grid-template-columns: minmax(0, 1fr); }
 .mayor-evidence .operational-card, .mayor-evidence .operational-field { min-width: 0; }
 .mayor-evidence .operational-header__meta { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-top: .9rem; }

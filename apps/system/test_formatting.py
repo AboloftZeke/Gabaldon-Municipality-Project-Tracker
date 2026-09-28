@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.template import Context, Template
 from django.test import SimpleTestCase
 
-from .formatting import format_peso
+from .formatting import format_barangay, format_peso
 
 
 class PesoFormattingTests(SimpleTestCase):
@@ -33,3 +33,15 @@ class PesoFormattingTests(SimpleTestCase):
                                      'progress': Decimal('42.75')})),
             '₱1,250,000.50 / 42.8%',
         )
+
+
+class BarangayFormattingTests(SimpleTestCase):
+    def test_known_key_uses_choice_label(self):
+        self.assertEqual(format_barangay('south_poblacion'), 'South Poblacion')
+
+    def test_unknown_key_is_humanized(self):
+        self.assertEqual(format_barangay('new_area'), 'New Area')
+
+    def test_template_filter_formats_barangay_label(self):
+        template = Template('{% load project_formatting %}{{ value|barangay_label }}')
+        self.assertEqual(template.render(Context({'value': 'south_poblacion'})), 'South Poblacion')

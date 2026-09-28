@@ -18,6 +18,7 @@ from django.utils import timezone
 from .forms import NonInfrastructureOperationalForm, NonInfrastructureProgressReturnForm, NonInfrastructureProgressUpdateForm, NonInfrastructureProjectForm
 from .progress_application import apply_approved_progress_update
 from apps.system.models import NonInfrastructureCategory, NonInfrastructureProgressUpdate, NonInfrastructureProject, Project, ProjectImage
+from apps.system.choices import BARANGAY_CHOICES
 from apps.system.publication_service import (
     create_head_operational_revision,
     publication_state,
@@ -120,7 +121,14 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
         # Filter by location
         location = self.request.GET.get('location', '').strip()
         if location:
-            queryset = queryset.filter(address__barangay=location)
+            location_label = dict(BARANGAY_CHOICES).get(location.lower())
+            if location_label:
+                queryset = queryset.filter(
+                    Q(address__barangay=location)
+                    | Q(address__barangay__iexact=location_label)
+                )
+            else:
+                queryset = queryset.filter(address__barangay=location)
 
         # Filter by category
         category = self.request.GET.get('category', '').strip()
@@ -161,7 +169,25 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         for project in context['projects']:
             project.publication_state = publication_state(project.project)
-        context['locations'] = NonInfrastructureProject.objects.values_list('address__barangay', flat=True).distinct()
+        stored_locations = NonInfrastructureProject.objects.values_list(
+            'address__barangay', flat=True,
+        )
+        known_values = {value for value, _ in BARANGAY_CHOICES}
+        known_labels = {label.casefold() for _, label in BARANGAY_CHOICES}
+        locations = list(BARANGAY_CHOICES)
+        seen_unknown = set()
+        for stored_location in stored_locations:
+            normalized = (stored_location or '').strip()
+            if (
+                not normalized
+                or normalized.lower() in known_values
+                or normalized.casefold() in known_labels
+                or normalized.casefold() in seen_unknown
+            ):
+                continue
+            seen_unknown.add(normalized.casefold())
+            locations.append((normalized, normalized.replace('_', ' ').title()))
+        context['locations'] = sorted(locations, key=lambda item: item[1].casefold())
         context['categories'] = NonInfrastructureCategory.objects.all()
         context['project_types'] = NonInfrastructureProject.ProjectType.choices
         context['months'] = [(str(i), month_name[i]) for i in range(1, 13)]

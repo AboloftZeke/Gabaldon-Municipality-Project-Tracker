@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static project_formatting %}
 
 {% block title %}Project Dashboard - Non-Infrastructure Projects{% endblock %}
 
@@ -131,7 +131,7 @@
                                 </div>
 
                                 <div class="project-meta">
-                                    {{ project.address.barangay|title }}
+                                    {{ project.address.barangay|barangay_label }}
                                     •
                                     {{ project.category.type_name }}
                                 </div>

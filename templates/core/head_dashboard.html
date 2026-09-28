@@ -5,14 +5,14 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}?v=20260821-1">
-<link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
+<link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260928-1">
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/mayor_evidence.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="ui-sidebar-layout ui-dashboard-theme">
 {% include "includes/sidebar_navigation.html" %}
-<div class="head-dashboard">
+<div class="head-dashboard{% if account_navigation.dashboard == 'mayor_head_dashboard' %} head-dashboard--mayor{% endif %}">
     <header class="head-dashboard__header ui-page-header">
         <div>
             <p class="head-dashboard__eyebrow">Publication Review</p>

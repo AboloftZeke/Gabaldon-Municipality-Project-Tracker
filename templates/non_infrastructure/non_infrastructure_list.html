@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static project_formatting %}
 
 {% block title %}Non-Infrastructure Projects - Municipality Project Tracker{% endblock %}
 
@@ -52,8 +52,8 @@
                 <label for="location-filter">Barangay</label>
                 <select id="location-filter" name="location">
                     <option value="">All barangays</option>
-                    {% for location in locations %}
-                        {% if location %}<option value="{{ location }}" {% if request.GET.location == location %}selected{% endif %}>{{ location }}</option>{% endif %}
+                    {% for value, label in locations %}
+                        <option value="{{ value }}" {% if request.GET.location == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -84,7 +84,7 @@
                     </div>
                     <div class="project-card-body">
                         <div class="project-title">{{ project.title }}</div>
-                        <div class="project-location">📍 {{ project.address.barangay|default:'Barangay not specified' }}</div>
+                        <div class="project-location">📍 {{ project.address.barangay|barangay_label|default:'Barangay not specified' }}</div>
                         <div class="project-category">{{ project.category|default:'Uncategorized' }}</div>
                         <div class="project-category">{{ project.get_project_type_display }}</div>
 
