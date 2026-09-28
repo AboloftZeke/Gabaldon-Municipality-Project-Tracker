@@ -10,13 +10,13 @@
 {% endblock %}
 
 {% block content %}
-<div class="breadcrumb-nav">
+<div class="projects-container">
+    <div class="breadcrumb-nav">
     <a href="{% url 'engineering_dashboard' %}">← Back to Dashboard</a>
     <span>/</span>
     <strong>Infrastructure Projects</strong>
-</div>
+    </div>
 
-<div class="projects-container">
     <div class="projects-header ui-page-header">
         <div>
             <h2>Infrastructure Projects</h2>
@@ -91,9 +91,9 @@
                 <div class="project-card project-card--infrastructure ui-card ui-card--interactive">
                     <div class="project-card-image ui-card-media">
                         {% if project.cover_image_url %}
-                            <img src="{{ project.cover_image_url }}" alt="{{ project.title }} cover">
+                            <button type="button" class="image-preview-trigger" data-image-viewer-trigger data-image-src="{{ project.cover_image_url }}" data-image-alt="{{ project.title }} cover" aria-label="Enlarge {{ project.title }} cover"><img src="{{ project.cover_image_url }}" alt="{{ project.title }} cover"></button>
                         {% else %}
-                            <img src="{% static 'images/project-placeholder.svg' %}" alt="{{ project.title }} cover">
+                            <button type="button" class="image-preview-trigger" data-image-viewer-trigger data-image-src="{% static 'images/project-placeholder.svg' %}" data-image-alt="{{ project.title }} cover" aria-label="Enlarge {{ project.title }} cover"><img src="{% static 'images/project-placeholder.svg' %}" alt="{{ project.title }} cover"></button>
                         {% endif %}
                     </div>
                     <div class="project-card-body">
@@ -166,8 +166,10 @@
     {% endif %}
 </div>
 {% include "projects/project_detail_modal.html" %}
+{% include 'includes/image_viewer.html' %}
 {% endblock %}
 
 {% block extra_scripts %}
 <script src="{% static 'js/templates/projects/project_modal.js' %}"></script>
+<script src="{% static 'js/components/image_viewer.js' %}" defer></script>
 {% endblock %}

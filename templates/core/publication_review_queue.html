@@ -30,9 +30,11 @@
 
     <nav class="review-filters" aria-label="Revision status filters">
         {% for filter in status_filters %}
+            {% if filter.value != 'draft' and filter.value != 'rejected' %}
             <a href="?status={{ filter.value }}" class="{% if selected_status == filter.value %}active{% endif %}">
                 {{ filter.label }} <span>{{ filter.count }}</span>
             </a>
+            {% endif %}
         {% endfor %}
     </nav>
 
@@ -46,9 +48,9 @@
                 <article class="review-card ui-card ui-card--interactive ui-list-row">
                     <div class="review-card__image">
                         {% if row.preview.cover_image_url %}
-                            <img src="{{ row.preview.cover_image_url }}" alt="">
+                            <img src="{{ row.preview.cover_image_url }}" alt="{{ row.preview.title }} cover" data-image-viewer-trigger data-image-src="{{ row.preview.cover_image_url }}" data-image-alt="{{ row.preview.title }} cover">
                         {% else %}
-                            <img src="{% static 'images/project-placeholder.svg' %}" alt="">
+                            <img src="{% static 'images/project-placeholder.svg' %}" alt="Project placeholder" data-image-viewer-trigger data-image-src="{% static 'images/project-placeholder.svg' %}" data-image-alt="Project placeholder">
                         {% endif %}
                     </div>
                     <div class="review-card__body">
@@ -101,5 +103,10 @@
             {% if page_obj.has_next %}<a href="?status={{ selected_status }}&page={{ page_obj.next_page_number }}">Next</a>{% endif %}
         </nav>
     {% endif %}
+    {% include 'includes/image_viewer.html' %}
 </main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/components/image_viewer.js' %}" defer></script>
 {% endblock %}

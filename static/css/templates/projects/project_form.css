@@ -1,24 +1,25 @@
 .breadcrumb-nav {
-    background: #1a5a3a;
-    color: white;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 1.15rem;
+    color: #627067;
+    font-size: 0.9rem;
 }
 
 .breadcrumb-nav a {
-    color: rgba(255, 255, 255, 0.9);
+    color: #1f6b43;
     text-decoration: none;
-    font-weight: 500;
-    transition: color 180ms ease;
+    font-weight: 750;
 }
 
 .breadcrumb-nav a:hover {
-    color: white;
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 .breadcrumb-nav span {
-    color: rgba(255, 255, 255, 0.7);
-    margin: 0 0.5rem;
+    color: #627067;
 }
 
 .form-container {

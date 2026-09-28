@@ -136,6 +136,9 @@
                         <img
                             src="{% if project.cover_image_url %}{{ project.cover_image_url }}{% else %}{% static 'images/project-placeholder.svg' %}{% endif %}"
                             alt="{{ project.title }} cover"
+                            data-image-viewer-trigger
+                            data-image-src="{% if project.cover_image_url %}{{ project.cover_image_url }}{% else %}{% static 'images/project-placeholder.svg' %}{% endif %}"
+                            data-image-alt="{{ project.title }} cover"
                         >
 
                     </div>
@@ -221,6 +224,7 @@
      PROJECT MODAL
      ========================================= -->
 {% include "projects/project_detail_modal.html" %}
+{% include "includes/image_viewer.html" %}
 
 
 {% endblock %}
@@ -228,4 +232,5 @@
 
 {% block extra_scripts %}
 <script src="{% static 'js/templates/projects/project_modal.js' %}"></script>
+<script src="{% static 'js/components/image_viewer.js' %}" defer></script>
 {% endblock %}
