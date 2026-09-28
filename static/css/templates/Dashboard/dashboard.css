@@ -31,9 +31,34 @@ body {
 }
 
 .site-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   max-width: 1280px;
   margin: 0 auto;
   padding: 0.95rem 1rem;
+}
+
+.municipal-login {
+  flex: 0 0 auto;
+  margin-left: auto;
+  border-color: var(--pine-800);
+  border-radius: 5px;
+  background: var(--pine-800);
+  box-shadow: 0 3px 10px rgba(18, 61, 42, 0.12);
+  color: #ffffff;
+}
+
+.municipal-login:hover {
+  background: var(--pine-900);
+  border-color: var(--pine-900);
+  box-shadow: 0 5px 14px rgba(18, 61, 42, 0.18);
+}
+
+.municipal-login:focus-visible {
+  outline: 3px solid var(--lime-400);
+  outline-offset: 3px;
 }
 
 .site-brand {
@@ -910,6 +935,18 @@ th {
 
   .site-brand {
     gap: 0.6rem;
+  }
+
+  .site-header-inner {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .municipal-login {
+    margin-left: auto;
+    min-height: 40px;
+    padding: 0.58rem 0.8rem;
+    font-size: 0.84rem;
   }
 
   .site-seal {

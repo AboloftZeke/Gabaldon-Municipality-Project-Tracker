@@ -1085,6 +1085,21 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         )
         self.public_revision = publish_current_snapshot(base_project)
 
+    def test_public_dashboard_login_navigation(self):
+        root_response = self.client.get('/')
+        self.assertRedirects(root_response, reverse('public_dashboard'))
+
+        dashboard_response = self.client.get(reverse('public_dashboard'))
+        self.assertEqual(dashboard_response.status_code, 200)
+        self.assertContains(dashboard_response, 'Municipal Login')
+        self.assertContains(
+            dashboard_response,
+            f'href="{reverse("login")}"',
+        )
+
+        login_response = self.client.get(reverse('login'))
+        self.assertEqual(login_response.status_code, 200)
+
     def test_public_budget_preserves_zero_instead_of_using_contract_price(self):
         snapshot = self.public_revision.snapshot.copy()
         snapshot['financial'] = {
