@@ -1,0 +1,57 @@
+GABALDON FICTIONAL PROJECT SAMPLES — LOCAL DEVELOPMENT IMPORT
+
+CONTENTS
+- Gabaldon_Infrastructure_Sample_10.csv
+- Gabaldon_NonInfrastructure_Sample_10.csv
+- import_gabaldon_samples.py
+
+These are 20 invented development records, NOT verified municipal projects.
+Never present them as actual funded work or publish them publicly.
+
+Before starting: back up your development database. You need an existing
+checkout of the Gabaldon Municipality Project Tracker with Python dependencies
+installed. The script does not change repository source code or migrations.
+
+OPTION A — DEFAULT LOCAL POSTGRESQL (config.settings)
+1. Extract all three files into the repository root (beside manage.py).
+2. Configure your local PostgreSQL database connection in the existing .env.
+3. From the repository root, run:
+
+   python manage.py migrate
+   python import_gabaldon_samples.py
+
+The script shows the target database name before finishing. It refuses to run
+when Django DEBUG is false. It imports only missing sample titles; running it
+again does not duplicate the 20 projects.
+
+OPTION B — SQLITE DEVELOPMENT DATABASE (config.test_settings)
+1. Extract all three files into the repository root (beside manage.py).
+2. From the repository root, run:
+
+   python manage.py migrate --settings=config.test_settings
+   python import_gabaldon_samples.py --settings config.test_settings
+
+   python manage.py runserver --settings=config.test_settings
+
+The SQLite file will be db.sqlite3 in the repository root. Alternatively,
+download the populated Gabaldon_Local_Development_Sample.sqlite3 file and
+copy it to db.sqlite3 in the repository root after backing up your own file.
+That pre-populated file works with config.test_settings. It will NOT populate
+the default PostgreSQL database.
+
+WHAT THE IMPORT DOES
+- Creates 10 infrastructure projects and 10 non-infrastructure projects.
+- Adds 20 locations, 10 infrastructure schedules, 10 financial records,
+  necessary lookups, and two demo Staff authors.
+- Demo author usernames are csv_demo_engineering_staff and
+  csv_demo_mayor_staff. Both have unusable passwords. An administrator must
+  assign passwords separately to sign in as either account.
+- Every sample project remains internal and unpublished. No revision or
+  evidence records are created; no public status is set.
+- Infrastructure coordinates are intentionally empty. Verify real locations
+  before adding coordinates or using map views.
+- Infrastructure actual expenditure is set to its model's initial 0.00
+  because that field cannot be null. This is NOT a verified spending figure.
+
+The importer is an ordinary Python script for local use, not a migration or
+a change to the tracked repository. It expects the two CSVs next to itself.
