@@ -147,11 +147,15 @@ def _operational_information(revision, project_type, preview, user):
         can_update = can_update_infrastructure_operations(user)
         update_url_name = 'engineering_projects:project_operations'
         set_label = 'Set Status & Progress'
-        update_label = 'Update Status & Progress'
+        update_label = 'Confirm Operational Information'
     else:
         non_infrastructure = snapshot.get('non_infrastructure') or {}
         controlled.append({
-            'label': 'Official Status',
+            'label': (
+                'Initial Official Status'
+                if readiness.get('is_first_publication')
+                else 'Official Status'
+            ),
             'value': non_infrastructure.get('status_label'),
             'is_percentage': False,
         })
@@ -160,17 +164,24 @@ def _operational_information(revision, project_type, preview, user):
             'mayor_projects:non_infrastructure_project_operations'
         )
         set_label = 'Set Project Status'
-        update_label = 'Update Project Status'
+        update_label = (
+            'Confirm Initial Status'
+            if readiness.get('is_first_publication')
+            else 'Confirm Operational Information'
+        )
 
     update_url = None
     if can_update and preview and preview.get('record_id'):
-        update_url = reverse(update_url_name, args=[preview['record_id']])
+        if project_type == 'infrastructure':
+            update_url = reverse(update_url_name, args=[preview['record_id']])
+        elif readiness.get('is_first_publication'):
+            update_url = reverse(update_url_name, args=[preview['record_id']])
     return {
         **readiness,
         'controlled_fields': controlled,
         'reference_fields': reference,
         'update_url': update_url,
-        'update_label': 'Confirm Operational Information',
+        'update_label': update_label,
     }
 
 

@@ -412,6 +412,8 @@ class NonInfrastructureProgressUpdateCreateView(MayorsOfficeOnlyMixin, FormView)
     template_name = 'non_infrastructure/non_infrastructure_progress_update_form.html'
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
         self.project = get_object_or_404(NonInfrastructureProject, pk=kwargs['pk'])
         if not can_create_non_infrastructure_progress_update(request.user, self.project):
             raise PermissionDenied(

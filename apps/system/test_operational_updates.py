@@ -474,7 +474,7 @@ class HeadOperationalUpdateTests(TestCase):
             'mayor_projects:non_infrastructure_project_detail',
             args=[self.non_infrastructure.pk],
         ))
-        self.assertContains(detail, 'Update Project Status')
+        self.assertNotContains(detail, 'Update Project Status')
         self.assertNotContains(detail, 'Edit Project')
         self.assertNotContains(detail, 'Delete Project')
         self.assertContains(detail, 'class="information-card-grid"')
@@ -484,9 +484,9 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertContains(detail, 'Status &amp; Operational Information')
         self.assertEqual(self.client.post(url, {
             'status': 'completed', 'title': 'Crafted change',
-        }).status_code, 302)
+        }).status_code, 403)
         self.non_infrastructure.refresh_from_db()
-        self.assertEqual(self.non_infrastructure.status, 'completed')
+        self.assertEqual(self.non_infrastructure.status, 'planned')
         self.assertEqual(self.non_infrastructure.title, 'Community Program')
         self.assertEqual(self.non_infrastructure.project.revisions.count(), 0)
         self.client.force_login(self.users['mayor', 'staff'])

@@ -61,7 +61,10 @@ class OfficeReviewPermissionTests(TestCase):
                             'publication_revision_detail',
                             args=[revision.pk],
                         ))
-                        self.assertContains(detail, 'Operational Information Required')
+                        if office == 'mayor':
+                            self.assertContains(detail, 'Initial Official Status Confirmation')
+                        else:
+                            self.assertContains(detail, 'Operational Information Required')
                         self.assertNotContains(detail, 'Publish to Public Dashboard')
                         self.assertNotContains(
                             detail,

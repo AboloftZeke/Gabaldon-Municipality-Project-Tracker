@@ -269,9 +269,9 @@ class PublicationOperationalUITests(TestCase):
             self.non_infrastructure_revision,
         ))
         self.assertFalse(response.context['operational']['is_complete'])
-        self.assertContains(response, 'Operational Information: Incomplete')
-        self.assertContains(response, 'Official Status')
-        self.assertContains(response, 'Confirm Operational Information')
+        self.assertContains(response, 'Initial Official Status Confirmation')
+        self.assertContains(response, 'Initial Official Status')
+        self.assertContains(response, 'Confirm Initial Status')
         self.assertNotContains(response, 'Actual Physical Progress')
         self.assertNotContains(response, 'Publish to Public Dashboard')
 
@@ -290,7 +290,7 @@ class PublicationOperationalUITests(TestCase):
             self.non_infrastructure_revision,
         ))
         self.assertTrue(response.context['operational']['is_complete'])
-        self.assertNotContains(response, 'Update Project Status')
+        self.assertNotContains(response, 'Confirm Initial Status')
         self.assertContains(response, 'Publish to Public Dashboard')
 
     def test_operational_controls_are_scoped_to_heads(self):
