@@ -69,6 +69,14 @@ class OfficePublicationIntegrationTests(TestCase):
                     args=[revision.pk],
                 )
                 if previous is None:
+                    self.assertEqual(
+                        self.client.post(
+                            reverse('publication_revision_review', args=[revision.pk]),
+                            {'decision': 'approved'},
+                        ).status_code,
+                        302,
+                    )
+                    revision.refresh_from_db()
                     if office == 'engineer':
                         operational_url = reverse(
                             'engineering_projects:project_operations',
@@ -96,7 +104,8 @@ class OfficePublicationIntegrationTests(TestCase):
                     )
                     revision.refresh_from_db()
                 snapshot = deepcopy(revision.snapshot)
-                self.client.post(reverse('publication_revision_review', args=[revision.pk]), {'decision': 'approved'})
+                if revision.status == 'pending_review':
+                    self.client.post(reverse('publication_revision_review', args=[revision.pk]), {'decision': 'approved'})
                 self.client.force_login(publisher)
                 self.assertContains(self.client.get(reverse('publication_lifecycle')), reverse('publication_revision_detail', args=[revision.pk]))
                 self.client.force_login(head)

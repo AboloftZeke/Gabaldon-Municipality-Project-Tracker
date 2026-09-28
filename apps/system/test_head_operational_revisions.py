@@ -359,26 +359,13 @@ class HeadOperationalRevisionTests(TestCase):
             'from_review': str(pending.pk),
         })
 
-        self.assertRedirects(
-            response,
-            reverse('publication_revision_detail', args=[pending.pk]),
-        )
+        self.assertEqual(response.status_code, 403)
         self.assertEqual(
             self.infrastructure.project.revisions.count(),
             1,
         )
         pending.refresh_from_db()
-        progress_snapshot = pending.snapshot['progress_update']
-        self.assertEqual(
-            progress_snapshot['head_remarks'],
-            'Initial publication confirmation.',
-        )
-        self.assertEqual(
-            progress_snapshot['supporting_inspections'][0]['evidence'][0][
-                'id'
-            ],
-            evidence.pk,
-        )
+        self.assertNotIn('progress_update', pending.snapshot)
         self.assertFalse(pending.is_current_public)
 
     def test_operational_revision_retains_public_financial_snapshot(self):

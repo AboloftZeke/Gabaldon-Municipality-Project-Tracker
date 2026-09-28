@@ -556,3 +556,20 @@ def create_head_operational_revision(project, actor, progress_update=None):
     )
     operational_revision.save()
     return operational_revision
+
+
+@transaction.atomic
+def confirm_head_operational_information(revision, actor):
+    """Confirm existing Head-owned values without changing project operations."""
+    locked_revision = _locked_project_revision(revision)
+    _require_head_operational_authority(locked_revision.project, actor)
+    if locked_revision.status != PublicationStatus.APPROVED:
+        raise ValidationError('Only an approved revision can receive Head confirmation.')
+
+    _synchronize_head_operational_snapshot(
+        locked_revision,
+        locked_revision.project,
+        actor,
+    )
+    locked_revision.save(update_fields=['snapshot', 'updated_at'])
+    return locked_revision

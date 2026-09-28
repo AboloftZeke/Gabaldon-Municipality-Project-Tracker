@@ -3,7 +3,7 @@ from datetime import date
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse, NoReverseMatch
@@ -25,10 +25,12 @@ from apps.system.models import (
     ProjectRevision,
 )
 from apps.system.publication_service import (
+    confirm_head_operational_information,
     create_head_operational_revision,
     publication_state,
     submit_project_for_review,
 )
+from apps.system.publication_workflow import PublicationStatus
 
 
 from apps.system.permissions import (
@@ -842,6 +844,28 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
 
     def post(self, request, pk):
         infrastructure = self.get_object(pk)
+        return_revision = self.return_revision(request, infrastructure)
+        if return_revision:
+            if return_revision.status != PublicationStatus.APPROVED:
+                raise PermissionDenied(
+                    'Only an approved revision can receive Head confirmation.',
+                )
+            try:
+                confirm_head_operational_information(return_revision, request.user)
+            except ValidationError as exc:
+                form = InfrastructureOperationalForm(instance=infrastructure)
+                form.add_error(None, '; '.join(exc.messages))
+                return self.render_form(
+                    request,
+                    infrastructure,
+                    form,
+                    status=409,
+                )
+            messages.success(request, 'Operational information confirmed for publication.')
+            return redirect(
+                'publication_revision_detail',
+                revision_id=return_revision.pk,
+            )
         form = InfrastructureOperationalForm(
             request.POST,
             instance=infrastructure,

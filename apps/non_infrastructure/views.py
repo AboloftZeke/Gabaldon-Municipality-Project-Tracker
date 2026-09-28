@@ -20,10 +20,12 @@ from .progress_application import apply_approved_progress_update
 from apps.system.models import NonInfrastructureCategory, NonInfrastructureProgressUpdate, NonInfrastructureProject, Project, ProjectImage
 from apps.system.choices import BARANGAY_CHOICES
 from apps.system.publication_service import (
+    confirm_head_operational_information,
     create_head_operational_revision,
     publication_state,
     submit_project_for_review,
 )
+from apps.system.publication_workflow import PublicationStatus
 
 
 from apps.system.permissions import (
@@ -638,6 +640,22 @@ class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):
         )
 
     def form_valid(self, form):
+        return_revision = self.return_revision()
+        if return_revision:
+            if return_revision.status != PublicationStatus.APPROVED:
+                raise PermissionDenied(
+                    'Only an approved revision can receive Head confirmation.',
+                )
+            try:
+                confirm_head_operational_information(return_revision, self.request.user)
+            except ValidationError as exc:
+                form.add_error(None, '; '.join(exc.messages))
+                return self.form_invalid(form)
+            messages.success(self.request, 'Operational information confirmed for publication.')
+            return redirect(
+                'publication_revision_detail',
+                revision_id=return_revision.pk,
+            )
         try:
             with transaction.atomic():
                 Project.objects.select_for_update().get(

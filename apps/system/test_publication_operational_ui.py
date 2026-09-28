@@ -102,7 +102,7 @@ class PublicationOperationalUITests(TestCase):
     def revision_url(self, revision):
         return reverse('publication_revision_detail', args=[revision.pk])
 
-    def test_engineering_head_sees_incomplete_readiness_and_direct_action(self):
+    def test_engineering_head_sees_incomplete_readiness_and_confirmation_action(self):
         self.client.force_login(self.users['engineer', 'head'])
         response = self.client.get(self.revision_url(
             self.infrastructure_revision,
@@ -117,7 +117,7 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(response, 'Expected / Scheduled Progress')
         self.assertContains(response, 'Variance')
         self.assertContains(response, 'Calculated Cost Progress')
-        self.assertContains(response, 'Set Status &amp; Progress')
+        self.assertContains(response, 'Confirm Operational Information')
         self.assertContains(response, 'Operational Information Required')
         self.assertContains(
             response,
@@ -158,14 +158,22 @@ class PublicationOperationalUITests(TestCase):
         self.assertFalse(response.context['can_publish'])
         self.assertNotContains(response, 'Publish to Public Dashboard')
 
+        self.infrastructure.physical_progress_percentage = Decimal('45')
+        self.infrastructure.cost_progress_percentage = Decimal('30')
+        self.infrastructure.save(update_fields=[
+            'physical_progress_percentage', 'cost_progress_percentage',
+        ])
+        self.inspection.completion_percentage = Decimal('50')
+        self.inspection.save(update_fields=['completion_percentage'])
+
         response = self.client.post(reverse(
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
         ), {
             'status': 'not_yet_started',
-            'physical_progress_percentage': '45',
-            'cost_progress_percentage': '30',
-            'inspection_completion_percentage': '50',
+            'physical_progress_percentage': '99',
+            'cost_progress_percentage': '99',
+            'inspection_completion_percentage': '99',
             'from_review': str(self.infrastructure_revision.pk),
         })
         self.assertRedirects(
@@ -185,7 +193,7 @@ class PublicationOperationalUITests(TestCase):
         self.assertTrue(response.context['can_publish'])
         self.assertContains(response, 'Operational Information: Complete')
         self.assertContains(response, 'Entered Cost Progress')
-        self.assertContains(response, 'Update Status &amp; Progress')
+        self.assertNotContains(response, 'Update Status &amp; Progress')
         self.assertContains(response, 'Publish to Public Dashboard')
         queue = self.client.get(
             reverse('publication_review_queue'),
@@ -263,7 +271,7 @@ class PublicationOperationalUITests(TestCase):
         self.assertFalse(response.context['operational']['is_complete'])
         self.assertContains(response, 'Operational Information: Incomplete')
         self.assertContains(response, 'Official Status')
-        self.assertContains(response, 'Set Project Status')
+        self.assertContains(response, 'Confirm Operational Information')
         self.assertNotContains(response, 'Actual Physical Progress')
         self.assertNotContains(response, 'Publish to Public Dashboard')
 
@@ -282,7 +290,7 @@ class PublicationOperationalUITests(TestCase):
             self.non_infrastructure_revision,
         ))
         self.assertTrue(response.context['operational']['is_complete'])
-        self.assertContains(response, 'Update Project Status')
+        self.assertNotContains(response, 'Update Project Status')
         self.assertContains(response, 'Publish to Public Dashboard')
 
     def test_operational_controls_are_scoped_to_heads(self):
