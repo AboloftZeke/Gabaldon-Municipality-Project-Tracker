@@ -318,7 +318,8 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
         context['can_create_progress_update'] = can_manage_non_infrastructure(self.request.user)
         history = list(
             project.progress_updates.select_related(
-                'submitted_by', 'reviewed_by', 'applied_by', 'publication_revision',
+                'submitted_by', 'reviewed_by', 'applied_by',
+                'publication_revision', 'publication_revision__published_by',
             ).prefetch_related('evidence').order_by('-created_at', '-progress_update_id')
         )
         for update in history:

@@ -125,6 +125,20 @@
   object-fit: contain;
 }
 
+.public-updates__image {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+button.public-updates__file-link {
+  border: 0;
+  cursor: zoom-in;
+  font: inherit;
+}
+
 .public-updates__filename {
   max-width: 100%;
   color: #17352a;

@@ -323,7 +323,7 @@
                         <div><dt>Publication revision</dt><dd>Revision {{ update.publication_revision.revision_number }} · {{ update.publication_revision.get_status_display }}
                             {% if can_update_operations %}<a href="{% url 'publication_revision_detail' update.publication_revision_id %}">View revision</a>{% endif %}
                         </dd></div>
-                        {% if update.publication_revision.published_at %}<div><dt>Published</dt><dd>{{ update.publication_revision.published_at|date:"M d, Y, g:i A" }}</dd></div>{% endif %}
+                        {% if update.publication_revision.published_at %}<div><dt>Published by</dt><dd>{{ update.publication_revision.published_by.get_full_name|default:update.publication_revision.published_by.username|default:"Former publisher" }}</dd></div><div><dt>Published</dt><dd>{{ update.publication_revision.published_at|date:"M d, Y, g:i A" }}</dd></div>{% endif %}
                     {% endif %}
                 </dl>
                 {% if update.remarks %}<div class="mayor-progress-entry__notes"><strong>Staff remarks</strong><p>{{ update.remarks|linebreaksbr }}</p></div>{% endif %}

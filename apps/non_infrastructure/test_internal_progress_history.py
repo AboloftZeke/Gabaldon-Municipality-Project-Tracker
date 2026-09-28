@@ -143,9 +143,12 @@ class InternalProgressHistoryTests(TestCase):
         ))
         revision.status = PublicationStatus.PUBLISHED
         revision.published_at = now
-        revision.save(update_fields=['status', 'published_at'])
+        revision.published_by = self.head
+        revision.save(update_fields=['status', 'published_at', 'published_by'])
         published = self.client.get(self.url)
         self.assertContains(published, 'Revision 1 · Published')
+        self.assertContains(published, 'Published by')
+        self.assertContains(published, self.head.username)
         self.assertContains(published, now.strftime('%Y'))
         revision.status = PublicationStatus.ARCHIVED
         revision.save(update_fields=['status'])

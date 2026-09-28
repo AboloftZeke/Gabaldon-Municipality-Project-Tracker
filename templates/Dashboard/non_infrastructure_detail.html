@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}">
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/infrastructure_detail.css' %}">
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/non_infrastructure_evidence.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
 </head>
 <body>
   <header class="site-header">
@@ -123,7 +124,7 @@
                   <li class="public-updates__file">
                     {% if file.is_image %}
                       <span class="public-updates__file-type">Image</span>
-                      <img class="public-updates__preview" src="{{ file.url }}" alt="Evidence for {{ public_project.title }}: {{ file.description|default:file.filename }}" loading="lazy">
+                      <button type="button" class="public-updates__image" data-image-viewer-trigger data-image-src="{{ file.url }}" data-image-alt="Evidence for {{ public_project.title }}: {{ file.description|default:file.filename }}" aria-label="Enlarge evidence image {{ file.filename }}"><img class="public-updates__preview" src="{{ file.url }}" alt="Evidence for {{ public_project.title }}: {{ file.description|default:file.filename }}" loading="lazy"></button>
                     {% elif file.url %}
                       <span class="public-updates__file-type">Document</span>
                     {% else %}
@@ -132,7 +133,7 @@
                     <strong class="public-updates__filename">{{ file.filename }}</strong>
                     {% if file.description %}<p class="public-updates__file-description">{{ file.description }}</p>{% endif %}
                     {% if file.url %}
-                      <a class="public-updates__file-link" href="{{ file.url }}" target="_blank" rel="noopener" aria-label="View evidence: {{ file.description|default:file.filename }}">View Evidence <span aria-hidden="true">↗</span></a>
+                      {% if file.is_image %}<button type="button" class="public-updates__file-link" data-image-viewer-trigger data-image-src="{{ file.url }}" data-image-alt="Evidence for {{ public_project.title }}: {{ file.description|default:file.filename }}" aria-label="View evidence image: {{ file.description|default:file.filename }}">View Evidence</button>{% else %}<a class="public-updates__file-link" href="{{ file.url }}" target="_blank" rel="noopener" aria-label="View evidence: {{ file.description|default:file.filename }}">View Evidence <span aria-hidden="true">↗</span></a>{% endif %}
                     {% else %}
                       <span class="public-updates__unavailable">File unavailable</span>
                     {% endif %}
@@ -164,9 +165,11 @@
     </section>
     {% endif %}
   </main>
+  {% include 'includes/image_viewer.html' %}
 
   <footer class="site-footer">
     <p>(c) 2026 Municipality of Gabaldon - Transparent Governance for the Community.</p>
   </footer>
+  <script src="{% static 'js/components/image_viewer.js' %}" defer></script>
 </body>
 </html>
