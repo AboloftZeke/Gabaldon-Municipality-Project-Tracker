@@ -7,7 +7,7 @@ from . import gis_views
 from . import publication_views, dashboard_views
 
 urlpatterns = [
-    path('', lambda request: redirect('login')),
+    path('', lambda request: redirect('public_dashboard')),
     path('dashboard/', views.PublicDashboardView.as_view(), name='public_dashboard'),
     path(
         'dashboard/infrastructure/<int:pk>/',
