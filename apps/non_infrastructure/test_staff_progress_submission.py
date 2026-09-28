@@ -10,6 +10,7 @@ from apps.system.models import (
     NonInfrastructureProgressUpdate,
     NonInfrastructureProject,
     Project,
+    ProjectRevision,
     UserRole,
 )
 
@@ -30,6 +31,9 @@ class MayorStaffProgressSubmissionTests(TestCase):
         )
         self.project = NonInfrastructureProject.objects.create(
             project=base, title='Community Program', status='planned',
+        )
+        self.revision = ProjectRevision.objects.create(
+            project=base, revision_number=1, status='approved',
         )
         self.create_url = reverse(
             'mayor_projects:non_infrastructure_progress_update_create',
@@ -87,6 +91,33 @@ class MayorStaffProgressSubmissionTests(TestCase):
         self.assertContains(detail, 'Open file')
         self.assertContains(detail, 'Download file')
 
+    def test_progress_updates_require_approved_or_published_latest_revision(self):
+        for status in ('draft', 'pending_review', 'needs_revision', 'rejected'):
+            with self.subTest(status=status):
+                self.revision.status = status
+                self.revision.save(update_fields=['status'])
+                self.assertEqual(self.client.get(self.create_url).status_code, 403)
+
+        self.revision.status = 'approved'
+        self.revision.save(update_fields=['status'])
+        self.assertEqual(self.client.get(self.create_url).status_code, 200)
+
+        self.revision.status = 'published'
+        self.revision.save(update_fields=['status'])
+        self.assertEqual(self.client.get(self.create_url).status_code, 200)
+
+    def test_approved_revision_allows_update_before_publication(self):
+        self.revision.status = 'approved'
+        self.revision.is_current_public = False
+        self.revision.save(update_fields=['status', 'is_current_public'])
+        self.assertEqual(self.client.get(self.create_url).status_code, 200)
+
+    def test_newer_ineligible_revision_blocks_progress_update(self):
+        ProjectRevision.objects.create(
+            project=self.project.project, revision_number=2, status='pending_review',
+        )
+        self.assertEqual(self.client.get(self.create_url).status_code, 403)
+
     def test_internal_evidence_image_has_preview_and_return_note_is_visible(self):
         NonInfrastructureEvidence.objects.create(
             progress_update=self.update,
@@ -133,7 +164,8 @@ class MayorStaffProgressSubmissionTests(TestCase):
         self.assertEqual(self.update.submitted_by, self.staff)
         self.assertEqual(self.update.evidence.get().pk, evidence_id)
         self.assertEqual(self.project.status, 'planned')
-        self.assertFalse(self.project.project.revisions.exists())
+        self.assertEqual(self.project.project.revisions.count(), 1)
+        self.assertEqual(self.project.project.revisions.get().status, 'approved')
         detail = self.client.get(self.detail_url)
         self.assertContains(detail, 'Review status: Pending Review')
         self.assertContains(detail, 'Waiting for Mayor Head review')

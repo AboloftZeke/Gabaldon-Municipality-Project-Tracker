@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
-from django.core.exceptions import SuspiciousFileOperation, ValidationError
+from django.core.exceptions import PermissionDenied, SuspiciousFileOperation, ValidationError
 from django.core.files.storage import default_storage
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, FormView
@@ -27,6 +27,7 @@ from apps.system.publication_service import (
 
 
 from apps.system.permissions import (
+    can_create_non_infrastructure_progress_update,
     can_manage_non_infrastructure,
     can_update_non_infrastructure_operations,
     department_for_user as _department_for_user,
@@ -341,7 +342,10 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
             is_system_admin(self.request.user)
             or can_manage_non_infrastructure(self.request.user)
         )
-        context['can_create_progress_update'] = can_manage_non_infrastructure(self.request.user)
+        context['can_create_progress_update'] = can_create_non_infrastructure_progress_update(
+            self.request.user,
+            project,
+        )
         history = list(
             project.progress_updates.select_related(
                 'submitted_by', 'reviewed_by', 'applied_by',
@@ -407,6 +411,10 @@ class NonInfrastructureProgressUpdateCreateView(MayorsOfficeOnlyMixin, FormView)
 
     def dispatch(self, request, *args, **kwargs):
         self.project = get_object_or_404(NonInfrastructureProject, pk=kwargs['pk'])
+        if not can_create_non_infrastructure_progress_update(request.user, self.project):
+            raise PermissionDenied(
+                'Progress updates require an approved or published project revision.',
+            )
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -415,6 +423,10 @@ class NonInfrastructureProgressUpdateCreateView(MayorsOfficeOnlyMixin, FormView)
         return context
 
     def form_valid(self, form):
+        if not can_create_non_infrastructure_progress_update(self.request.user, self.project):
+            raise PermissionDenied(
+                'Progress updates require an approved or published project revision.',
+            )
         try:
             update = form.save(project=self.project, user=self.request.user)
         except (OSError, SuspiciousFileOperation):

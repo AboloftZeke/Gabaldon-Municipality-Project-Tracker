@@ -5,7 +5,8 @@ explicit at their call sites because create and edit permissions differ today.
 Review capabilities are scoped to the Head's office, never to superuser status.
 """
 
-from .models import UserRole
+from .models import ProjectRevision, UserRole
+from .publication_workflow import PublicationStatus
 
 
 VALID_ASSIGNMENTS = {
@@ -61,6 +62,20 @@ def can_update_infrastructure_operations(user):
 
 def can_update_non_infrastructure_operations(user):
     return is_mayor_head(user)
+
+
+def can_create_non_infrastructure_progress_update(user, project):
+    """Allow Mayor Staff updates only after the latest revision is approved."""
+    if not can_manage_non_infrastructure(user):
+        return False
+
+    latest_revision = ProjectRevision.objects.filter(
+        project_id=project.project_id,
+    ).order_by('-revision_number').first()
+    return bool(latest_revision and latest_revision.status in {
+        PublicationStatus.APPROVED,
+        PublicationStatus.PUBLISHED,
+    })
 
 
 def can_review_infrastructure(user):
