@@ -311,20 +311,6 @@
     text-align: center;
 }
 
-.review-empty::before {
-    content: "✓";
-    display: grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    margin-bottom: 0.85rem;
-    border-radius: 50%;
-    background: var(--review-green-soft);
-    color: var(--review-green);
-    font-size: 1.25rem;
-    font-weight: 900;
-}
-
 .review-empty h2 {
     margin: 0;
     color: var(--review-text);
