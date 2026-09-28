@@ -157,7 +157,7 @@
       <div class="public-image-grid">
         {% for image in project_images %}
         <figure class="public-image-card">
-          <img src="{{ image.image_url }}" alt="{{ public_project.title }} photo {{ forloop.counter }}" loading="lazy">
+          <button type="button" class="image-preview-trigger" data-image-viewer-trigger data-image-src="{{ image.image_url }}" data-image-alt="{{ public_project.title }} photo {{ forloop.counter }}" aria-label="Enlarge {{ public_project.title }} photo {{ forloop.counter }}"><img src="{{ image.image_url }}" alt="{{ public_project.title }} photo {{ forloop.counter }}" loading="lazy"></button>
           {% if image.is_cover %}<figcaption>Cover photo</figcaption>{% endif %}
         </figure>
         {% endfor %}

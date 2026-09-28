@@ -9,7 +9,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="breadcrumb-nav">
+<div class="projects-container">
+    <div class="breadcrumb-nav">
     {% if request.META.HTTP_REFERER %}
         <a href="{% url 'mayor_dashboard' %}">← Back to Dashboard</a>
     {% else %}
@@ -17,9 +18,8 @@
     {% endif %}
     <span>/</span>
     <strong>Non-Infrastructure Programs</strong>
-</div>
+    </div>
 
-<div class="projects-container">
     <div class="projects-header ui-page-header">
         <div>
             <h2>Non-Infrastructure Projects</h2>
@@ -77,9 +77,9 @@
                 <div class="project-card ui-card ui-card--interactive">
                     <div class="project-card-image">
                         {% if project.project.images.first.image_url %}
-                            <img src="{{ project.project.images.first.image_url }}" alt="{{ project.title }} cover">
+                            <button type="button" class="image-preview-trigger" data-image-viewer-trigger data-image-src="{{ project.project.images.first.image_url }}" data-image-alt="{{ project.title }} cover" aria-label="Enlarge {{ project.title }} cover"><img src="{{ project.project.images.first.image_url }}" alt="{{ project.title }} cover"></button>
                         {% else %}
-                            <img src="{% static 'images/project-placeholder.svg' %}" alt="{{ project.title }} cover">
+                            <button type="button" class="image-preview-trigger" data-image-viewer-trigger data-image-src="{% static 'images/project-placeholder.svg' %}" data-image-alt="{{ project.title }} cover" aria-label="Enlarge {{ project.title }} cover"><img src="{% static 'images/project-placeholder.svg' %}" alt="{{ project.title }} cover"></button>
                         {% endif %}
                     </div>
                     <div class="project-card-body">
@@ -154,4 +154,9 @@
         </nav>
     {% endif %}
 </div>
+{% include 'includes/image_viewer.html' %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/components/image_viewer.js' %}" defer></script>
 {% endblock %}

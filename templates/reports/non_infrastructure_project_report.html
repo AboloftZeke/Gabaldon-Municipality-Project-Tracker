@@ -88,8 +88,8 @@
         <div class="head-section__heading"><p class="head-section__eyebrow">Photo record</p><h2 id="images-heading">Disclosed Project Images</h2></div>
         <div class="report-gallery">
         {% for image in report.images %}
-            <figure>
-                <img src="{{ image.image_url }}" alt="{{ report.title }} image {{ forloop.counter }}">
+            <figure class="public-image-card">
+                <button type="button" class="image-preview-trigger" data-image-viewer-trigger data-image-src="{{ image.image_url }}" data-image-alt="{{ report.title }} image {{ forloop.counter }}" aria-label="Enlarge {{ report.title }} image {{ forloop.counter }}"><img src="{{ image.image_url }}" alt="{{ report.title }} image {{ forloop.counter }}"></button>
                 <figcaption>Project image {{ forloop.counter }}</figcaption>
             </figure>
         {% endfor %}
@@ -97,4 +97,9 @@
     </section>
     {% endif %}
 </div>
+{% include 'includes/image_viewer.html' %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/components/image_viewer.js' %}" defer></script>
 {% endblock %}

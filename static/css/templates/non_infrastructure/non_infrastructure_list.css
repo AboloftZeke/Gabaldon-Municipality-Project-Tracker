@@ -1,57 +1,73 @@
 .breadcrumb-nav {
-        background: #1a5a3a;
-        color: white;
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 0 0 1.15rem;
+        color: #627067;
+        font-size: 0.9rem;
+        width: auto;
     }
 
     .breadcrumb-nav a {
-        color: rgba(255, 255, 255, 0.9);
+        color: #1f6b43;
         text-decoration: none;
-        font-weight: 500;
-        transition: color 180ms ease;
+        font-weight: 750;
     }
 
     .breadcrumb-nav a:hover {
-        color: white;
+        text-decoration: underline;
+        text-underline-offset: 3px;
     }
 
     .breadcrumb-nav span {
-        color: rgba(255, 255, 255, 0.7);
-        margin: 0 0.5rem;
+        color: #627067;
     }
 
     .projects-container {
-        max-width: 1200px;
-        margin: 2rem auto;
-        padding: 0 var(--ui-sidebar-content-gutter);
+        width: min(1240px, calc(100% - 3rem));
+        margin: 0 auto;
+        padding: 2.25rem 0 4rem;
+        color: #1f2d24;
     }
 
     .projects-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
+        gap: 2rem;
+        margin: 0 0 1.35rem;
+        padding: 1.5rem 1.65rem;
+        border: 1px solid #d7e0da;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #ffffff 0%, #f6faf7 100%);
+        box-shadow: 0 12px 32px rgba(22, 79, 50, 0.08);
     }
 
     .projects-header h2 {
-        font-size: 2rem;
+        margin: 0;
+        color: #1f2d24;
+        font-size: clamp(2rem, 4vw, 2.8rem);
+        line-height: 1.05;
+        letter-spacing: -0.035em;
         font-weight: 700;
-        color: #111827;
+        color: #627067;
+        line-height: 1.55;
     }
 
     .btn-create {
-        background: #7c3aed;
+        background: #1f6b43;
         color: white;
         padding: 0.75rem 1.5rem;
         text-decoration: none;
         border-radius: 8px;
         font-weight: 600;
-        transition: background 180ms ease;
+        transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
     }
 
     .btn-create:hover {
-        background: #6d28d9;
+        background: #164f32;
+        box-shadow: 0 5px 14px rgba(31, 107, 67, 0.18);
+        transform: translateY(-1px);
     }
 
     .projects-grid {
@@ -197,42 +213,58 @@
         background: #4b5563;
     }
     .ui-form {
-    margin-bottom: 2rem;
-    padding: 1.25rem;
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
+    margin-bottom: 1.4rem;
+        padding: 1rem 1.1rem;
+    background: #ffffff;
+    border: 1px solid #d7e0da;
+        border-radius: 13px;
+    box-shadow: 0 8px 24px rgba(24, 62, 39, 0.045);
     }
 
     .form-grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1rem;
+        gap: 0.85rem 1rem;
         align-items: end;
     }
 
     .form-group {
         display: flex;
         flex-direction: column;
-        gap: 0.4rem;
+        gap: 0.3rem;
     }
 
     .form-group label {
-        font-weight: 600;
+        color: #34443a;
+        font-size: 0.82rem;
+        font-weight: 750;
     }
 
     .form-group select {
         width: 100%;
-        padding: 0.7rem 0.85rem;
+        padding: 0.55rem 0.7rem;
         border: 1px solid #d1d5db;
-        border-radius: 8px;
+        border-radius: 7px;
         font: inherit;
+        font-size: 0.88rem;
         background: white;
+    }
+
+    #month-filter-help {
+        color: #627067;
+        font-size: 0.74rem;
+        line-height: 1.35;
     }
 
     .form-actions {
         display: flex;
         align-items: end;
+    }
+
+    .form-actions .ui-button {
+        min-height: 38px;
+        padding: 0.5rem 0.8rem;
+        font-size: 0.82rem;
     }
 
     .project-pagination {
@@ -242,4 +274,48 @@
         flex-wrap: wrap;
         gap: 0.75rem;
         margin: 1.5rem 0;
+    }
+
+    @media (max-width: 900px) {
+        .projects-container {
+            width: min(100% - 2rem, 1240px);
+        }
+
+        .projects-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .form-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 650px) {
+        .projects-container {
+            width: min(100% - 1.25rem, 1240px);
+        }
+
+        .projects-container {
+            padding-top: 1.25rem;
+        }
+
+        .projects-header {
+            padding: 1.2rem;
+            border-radius: 13px;
+        }
+
+        .projects-header h2 {
+            font-size: 2rem;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions,
+        .form-actions .ui-button,
+        .btn-create {
+            width: 100%;
+        }
     }

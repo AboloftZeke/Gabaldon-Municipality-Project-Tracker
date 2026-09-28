@@ -45,25 +45,26 @@
 
         <div class="project-detail-header-media" aria-hidden="true">
             {% if project_images %}
-                <img src="{{ project_images.0.image_url }}" alt="">
+                <img src="{{ project_images.0.image_url }}" alt="{{ project_name }} cover" data-image-viewer-trigger data-image-src="{{ project_images.0.image_url }}" data-image-alt="{{ project_name }} cover">
             {% else %}
-                <img src="{% static 'images/project-placeholder.svg' %}" alt="">
+                <img src="{% static 'images/project-placeholder.svg' %}" alt="{{ project_name }} cover" data-image-viewer-trigger data-image-src="{% static 'images/project-placeholder.svg' %}" data-image-alt="{{ project_name }} cover">
             {% endif %}
         </div>
         <div class="project-detail-header-overlay"></div>
 
         <div class="project-detail-header-content">
-            <h2>{{ project_name }}</h2>
-            {% if can_update_operations %}
-                <a href="{% url 'mayor_projects:non_infrastructure_project_operations' project.pk %}" class="btn btn-edit ui-button ui-button--primary">Update Project Status</a>
-            {% endif %}
-            {% if can_create_progress_update %}
-                <a href="{% url 'mayor_projects:non_infrastructure_progress_update_create' project.pk %}" class="btn btn-edit ui-button ui-button--secondary">Add Progress Update</a>
-            {% endif %}
-            {% if can_manage_project %}
-                <a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}" class="btn btn-edit ui-button ui-button--secondary">Edit Project</a>
-                <a href="{% url 'mayor_projects:non_infrastructure_project_delete' project.pk %}" class="btn btn-delete ui-button ui-button--danger">Delete Project</a>
-            {% endif %}
+            <div class="project-detail-heading">
+                <div class="project-title-block">
+                    <p class="project-eyebrow">{{ project_type_label }} · {{ project_code }}</p>
+                    <h2>{{ project_name }}</h2>
+                    <p class="project-subtitle">{{ project_category|default:"Uncategorized" }}</p>
+                </div>
+                <div class="action-buttons action-buttons--detail">
+                    {% if can_update_operations %}<a href="{% url 'mayor_projects:non_infrastructure_project_operations' project.pk %}" class="btn btn-edit ui-button ui-button--primary">Update Project Status</a>{% endif %}
+                    {% if can_create_progress_update %}<a href="{% url 'mayor_projects:non_infrastructure_progress_update_create' project.pk %}" class="btn btn-edit ui-button ui-button--secondary">Add Progress Update</a>{% endif %}
+                    {% if can_manage_project %}<a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}" class="btn btn-edit ui-button ui-button--secondary">Edit Project</a><a href="{% url 'mayor_projects:non_infrastructure_project_delete' project.pk %}" class="btn btn-delete ui-button ui-button--danger">Delete Project</a>{% endif %}
+                </div>
+            </div>
 
             <div class="project-meta">
 
@@ -366,11 +367,7 @@
                 {% for image in project_images %}
 
                     <div class="project-image">
-                        <img
-                            src="{{ image.image_url }}"
-                            alt="{{ project_name }}"
-                            loading="lazy"
-                        >
+                        <button type="button" class="image-preview-trigger" data-image-viewer-trigger data-image-src="{{ image.image_url }}" data-image-alt="{{ project_name }} photo {{ forloop.counter }}" aria-label="Enlarge {{ project_name }} photo {{ forloop.counter }}"><img src="{{ image.image_url }}" alt="{{ project_name }} photo {{ forloop.counter }}" loading="lazy"></button>
                     </div>
 
                 {% endfor %}

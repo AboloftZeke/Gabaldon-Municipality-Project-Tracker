@@ -60,9 +60,9 @@
         <div class="revision-preview">
             <section class="revision-section revision-hero ui-card ui-card--padded">
                 {% if preview.cover_image_url %}
-                    <img src="{{ preview.cover_image_url }}" alt="{{ preview.title }} cover">
+                    <img src="{{ preview.cover_image_url }}" alt="{{ preview.title }} cover" data-image-viewer-trigger data-image-src="{{ preview.cover_image_url }}" data-image-alt="{{ preview.title }} cover">
                 {% else %}
-                    <img src="{% static 'images/project-placeholder.svg' %}" alt="">
+                    <img src="{% static 'images/project-placeholder.svg' %}" alt="Project placeholder" data-image-viewer-trigger data-image-src="{% static 'images/project-placeholder.svg' %}" data-image-alt="Project placeholder">
                 {% endif %}
                 <div><span>{{ preview.code }}</span><h2>{{ preview.title }}</h2><p>{{ preview.description|default:"No description provided." }}</p></div>
             </section>

@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{% static 'css/templates/base.css' %}?v=20260927-2">
     {% block extra_head %}{% endblock %}
     <link rel="stylesheet" href="{% static 'css/components/ui.css' %}?v=20260927-1">
+    <link rel="stylesheet" href="{% static 'css/components/logout_confirm.css' %}?v=20260928-1">
     <link rel="stylesheet" href="{% static 'css/components/toasts.css' %}?v=20260927-1">
 </head>
 <body>
@@ -63,73 +64,22 @@
         {% endif %}
     </main>
 
+    <div class="logout-confirm" data-logout-confirm hidden>
+        <div class="logout-confirm__backdrop" data-logout-cancel></div>
+        <section class="logout-confirm__dialog ui-card" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title" aria-describedby="logout-confirm-description" tabindex="-1">
+            <h2 id="logout-confirm-title">Log out?</h2>
+            <p id="logout-confirm-description">Are you sure you want to log out of the Municipality Project Tracker?</p>
+            <div class="logout-confirm__actions">
+                <button type="button" class="ui-button ui-button--secondary" data-logout-cancel>Cancel</button>
+                <button type="button" class="ui-button ui-button--primary" data-logout-proceed>Logout</button>
+            </div>
+        </section>
+    </div>
+
     {% block extra_scripts %}{% endblock %}
+    <script src="{% static 'js/components/logout_confirm.js' %}?v=20260928-1" defer></script>
     <script src="{% static 'js/components/toasts.js' %}?v=20260927-1" defer></script>
 
-    {% block show_footer %}
-    {% if not account_navigation.is_head %}
-    <footer>
-        <div class="footer-container">
-            <div class="footer-content">
-                <!-- Quick Links -->
-                <div class="footer-section">
-                    <h3>Quick Links</h3>
-                    <ul>
-                        <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
-                        <li><a href="#">All Projects</a></li>
-                        <li><a href="#">Statistics</a></li>
-                        <li><a href="#">Official Websites</a></li>
-                    </ul>
-                </div>
-
-                <!-- Departments -->
-                <div class="footer-section">
-                    <h3>Departments</h3>
-                    <ul>
-                        <li><a href="#">Engineering Office</a></li>
-                        <li><a href="#">Mayor's Office</a></li>
-                        <li><a href="#">Health Office</a></li>
-                        <li><a href="#">Social Welfare</a></li>
-                    </ul>
-                </div>
-
-                <!-- Resources -->
-                <div class="footer-section">
-                    <h3>Resources</h3>
-                    <ul>
-                        <li><a href="#">Project Reports</a></li>
-                        <li><a href="#">Budget Documents</a></li>
-                        <li><a href="#">Public Notices</a></li>
-                        <li><a href="#">FAQs</a></li>
-                    </ul>
-                </div>
-
-                <!-- Connect -->
-                <div class="footer-section">
-                    <h3>Connect</h3>
-                    <ul>
-                        <li><a href="#">Facebook</a></li>
-                        <li><a href="#">Feedback</a></li>
-                        <li><a href="#">Contact Us</a></li>
-                        <li><a href="#">Report an Issue</a></li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Municipality Seal -->
-            <div class="footer-middle">
-                <img src="{% static 'images/gabaldon-seal.png' %}" alt="Municipality of Gabaldon seal" class="footer-seal">
-            </div>
-
-            <!-- Copyright -->
-            <div class="footer-bottom">
-                <p>&copy; 2026 Municipality of Gabaldon – Transparent Governance for the Community.</p>
-            </div>
-        </div>
-
-        <div class="footer-accent"></div>
-    </footer>
-    {% endif %}
-    {% endblock %}
+    {% block show_footer %}{% endblock %}
 </body>
 </html>

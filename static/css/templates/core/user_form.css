@@ -14,26 +14,29 @@
     }
 
     .user-management-form-content {
-        width: min(100%, 900px);
+        width: 100%;
         min-width: 0;
-        padding: clamp(1.5rem, 3vw, 2.5rem) var(--ui-sidebar-content-gutter) 3rem;
-        justify-self: start;
+        padding: clamp(2rem, 4vw, 3rem) var(--ui-sidebar-content-gutter) 4rem;
+        justify-self: stretch;
     }
 
     .page-title {
-        font-size: 2rem;
+        width: min(100%, 760px);
+        margin: 0 auto 1.5rem;
+        font-size: clamp(1.8rem, 3vw, 2.35rem);
         font-weight: 700;
         color: var(--ink-900);
-        margin-bottom: 2rem;
     }
 
     .form-wrapper {
         background: var(--white);
-        border-radius: 12px;
-        border: 1px solid var(--line);
-        padding: 2rem;
-        max-width: 600px;
+        width: min(100%, 760px);
         margin: 0 auto;
+        border-radius: 16px;
+        border: 1px solid var(--ui-border);
+        padding: clamp(1.5rem, 3vw, 2.25rem);
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+        box-sizing: border-box;
     }
 
     .error-messages {
@@ -61,16 +64,16 @@
     }
 
     .form-section {
-        margin-bottom: 2rem;
+        margin-bottom: 2.25rem;
     }
 
     .form-section h3 {
-        font-size: 1rem;
+        font-size: 1.05rem;
         font-weight: 700;
         color: var(--ink-900);
-        margin-bottom: 1.25rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid var(--line);
+        margin: 0 0 1.25rem;
+        padding-bottom: 0.8rem;
+        border-bottom: 1px solid var(--ui-border);
     }
 
     .form-group {
