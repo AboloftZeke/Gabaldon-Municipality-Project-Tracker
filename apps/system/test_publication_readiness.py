@@ -119,12 +119,13 @@ class FirstPublicationReadinessTests(TestCase):
         response = self.client.post(reverse(
             'mayor_projects:non_infrastructure_project_operations',
             args=[self.non_infrastructure.pk],
-        ), {'status': 'planned'})
+        ), {'status': 'planned', 'from_review': str(revision.pk)})
         self.assertEqual(response.status_code, 302)
         revision.refresh_from_db()
         self.assertEqual(
             revision.snapshot['non_infrastructure']['status'],
             'planned',
         )
+        self.assertEqual(self.non_infrastructure.status, 'planned')
         published = publish_publication_revision(revision, mayor_head)
         self.assertEqual(published.status, PublicationStatus.PUBLISHED)

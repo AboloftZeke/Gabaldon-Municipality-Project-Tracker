@@ -321,7 +321,8 @@ class PublicationOperationalUITests(TestCase):
         response = self.client.get(reverse(
             'mayor_projects:non_infrastructure_project_list',
         ))
-        self.assertContains(response, 'Update Status')
+        self.assertNotContains(response, 'Update Status')
+        self.assertContains(response, 'View')
         self.assertNotContains(response, '>Edit<', html=True)
 
     def test_review_linked_forms_use_retained_revision_titles(self):
@@ -420,9 +421,9 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(response, 'Planned')
         self.assertNotContains(response, 'Unpublished Mayor Title')
         self.assertNotContains(response, 'Completed')
-        self.assertContains(response, 'Update Status')
+        self.assertContains(response, 'View Project')
         self.assertContains(response, reverse(
-            'mayor_projects:non_infrastructure_project_operations',
+            'mayor_projects:non_infrastructure_project_detail',
             args=[self.non_infrastructure.pk],
         ))
         self.assertNotContains(response, 'percentage')

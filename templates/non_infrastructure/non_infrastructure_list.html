@@ -120,7 +120,6 @@
 
                         <div class="project-actions ui-list-actions">
                             <a href="{% url 'mayor_projects:non_infrastructure_project_detail' project.pk %}" class="btn-small btn-view ui-button ui-button--primary ui-button--small">View</a>
-                            {% if can_update_operations %}<a href="{% url 'mayor_projects:non_infrastructure_project_operations' project.pk %}" class="btn-small btn-edit ui-button ui-button--secondary ui-button--small">Update Status</a>{% endif %}
                             {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}" class="btn-small btn-edit ui-button ui-button--subtle ui-button--small">Edit</a>{% endif %}
                         </div>
                     </div>

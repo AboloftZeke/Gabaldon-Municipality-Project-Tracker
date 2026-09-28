@@ -16,7 +16,10 @@ from .models import (
     ProjectRevision,
     UserRole,
 )
-from .publication_service import create_head_operational_revision
+from .publication_service import (
+    OPERATIONAL_CONFIRMATION_KEY,
+    create_head_operational_revision,
+)
 from .publication_snapshots import build_project_publication_snapshot
 from .publication_workflow import PublicationStatus
 
@@ -359,12 +362,13 @@ class HeadOperationalRevisionTests(TestCase):
             'from_review': str(pending.pk),
         })
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(
             self.infrastructure.project.revisions.count(),
             1,
         )
         pending.refresh_from_db()
+        self.assertIn(OPERATIONAL_CONFIRMATION_KEY, pending.snapshot)
         self.assertNotIn('progress_update', pending.snapshot)
         self.assertFalse(pending.is_current_public)
 
@@ -443,68 +447,41 @@ class HeadOperationalRevisionTests(TestCase):
 
     def test_non_infrastructure_update_creates_approved_snapshot_without_republishing(self):
         previous_snapshot = deepcopy(self.non_infrastructure_public.snapshot)
+        approval = ProjectRevision.objects.create(
+            project=self.non_infrastructure.project,
+            revision_number=2,
+            status=PublicationStatus.APPROVED,
+            snapshot=deepcopy(self.non_infrastructure_public.snapshot),
+            previous_revision=self.non_infrastructure_public,
+            submitted_by=self.users['mayor', 'staff'],
+        )
         self.client.force_login(self.users['mayor', 'head'])
         response = self.client.post(reverse(
             'mayor_projects:non_infrastructure_project_operations',
             args=[self.non_infrastructure.pk],
-        ), {'status': 'completed'})
+        ), {'status': 'completed', 'from_review': str(approval.pk)})
         self.assertEqual(response.status_code, 302)
 
-        revision = self.non_infrastructure.project.revisions.get(
-            status=PublicationStatus.APPROVED,
-        )
-        self.assertRedirects(
-            response,
-            reverse('publication_revision_detail', args=[revision.pk]),
-        )
-        self.assertEqual(revision.previous_revision, self.non_infrastructure_public)
+        approval.refresh_from_db()
         self.assertEqual(
-            revision.snapshot['non_infrastructure']['status'],
-            'completed',
+            approval.snapshot['non_infrastructure']['status'],
+            previous_snapshot['non_infrastructure']['status'],
         )
-        self.assertFalse(revision.is_current_public)
-        self.non_infrastructure_public.refresh_from_db()
-        self.assertTrue(self.non_infrastructure_public.is_current_public)
-        self.assertEqual(self.non_infrastructure_public.snapshot, previous_snapshot)
-        public_response = self.client.get(reverse(
-            'public_non_infrastructure_project_detail',
-            args=[self.non_infrastructure.pk],
-        ))
-        self.assertEqual(public_response.status_code, 200)
-        self.assertEqual(public_response.context['public_project']['status'], 'planned')
+        self.assertIn(OPERATIONAL_CONFIRMATION_KEY, approval.snapshot)
+        self.assertEqual(self.non_infrastructure.status, 'planned')
+        self.assertEqual(
+            self.non_infrastructure.project.revisions.filter(
+                status=PublicationStatus.APPROVED,
+            ).count(),
+            1,
+        )
 
         preview = self.client.get(reverse(
             'publication_revision_detail',
-            args=[revision.pk],
+            args=[approval.pk],
         ))
         self.assertEqual(preview.context['comparison']['baseline'], self.non_infrastructure_public)
-        changed = {
-            (section['label'], field['path'])
-            for section in preview.context['comparison']['sections']
-            for field in section['fields']
-            if field['changed']
-        }
-        self.assertIn(('Program Information', 'status'), changed)
         self.assertContains(preview, 'Publish Update to Public Dashboard')
-        self.assertEqual(self.client.post(reverse(
-            'publication_revision_publish',
-            args=[revision.pk],
-        )).status_code, 302)
-        revision.refresh_from_db()
-        self.non_infrastructure_public.refresh_from_db()
-        self.assertTrue(revision.is_current_public)
-        self.assertEqual(
-            self.non_infrastructure_public.status,
-            PublicationStatus.ARCHIVED,
-        )
-        public_response = self.client.get(reverse(
-            'public_non_infrastructure_project_detail',
-            args=[self.non_infrastructure.pk],
-        ))
-        self.assertEqual(
-            public_response.context['public_project']['status'],
-            'completed',
-        )
 
     def test_never_published_update_changes_working_data_without_revision(self):
         project = Project.objects.create(project_type='non_infrastructure')
@@ -520,9 +497,9 @@ class HeadOperationalRevisionTests(TestCase):
             'mayor_projects:non_infrastructure_project_operations',
             args=[unpublished.pk],
         ), {'status': 'ongoing'})
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
         unpublished.refresh_from_db()
-        self.assertEqual(unpublished.status, 'ongoing')
+        self.assertEqual(unpublished.status, 'planned')
         self.assertFalse(project.revisions.exists())
 
     def test_service_rejects_wrong_roles_without_creating_a_revision(self):

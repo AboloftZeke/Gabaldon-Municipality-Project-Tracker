@@ -594,6 +594,23 @@ class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):
     form_class = NonInfrastructureOperationalForm
     template_name = 'non_infrastructure/non_infrastructure_operational_form.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        revision_id = request.POST.get('from_review') or request.GET.get('from_review')
+        if not revision_id:
+            raise PermissionDenied(
+                'Operational status changes for non-infrastructure projects must be confirmed from an approved publication review.',
+            )
+        project = get_object_or_404(
+            NonInfrastructureProject.objects.select_related('project'),
+            pk=kwargs['pk'],
+        )
+        revision = project.project.revisions.filter(pk=revision_id).first()
+        if revision is None or revision.status != PublicationStatus.APPROVED:
+            raise PermissionDenied(
+                'Only an approved publication revision can be confirmed here.',
+            )
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         return NonInfrastructureProject.objects.select_related('project', 'address', 'category').prefetch_related(Prefetch('project__images', queryset=ProjectImage.objects.order_by('-is_cover', '-created_at')))
 

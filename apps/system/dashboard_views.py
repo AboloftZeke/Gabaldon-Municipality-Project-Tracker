@@ -163,7 +163,7 @@ class HeadDashboardView(OfficeHeadRequiredMixin, TemplateView):
                     'title': snapshot.get('title') or 'Untitled program',
                     'status': snapshot.get('status_label') or 'Status not set',
                     'update_url': reverse(
-                        'mayor_projects:non_infrastructure_project_operations',
+                        'mayor_projects:non_infrastructure_project_detail',
                         args=[snapshot['id']],
                     ),
                 }
@@ -172,7 +172,7 @@ class HeadDashboardView(OfficeHeadRequiredMixin, TemplateView):
                     revision.snapshot or {}
                 ).get('non_infrastructure') or {}).get('id')
             ]
-            context['operational_action_label'] = 'Update Status'
+            context['operational_action_label'] = 'View Project'
             context['project_list_url'] = reverse(
                 'mayor_projects:non_infrastructure_project_list',
             )

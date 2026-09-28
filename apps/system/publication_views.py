@@ -163,7 +163,7 @@ def _operational_information(revision, project_type, preview, user):
         update_label = 'Update Project Status'
 
     update_url = None
-    if can_update and not readiness['is_complete'] and preview and preview.get('record_id'):
+    if can_update and preview and preview.get('record_id'):
         update_url = reverse(update_url_name, args=[preview['record_id']])
     return {
         **readiness,

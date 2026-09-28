@@ -100,7 +100,9 @@
                         {% endfor %}
                     </dl>
                 {% endif %}
+                {% if operational.update_url and not operational.is_complete %}
                 <a class="review-primary-link ui-button ui-button--primary" href="{{ operational.update_url }}?from_review={{ revision.pk }}">{{ operational.update_label }}</a>
+                {% endif %}
             </section>
             {% endif %}
 
