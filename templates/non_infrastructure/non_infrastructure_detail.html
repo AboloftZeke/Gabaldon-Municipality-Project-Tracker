@@ -7,7 +7,8 @@
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_detail.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/head_information_cards.css' %}">
-<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/mayor_evidence.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/mayor_evidence.css' %}?v=20260928-1">
+<link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -292,6 +293,67 @@
     </section>
     {% endif %}
 
+    <section class="project-section information-card ui-card mayor-evidence mayor-progress-history" aria-labelledby="progress-history-heading">
+        <div class="information-card__heading">
+            <span class="information-card__eyebrow">Mayor's Office</span>
+            <h3 id="progress-history-heading">Progress Update History</h3>
+        </div>
+        <p>Chronological record of submitted, reviewed, applied, and published project status updates. Newest first.</p>
+        <div class="mayor-progress-timeline">
+        {% for update in progress_update_history %}
+            <article class="mayor-progress-entry ui-card" aria-label="Progress update by {{ update.submitted_by.username|default:'former staff member' }}">
+                <div class="mayor-progress-entry__heading">
+                    <div>
+                        <p class="mayor-progress-entry__transition"><span>{{ update.get_previous_status_display|default:"Not recorded" }}</span><span aria-hidden="true">→</span><span>{{ update.get_proposed_status_display }}</span></p>
+                        <span class="mayor-status mayor-status--{{ update.review_status }}">{{ update.get_review_status_display }}</span>
+                        {% if update.publication_revision_id %}
+                            {% if update.publication_revision.status == 'published' %}<span class="mayor-status mayor-status--published">Published</span>
+                            {% elif update.publication_revision.status == 'archived' %}<span class="mayor-status mayor-status--published">Previously published</span>
+                            {% else %}<span class="mayor-status mayor-status--awaiting">Applied · Awaiting Publication</span>{% endif %}
+                        {% elif update.applied_at %}<span class="mayor-status mayor-status--applied">Applied</span>{% endif %}
+                    </div>
+                    <time datetime="{{ update.created_at|date:'c' }}">Created {{ update.created_at|date:"M d, Y, g:i A" }}</time>
+                </div>
+                <dl class="mayor-progress-entry__meta">
+                    <div><dt>Submitted by</dt><dd>{{ update.submitted_by.get_full_name|default:update.submitted_by.username|default:"Former staff member" }}</dd></div>
+                    {% if update.submitted_at %}<div><dt>Submitted</dt><dd>{{ update.submitted_at|date:"M d, Y, g:i A" }}</dd></div>{% endif %}
+                    {% if update.reviewed_at %}<div><dt>Reviewed by</dt><dd>{{ update.reviewed_by.get_full_name|default:update.reviewed_by.username|default:"Former Head" }}</dd></div><div><dt>Reviewed</dt><dd>{{ update.reviewed_at|date:"M d, Y, g:i A" }}</dd></div>{% endif %}
+                    {% if update.applied_at %}<div><dt>Applied by</dt><dd>{{ update.applied_by.get_full_name|default:update.applied_by.username|default:"Former Head" }}</dd></div><div><dt>Applied</dt><dd>{{ update.applied_at|date:"M d, Y, g:i A" }}</dd></div>{% endif %}
+                    {% if update.publication_revision_id %}
+                        <div><dt>Publication revision</dt><dd>Revision {{ update.publication_revision.revision_number }} · {{ update.publication_revision.get_status_display }}
+                            {% if can_update_operations %}<a href="{% url 'publication_revision_detail' update.publication_revision_id %}">View revision</a>{% endif %}
+                        </dd></div>
+                        {% if update.publication_revision.published_at %}<div><dt>Published</dt><dd>{{ update.publication_revision.published_at|date:"M d, Y, g:i A" }}</dd></div>{% endif %}
+                    {% endif %}
+                </dl>
+                {% if update.remarks %}<div class="mayor-progress-entry__notes"><strong>Staff remarks</strong><p>{{ update.remarks|linebreaksbr }}</p></div>{% endif %}
+                {% if update.review_notes and can_update_operations or update.review_notes and update.submitted_by_id == request.user.pk %}<div class="mayor-progress-entry__notes"><strong>Review note</strong><p>{{ update.review_notes|linebreaksbr }}</p></div>{% endif %}
+                <div class="mayor-progress-entry__evidence">
+                    <h4>Supporting Evidence</h4>
+                    <ul class="mayor-evidence-list">
+                        {% for item in update.history_evidence %}
+                            <li class="mayor-evidence-file">
+                                <span class="mayor-evidence-file__type">{% if item.is_image %}Image{% elif item.is_document %}PDF document{% else %}Supporting file{% endif %}</span>
+                                <strong class="mayor-evidence-file__title">{{ item.name }}</strong>
+                                {% if item.description %}<p class="mayor-evidence-file__description">{{ item.description }}</p>{% endif %}
+                                {% if item.url %}
+                                    {% if item.is_image %}
+                                        <button type="button" class="mayor-progress-entry__image" data-image-viewer-trigger data-image-src="{{ item.url }}" data-image-alt="Evidence for {{ project_name }}: {{ item.name }}" aria-label="Enlarge evidence image {{ item.name }}"><img src="{{ item.url }}" alt="Evidence for {{ project_name }}: {{ item.name }}" loading="lazy"><span>View image</span></button>
+                                    {% else %}<a class="ui-button ui-button--secondary" href="{{ item.url }}" target="_blank" rel="noopener">View Evidence</a>{% endif %}
+                                {% else %}<span class="mayor-progress-entry__unavailable">File unavailable</span>{% endif %}
+                            </li>
+                        {% empty %}<li class="operational-empty-state">No supporting evidence attached.</li>{% endfor %}
+                    </ul>
+                </div>
+                {% if can_update_operations %}<a href="{% url 'mayor_projects:non_infrastructure_progress_review_detail' update.pk %}">View review details</a>
+                {% elif update.submitted_by_id == request.user.pk and can_create_progress_update %}<a href="{% url 'mayor_projects:non_infrastructure_progress_update_detail' project.pk update.pk %}">View my update</a>{% endif %}
+            </article>
+        {% empty %}
+            <div class="ui-empty-state"><strong>No progress updates yet</strong><p>Submitted and reviewed Mayor's Office progress updates will appear here.</p></div>
+        {% endfor %}
+        </div>
+    </section>
+
     <!-- Project Images -->
     {% if project_images %}
 
@@ -320,9 +382,11 @@
     {% endif %}
 
 
+    {% include 'includes/image_viewer.html' %}
 </div>
 
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="{% static 'js/components/image_viewer.js' %}" defer></script>
 {% endblock %}

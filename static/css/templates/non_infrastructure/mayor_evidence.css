@@ -50,8 +50,29 @@
 .mayor-evidence [aria-invalid="true"] { border-color: #a51d2d; }
 .mayor-evidence :is(a, button, input, select, textarea):focus-visible { outline: 3px solid #e3a940; outline-offset: 3px; }
 .mayor-evidence .operational-actions { flex-wrap: wrap; }
+.mayor-progress-history { min-width: 0; }
+.mayor-progress-history > p { margin: .3rem 0 1.25rem; color: #425d4d; }
+.mayor-progress-timeline { display: grid; gap: 1rem; border-left: 3px solid #b6d2bd; padding-left: 1rem; }
+.mayor-progress-entry { position: relative; min-width: 0; padding: 1rem; overflow-wrap: anywhere; }
+.mayor-progress-entry::before { content: ''; position: absolute; width: .7rem; height: .7rem; left: calc(-1rem - 8px); top: 1.4rem; border-radius: 50%; background: var(--ui-green-800); }
+.mayor-progress-entry__heading { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: .7rem; }
+.mayor-progress-entry__heading time { color: #425d4d; font-size: .85rem; }
+.mayor-progress-entry__transition { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem; margin: 0 0 .55rem; font-size: 1rem; font-weight: 750; }
+.mayor-progress-entry__meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem 1rem; margin: .9rem 0; }
+.mayor-progress-entry__meta div { min-width: 0; }
+.mayor-progress-entry__meta dt { font-size: .8rem; color: #425d4d; font-weight: 750; }
+.mayor-progress-entry__meta dd { margin: .2rem 0 0; }
+.mayor-progress-entry__meta a { display: inline-block; margin-left: .35rem; }
+.mayor-progress-entry__notes { margin: .8rem 0; }
+.mayor-progress-entry__notes p { margin: .3rem 0 0; white-space: normal; }
+.mayor-progress-entry__evidence { margin: 1rem 0; }
+.mayor-progress-entry__evidence h4 { margin: 0 0 .6rem; }
+.mayor-progress-entry__image { display: grid; gap: .35rem; max-width: 100%; padding: 0; border: 0; background: transparent; color: var(--ui-green-800); font: inherit; cursor: pointer; text-align: left; }
+.mayor-progress-entry__image img { display: block; max-width: min(100%, 240px); max-height: 160px; object-fit: contain; border-radius: 8px; }
+.mayor-progress-entry__unavailable { color: #684316; font-weight: 700; }
 @media (max-width: 720px) {
     .mayor-evidence .mayor-summary, .mayor-evidence .mayor-decision { grid-template-columns: minmax(0, 1fr); }
     .mayor-evidence .mayor-summary__wide { grid-column: auto; }
     .mayor-evidence .mayor-decision .operational-button, .mayor-evidence .operational-actions .ui-button { width: 100%; }
+    .mayor-progress-entry__meta { grid-template-columns: minmax(0, 1fr); }
 }

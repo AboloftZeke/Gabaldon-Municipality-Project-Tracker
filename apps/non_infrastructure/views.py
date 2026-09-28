@@ -1,10 +1,12 @@
 from calendar import month_name
+from pathlib import PurePosixPath
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
+from django.core.files.storage import default_storage
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, FormView
 from django.urls import reverse_lazy, reverse, NoReverseMatch
@@ -314,10 +316,46 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
             or can_manage_non_infrastructure(self.request.user)
         )
         context['can_create_progress_update'] = can_manage_non_infrastructure(self.request.user)
+        history = list(
+            project.progress_updates.select_related(
+                'submitted_by', 'reviewed_by', 'applied_by', 'publication_revision',
+            ).prefetch_related('evidence').order_by('-created_at', '-progress_update_id')
+        )
+        for update in history:
+            update.history_evidence = []
+            for evidence in update.evidence.all():
+                path = evidence.evidence_file.name or ''
+                parts = PurePosixPath(path).parts
+                safe = (
+                    len(parts) >= 3
+                    and parts[:2] == ('non_infrastructure', 'evidence')
+                    and '..' not in parts and '\\' not in path
+                    and PurePosixPath(path).suffix.lower() in {
+                        '.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf',
+                    }
+                )
+                url = ''
+                if safe:
+                    try:
+                        if default_storage.exists(path):
+                            url = default_storage.url(path)
+                    except (OSError, ValueError, SuspiciousFileOperation):
+                        pass
+                update.history_evidence.append({
+                    'name': parts[-1] if safe else 'Supporting file',
+                    'description': evidence.description,
+                    'url': url,
+                    'is_image': bool(url and PurePosixPath(path).suffix.lower() in {
+                        '.jpg', '.jpeg', '.png', '.gif', '.webp',
+                    }),
+                    'is_document': PurePosixPath(path).suffix.lower() == '.pdf',
+                })
+        context['progress_update_history'] = history
         if context['can_create_progress_update']:
-            context['staff_progress_updates'] = project.progress_updates.filter(
-                submitted_by=self.request.user,
-            ).order_by('-created_at', '-progress_update_id')
+            context['staff_progress_updates'] = [
+                update for update in history
+                if update.submitted_by_id == self.request.user.pk
+            ]
 
         context['project_placeholder_image'] = static(
             'images/project-placeholder.svg'
