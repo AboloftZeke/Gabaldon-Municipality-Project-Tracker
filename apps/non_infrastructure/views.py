@@ -15,13 +15,13 @@ from django.db.models import Case, DateField, F, Prefetch, Q, Sum, When
 from django.db.models.functions import Coalesce, ExtractMonth
 from django.templatetags.static import static
 from django.utils import timezone
-from .forms import NonInfrastructureOperationalForm, NonInfrastructureProgressReturnForm, NonInfrastructureProgressUpdateForm, NonInfrastructureProjectForm
+from .forms import NonInfrastructureProgressReturnForm, NonInfrastructureProgressUpdateForm, NonInfrastructureProjectForm
 from .progress_application import apply_approved_progress_update
 from apps.system.models import NonInfrastructureCategory, NonInfrastructureProgressUpdate, NonInfrastructureProject, Project, ProjectImage
 from apps.system.choices import BARANGAY_CHOICES
 from apps.system.publication_service import (
     confirm_head_operational_information,
-    create_head_operational_revision,
+    publication_readiness,
     publication_state,
     submit_project_for_review,
 )
@@ -591,9 +591,7 @@ class NonInfrastructureProgressApplyView(MayorHeadOnlyMixin, View):
         return redirect('publication_revision_detail', revision_id=update.publication_revision_id)
 
 
-class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):
-    model = NonInfrastructureProject
-    form_class = NonInfrastructureOperationalForm
+class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, View):
     template_name = 'non_infrastructure/non_infrastructure_operational_form.html'
 
     def dispatch(self, request, *args, **kwargs):
@@ -602,104 +600,57 @@ class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, UpdateView):
             raise PermissionDenied(
                 'Operational status changes for non-infrastructure projects must be confirmed from an approved publication review.',
             )
-        project = get_object_or_404(
+        self.project = get_object_or_404(
             NonInfrastructureProject.objects.select_related('project'),
             pk=kwargs['pk'],
         )
-        revision = project.project.revisions.filter(pk=revision_id).first()
-        if revision is None or revision.status != PublicationStatus.APPROVED:
+        self.revision = self.project.project.revisions.filter(
+            pk=revision_id,
+        ).first()
+        if (
+            self.revision is None
+            or self.revision.status != PublicationStatus.APPROVED
+            or not publication_readiness(self.revision)['is_first_publication']
+        ):
             raise PermissionDenied(
-                'Only an approved publication revision can be confirmed here.',
+                'Only an approved first-publication revision can be confirmed here.',
             )
         return super().dispatch(request, *args, **kwargs)
 
-    def get_queryset(self):
-        return NonInfrastructureProject.objects.select_related('project', 'address', 'category').prefetch_related(Prefetch('project__images', queryset=ProjectImage.objects.order_by('-is_cover', '-created_at')))
+    def get_context_data(self):
+        revision_data = (
+            (self.revision.snapshot or {}).get('non_infrastructure') or {}
+        )
+        status = revision_data.get('status')
+        status_label = revision_data.get('status_label') or dict(
+            NonInfrastructureProject.STATUS_CHOICES,
+        ).get(status, 'Not set')
+        return {
+            'operational_display_title': (
+                revision_data.get('title') or self.project.title
+            ),
+            'operational_display_status': status_label,
+            'return_revision_id': self.revision.pk,
+        }
 
-    def return_revision(self):
-        revision_id = (
-            self.request.POST.get('from_review')
-            or self.request.GET.get('from_review')
-        )
-        if not revision_id:
-            return None
-        return self.object.project.revisions.filter(
-            pk=revision_id,
-        ).first()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return_revision = self.return_revision()
-        revision_snapshot = (
-            (return_revision.snapshot or {}).get(
-                'non_infrastructure',
-            ) or {}
-            if return_revision else {}
-        )
-        context['operational_display_title'] = (
-            revision_snapshot.get('title') or self.object.title
-        )
-        context['return_revision_id'] = getattr(
-            return_revision,
-            'pk',
-            None,
-        )
-        return context
-
-    def get_success_url(self):
-        return_revision_id = getattr(self.return_revision(), 'pk', None)
-        if return_revision_id:
-            return reverse(
-                'publication_revision_detail',
-                args=[return_revision_id],
-            )
-        return reverse(
-            'mayor_projects:non_infrastructure_project_detail',
-            args=[self.object.pk],
+    def get(self, request, *args, **kwargs):
+        return render(
+            request,
+            self.template_name,
+            self.get_context_data(),
         )
 
-    def form_valid(self, form):
-        return_revision = self.return_revision()
-        if return_revision:
-            if return_revision.status != PublicationStatus.APPROVED:
-                raise PermissionDenied(
-                    'Only an approved revision can receive Head confirmation.',
-                )
-            try:
-                confirm_head_operational_information(return_revision, self.request.user)
-            except ValidationError as exc:
-                form.add_error(None, '; '.join(exc.messages))
-                return self.form_invalid(form)
-            messages.success(self.request, 'Operational information confirmed for publication.')
-            return redirect(
-                'publication_revision_detail',
-                revision_id=return_revision.pk,
-            )
+    def post(self, request, *args, **kwargs):
         try:
-            with transaction.atomic():
-                Project.objects.select_for_update().get(
-                    pk=form.instance.project_id,
-                )
-                response = super().form_valid(form)
-                revision = create_head_operational_revision(
-                    self.object.project,
-                    self.request.user,
-                )
+            confirm_head_operational_information(self.revision, request.user)
         except ValidationError as exc:
-            form.instance.refresh_from_db()
-            form.add_error(None, '; '.join(exc.messages))
-            return self.form_invalid(form)
-        messages.success(self.request, 'Official project status updated.')
-        if revision is not None:
-            messages.info(
-                self.request,
-                f'Revision {revision.revision_number} is approved and awaiting publication.',
-            )
-            return redirect(
-                'publication_revision_detail',
-                revision_id=revision.pk,
-            )
-        return response
+            messages.error(request, '; '.join(exc.messages))
+        else:
+            messages.success(request, 'Initial official status confirmed for publication.')
+        return redirect(
+            'publication_revision_detail',
+            revision_id=self.revision.pk,
+        )
 
 
 class NonInfrastructureProjectSubmitForReviewView(

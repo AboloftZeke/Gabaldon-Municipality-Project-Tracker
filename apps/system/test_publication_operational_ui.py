@@ -272,14 +272,18 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(response, 'Initial Official Status Confirmation')
         self.assertContains(response, 'Initial Official Status')
         self.assertContains(response, 'Confirm Initial Status')
+        self.assertContains(response, 'Planned')
+        self.assertNotContains(response, '<select')
         self.assertNotContains(response, 'Actual Physical Progress')
         self.assertNotContains(response, 'Publish to Public Dashboard')
 
+        self.non_infrastructure.status = 'ongoing'
+        self.non_infrastructure.save(update_fields=['status'])
         response = self.client.post(reverse(
             'mayor_projects:non_infrastructure_project_operations',
             args=[self.non_infrastructure.pk],
         ), {
-            'status': 'ongoing',
+            'status': 'completed',
             'from_review': str(self.non_infrastructure_revision.pk),
         })
         self.assertRedirects(
@@ -289,9 +293,45 @@ class PublicationOperationalUITests(TestCase):
         response = self.client.get(self.revision_url(
             self.non_infrastructure_revision,
         ))
+        self.non_infrastructure.refresh_from_db()
+        self.non_infrastructure_revision.refresh_from_db()
+        self.assertEqual(self.non_infrastructure.status, 'ongoing')
+        self.assertEqual(
+            self.non_infrastructure_revision.snapshot['non_infrastructure']['status'],
+            'planned',
+        )
+        self.assertEqual(self.non_infrastructure_revision.status, 'approved')
         self.assertTrue(response.context['operational']['is_complete'])
         self.assertNotContains(response, 'Confirm Initial Status')
         self.assertContains(response, 'Publish to Public Dashboard')
+
+    def test_later_non_infrastructure_revision_has_no_initial_confirmation_action(self):
+        self.non_infrastructure_revision.status = 'published'
+        self.non_infrastructure_revision.is_current_public = True
+        self.non_infrastructure_revision.save(update_fields=[
+            'status', 'is_current_public',
+        ])
+        later_revision = ProjectRevision.objects.create(
+            project=self.non_infrastructure.project,
+            revision_number=2,
+            status='approved',
+            snapshot=build_project_publication_snapshot(
+                self.non_infrastructure.project,
+            ),
+            previous_revision=self.non_infrastructure_revision,
+        )
+        self.client.force_login(self.users['mayor', 'head'])
+
+        response = self.client.get(self.revision_url(later_revision))
+
+        self.assertIsNone(response.context['operational']['update_url'])
+        self.assertNotContains(response, 'Confirm Initial Status')
+        self.assertNotContains(response, 'Initial Official Status Confirmation')
+        direct_response = self.client.get(reverse(
+            'mayor_projects:non_infrastructure_project_operations',
+            args=[self.non_infrastructure.pk],
+        ), {'from_review': later_revision.pk})
+        self.assertEqual(direct_response.status_code, 403)
 
     def test_operational_controls_are_scoped_to_heads(self):
         for user in [self.users['engineer', 'staff'], self.admin]:
@@ -358,9 +398,11 @@ class PublicationOperationalUITests(TestCase):
         ), {'from_review': self.non_infrastructure_revision.pk})
         self.assertContains(response, 'Community Wellness Program')
         self.assertNotContains(response, 'Newer Staff Program Title')
-        self.assertContains(response, 'Operational Information')
+        self.assertContains(response, 'Initial Official Status Confirmation')
         self.assertContains(response, 'Official Status')
-        self.assertContains(response, 'Save Status')
+        self.assertContains(response, 'Planned')
+        self.assertContains(response, 'Confirm Initial Status')
+        self.assertNotContains(response, '<select')
         self.assertContains(response, 'Back to Publication Review')
         self.assertNotContains(response, 'Calculated Reference')
         self.assertNotContains(

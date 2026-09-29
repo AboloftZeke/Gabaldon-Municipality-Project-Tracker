@@ -445,7 +445,7 @@ class HeadOperationalRevisionTests(TestCase):
             PublicationStatus.ARCHIVED,
         )
 
-    def test_non_infrastructure_update_creates_approved_snapshot_without_republishing(self):
+    def test_non_infrastructure_later_revision_cannot_use_initial_confirmation(self):
         previous_snapshot = deepcopy(self.non_infrastructure_public.snapshot)
         approval = ProjectRevision.objects.create(
             project=self.non_infrastructure.project,
@@ -460,14 +460,14 @@ class HeadOperationalRevisionTests(TestCase):
             'mayor_projects:non_infrastructure_project_operations',
             args=[self.non_infrastructure.pk],
         ), {'status': 'completed', 'from_review': str(approval.pk)})
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
 
         approval.refresh_from_db()
         self.assertEqual(
             approval.snapshot['non_infrastructure']['status'],
             previous_snapshot['non_infrastructure']['status'],
         )
-        self.assertIn(OPERATIONAL_CONFIRMATION_KEY, approval.snapshot)
+        self.assertNotIn(OPERATIONAL_CONFIRMATION_KEY, approval.snapshot)
         self.assertEqual(self.non_infrastructure.status, 'planned')
         self.assertEqual(
             self.non_infrastructure.project.revisions.filter(
@@ -481,9 +481,10 @@ class HeadOperationalRevisionTests(TestCase):
             args=[approval.pk],
         ))
         self.assertEqual(preview.context['comparison']['baseline'], self.non_infrastructure_public)
+        self.assertNotContains(preview, 'Confirm Initial Status')
         self.assertContains(preview, 'Publish Update to Public Dashboard')
 
-    def test_never_published_update_changes_working_data_without_revision(self):
+    def test_never_published_project_cannot_use_legacy_operations_route(self):
         project = Project.objects.create(project_type='non_infrastructure')
         unpublished = NonInfrastructureProject.objects.create(
             project=project,

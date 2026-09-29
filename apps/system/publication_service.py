@@ -566,10 +566,22 @@ def confirm_head_operational_information(revision, actor):
     if locked_revision.status != PublicationStatus.APPROVED:
         raise ValidationError('Only an approved revision can receive Head confirmation.')
 
-    _synchronize_head_operational_snapshot(
-        locked_revision,
-        locked_revision.project,
-        actor,
-    )
+    if locked_revision.project.project_type == 'non_infrastructure':
+        if not publication_readiness(locked_revision)['is_first_publication']:
+            raise ValidationError(
+                'Initial status confirmation is only available before first publication.',
+            )
+        snapshot = deepcopy(locked_revision.snapshot or {})
+        snapshot[OPERATIONAL_CONFIRMATION_KEY] = _operational_confirmation(
+            locked_revision.project,
+            actor,
+        )
+        locked_revision.snapshot = snapshot
+    else:
+        _synchronize_head_operational_snapshot(
+            locked_revision,
+            locked_revision.project,
+            actor,
+        )
     locked_revision.save(update_fields=['snapshot', 'updated_at'])
     return locked_revision
