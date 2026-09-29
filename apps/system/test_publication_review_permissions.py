@@ -83,6 +83,123 @@ class OfficeReviewPermissionTests(TestCase):
             response = self.client.get(reverse('publication_review_queue'), {'status': 'approved'})
             self.assertEqual(len(response.context['revisions']), int(office == 'mayor'))
 
+    def test_heads_can_return_approved_revisions_for_correction_without_publication(self):
+        for office, revision in self.revisions.items():
+            with self.subTest(office=office):
+                revision.revision_number = 2
+                revision.save(update_fields=['revision_number'])
+                public_revision = ProjectRevision.objects.create(
+                    project=revision.project,
+                    revision_number=1,
+                    status='published',
+                    is_current_public=True,
+                    snapshot={'project': {'title': 'Existing public version'}},
+                )
+                revision.previous_revision = public_revision
+                revision.save(update_fields=['previous_revision'])
+                head = self.users[office, 'head']
+                review_publication_revision(
+                    revision,
+                    head,
+                    'approved',
+                    'Approved for final preview.',
+                )
+                self.client.force_login(head)
+
+                detail_url = reverse(
+                    'publication_revision_detail',
+                    args=[revision.pk],
+                )
+                detail = self.client.get(detail_url)
+                self.assertTrue(detail.context['can_request_corrections'])
+                self.assertContains(detail, 'Return for Correction')
+                self.assertContains(detail, 'No evidence upload is needed')
+                self.assertContains(
+                    detail,
+                    'type="hidden" name="decision" value="needs_revision"',
+                )
+                self.assertNotContains(detail, 'type="radio" name="decision"')
+
+                response = self.client.post(
+                    reverse('publication_revision_review', args=[revision.pk]),
+                    {
+                        'decision': 'needs_revision',
+                        'notes': 'Correct the address and project description.',
+                    },
+                )
+
+                self.assertRedirects(response, detail_url)
+                revision.refresh_from_db()
+                public_revision.refresh_from_db()
+                self.assertEqual(revision.status, 'needs_revision')
+                self.assertEqual(
+                    revision.review_notes,
+                    'Correct the address and project description.',
+                )
+                self.assertFalse(revision.is_current_public)
+                self.assertEqual(public_revision.status, 'published')
+                self.assertTrue(public_revision.is_current_public)
+                self.assertEqual(
+                    public_revision.snapshot,
+                    {'project': {'title': 'Existing public version'}},
+                )
+
+    def test_approved_revision_correction_requires_notes(self):
+        revision = self.revisions['engineer']
+        head = self.users['engineer', 'head']
+        review_publication_revision(
+            revision,
+            head,
+            'approved',
+            'Approved for final preview.',
+        )
+        self.client.force_login(head)
+
+        response = self.client.post(
+            reverse('publication_revision_review', args=[revision.pk]),
+            {'decision': 'needs_revision', 'notes': '   '},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue(response.context['can_request_corrections'])
+        revision.refresh_from_db()
+        self.assertEqual(revision.status, 'approved')
+        self.assertEqual(revision.review_notes, 'Approved for final preview.')
+
+    def test_wrong_roles_cannot_return_approved_revision_for_correction(self):
+        revision = self.revisions['engineer']
+        review_publication_revision(
+            revision,
+            self.users['engineer', 'head'],
+            'approved',
+            'Approved for final preview.',
+        )
+        review_url = reverse('publication_revision_review', args=[revision.pk])
+
+        for user in (
+            self.users['engineer', 'staff'],
+            self.users['mayor', 'head'],
+            self.admin,
+        ):
+            with self.subTest(user=user.username):
+                self.client.force_login(user)
+                detail = self.client.get(reverse(
+                    'publication_revision_detail', args=[revision.pk],
+                ))
+                if user == self.admin:
+                    self.assertEqual(detail.status_code, 200)
+                    self.assertFalse(detail.context['can_request_corrections'])
+                    self.assertNotContains(detail, 'Return for Correction')
+                else:
+                    self.assertEqual(detail.status_code, 403)
+                self.assertEqual(self.client.post(review_url, {
+                    'decision': 'needs_revision',
+                    'notes': 'Unauthorized correction request.',
+                }).status_code, 403)
+
+        revision.refresh_from_db()
+        self.assertEqual(revision.status, 'approved')
+
     def test_wrong_office_staff_admin_and_anonymous_denied_at_view_and_service(self):
         for office, revision in self.revisions.items():
             other = 'mayor' if office == 'engineer' else 'engineer'

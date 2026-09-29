@@ -4,14 +4,7 @@ from .publication_workflow import PublicationStatus
 
 
 class PublicationReviewForm(forms.Form):
-    decision = forms.ChoiceField(
-        choices=(
-            (PublicationStatus.APPROVED, 'Approve'),
-            (PublicationStatus.NEEDS_REVISION, 'Request Revisions'),
-            (PublicationStatus.REJECTED, 'Reject'),
-        ),
-        widget=forms.RadioSelect,
-    )
+    decision = forms.ChoiceField(widget=forms.RadioSelect)
     notes = forms.CharField(
         required=False,
         label='Review notes',
@@ -22,6 +15,21 @@ class PublicationReviewForm(forms.Form):
             ),
         }),
     )
+
+    def __init__(self, *args, correction_only=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if correction_only:
+            self.fields['decision'].choices = (
+                (PublicationStatus.NEEDS_REVISION, 'Request Revisions'),
+            )
+            self.fields['decision'].widget = forms.HiddenInput()
+            self.initial['decision'] = PublicationStatus.NEEDS_REVISION
+        else:
+            self.fields['decision'].choices = (
+                (PublicationStatus.APPROVED, 'Approve'),
+                (PublicationStatus.NEEDS_REVISION, 'Request Revisions'),
+                (PublicationStatus.REJECTED, 'Reject'),
+            )
 
     def clean(self):
         cleaned_data = super().clean()

@@ -202,6 +202,21 @@
                 {% if revision.review_notes %}<div class="revision-existing-notes"><strong>Review notes</strong><p>{{ revision.review_notes }}</p></div>{% endif %}
             </section>
 
+            {% if can_request_corrections %}
+                <section class="review-correction-request">
+                    <h2>Request Content Corrections</h2>
+                    <p>Return this approved revision to Staff if you find content that needs correction. No evidence upload is needed for publication-content changes.</p>
+                    <form method="post" action="{% url 'publication_revision_review' revision.pk %}" class="review-decision-form">
+                        {% csrf_token %}
+                        {{ review_form.decision }}
+                        <label for="{{ review_form.notes.id_for_label }}">{{ review_form.notes.label }}</label>
+                        {{ review_form.notes }}
+                        {% for error in review_form.notes.errors %}<p class="review-form-error">{{ error }}</p>{% endfor %}
+                        <button type="submit" class="review-button review-button--secondary ui-button ui-button--secondary">Return for Correction</button>
+                    </form>
+                </section>
+            {% endif %}
+
             {% if can_review %}
                 <section>
                     <h2>Review Decision</h2>

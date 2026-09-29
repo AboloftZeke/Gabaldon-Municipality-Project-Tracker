@@ -236,7 +236,9 @@ def _revision_page_context(revision, user, review_form=None):
         'project_type': project_type,
         'preview': preview,
         'review_form': (
-            review_form if review_form is not None else PublicationReviewForm()
+            review_form if review_form is not None else PublicationReviewForm(
+                correction_only=revision.status == PublicationStatus.APPROVED,
+            )
         ),
         'comparison': comparison,
         'operational': operational,
@@ -256,6 +258,11 @@ def _revision_page_context(revision, user, review_form=None):
         ),
         'can_review': (
             revision.status == PublicationStatus.PENDING_REVIEW
+            and can_review_revision(user, revision)
+        ),
+        'can_request_corrections': (
+            revision.status == PublicationStatus.APPROVED
+            and not revision.is_current_public
             and can_review_revision(user, revision)
         ),
         'can_publish': (
@@ -372,7 +379,11 @@ class PublicationRevisionReviewView(OfficeHeadRequiredMixin, View):
         )
         if not can_review_revision(request.user, revision):
             raise PermissionDenied('You cannot review this publication submission.')
-        form = PublicationReviewForm(request.POST)
+        correction_only = revision.status == PublicationStatus.APPROVED
+        form = PublicationReviewForm(
+            request.POST,
+            correction_only=correction_only,
+        )
         if not form.is_valid():
             return render(
                 request,
