@@ -579,10 +579,6 @@ class NonInfrastructureProject(models.Model):
                         'This field is required for an Event / Activity project.'
                     )
         elif self.project_type == self.ProjectType.TRAINING:
-            if not (self.event_date or self.implementation_start_date):
-                errors['event_date'] = (
-                    'Provide a training date or an implementation start date.'
-                )
             if not self.venue_name:
                 errors['venue_name'] = (
                     'Venue is required for a Training / Seminar project.'

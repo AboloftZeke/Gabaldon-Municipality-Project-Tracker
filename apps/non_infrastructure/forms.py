@@ -281,14 +281,6 @@ class NonInfrastructureProjectForm(forms.Form):
                 if not cleaned_data.get(field_name):
                     self.add_error(field_name, 'This field is required for an Event / Activity project.')
         elif project_type == NonInfrastructureProject.ProjectType.TRAINING:
-            if not (
-                cleaned_data.get('event_date')
-                or cleaned_data.get('implementation_start_date')
-            ):
-                self.add_error(
-                    'event_date',
-                    'Provide a training date or an implementation start date.',
-                )
             if not cleaned_data.get('venue_name'):
                 self.add_error('venue_name', 'Venue is required for a Training / Seminar project.')
             if not cleaned_data.get('target_beneficiaries'):

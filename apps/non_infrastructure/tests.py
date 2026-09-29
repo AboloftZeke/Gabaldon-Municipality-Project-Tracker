@@ -75,6 +75,20 @@ class NonInfrastructureProjectFormTests(TestCase):
             description='Health care services',
         )
 
+    def training_form(self, **overrides):
+        data = {
+            'title': 'Community Health Training',
+            'project_type': 'TRAINING',
+            'description': 'A training program for local residents.',
+            'category': str(self.category.non_infrastructure_category_id),
+            'proponent': 'Municipal Health Office',
+            'target_beneficiaries': 'Community health volunteers',
+            'venue_name': 'Municipal Hall',
+            'barangay': 'bagting',
+        }
+        data.update(overrides)
+        return NonInfrastructureProjectForm(data=data)
+
     def test_create_form_renders_six_step_wizard(self):
         content = render_to_string(
             'non_infrastructure/non_infrastructure_form.html',
@@ -238,6 +252,47 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.assertEqual(project.project_type, 'PROGRAM')
         self.assertIsNone(project.event_date)
         self.assertEqual(project.target_beneficiaries, 'Qualified students of Gabaldon')
+
+    def test_training_saves_with_both_date_fields_blank(self):
+        form = self.training_form()
+
+        self.assertFalse(form.fields['event_date'].required)
+        self.assertFalse(form.fields['implementation_start_date'].required)
+        self.assertTrue(form.is_valid(), form.errors)
+        project = form.save(user=self.user)
+        project.full_clean()
+
+        self.assertIsNone(project.event_date)
+        self.assertIsNone(project.implementation_start_date)
+
+    def test_training_saves_with_only_event_date(self):
+        form = self.training_form(event_date='2026-10-01')
+
+        self.assertTrue(form.is_valid(), form.errors)
+        project = form.save(user=self.user)
+
+        self.assertEqual(project.event_date.isoformat(), '2026-10-01')
+        self.assertIsNone(project.implementation_start_date)
+
+    def test_training_saves_with_only_implementation_start_date(self):
+        form = self.training_form(implementation_start_date='2026-10-01')
+
+        self.assertTrue(form.is_valid(), form.errors)
+        project = form.save(user=self.user)
+
+        self.assertIsNone(project.event_date)
+        self.assertEqual(
+            project.implementation_start_date.isoformat(),
+            '2026-10-01',
+        )
+
+    def test_training_still_requires_venue_and_target_participants(self):
+        for field_name in ('venue_name', 'target_beneficiaries'):
+            with self.subTest(field=field_name):
+                form = self.training_form(**{field_name: ''})
+
+                self.assertFalse(form.is_valid())
+                self.assertIn(field_name, form.errors)
 
     def test_internal_project_cost_displays_pesos_and_zero(self):
         self.user.is_staff = True
