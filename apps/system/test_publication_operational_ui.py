@@ -158,22 +158,14 @@ class PublicationOperationalUITests(TestCase):
         self.assertFalse(response.context['can_publish'])
         self.assertNotContains(response, 'Publish to Public Dashboard')
 
-        self.infrastructure.physical_progress_percentage = Decimal('45')
-        self.infrastructure.cost_progress_percentage = Decimal('30')
-        self.infrastructure.save(update_fields=[
-            'physical_progress_percentage', 'cost_progress_percentage',
-        ])
-        self.inspection.completion_percentage = Decimal('50')
-        self.inspection.save(update_fields=['completion_percentage'])
-
         response = self.client.post(reverse(
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
         ), {
-            'status': 'not_yet_started',
-            'physical_progress_percentage': '99',
-            'cost_progress_percentage': '99',
-            'inspection_completion_percentage': '99',
+            'status': 'ongoing',
+            'physical_progress_percentage': '45',
+            'cost_progress_percentage': '30',
+            'inspection_completion_percentage': '70',
             'from_review': str(self.infrastructure_revision.pk),
         })
         self.assertRedirects(
@@ -186,6 +178,31 @@ class PublicationOperationalUITests(TestCase):
             OPERATIONAL_CONFIRMATION_KEY,
             self.infrastructure_revision.snapshot,
         )
+        self.infrastructure.refresh_from_db()
+        self.inspection.refresh_from_db()
+        self.assertEqual(self.infrastructure.status, 'ongoing')
+        self.assertEqual(
+            self.infrastructure.physical_progress_percentage,
+            Decimal('45.00'),
+        )
+        self.assertEqual(
+            self.infrastructure.cost_progress_percentage,
+            Decimal('30.00'),
+        )
+        self.assertEqual(self.inspection.completion_percentage, Decimal('70.00'))
+        self.assertEqual(
+            self.infrastructure_revision.snapshot['infrastructure']['status'],
+            'ongoing',
+        )
+        self.assertEqual(
+            self.infrastructure_revision.snapshot['infrastructure']['physical_progress_percentage'],
+            '45.00',
+        )
+        self.assertEqual(
+            self.infrastructure_revision.snapshot['inspection']['completion_percentage'],
+            '70.00',
+        )
+        self.assertFalse(self.infrastructure_revision.is_current_public)
         response = self.client.get(self.revision_url(
             self.infrastructure_revision,
         ))
@@ -212,6 +229,31 @@ class PublicationOperationalUITests(TestCase):
         self.assertTrue(
             self.infrastructure_revision.is_current_public,
         )
+
+    def test_infrastructure_initial_confirmation_requires_physical_progress(self):
+        self.client.force_login(self.users['engineer', 'head'])
+        response = self.client.post(reverse(
+            'engineering_projects:project_operations',
+            args=[self.infrastructure.pk],
+        ), {
+            'status': 'ongoing',
+            'cost_progress_percentage': '20',
+            'inspection_completion_percentage': '55',
+            'from_review': str(self.infrastructure_revision.pk),
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.infrastructure.refresh_from_db()
+        self.inspection.refresh_from_db()
+        self.infrastructure_revision.refresh_from_db()
+        self.assertEqual(self.infrastructure.status, 'not_yet_started')
+        self.assertIsNone(self.infrastructure.physical_progress_percentage)
+        self.assertEqual(self.inspection.completion_percentage, Decimal('30'))
+        self.assertNotIn(
+            OPERATIONAL_CONFIRMATION_KEY,
+            self.infrastructure_revision.snapshot,
+        )
+        self.assertEqual(self.infrastructure_revision.status, 'approved')
 
     def test_calculated_cost_progress_uses_retained_submission_values(self):
         snapshot = deepcopy(self.infrastructure_revision.snapshot)

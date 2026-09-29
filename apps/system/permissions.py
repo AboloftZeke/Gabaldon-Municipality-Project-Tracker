@@ -65,15 +65,19 @@ def can_update_non_infrastructure_operations(user):
 
 
 def can_create_non_infrastructure_progress_update(user, project):
-    """Allow Mayor Staff to draft status changes using the review workflow.
-
-    Staff updates are not gated on an already-approved revision; they are the
-    normal mechanism by which status changes are proposed, reviewed, and then
-    applied by the Head.
-    """
+    """Allow Mayor Staff to draft later operational updates after publication."""
     if not can_manage_non_infrastructure(user):
         return False
-    return bool(project and project.project_id is not None)
+    if not project or project.project_id is None:
+        return False
+    latest_revision = ProjectRevision.objects.filter(
+        project_id=project.project_id,
+    ).order_by('-revision_number', '-pk').first()
+    return bool(
+        latest_revision
+        and latest_revision.status == PublicationStatus.PUBLISHED
+        and latest_revision.is_current_public
+    )
 
 
 def can_review_infrastructure(user):

@@ -33,7 +33,10 @@ class MayorStaffProgressSubmissionTests(TestCase):
             project=base, title='Community Program', status='planned',
         )
         self.revision = ProjectRevision.objects.create(
-            project=base, revision_number=1, status='approved',
+            project=base,
+            revision_number=1,
+            status='published',
+            is_current_public=True,
         )
         self.create_url = reverse(
             'mayor_projects:non_infrastructure_progress_update_create',
@@ -91,26 +94,26 @@ class MayorStaffProgressSubmissionTests(TestCase):
         self.assertContains(detail, 'Open file')
         self.assertContains(detail, 'Download file')
 
-    def test_progress_updates_require_approved_or_published_latest_revision(self):
-        for status in ('draft', 'pending_review', 'needs_revision', 'rejected'):
+    def test_progress_updates_require_current_published_revision(self):
+        for status in (
+            'draft', 'pending_review', 'needs_revision', 'rejected', 'approved',
+        ):
             with self.subTest(status=status):
                 self.revision.status = status
-                self.revision.save(update_fields=['status'])
+                self.revision.is_current_public = False
+                self.revision.save(update_fields=['status', 'is_current_public'])
                 self.assertEqual(self.client.get(self.create_url).status_code, 403)
 
-        self.revision.status = 'approved'
-        self.revision.save(update_fields=['status'])
-        self.assertEqual(self.client.get(self.create_url).status_code, 200)
-
         self.revision.status = 'published'
-        self.revision.save(update_fields=['status'])
+        self.revision.is_current_public = True
+        self.revision.save(update_fields=['status', 'is_current_public'])
         self.assertEqual(self.client.get(self.create_url).status_code, 200)
 
-    def test_approved_revision_allows_update_before_publication(self):
+    def test_approved_first_publication_does_not_allow_progress_draft(self):
         self.revision.status = 'approved'
         self.revision.is_current_public = False
         self.revision.save(update_fields=['status', 'is_current_public'])
-        self.assertEqual(self.client.get(self.create_url).status_code, 200)
+        self.assertEqual(self.client.get(self.create_url).status_code, 403)
 
     def test_newer_ineligible_revision_blocks_progress_update(self):
         ProjectRevision.objects.create(
@@ -165,7 +168,7 @@ class MayorStaffProgressSubmissionTests(TestCase):
         self.assertEqual(self.update.evidence.get().pk, evidence_id)
         self.assertEqual(self.project.status, 'planned')
         self.assertEqual(self.project.project.revisions.count(), 1)
-        self.assertEqual(self.project.project.revisions.get().status, 'approved')
+        self.assertEqual(self.project.project.revisions.get().status, 'published')
         detail = self.client.get(self.detail_url)
         self.assertContains(detail, 'Review status: Pending Review')
         self.assertContains(detail, 'Waiting for Mayor Head review')

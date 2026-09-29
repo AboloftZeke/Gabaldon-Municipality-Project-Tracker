@@ -30,6 +30,13 @@ class InternalRouteAccessTests(TestCase):
             project=mayor_base, title='Mayor program',
             project_type=NonInfrastructureProject.ProjectType.PROGRAM,
         )
+        ProjectRevision.objects.create(
+            project=mayor_base,
+            revision_number=1,
+            status='published',
+            is_current_public=True,
+            snapshot=build_project_publication_snapshot(mayor_base),
+        )
         self.revision = ProjectRevision.objects.create(
             project=infra_base, revision_number=1, status='pending_review',
             snapshot=build_project_publication_snapshot(infra_base),

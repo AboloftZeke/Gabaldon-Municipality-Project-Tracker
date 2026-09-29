@@ -651,6 +651,17 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
             args=[self.revision.pk],
         )
 
+        approved_response = self.client.post(review_url, {
+            'decision': PublicationStatus.APPROVED,
+            'notes': 'Verified for publication.',
+        })
+        self.assertRedirects(
+            approved_response,
+            reverse('publication_revision_detail', args=[self.revision.pk]),
+        )
+        self.revision.refresh_from_db()
+        self.assertEqual(self.revision.status, PublicationStatus.APPROVED)
+
         operational_response = self.client.post(
             reverse(
                 'engineering_projects:project_operations',
@@ -669,15 +680,6 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
                 'publication_revision_detail',
                 args=[self.revision.pk],
             ),
-        )
-
-        approved_response = self.client.post(review_url, {
-            'decision': PublicationStatus.APPROVED,
-            'notes': 'Verified for publication.',
-        })
-        self.assertRedirects(
-            approved_response,
-            reverse('publication_revision_detail', args=[self.revision.pk]),
         )
         self.revision.refresh_from_db()
         self.assertEqual(self.revision.status, PublicationStatus.APPROVED)

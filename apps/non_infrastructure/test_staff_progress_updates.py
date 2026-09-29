@@ -12,6 +12,7 @@ from apps.system.models import (
     NonInfrastructureProgressUpdate,
     NonInfrastructureProject,
     Project,
+    ProjectRevision,
     UserRole,
 )
 
@@ -32,6 +33,12 @@ class MayorStaffProgressUpdateTests(TestCase):
         )
         self.project = NonInfrastructureProject.objects.create(
             project=base, title='Community Program', status='planned',
+        )
+        ProjectRevision.objects.create(
+            project=base,
+            revision_number=1,
+            status='published',
+            is_current_public=True,
         )
         self.url = reverse(
             'mayor_projects:non_infrastructure_progress_update_create',
@@ -120,7 +127,11 @@ class MayorStaffProgressUpdateTests(TestCase):
         self.assertTrue(evidence.evidence_file.storage.exists(evidence.evidence_file.name))
         self.project.refresh_from_db()
         self.assertEqual(self.project.status, 'planned')
-        self.assertFalse(self.project.project.revisions.exists())
+        self.assertEqual(self.project.project.revisions.count(), 1)
+        self.assertEqual(
+            self.project.project.revisions.get().status,
+            'published',
+        )
 
     def test_multiple_evidence_files_are_linked_to_one_update(self):
         self.client.force_login(self.staff)

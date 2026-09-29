@@ -595,6 +595,8 @@ class NonInfrastructureOperationalUpdateView(MayorHeadOnlyMixin, View):
     template_name = 'non_infrastructure/non_infrastructure_operational_form.html'
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
         revision_id = request.POST.get('from_review') or request.GET.get('from_review')
         if not revision_id:
             raise PermissionDenied(

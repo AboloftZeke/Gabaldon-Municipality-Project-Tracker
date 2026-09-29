@@ -559,18 +559,23 @@ def create_head_operational_revision(project, actor, progress_update=None):
 
 
 @transaction.atomic
-def confirm_head_operational_information(revision, actor):
+def confirm_head_operational_information(
+    revision,
+    actor,
+    *,
+    progress_update=None,
+):
     """Confirm existing Head-owned values without changing project operations."""
     locked_revision = _locked_project_revision(revision)
     _require_head_operational_authority(locked_revision.project, actor)
     if locked_revision.status != PublicationStatus.APPROVED:
         raise ValidationError('Only an approved revision can receive Head confirmation.')
+    if not publication_readiness(locked_revision)['is_first_publication']:
+        raise ValidationError(
+            'Operational confirmation is only available before first publication.',
+        )
 
     if locked_revision.project.project_type == 'non_infrastructure':
-        if not publication_readiness(locked_revision)['is_first_publication']:
-            raise ValidationError(
-                'Initial status confirmation is only available before first publication.',
-            )
         snapshot = deepcopy(locked_revision.snapshot or {})
         snapshot[OPERATIONAL_CONFIRMATION_KEY] = _operational_confirmation(
             locked_revision.project,
@@ -582,6 +587,8 @@ def confirm_head_operational_information(revision, actor):
             locked_revision,
             locked_revision.project,
             actor,
+            progress_update=progress_update,
         )
+    validate_publication_readiness(locked_revision)
     locked_revision.save(update_fields=['snapshot', 'updated_at'])
     return locked_revision

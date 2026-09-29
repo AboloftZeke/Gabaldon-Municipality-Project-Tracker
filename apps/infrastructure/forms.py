@@ -847,7 +847,13 @@ class InfrastructureOperationalForm(forms.Form):
         min_value=0, max_value=100, required=True,
     )
 
-    def __init__(self, *args, instance, **kwargs):
+    def __init__(
+        self,
+        *args,
+        instance,
+        require_initial_values=False,
+        **kwargs,
+    ):
         self.instance = instance
         self.inspection = instance.project.inspections.order_by(
             '-inspection_date', '-created_at',
@@ -861,6 +867,8 @@ class InfrastructureOperationalForm(forms.Form):
         if self.inspection:
             initial['inspection_completion_percentage'] = self.inspection.completion_percentage
         super().__init__(*args, **kwargs)
+        if require_initial_values:
+            self.fields['physical_progress_percentage'].required = True
         self.fields['supporting_inspections'].queryset = (
             instance.project.inspections.select_related(
                 'inspected_by_user',

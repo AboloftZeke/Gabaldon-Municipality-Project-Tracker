@@ -27,6 +27,7 @@ from apps.system.models import (
 from apps.system.publication_service import (
     confirm_head_operational_information,
     create_head_operational_revision,
+    publication_readiness,
     publication_state,
     submit_project_for_review,
 )
@@ -789,9 +790,18 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
         )
         if not revision_id:
             return None
-        return infrastructure.project.revisions.filter(
+        revision = infrastructure.project.revisions.filter(
             pk=revision_id,
         ).first()
+        if (
+            revision is None
+            or revision.status != PublicationStatus.APPROVED
+            or not publication_readiness(revision)['is_first_publication']
+        ):
+            raise PermissionDenied(
+                'Only an approved first-publication revision can receive initial operational confirmation.',
+            )
+        return revision
 
     def render_form(self, request, infrastructure, form, status=200):
         return_revision = self.return_revision(request, infrastructure)
@@ -825,6 +835,7 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
         return render(request, self.template_name, {
             'project': infrastructure,
             'form': form,
+            'is_initial_confirmation': bool(return_revision),
             'operational_display_title': (
                 revision_snapshot.get('title')
                 or infrastructure.title
@@ -836,24 +847,78 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
 
     def get(self, request, pk):
         infrastructure = self.get_object(pk)
+        return_revision = self.return_revision(request, infrastructure)
         return self.render_form(
             request,
             infrastructure,
-            InfrastructureOperationalForm(instance=infrastructure),
+            InfrastructureOperationalForm(
+                instance=infrastructure,
+                require_initial_values=bool(return_revision),
+            ),
         )
 
     def post(self, request, pk):
         infrastructure = self.get_object(pk)
         return_revision = self.return_revision(request, infrastructure)
         if return_revision:
-            if return_revision.status != PublicationStatus.APPROVED:
-                raise PermissionDenied(
-                    'Only an approved revision can receive Head confirmation.',
+            form = InfrastructureOperationalForm(
+                request.POST,
+                instance=infrastructure,
+                require_initial_values=True,
+            )
+            if not form.is_valid():
+                return self.render_form(
+                    request,
+                    infrastructure,
+                    form,
+                    status=400,
                 )
             try:
-                confirm_head_operational_information(return_revision, request.user)
+                with transaction.atomic():
+                    Project.objects.select_for_update().get(
+                        pk=infrastructure.project_id,
+                    )
+                    infrastructure = InfrastructureProject.objects.select_for_update().select_related(
+                        'project',
+                    ).get(pk=infrastructure.pk)
+                    locked_revision = ProjectRevision.objects.select_for_update().get(
+                        pk=return_revision.pk,
+                        project_id=infrastructure.project_id,
+                    )
+                    form = InfrastructureOperationalForm(
+                        request.POST,
+                        instance=infrastructure,
+                        require_initial_values=True,
+                    )
+                    if not form.is_valid():
+                        return self.render_form(
+                            request,
+                            infrastructure,
+                            form,
+                            status=400,
+                        )
+                    previous_status = infrastructure.status
+                    previous_physical_progress = (
+                        infrastructure.physical_progress_percentage
+                    )
+                    form.save()
+                    progress_update = record_progress_update(
+                        infrastructure,
+                        request.user,
+                        previous_status=previous_status,
+                        previous_physical_progress=previous_physical_progress,
+                        remarks=form.cleaned_data['head_remarks'],
+                        supporting_inspections=(
+                            form.cleaned_data['supporting_inspections']
+                        ),
+                    )
+                    confirm_head_operational_information(
+                        locked_revision,
+                        request.user,
+                        progress_update=progress_update,
+                    )
             except ValidationError as exc:
-                form = InfrastructureOperationalForm(instance=infrastructure)
+                infrastructure.refresh_from_db()
                 form.add_error(None, '; '.join(exc.messages))
                 return self.render_form(
                     request,
@@ -861,7 +926,7 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
                     form,
                     status=409,
                 )
-            messages.success(request, 'Operational information confirmed for publication.')
+            messages.success(request, 'Initial operational information confirmed for publication.')
             return redirect(
                 'publication_revision_detail',
                 revision_id=return_revision.pk,

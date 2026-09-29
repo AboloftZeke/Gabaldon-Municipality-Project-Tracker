@@ -367,9 +367,32 @@ class HeadOperationalRevisionTests(TestCase):
             self.infrastructure.project.revisions.count(),
             1,
         )
+        self.infrastructure.refresh_from_db()
+        self.inspection.refresh_from_db()
+        self.assertEqual(self.infrastructure.status, 'not_yet_started')
+        self.assertEqual(
+            self.infrastructure.physical_progress_percentage,
+            Decimal('30.00'),
+        )
+        self.assertEqual(
+            self.infrastructure.cost_progress_percentage,
+            Decimal('20.00'),
+        )
+        self.assertEqual(self.inspection.completion_percentage, Decimal('35.00'))
         pending.refresh_from_db()
         self.assertIn(OPERATIONAL_CONFIRMATION_KEY, pending.snapshot)
-        self.assertNotIn('progress_update', pending.snapshot)
+        self.assertEqual(
+            pending.snapshot['infrastructure']['physical_progress_percentage'],
+            '30.00',
+        )
+        self.assertEqual(
+            pending.snapshot['inspection']['completion_percentage'],
+            '35.00',
+        )
+        self.assertEqual(
+            pending.snapshot['progress_update']['head_remarks'],
+            'Initial publication confirmation.',
+        )
         self.assertFalse(pending.is_current_public)
 
     def test_operational_revision_retains_public_financial_snapshot(self):

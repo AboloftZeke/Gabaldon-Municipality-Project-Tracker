@@ -80,6 +80,12 @@ class InternalProgressHistoryTests(TestCase):
                 self.assertEqual(list(page.context['progress_update_history']), [])
 
     def test_newest_first_including_other_staff_but_not_other_projects(self):
+        ProjectRevision.objects.create(
+            project=self.base,
+            revision_number=1,
+            status=PublicationStatus.PUBLISHED,
+            is_current_public=True,
+        )
         first = self.update(evidence=('older.pdf',))
         second = self.update(by=self.other_staff, evidence=('newer.png',))
         self.update(project=self.other_project, evidence=('unrelated.pdf',))
