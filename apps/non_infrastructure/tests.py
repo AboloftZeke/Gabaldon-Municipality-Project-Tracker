@@ -83,6 +83,7 @@ class NonInfrastructureProjectFormTests(TestCase):
             'category': str(self.category.non_infrastructure_category_id),
             'proponent': 'Municipal Health Office',
             'target_beneficiaries': 'Community health volunteers',
+            'beneficiaries': '25',
             'venue_name': 'Municipal Hall',
             'barangay': 'bagting',
         }
@@ -294,6 +295,13 @@ class NonInfrastructureProjectFormTests(TestCase):
                 self.assertFalse(form.is_valid())
                 self.assertIn(field_name, form.errors)
 
+    def test_beneficiaries_count_is_required(self):
+        form = self.training_form(beneficiaries='')
+
+        self.assertTrue(form.fields['beneficiaries'].required)
+        self.assertFalse(form.is_valid())
+        self.assertIn('beneficiaries', form.errors)
+
     def test_internal_project_cost_displays_pesos_and_zero(self):
         self.user.is_staff = True
         self.user.save(update_fields=['is_staff'])
@@ -321,6 +329,7 @@ class NonInfrastructureProjectFormTests(TestCase):
             'description': 'An event record.',
             'category': str(self.category.non_infrastructure_category_id),
             'proponent': "Mayor's Office",
+            'beneficiaries': '25',
             'barangay': 'bagting',
         })
 

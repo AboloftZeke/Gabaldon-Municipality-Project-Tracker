@@ -153,7 +153,7 @@ class NonInfrastructureProjectForm(forms.Form):
     target_beneficiaries = forms.CharField(
         required=False, max_length=2000, widget=forms.Textarea(attrs={'rows': 3}),
     )
-    beneficiaries = forms.IntegerField(required=False, min_value=0, label='Number of Beneficiaries')
+    beneficiaries = forms.IntegerField(required=True, min_value=0, label='Number of Beneficiaries')
     implementation_start_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     implementation_end_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     event_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
