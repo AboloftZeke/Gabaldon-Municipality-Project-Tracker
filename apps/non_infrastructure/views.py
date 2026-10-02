@@ -33,6 +33,7 @@ from apps.system.permissions import (
     can_manage_non_infrastructure,
     can_update_non_infrastructure_operations,
     department_for_user as _department_for_user,
+    has_active_publication_revision,
     is_system_admin,
 )
 
@@ -410,15 +411,28 @@ class NonInfrastructureProgressUpdateCreateView(MayorsOfficeOnlyMixin, FormView)
 
     form_class = NonInfrastructureProgressUpdateForm
     template_name = 'non_infrastructure/non_infrastructure_progress_update_form.html'
+    revision_conflict_message = (
+        'A publication revision is already in progress for this project. '
+        'Publish or resolve it before creating a progress update.'
+    )
+
+    def _permission_denied_response(self):
+        if has_active_publication_revision(self.project):
+            messages.error(self.request, self.revision_conflict_message)
+            return redirect(
+                'mayor_projects:non_infrastructure_project_detail',
+                pk=self.project.pk,
+            )
+        raise PermissionDenied(
+            'Progress updates require an approved or published project revision.',
+        )
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return self.handle_no_permission()
         self.project = get_object_or_404(NonInfrastructureProject, pk=kwargs['pk'])
         if not can_create_non_infrastructure_progress_update(request.user, self.project):
-            raise PermissionDenied(
-                'Progress updates require an approved or published project revision.',
-            )
+            return self._permission_denied_response()
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -428,9 +442,7 @@ class NonInfrastructureProgressUpdateCreateView(MayorsOfficeOnlyMixin, FormView)
 
     def form_valid(self, form):
         if not can_create_non_infrastructure_progress_update(self.request.user, self.project):
-            raise PermissionDenied(
-                'Progress updates require an approved or published project revision.',
-            )
+            return self._permission_denied_response()
         try:
             update = form.save(project=self.project, user=self.request.user)
         except (OSError, SuspiciousFileOperation):

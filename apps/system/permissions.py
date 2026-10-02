@@ -64,11 +64,25 @@ def can_update_non_infrastructure_operations(user):
     return is_mayor_head(user)
 
 
+def has_active_publication_revision(project):
+    if not project or project.project_id is None:
+        return False
+    # Import lazily because publication_service imports these permission helpers.
+    from .publication_service import OPEN_REVISION_STATUSES
+
+    return ProjectRevision.objects.filter(
+        project_id=project.project_id,
+        status__in=OPEN_REVISION_STATUSES,
+    ).exists()
+
+
 def can_create_non_infrastructure_progress_update(user, project):
     """Allow Mayor Staff to draft later operational updates after publication."""
     if not can_manage_non_infrastructure(user):
         return False
     if not project or project.project_id is None:
+        return False
+    if has_active_publication_revision(project):
         return False
     latest_revision = ProjectRevision.objects.filter(
         project_id=project.project_id,

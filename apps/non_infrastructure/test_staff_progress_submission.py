@@ -13,6 +13,7 @@ from apps.system.models import (
     ProjectRevision,
     UserRole,
 )
+from apps.system.publication_workflow import PublicationStatus
 
 
 class MayorStaffProgressSubmissionTests(TestCase):
@@ -96,30 +97,99 @@ class MayorStaffProgressSubmissionTests(TestCase):
 
     def test_progress_updates_require_current_published_revision(self):
         for status in (
-            'draft', 'pending_review', 'needs_revision', 'rejected', 'approved',
+            PublicationStatus.DRAFT,
+            PublicationStatus.PENDING_REVIEW,
+            PublicationStatus.NEEDS_REVISION,
+            PublicationStatus.APPROVED,
         ):
             with self.subTest(status=status):
                 self.revision.status = status
                 self.revision.is_current_public = False
                 self.revision.save(update_fields=['status', 'is_current_public'])
-                self.assertEqual(self.client.get(self.create_url).status_code, 403)
+                response = self.client.get(self.create_url, follow=True)
+                self.assertContains(
+                    response,
+                    'A publication revision is already in progress for this project.',
+                )
 
         self.revision.status = 'published'
         self.revision.is_current_public = True
         self.revision.save(update_fields=['status', 'is_current_public'])
         self.assertEqual(self.client.get(self.create_url).status_code, 200)
 
+        self.revision.status = PublicationStatus.REJECTED
+        self.revision.is_current_public = False
+        self.revision.save(update_fields=['status', 'is_current_public'])
+        self.assertEqual(self.client.get(self.create_url).status_code, 403)
+
     def test_approved_first_publication_does_not_allow_progress_draft(self):
         self.revision.status = 'approved'
         self.revision.is_current_public = False
         self.revision.save(update_fields=['status', 'is_current_public'])
-        self.assertEqual(self.client.get(self.create_url).status_code, 403)
+        response = self.client.get(self.create_url, follow=True)
+        self.assertContains(
+            response,
+            'A publication revision is already in progress for this project.',
+        )
 
     def test_newer_ineligible_revision_blocks_progress_update(self):
         ProjectRevision.objects.create(
             project=self.project.project, revision_number=2, status='pending_review',
         )
-        self.assertEqual(self.client.get(self.create_url).status_code, 403)
+        response = self.client.get(self.create_url, follow=True)
+        self.assertContains(
+            response,
+            'A publication revision is already in progress for this project.',
+        )
+
+    def test_active_publication_revisions_block_progress_update_creation(self):
+        for status in (
+            PublicationStatus.DRAFT,
+            PublicationStatus.PENDING_REVIEW,
+            PublicationStatus.NEEDS_REVISION,
+            PublicationStatus.APPROVED,
+        ):
+            with self.subTest(status=status):
+                ProjectRevision.objects.create(
+                    project=self.project.project,
+                    revision_number=2,
+                    status=status,
+                )
+                response = self.client.get(self.create_url, follow=True)
+                self.assertContains(
+                    response,
+                    'A publication revision is already in progress for this project.',
+                )
+                self.assertNotContains(response, 'Save Draft')
+                ProjectRevision.objects.filter(
+                    project=self.project.project,
+                    revision_number=2,
+                ).delete()
+
+    def test_stale_progress_update_form_is_blocked_on_submission(self):
+        self.assertEqual(self.client.get(self.create_url).status_code, 200)
+        ProjectRevision.objects.create(
+            project=self.project.project,
+            revision_number=2,
+            status=PublicationStatus.DRAFT,
+        )
+        response = self.client.post(self.create_url, {
+            'proposed_status': 'ongoing',
+            'remarks': 'The program has started.',
+            'evidence_files': SimpleUploadedFile(
+                'new-proof.pdf', b'%PDF-1.4\nproof', content_type='application/pdf',
+            ),
+        }, follow=True)
+        self.assertContains(
+            response,
+            'A publication revision is already in progress for this project.',
+        )
+        self.assertEqual(
+            NonInfrastructureProgressUpdate.objects.filter(
+                non_infrastructure=self.project,
+            ).count(),
+            1,
+        )
 
     def test_internal_evidence_image_has_preview_and_return_note_is_visible(self):
         NonInfrastructureEvidence.objects.create(
