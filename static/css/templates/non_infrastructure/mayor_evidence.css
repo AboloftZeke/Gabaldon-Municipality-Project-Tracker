@@ -29,7 +29,14 @@
 .mayor-evidence .mayor-upload { padding: 1rem; border: 2px dashed #a5c5ae; border-radius: 12px; background: #f8fbf8; }
 .mayor-evidence .mayor-upload input[type="file"] { max-width: 100%; background: #fff; }
 .mayor-evidence .mayor-upload__selection { margin-top: .75rem; color: #334a39; font-size: .84rem; overflow-wrap: anywhere; }
-.mayor-evidence .mayor-upload__selection ul { margin: .4rem 0 0; padding-left: 1.3rem; }
+.mayor-evidence .mayor-upload__preview-list { display: grid; gap: .7rem; list-style: none; margin: .55rem 0 0; padding: 0; }
+.mayor-evidence .mayor-upload__preview-item { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; min-width: 0; padding: .7rem; border: 1px solid #d9e5db; border-radius: 10px; background: #fff; }
+.mayor-evidence .mayor-upload__preview-details { display: flex; align-items: flex-start; flex-wrap: wrap; gap: .35rem .6rem; min-width: 0; }
+.mayor-evidence .mayor-upload__preview-name { min-width: 0; overflow-wrap: anywhere; }
+.mayor-evidence .mayor-upload__preview-type { color: #425d4d; font-size: .78rem; }
+.mayor-evidence .mayor-upload__preview-link { flex: 0 0 auto; }
+.mayor-evidence .mayor-upload__preview-image { display: block; width: 88px; height: 64px; object-fit: cover; border-radius: 7px; border: 1px solid #d9e5db; }
+.mayor-evidence .mayor-upload__open, .mayor-evidence .mayor-upload__remove { flex: 0 0 auto; }
 .mayor-evidence .mayor-evidence-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .85rem; }
 .mayor-evidence .mayor-evidence-file { min-width: 0; padding: .9rem; border: 1px solid #d9e5db; border-radius: 10px; background: #f9fbfa; }
 .mayor-evidence .mayor-evidence-file__title { display: block; overflow-wrap: anywhere; }
@@ -81,4 +88,6 @@
     .mayor-evidence .mayor-summary__wide { grid-column: auto; }
     .mayor-evidence .mayor-decision .operational-button, .mayor-evidence .operational-actions .ui-button { width: 100%; }
     .mayor-progress-entry__meta { grid-template-columns: minmax(0, 1fr); }
+    .mayor-evidence .mayor-upload__preview-item { flex-wrap: wrap; }
+    .mayor-evidence .mayor-upload__remove { width: 100%; }
 }
