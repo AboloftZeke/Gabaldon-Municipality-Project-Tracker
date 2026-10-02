@@ -11,8 +11,10 @@ from apps.system.models import (
     NonInfrastructureProgressUpdate,
     NonInfrastructureProject,
     Project,
+    ProjectRevision,
     UserRole,
 )
+from apps.system.publication_workflow import PublicationStatus
 
 
 class MayorHeadProgressReviewTests(TestCase):
@@ -73,6 +75,21 @@ class MayorHeadProgressReviewTests(TestCase):
             )
         return update
 
+    def make_applied_update(self, revision_status=PublicationStatus.APPROVED):
+        update = self.make_update(PublicationStatus.APPROVED)
+        update.applied_at = timezone.now()
+        update.applied_by = self.head
+        update.save(update_fields=['applied_at', 'applied_by', 'updated_at'])
+        revision = ProjectRevision.objects.create(
+            project=self.project.project,
+            revision_number=1,
+            status=revision_status,
+            submitted_by=self.staff,
+        )
+        update.publication_revision = revision
+        update.save(update_fields=['publication_revision', 'updated_at'])
+        return update
+
     def detail_url_for(self, update):
         return reverse(
             'mayor_projects:non_infrastructure_progress_review_detail',
@@ -99,6 +116,42 @@ class MayorHeadProgressReviewTests(TestCase):
         self.assertEqual([item.pk for item in queue.context['progress_updates']], [self.pending.pk])
         self.assertContains(queue, 'Pending Review')
         self.assertNotContains(queue, self.detail_url_for(self.draft))
+
+    def test_queue_separates_pending_approved_and_applied_updates(self):
+        approved = self.make_update(PublicationStatus.APPROVED)
+        applied = self.make_applied_update()
+
+        queue = self.client.get(self.queue_url)
+
+        self.assertEqual(
+            [item.pk for item in queue.context['pending_progress_updates']],
+            [self.pending.pk],
+        )
+        self.assertEqual(
+            [item.pk for item in queue.context['approved_progress_updates']],
+            [approved.pk],
+        )
+        self.assertEqual(
+            [item.pk for item in queue.context['applied_progress_updates']],
+            [applied.pk],
+        )
+        self.assertContains(queue, 'Review Progress Update')
+        self.assertContains(queue, 'Open Progress Update')
+        self.assertContains(queue, 'View Publication Revision')
+        self.assertNotContains(queue, self.detail_url_for(applied))
+
+    def test_published_applied_updates_leave_awaiting_publication(self):
+        published = self.make_applied_update(PublicationStatus.PUBLISHED)
+
+        queue = self.client.get(self.queue_url)
+
+        self.assertNotIn(published.pk, [item.pk for item in queue.context['pending_progress_updates']])
+        self.assertNotIn(published.pk, [item.pk for item in queue.context['approved_progress_updates']])
+        self.assertNotIn(published.pk, [item.pk for item in queue.context['applied_progress_updates']])
+        self.assertNotContains(
+            queue,
+            reverse('publication_revision_detail', args=[published.publication_revision_id]),
+        )
 
     def test_dashboard_preview_links_to_full_pending_queue(self):
         for _ in range(7):
@@ -145,7 +198,9 @@ class MayorHeadProgressReviewTests(TestCase):
         self.assertEqual(self.pending.evidence.get().pk, evidence_id)
         self.assert_official_state_unchanged()
         self.assertNotContains(self.client.get(self.detail_url), 'Return for Correction')
-        self.assertNotContains(self.client.get(self.queue_url), self.detail_url)
+        queue = self.client.get(self.queue_url)
+        self.assertContains(queue, self.detail_url)
+        self.assertContains(queue, 'Approved / Awaiting Application')
 
     def test_return_requires_reason_and_stores_trimmed_note(self):
         for reason in ('', '   '):

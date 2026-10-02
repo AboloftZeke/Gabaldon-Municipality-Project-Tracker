@@ -20,6 +20,7 @@ from .progress_application import apply_approved_progress_update
 from apps.system.models import NonInfrastructureCategory, NonInfrastructureProgressUpdate, NonInfrastructureProject, Project, ProjectImage
 from apps.system.choices import BARANGAY_CHOICES
 from apps.system.publication_service import (
+    OPEN_REVISION_STATUSES,
     confirm_head_operational_information,
     publication_readiness,
     publication_state,
@@ -506,7 +507,7 @@ class NonInfrastructureProgressUpdateSubmitView(MayorsOfficeOnlyMixin, View):
 
 
 class NonInfrastructureProgressReviewQueueView(MayorHeadOnlyMixin, ListView):
-    """List all pending staff progress updates for the Mayor Head."""
+    """List staff progress updates that still need Head action."""
 
     template_name = 'non_infrastructure/non_infrastructure_progress_review_queue.html'
     context_object_name = 'progress_updates'
@@ -514,10 +515,44 @@ class NonInfrastructureProgressReviewQueueView(MayorHeadOnlyMixin, ListView):
 
     def get_queryset(self):
         return NonInfrastructureProgressUpdate.objects.filter(
-            review_status=NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW,
-        ).select_related('non_infrastructure', 'submitted_by').order_by(
+            Q(review_status=NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW)
+            | Q(
+                review_status=NonInfrastructureProgressUpdate.ReviewStatus.APPROVED,
+                applied_at__isnull=True,
+            )
+            | Q(
+                applied_at__isnull=False,
+                publication_revision__status__in=OPEN_REVISION_STATUSES,
+            ),
+        ).select_related(
+            'non_infrastructure', 'submitted_by', 'publication_revision',
+        ).order_by(
             '-submitted_at', '-progress_update_id',
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        updates = list(context['progress_updates'])
+        context['pending_progress_updates'] = [
+            update for update in updates
+            if update.review_status == NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW
+        ]
+        context['approved_progress_updates'] = [
+            update for update in updates
+            if (
+                update.review_status == NonInfrastructureProgressUpdate.ReviewStatus.APPROVED
+                and update.applied_at is None
+            )
+        ]
+        context['applied_progress_updates'] = [
+            update for update in updates
+            if (
+                update.applied_at is not None
+                and update.publication_revision_id is not None
+                and update.publication_revision.status in OPEN_REVISION_STATUSES
+            )
+        ]
+        return context
 
 
 class NonInfrastructureProgressReviewDetailView(MayorHeadOnlyMixin, DetailView):

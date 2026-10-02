@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Progress Updates Awaiting Review{% endblock %}
+{% block title %}Progress Update Queue{% endblock %}
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/operational_update.css' %}?v=20260913-1">
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/mayor_evidence.css' %}">
@@ -8,19 +8,52 @@
 {% block content %}
 <div class="operational-workspace operational-workspace--compact mayor-evidence">
     <nav class="operational-back" aria-label="Back navigation"><a href="{% url 'mayor_head_dashboard' %}">← Back to Mayor Head Dashboard</a></nav>
-    <header class="operational-header ui-page-header"><p class="operational-eyebrow">Mayor's Office Head · Progress Update Review</p><h1>Progress Updates Awaiting Review</h1><p class="operational-intro">Review submitted evidence and decide whether an update can move forward.</p></header>
+    <header class="operational-header ui-page-header"><p class="operational-eyebrow">Mayor's Office Head · Progress Update Review</p><h1>Progress Update Queue</h1><p class="operational-intro">Review, apply, and publish staff progress updates from one queue.</p></header>
     <div class="mayor-queue">
-    {% for update in progress_updates %}
-        <article class="operational-card ui-card">
-            <div class="mayor-queue__top"><span class="mayor-status mayor-status--pending_review">{{ update.get_review_status_display }}</span><span>Submitted {{ update.submitted_at|date:"M d, Y, g:i A" }}</span></div>
-            <h2>{{ update.non_infrastructure.title }}</h2>
-            <p><strong>Proposed status:</strong> {{ update.get_proposed_status_display }}</p>
-            <p><strong>Submitted by:</strong> {{ update.submitted_by.get_full_name|default:update.submitted_by.username|default:"Former staff member" }}</p>
-            <a class="operational-button operational-button--primary ui-button ui-button--primary" href="{% url 'mayor_projects:non_infrastructure_progress_review_detail' update.pk %}">Review Progress Update</a>
-        </article>
-    {% empty %}
-        <section class="operational-empty-state"><strong>No progress updates are waiting for review.</strong><p>New staff submissions will appear here.</p></section>
-    {% endfor %}
+        <section class="mayor-queue__section" aria-labelledby="pending-progress-heading">
+            <div class="mayor-queue__section-heading"><h2 id="pending-progress-heading">Pending Review</h2><span class="mayor-status mayor-status--pending_review">{{ pending_progress_updates|length }}</span></div>
+            {% for update in pending_progress_updates %}
+                <article class="operational-card ui-card">
+                    <div class="mayor-queue__top"><span class="mayor-status mayor-status--pending_review">Pending Review</span><span>Submitted {{ update.submitted_at|date:"M d, Y, g:i A" }}</span></div>
+                    <h3>{{ update.non_infrastructure.title }}</h3>
+                    <p><strong>Proposed status:</strong> {{ update.get_proposed_status_display }}</p>
+                    <p><strong>Submitted by:</strong> {{ update.submitted_by.get_full_name|default:update.submitted_by.username|default:"Former staff member" }}</p>
+                    <a class="operational-button operational-button--primary ui-button ui-button--primary" href="{% url 'mayor_projects:non_infrastructure_progress_review_detail' update.pk %}">Review Progress Update</a>
+                </article>
+            {% empty %}
+                <div class="operational-empty-state"><strong>No progress updates are pending review.</strong></div>
+            {% endfor %}
+        </section>
+
+        <section class="mayor-queue__section" aria-labelledby="approved-progress-heading">
+            <div class="mayor-queue__section-heading"><h2 id="approved-progress-heading">Approved / Awaiting Application</h2><span class="mayor-status mayor-status--approved">{{ approved_progress_updates|length }}</span></div>
+            {% for update in approved_progress_updates %}
+                <article class="operational-card ui-card">
+                    <div class="mayor-queue__top"><span class="mayor-status mayor-status--approved">Approved</span><span>Reviewed {{ update.reviewed_at|date:"M d, Y, g:i A" }}</span></div>
+                    <h3>{{ update.non_infrastructure.title }}</h3>
+                    <p><strong>Proposed status:</strong> {{ update.get_proposed_status_display }}</p>
+                    <p><strong>Submitted by:</strong> {{ update.submitted_by.get_full_name|default:update.submitted_by.username|default:"Former staff member" }}</p>
+                    <a class="operational-button operational-button--primary ui-button ui-button--primary" href="{% url 'mayor_projects:non_infrastructure_progress_review_detail' update.pk %}">Open Progress Update</a>
+                </article>
+            {% empty %}
+                <div class="operational-empty-state"><strong>No approved updates are awaiting application.</strong></div>
+            {% endfor %}
+        </section>
+
+        <section class="mayor-queue__section" aria-labelledby="applied-progress-heading">
+            <div class="mayor-queue__section-heading"><h2 id="applied-progress-heading">Applied / Awaiting Publication</h2><span class="mayor-status mayor-status--awaiting">{{ applied_progress_updates|length }}</span></div>
+            {% for update in applied_progress_updates %}
+                <article class="operational-card ui-card">
+                    <div class="mayor-queue__top"><span class="mayor-status mayor-status--awaiting">Applied · Awaiting Publication</span><span>Applied {{ update.applied_at|date:"M d, Y, g:i A" }}</span></div>
+                    <h3>{{ update.non_infrastructure.title }}</h3>
+                    <p><strong>Proposed status:</strong> {{ update.get_proposed_status_display }}</p>
+                    <p><strong>Submitted by:</strong> {{ update.submitted_by.get_full_name|default:update.submitted_by.username|default:"Former staff member" }}</p>
+                    <a class="operational-button operational-button--primary ui-button ui-button--primary" href="{% url 'publication_revision_detail' update.publication_revision_id %}">View Publication Revision</a>
+                </article>
+            {% empty %}
+                <div class="operational-empty-state"><strong>No applied updates are awaiting publication.</strong></div>
+            {% endfor %}
+        </section>
     </div>
     {% if is_paginated %}<nav aria-label="Review queue pages" class="operational-actions">
         {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}

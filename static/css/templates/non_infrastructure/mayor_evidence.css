@@ -46,6 +46,10 @@
 .mayor-evidence .mayor-evidence-file__preview { display: block; max-width: min(100%, 280px); max-height: 190px; object-fit: contain; margin: .7rem 0; border-radius: 8px; }
 .mayor-evidence .mayor-evidence-file a, .mayor-evidence a { overflow-wrap: anywhere; }
 .mayor-evidence .mayor-queue { display: grid; gap: 1rem; }
+.mayor-evidence .mayor-queue__section { display: grid; gap: .8rem; }
+.mayor-evidence .mayor-queue__section + .mayor-queue__section { margin-top: .5rem; }
+.mayor-evidence .mayor-queue__section-heading { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; }
+.mayor-evidence .mayor-queue__section-heading h2 { margin: 0; }
 .mayor-evidence .mayor-queue__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; }
 .mayor-evidence .mayor-queue h2 { margin: .6rem 0; overflow-wrap: anywhere; }
 .mayor-evidence .mayor-queue p { margin: .35rem 0; }
