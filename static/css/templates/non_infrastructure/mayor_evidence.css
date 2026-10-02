@@ -42,6 +42,7 @@
 .mayor-evidence .mayor-evidence-file__title { display: block; overflow-wrap: anywhere; }
 .mayor-evidence .mayor-evidence-file__type { display: inline-block; margin-bottom: .4rem; color: #375742; font-size: .78rem; font-weight: 700; text-transform: uppercase; }
 .mayor-evidence .mayor-evidence-file__description { margin: .4rem 0 .7rem; overflow-wrap: anywhere; }
+.mayor-evidence .mayor-evidence-file__preview-link { display: inline-block; }
 .mayor-evidence .mayor-evidence-file__preview { display: block; max-width: min(100%, 280px); max-height: 190px; object-fit: contain; margin: .7rem 0; border-radius: 8px; }
 .mayor-evidence .mayor-evidence-file a, .mayor-evidence a { overflow-wrap: anywhere; }
 .mayor-evidence .mayor-queue { display: grid; gap: 1rem; }
@@ -63,6 +64,12 @@
 .mayor-evidence [aria-invalid="true"] { border-color: #a51d2d; }
 .mayor-evidence :is(a, button, input, select, textarea):focus-visible { outline: 3px solid #e3a940; outline-offset: 3px; }
 .mayor-evidence .operational-actions { flex-wrap: wrap; }
+.mayor-evidence-lightbox-open { overflow: hidden; }
+.mayor-evidence-lightbox { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: 1.5rem; background: rgb(20 35 26 / 82%); }
+.mayor-evidence-lightbox[hidden] { display: none; }
+.mayor-evidence-lightbox__image { display: block; max-width: min(92vw, 1100px); max-height: 84vh; object-fit: contain; border-radius: 10px; background: #fff; }
+.mayor-evidence-lightbox__close { position: absolute; top: 1rem; right: 1rem; padding: .55rem .8rem; border: 1px solid #d9e5db; border-radius: 8px; background: #fff; color: #254b36; cursor: pointer; font: inherit; font-weight: 700; }
+.mayor-evidence-lightbox__close:focus-visible { outline: 3px solid #e3a940; outline-offset: 3px; }
 .mayor-progress-history { min-width: 0; }
 .mayor-progress-history > p { margin: .3rem 0 1.25rem; color: #425d4d; }
 .mayor-progress-timeline { display: grid; gap: 1rem; border-left: 3px solid #b6d2bd; padding-left: 1rem; }

@@ -7,7 +7,7 @@
             <strong class="mayor-evidence-file__title">{{ item.evidence_file.name|evidence_filename }}</strong>
             {% if item.description %}<p class="mayor-evidence-file__description">{{ item.description }}</p>{% endif %}
             {% if type == 'jpg' or type == 'jpeg' or type == 'png' or type == 'gif' or type == 'webp' %}
-                <a href="{{ item.evidence_file.url }}" target="_blank" rel="noopener" aria-label="Open image preview: {{ item.evidence_file.name|evidence_filename }}">
+                <a class="mayor-evidence-file__preview-link" href="{{ item.evidence_file.url }}" aria-label="Open image preview: {{ item.evidence_file.name|evidence_filename }}">
                     <img class="mayor-evidence-file__preview" src="{{ item.evidence_file.url }}" alt="Evidence preview: {{ item.description|default:item.evidence_file.name|evidence_filename }}" loading="lazy">
                 </a>
             {% endif %}

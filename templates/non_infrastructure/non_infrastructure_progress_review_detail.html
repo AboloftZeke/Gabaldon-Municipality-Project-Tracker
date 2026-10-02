@@ -66,4 +66,5 @@
         <section class="operational-card operational-card--publication-status ui-card"><h2>Publication status</h2><p>Applied by {{ progress_update.applied_by.get_full_name|default:progress_update.applied_by.username|default:"Former Head" }} on {{ progress_update.applied_at|date:"M d, Y, g:i A" }}.</p><a class="ui-button ui-button--primary" href="{% url 'publication_revision_detail' progress_update.publication_revision_id %}">View Publication Revision</a></section>
     {% endif %}
 </div>
+<script defer src="{% static 'js/templates/non_infrastructure/mayor_evidence_upload.js' %}"></script>
 {% endblock %}

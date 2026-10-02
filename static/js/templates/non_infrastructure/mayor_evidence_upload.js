@@ -1,6 +1,55 @@
 document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('id_evidence_files');
     const summary = document.getElementById('mayor-selected-files');
+
+    let lastFocusedElement = null;
+    const lightbox = document.createElement('div');
+    lightbox.className = 'mayor-evidence-lightbox';
+    lightbox.hidden = true;
+    lightbox.setAttribute('role', 'dialog');
+    lightbox.setAttribute('aria-modal', 'true');
+    lightbox.setAttribute('aria-label', 'Evidence image preview');
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'mayor-evidence-lightbox__close';
+    closeButton.textContent = 'Close image preview';
+    const lightboxImage = document.createElement('img');
+    lightboxImage.className = 'mayor-evidence-lightbox__image';
+    lightbox.append(closeButton, lightboxImage);
+    document.body.appendChild(lightbox);
+
+    const closeLightbox = () => {
+        lightbox.hidden = true;
+        lightboxImage.removeAttribute('src');
+        document.body.classList.remove('mayor-evidence-lightbox-open');
+        if (lastFocusedElement) lastFocusedElement.focus();
+    };
+
+    const openLightbox = (link) => {
+        lastFocusedElement = document.activeElement;
+        lightboxImage.src = link.href;
+        lightboxImage.alt = link.querySelector('img')?.alt || 'Evidence image preview';
+        lightbox.hidden = false;
+        document.body.classList.add('mayor-evidence-lightbox-open');
+        closeButton.focus();
+    };
+
+    closeButton.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', (event) => {
+        if (event.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !lightbox.hidden) closeLightbox();
+    });
+    document.addEventListener('click', (event) => {
+        const link = event.target.closest(
+            '.mayor-upload__preview-link, .mayor-evidence-file__preview-link',
+        );
+        if (!link) return;
+        event.preventDefault();
+        openLightbox(link);
+    });
+
     if (!input || !summary) return;
 
     const imageTypes = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
@@ -48,8 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const previewLink = document.createElement('a');
                 previewLink.className = 'mayor-upload__preview-link';
                 previewLink.href = fileUrl;
-                previewLink.target = '_blank';
-                previewLink.rel = 'noopener';
                 previewLink.setAttribute('aria-label', `Open image preview for ${file.name}`);
                 const image = document.createElement('img');
                 image.className = 'mayor-upload__preview-image';
