@@ -456,6 +456,11 @@ class NonInfrastructureProgressUpdateCreateView(MayorsOfficeOnlyMixin, FormView)
         context['project'] = self.project
         return context
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['project'] = self.project
+        return kwargs
+
     def form_valid(self, form):
         if not can_create_non_infrastructure_progress_update(self.request.user, self.project):
             return self._permission_denied_response()
@@ -465,6 +470,8 @@ class NonInfrastructureProgressUpdateCreateView(MayorsOfficeOnlyMixin, FormView)
                 user=self.request.user,
                 submit_for_review=True,
             )
+            if update is None:
+                return self.form_invalid(form)
         except (OSError, SuspiciousFileOperation):
             form.add_error('evidence_files', 'The file could not be saved. Please try again.')
             return self.form_invalid(form)

@@ -133,6 +133,18 @@ class MayorStaffProgressUpdateTests(TestCase):
             'published',
         )
 
+    def test_same_current_status_is_rejected_without_records_or_evidence(self):
+        self.client.force_login(self.staff)
+        response = self.client.post(self.url, self.form_data(proposed_status='planned'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            'The proposed status must be different from the current official status.',
+        )
+        self.assertEqual(NonInfrastructureProgressUpdate.objects.count(), 0)
+        self.assertEqual(NonInfrastructureEvidence.objects.count(), 0)
+
     def test_multiple_evidence_files_are_linked_to_one_update(self):
         self.client.force_login(self.staff)
         data = self.form_data(evidence_files=[self.upload('first.pdf'), self.upload('second.pdf')])

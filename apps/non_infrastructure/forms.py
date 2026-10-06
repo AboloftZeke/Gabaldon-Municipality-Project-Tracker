@@ -38,6 +38,10 @@ class MultipleFileField(forms.FileField):
 class NonInfrastructureProgressUpdateForm(forms.Form):
     """Save a staff proposal and its evidence without changing official status."""
 
+    SAME_STATUS_ERROR = (
+        'The proposed status must be different from the current official status.'
+    )
+
     IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
     IMAGE_CONTENT_TYPES = {'image/jpeg', 'image/png', 'image/gif', 'image/webp'}
     DOCUMENT_EXTENSIONS = {'.pdf'}
@@ -60,6 +64,16 @@ class NonInfrastructureProgressUpdateForm(forms.Form):
         label='Evidence Description',
         widget=forms.Textarea(attrs={'rows': 2}),
     )
+
+    def __init__(self, *args, project=None, **kwargs):
+        self.project = project
+        super().__init__(*args, **kwargs)
+
+    def clean_proposed_status(self):
+        proposed_status = self.cleaned_data['proposed_status']
+        if self.project and proposed_status == self.project.status:
+            raise forms.ValidationError(self.SAME_STATUS_ERROR)
+        return proposed_status
 
     def clean_evidence_files(self):
         uploads = self.cleaned_data['evidence_files']
@@ -87,6 +101,9 @@ class NonInfrastructureProgressUpdateForm(forms.Form):
                 # Capture the official status at save time, even if another user
                 # changed it after this form was opened.
                 project = NonInfrastructureProject.objects.select_for_update().get(pk=project.pk)
+                if self.cleaned_data['proposed_status'] == project.status:
+                    self.add_error('proposed_status', self.SAME_STATUS_ERROR)
+                    return None
                 update = NonInfrastructureProgressUpdate.objects.create(
                     non_infrastructure=project,
                     previous_status=project.status,
