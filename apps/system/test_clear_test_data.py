@@ -33,6 +33,7 @@ class ClearTestDataCommandTests(TestCase):
             password='testpass123',
         )
         self.seed_user = User.objects.create_user(username='seed_projects_engineer')
+        self.seed_head = User.objects.create_user(username='seed_projects_mayor_head')
         UserRole.objects.create(
             user=self.seed_user,
             department='engineer',
@@ -89,6 +90,15 @@ class ClearTestDataCommandTests(TestCase):
             category=self.category,
             project_type=NonInfrastructureProject.ProjectType.PROGRAM,
         )
+        self.manual_non_infrastructure = NonInfrastructureProject.objects.create(
+            project=Project.objects.create(
+                project_type='non_infrastructure',
+                created_by_user=self.required_user,
+            ),
+            title='Manual Non-Infrastructure Test Project',
+            category=self.category,
+            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
+        )
         self.update = NonInfrastructureProgressUpdate.objects.create(
             non_infrastructure=self.non_infrastructure,
             previous_status='planned',
@@ -130,50 +140,95 @@ class ClearTestDataCommandTests(TestCase):
             project_type=NonInfrastructureProject.ProjectType.PROGRAM,
         )
 
-    def test_without_confirm_is_a_dry_run(self):
-        output = StringIO()
-        call_command('clear_test_data', stdout=output)
+    def test_scope_is_required_and_scopes_are_mutually_exclusive(self):
+        with self.assertRaisesMessage(CommandError, 'Please specify one cleanup scope'):
+            call_command('clear_test_data')
+        with self.assertRaisesMessage(CommandError, 'mutually exclusive'):
+            call_command('clear_test_data', '--infra', '--non-infra')
 
-        self.assertIn('DRY RUN: No data was deleted.', output.getvalue())
-        self.assertTrue(InfrastructureProject.objects.filter(pk=self.infrastructure.pk).exists())
+    def test_each_scope_without_confirm_is_a_dry_run(self):
+        for option in ('--infra', '--non-infra', '--users', '--all'):
+            with self.subTest(option=option):
+                output = StringIO()
+                call_command('clear_test_data', option, stdout=output)
+                self.assertIn('DRY RUN: No data was deleted.', output.getvalue())
+                self.assertTrue(InfrastructureProject.objects.filter(pk=self.infrastructure.pk).exists())
+                self.assertTrue(NonInfrastructureProject.objects.filter(pk=self.non_infrastructure.pk).exists())
+                self.assertTrue(User.objects.filter(pk=self.seed_user.pk).exists())
+
+    def test_infra_scope_isolated_from_non_infrastructure_and_users(self):
+        output = StringIO()
+        call_command('clear_test_data', '--infra', '--confirm', stdout=output)
+
+        self.assertIn('Scope: Infrastructure', output.getvalue())
+        self.assertFalse(InfrastructureProject.objects.filter(pk=self.infrastructure.pk).exists())
+        self.assertFalse(Project.objects.filter(pk=self.infrastructure_base.pk).exists())
+        self.assertFalse(InfrastructureProgressUpdate.objects.exists())
+        self.assertFalse(InspectionEvidence.objects.exists())
         self.assertTrue(NonInfrastructureProject.objects.filter(pk=self.non_infrastructure.pk).exists())
-        self.assertTrue(Project.objects.filter(pk=self.unrelated_project.pk).exists())
-        self.assertTrue(InfrastructureProject.objects.filter(pk=self.unrelated_infrastructure.pk).exists())
         self.assertTrue(
-            NonInfrastructureProject.objects.filter(pk=self.unrelated_non_infrastructure.pk).exists()
+            NonInfrastructureProject.objects.filter(pk=self.manual_non_infrastructure.pk).exists()
         )
-        self.assertTrue(User.objects.filter(pk=self.required_user.pk).exists())
+        self.assertTrue(Project.objects.filter(pk=self.non_infrastructure_base.pk).exists())
+        self.assertTrue(NonInfrastructureEvidence.objects.exists())
         self.assertTrue(User.objects.filter(pk=self.seed_user.pk).exists())
 
-    def test_confirm_removes_scoped_records_and_preserves_configuration(self):
+    def test_non_infra_scope_isolated_from_infrastructure_and_users(self):
         output = StringIO()
-        call_command('clear_test_data', '--confirm', stdout=output)
+        call_command('clear_test_data', '--non-infra', '--confirm', stdout=output)
 
-        self.assertIn('Test data cleanup completed successfully.', output.getvalue())
+        self.assertIn('Scope: Non-Infrastructure', output.getvalue())
+        self.assertFalse(NonInfrastructureProject.objects.filter(pk=self.non_infrastructure.pk).exists())
+        self.assertFalse(
+            NonInfrastructureProject.objects.filter(pk=self.manual_non_infrastructure.pk).exists()
+        )
+        self.assertFalse(Project.objects.filter(pk=self.non_infrastructure_base.pk).exists())
+        self.assertFalse(NonInfrastructureProgressUpdate.objects.exists())
+        self.assertFalse(NonInfrastructureEvidence.objects.exists())
+        self.assertTrue(InfrastructureProject.objects.filter(pk=self.infrastructure.pk).exists())
+        self.assertTrue(Project.objects.filter(pk=self.infrastructure_base.pk).exists())
+        self.assertTrue(InfrastructureProgressUpdate.objects.exists())
+        self.assertTrue(User.objects.filter(pk=self.seed_user.pk).exists())
+
+    def test_users_scope_only_removes_recognized_seed_users(self):
+        call_command('clear_test_data', '--users', '--confirm', stdout=StringIO())
+
+        self.assertFalse(User.objects.filter(pk=self.seed_user.pk).exists())
+        self.assertFalse(User.objects.filter(pk=self.seed_head.pk).exists())
+        self.assertTrue(User.objects.filter(pk=self.required_user.pk).exists())
+        self.assertTrue(InfrastructureProject.objects.filter(pk=self.infrastructure.pk).exists())
+        self.assertTrue(NonInfrastructureProject.objects.filter(pk=self.non_infrastructure.pk).exists())
+        self.assertTrue(
+            NonInfrastructureProject.objects.filter(pk=self.manual_non_infrastructure.pk).exists()
+        )
+
+    def test_all_scope_removes_projects_and_seed_users(self):
+        output = StringIO()
+        call_command('clear_test_data', '--all', '--confirm', stdout=output)
+
+        self.assertIn('Scope: All', output.getvalue())
         self.assertFalse(InfrastructureProject.objects.filter(pk=self.infrastructure.pk).exists())
         self.assertFalse(NonInfrastructureProject.objects.filter(pk=self.non_infrastructure.pk).exists())
-        self.assertFalse(Project.objects.filter(pk=self.infrastructure_base.pk).exists())
-        self.assertFalse(Project.objects.filter(pk=self.non_infrastructure_base.pk).exists())
+        self.assertFalse(
+            NonInfrastructureProject.objects.filter(pk=self.manual_non_infrastructure.pk).exists()
+        )
         self.assertFalse(ProjectRevision.objects.filter(pk=self.revision.pk).exists())
-        self.assertFalse(InfrastructureProgressUpdate.objects.exists())
-        self.assertFalse(NonInfrastructureProgressUpdate.objects.exists())
-        self.assertFalse(InspectionEvidence.objects.exists())
-        self.assertFalse(NonInfrastructureEvidence.objects.exists())
-        self.assertTrue(Project.objects.filter(pk=self.unrelated_project.pk).exists())
-        self.assertTrue(NonInfrastructureCategory.objects.filter(pk=self.category.pk).exists())
-        self.assertTrue(User.objects.filter(pk=self.required_user.pk).exists())
         self.assertFalse(User.objects.filter(pk=self.seed_user.pk).exists())
+        self.assertFalse(User.objects.filter(pk=self.seed_head.pk).exists())
+        self.assertTrue(User.objects.filter(pk=self.required_user.pk).exists())
+        self.assertTrue(NonInfrastructureCategory.objects.filter(pk=self.category.pk).exists())
+        self.assertTrue(Project.objects.filter(pk=self.unrelated_project.pk).exists())
 
     def test_unexpected_failure_rolls_back_deletions(self):
-        def delete_then_fail(scope):
+        def delete_then_fail(scope_name, scope):
             ProjectRevision.objects.filter(
                 project_id__in=scope['project_ids'],
             ).delete()
             raise RuntimeError('simulated cleanup failure')
 
-        with patch.object(Command, '_delete_scoped_data', side_effect=delete_then_fail):
+        with patch.object(Command, '_delete_scope', side_effect=delete_then_fail):
             with self.assertRaises(CommandError):
-                call_command('clear_test_data', '--confirm', stdout=StringIO())
+                call_command('clear_test_data', '--non-infra', '--confirm', stdout=StringIO())
 
         self.assertTrue(ProjectRevision.objects.filter(pk=self.revision.pk).exists())
         self.assertTrue(Project.objects.filter(pk=self.non_infrastructure_base.pk).exists())
