@@ -398,6 +398,7 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
         )
 
         if normalized and normalized.project:
+            context['has_publication_history'] = normalized.project.revisions.exists()
             context['publication'] = publication_state(normalized.project)
             context['publication_submit_url'] = reverse(
                 'mayor_projects:non_infrastructure_project_submit_for_review',

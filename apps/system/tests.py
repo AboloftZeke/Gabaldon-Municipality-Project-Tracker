@@ -404,6 +404,7 @@ class EmployeePublicationWorkflowViewTests(TestCase):
         initial = self.client.get(detail_url)
         self.assertContains(initial, 'Not Submitted')
         self.assertContains(initial, 'Submit for Public Review')
+        self.assertContains(initial, 'Delete Project')
         self.assertEqual(self.client.get(submit_url).status_code, 405)
 
         response = self.client.post(submit_url)
@@ -416,6 +417,7 @@ class EmployeePublicationWorkflowViewTests(TestCase):
         pending = self.client.get(detail_url)
         self.assertContains(pending, 'Pending Review')
         self.assertNotContains(pending, 'Submit for Public Review')
+        self.assertNotContains(pending, 'Delete Project')
 
         delete_response = self.client.post(reverse(
             'engineering_projects:project_delete',
@@ -454,6 +456,7 @@ class EmployeePublicationWorkflowViewTests(TestCase):
 
         initial = self.client.get(detail_url)
         self.assertContains(initial, 'Not Submitted')
+        self.assertContains(initial, 'Delete Project')
         response = self.client.post(submit_url)
 
         self.assertRedirects(response, detail_url)
@@ -465,6 +468,8 @@ class EmployeePublicationWorkflowViewTests(TestCase):
             revision.snapshot['non_infrastructure']['title'],
             'Employee Submission Program',
         )
+        published_history = self.client.get(detail_url)
+        self.assertNotContains(published_history, 'Delete Project')
         delete_response = self.client.post(reverse(
             'mayor_projects:non_infrastructure_project_delete',
             args=[self.non_infrastructure.pk],

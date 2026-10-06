@@ -676,6 +676,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
         }
 
         if infra and infra.project:
+            context['has_publication_history'] = infra.project.revisions.exists()
             context['can_update_operations'] = (
                 can_update_infrastructure_operations(self.request.user)
             )

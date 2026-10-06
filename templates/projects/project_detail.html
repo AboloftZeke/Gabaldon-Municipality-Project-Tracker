@@ -61,7 +61,7 @@
                     <div class="action-buttons action-buttons--detail">
                         {% if can_update_operations %}<a href="{% url 'engineering_projects:project_operations' project_details.pk %}" class="btn btn-edit ui-button ui-button--primary">Update Status &amp; Progress</a>{% endif %}
                         {% if can_manage_project %}<a href="{% url 'engineering_projects:project_update' project_details.pk %}" class="btn btn-edit ui-button ui-button--secondary">Edit Project</a>{% endif %}
-                        {% if can_manage_project %}<a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete ui-button ui-button--danger">Delete Project</a>{% endif %}
+                        {% if can_manage_project and not has_publication_history %}<a href="{% url 'engineering_projects:project_delete' project_details.pk %}" class="btn btn-delete ui-button ui-button--danger">Delete Project</a>{% endif %}
                     </div>
                 {% endif %}
             </div>
