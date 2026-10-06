@@ -5,7 +5,8 @@ explicit at their call sites because create and edit permissions differ today.
 Review capabilities are scoped to the Head's office, never to superuser status.
 """
 
-from .models import ProjectRevision, UserRole
+from .models import NonInfrastructureProgressUpdate, ProjectRevision, UserRole
+from django.db.models import Q
 from .publication_workflow import PublicationStatus
 
 
@@ -76,6 +77,29 @@ def has_active_publication_revision(project):
     ).exists()
 
 
+def has_active_non_infrastructure_progress_update(project):
+    if not project or project.pk is None:
+        return False
+    from .publication_service import OPEN_REVISION_STATUSES
+
+    return NonInfrastructureProgressUpdate.objects.filter(
+        non_infrastructure_id=project.pk,
+    ).filter(
+        Q(review_status__in=(
+            NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW,
+            NonInfrastructureProgressUpdate.ReviewStatus.RETURNED,
+        ))
+        | Q(
+            review_status=NonInfrastructureProgressUpdate.ReviewStatus.APPROVED,
+            applied_at__isnull=True,
+        )
+        | Q(
+            applied_at__isnull=False,
+            publication_revision__status__in=OPEN_REVISION_STATUSES,
+        ),
+    ).exists()
+
+
 def can_create_non_infrastructure_progress_update(user, project):
     """Allow Mayor Staff to draft later operational updates after publication."""
     if not can_manage_non_infrastructure(user):
@@ -83,6 +107,8 @@ def can_create_non_infrastructure_progress_update(user, project):
     if not project or project.project_id is None:
         return False
     if has_active_publication_revision(project):
+        return False
+    if has_active_non_infrastructure_progress_update(project):
         return False
     latest_revision = ProjectRevision.objects.filter(
         project_id=project.project_id,

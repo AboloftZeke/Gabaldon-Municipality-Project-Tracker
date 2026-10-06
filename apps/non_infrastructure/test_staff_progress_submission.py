@@ -1,9 +1,11 @@
 import tempfile
 
 from django.contrib.auth import get_user_model
+from django.contrib.messages import get_messages
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.system.models import (
     NonInfrastructureEvidence,
@@ -116,6 +118,102 @@ class MayorStaffProgressSubmissionTests(TestCase):
         self.client.force_login(head)
         queue = self.client.get(reverse('mayor_projects:non_infrastructure_progress_review_queue'))
         self.assertIn(update.pk, [item.pk for item in queue.context['pending_progress_updates']])
+
+    def test_creation_is_allowed_without_existing_progress_update(self):
+        self.update.evidence.all().delete()
+        self.update.delete()
+        response = self.client.get(self.create_url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_pending_progress_update_blocks_creation_with_message(self):
+        self.update.review_status = PublicationStatus.PENDING_REVIEW
+        self.update.submitted_at = timezone.now()
+        self.update.save(update_fields=['review_status', 'submitted_at'])
+        response = self.client.get(self.create_url, follow=True)
+        self.assertContains(
+            response,
+            'A progress update is already awaiting review or publication for this project.',
+        )
+        self.assertRedirects(response, reverse(
+            'mayor_projects:non_infrastructure_project_detail',
+            args=[self.project.pk],
+        ), fetch_redirect_response=False)
+
+    def test_approved_unapplied_progress_update_blocks_creation(self):
+        self.update.review_status = PublicationStatus.APPROVED
+        self.update.save(update_fields=['review_status'])
+        response = self.client.get(self.create_url, follow=True)
+        self.assertContains(response, 'A progress update is already awaiting review or publication')
+
+    def test_returned_progress_update_blocks_creation(self):
+        self.update.review_status = NonInfrastructureProgressUpdate.ReviewStatus.RETURNED
+        self.update.save(update_fields=['review_status'])
+        response = self.client.get(self.create_url, follow=True)
+        self.assertContains(response, 'A progress update is already awaiting review or publication')
+
+    def test_applied_progress_update_with_open_revision_blocks_creation(self):
+        revision = ProjectRevision.objects.create(
+            project=self.project.project,
+            revision_number=2,
+            status=PublicationStatus.APPROVED,
+            submitted_by=self.staff,
+        )
+        self.update.review_status = PublicationStatus.APPROVED
+        self.update.applied_at = timezone.now()
+        self.update.publication_revision = revision
+        self.update.save(update_fields=['review_status', 'applied_at', 'publication_revision'])
+        response = self.client.get(self.create_url)
+        self.assertRedirects(response, reverse(
+            'mayor_projects:non_infrastructure_project_detail',
+            args=[self.project.pk],
+        ), fetch_redirect_response=False)
+        self.assertTrue(any(
+            'A publication revision is already in progress for this project.' in str(message)
+            for message in get_messages(response.wsgi_request)
+        ))
+
+    def test_completed_published_progress_update_allows_creation_again(self):
+        self.revision.is_current_public = False
+        self.revision.save(update_fields=['is_current_public'])
+        revision = ProjectRevision.objects.create(
+            project=self.project.project,
+            revision_number=2,
+            status=PublicationStatus.PUBLISHED,
+            is_current_public=True,
+        )
+        self.update.review_status = PublicationStatus.APPROVED
+        self.update.applied_at = timezone.now()
+        self.update.publication_revision = revision
+        self.update.save(update_fields=['review_status', 'applied_at', 'publication_revision'])
+        self.assertEqual(self.client.get(self.create_url).status_code, 200)
+
+    def test_stale_creation_form_is_rejected_when_another_update_becomes_active(self):
+        self.assertEqual(self.client.get(self.create_url).status_code, 200)
+        self.update.review_status = PublicationStatus.PENDING_REVIEW
+        self.update.submitted_at = timezone.now()
+        self.update.save(update_fields=['review_status', 'submitted_at'])
+        response = self.client.post(self.create_url, {
+            'proposed_status': 'completed',
+            'remarks': 'Completed activity report.',
+            'evidence_files': SimpleUploadedFile(
+                'stale-proof.pdf', b'%PDF-1.4\nproof', content_type='application/pdf',
+            ),
+        }, follow=True)
+        self.assertContains(response, 'A progress update is already awaiting review or publication')
+        self.assertEqual(
+            NonInfrastructureProgressUpdate.objects.filter(non_infrastructure=self.project).count(),
+            1,
+        )
+
+    def test_publication_conflict_message_takes_precedence(self):
+        self.update.evidence.all().delete()
+        self.update.delete()
+        self.revision.status = PublicationStatus.DRAFT
+        self.revision.is_current_public = False
+        self.revision.save(update_fields=['status', 'is_current_public'])
+        response = self.client.get(self.create_url, follow=True)
+        self.assertContains(response, 'A publication revision is already in progress for this project.')
+        self.assertNotContains(response, 'A progress update is already awaiting review or publication')
 
     def test_invalid_creation_does_not_create_or_submit_update(self):
         response = self.client.post(self.create_url, {

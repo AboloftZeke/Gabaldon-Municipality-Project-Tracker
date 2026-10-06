@@ -35,6 +35,7 @@ from apps.system.permissions import (
     can_update_non_infrastructure_operations,
     department_for_user as _department_for_user,
     has_active_publication_revision,
+    has_active_non_infrastructure_progress_update,
     is_system_admin,
 )
 
@@ -416,10 +417,24 @@ class NonInfrastructureProgressUpdateCreateView(MayorsOfficeOnlyMixin, FormView)
         'A publication revision is already in progress for this project. '
         'Publish or resolve it before creating a progress update.'
     )
+    progress_update_conflict_message = (
+        'A progress update is already awaiting review or publication for this project. '
+        'Please wait for the current update to complete before submitting another.'
+    )
 
     def _permission_denied_response(self):
+        if not can_manage_non_infrastructure(self.request.user):
+            raise PermissionDenied(
+                'Progress updates require an approved or published project revision.',
+            )
         if has_active_publication_revision(self.project):
             messages.error(self.request, self.revision_conflict_message)
+            return redirect(
+                'mayor_projects:non_infrastructure_project_detail',
+                pk=self.project.pk,
+            )
+        if has_active_non_infrastructure_progress_update(self.project):
+            messages.error(self.request, self.progress_update_conflict_message)
             return redirect(
                 'mayor_projects:non_infrastructure_project_detail',
                 pk=self.project.pk,
