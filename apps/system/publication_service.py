@@ -13,6 +13,7 @@ from .publication_snapshots import (
     build_non_infrastructure_progress_update_snapshot,
     build_project_publication_snapshot,
 )
+from .publication_diff import compare_snapshots
 from .permissions import (
     can_review_revision, can_publish_revision, can_manage_infrastructure,
     can_manage_non_infrastructure, can_update_infrastructure_operations,
@@ -279,9 +280,20 @@ def submit_publication_revision(revision, actor):
         PublicationStatus.PENDING_REVIEW,
     )
 
-    locked_revision.snapshot = build_project_publication_snapshot(
-        locked_revision.project,
-    )
+    snapshot = build_project_publication_snapshot(locked_revision.project)
+    current_public = locked_revision.project.revisions.filter(
+        status=PublicationStatus.PUBLISHED,
+        is_current_public=True,
+    ).exclude(pk=locked_revision.pk).first()
+    if current_public is not None and compare_snapshots(
+        snapshot,
+        current_public.snapshot,
+    )['change_count'] == 0:
+        raise ValidationError(
+            'No changes have been made since the current published version.',
+        )
+
+    locked_revision.snapshot = snapshot
     locked_revision.source_updated_at = locked_revision.project.updated_at
     locked_revision.status = PublicationStatus.PENDING_REVIEW
     locked_revision.submitted_by = actor
