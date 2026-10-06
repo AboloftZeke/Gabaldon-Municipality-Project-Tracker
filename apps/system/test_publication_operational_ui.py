@@ -3,6 +3,7 @@ from copy import deepcopy
 from decimal import Decimal
 
 from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.urls import reverse
 
@@ -313,11 +314,11 @@ class PublicationOperationalUITests(TestCase):
         self.assertFalse(response.context['operational']['is_complete'])
         self.assertContains(response, 'Initial Official Status Confirmation')
         self.assertContains(response, 'Initial Official Status')
-        self.assertContains(response, 'Confirm Initial Status')
+        self.assertContains(response, 'Publish to Public Dashboard')
+        self.assertContains(response, 'initial-publication-confirm')
         self.assertContains(response, 'Planned')
         self.assertNotContains(response, '<select')
         self.assertNotContains(response, 'Actual Physical Progress')
-        self.assertNotContains(response, 'Publish to Public Dashboard')
 
         self.non_infrastructure.status = 'ongoing'
         self.non_infrastructure.save(update_fields=['status'])
@@ -344,8 +345,48 @@ class PublicationOperationalUITests(TestCase):
         )
         self.assertEqual(self.non_infrastructure_revision.status, 'approved')
         self.assertTrue(response.context['operational']['is_complete'])
-        self.assertNotContains(response, 'Confirm Initial Status')
+        self.assertNotContains(response, 'initial-publication-confirm')
         self.assertContains(response, 'Publish to Public Dashboard')
+
+    def test_non_infrastructure_initial_publish_confirms_status_and_publishes(self):
+        self.client.force_login(self.users['mayor', 'head'])
+        detail = self.client.get(self.revision_url(self.non_infrastructure_revision))
+        self.assertContains(detail, 'Publish to Public Dashboard')
+        self.assertContains(detail, 'Initial Official Status')
+        self.assertContains(detail, 'Planned')
+        self.assertNotContains(detail, 'Confirm Initial Status')
+        self.assertNotContains(
+            detail,
+            reverse(
+                'mayor_projects:non_infrastructure_project_operations',
+                args=[self.non_infrastructure.pk],
+            ),
+        )
+
+        publish_url = reverse(
+            'publication_revision_publish',
+            args=[self.non_infrastructure_revision.pk],
+        )
+        response = self.client.post(publish_url)
+        self.assertRedirects(response, self.revision_url(self.non_infrastructure_revision))
+        self.non_infrastructure_revision.refresh_from_db()
+        self.assertEqual(self.non_infrastructure_revision.status, 'published')
+        self.assertTrue(self.non_infrastructure_revision.is_current_public)
+        self.assertEqual(
+            self.non_infrastructure_revision.snapshot[OPERATIONAL_CONFIRMATION_KEY]['project_type'],
+            'non_infrastructure',
+        )
+        self.assertTrue(any(
+            'now public' in str(message)
+            for message in get_messages(response.wsgi_request)
+        ))
+
+        second_response = self.client.post(publish_url)
+        self.assertEqual(second_response.status_code, 403)
+        self.assertEqual(
+            ProjectRevision.objects.filter(project=self.non_infrastructure.project).count(),
+            1,
+        )
 
     def test_later_non_infrastructure_revision_has_no_initial_confirmation_action(self):
         self.non_infrastructure_revision.status = 'published'

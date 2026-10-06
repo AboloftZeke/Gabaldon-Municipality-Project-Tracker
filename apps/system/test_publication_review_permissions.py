@@ -63,9 +63,10 @@ class OfficeReviewPermissionTests(TestCase):
                         ))
                         if office == 'mayor':
                             self.assertContains(detail, 'Initial Official Status Confirmation')
+                            self.assertContains(detail, 'Publish to Public Dashboard')
                         else:
                             self.assertContains(detail, 'Operational Information Required')
-                        self.assertNotContains(detail, 'Publish to Public Dashboard')
+                            self.assertNotContains(detail, 'Publish to Public Dashboard')
                         self.assertNotContains(
                             detail,
                             'Publish Update to Public Dashboard',

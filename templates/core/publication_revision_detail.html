@@ -109,7 +109,7 @@
                         {% endfor %}
                     </dl>
                 {% endif %}
-                {% if operational.update_url and not operational.is_complete %}
+                {% if operational.update_url and not operational.is_complete and project_type == 'infrastructure' %}
                 <a class="review-primary-link ui-button ui-button--primary" href="{{ operational.update_url }}?from_review={{ revision.pk }}">{{ operational.update_label }}</a>
                 {% endif %}
             </section>
@@ -239,6 +239,28 @@
                         <button type="submit" class="review-button review-button--primary ui-button ui-button--primary">{% if comparison.baseline %}Publish Update to Public Dashboard{% else %}Publish to Public Dashboard{% endif %}</button>
                     </form>
                 </section>
+            {% elif can_publish_initial_non_infrastructure %}
+                <section class="publish-confirmation">
+                    <h2>Ready to Publish</h2>
+                    <p>Confirm the initial official status and publish this project to the Public Dashboard in one action.</p>
+                    <form id="initial-publication-form" method="post" action="{% url 'publication_revision_publish' revision.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="review-button review-button--primary ui-button ui-button--primary" data-initial-publication-trigger>Publish to Public Dashboard</button>
+                    </form>
+                </section>
+                <div class="initial-publication-confirm" data-initial-publication-modal hidden>
+                    <div class="initial-publication-confirm__backdrop" data-initial-publication-cancel></div>
+                    <section class="initial-publication-confirm__dialog" role="dialog" aria-modal="true" aria-labelledby="initial-publication-title" aria-describedby="initial-publication-message" tabindex="-1">
+                        <h2 id="initial-publication-title">Publish to Public Dashboard?</h2>
+                        <p id="initial-publication-message">This project will be published to the Public Dashboard with the following initial status:</p>
+                        <strong class="initial-publication-confirm__status">{{ operational.controlled_fields.0.value|default:"Not set" }}</strong>
+                        <p>Once you confirm, the initial status will be applied and the project will be published.</p>
+                        <div class="initial-publication-confirm__actions">
+                            <button type="button" class="ui-button ui-button--secondary" data-initial-publication-cancel>Cancel</button>
+                            <button type="submit" form="initial-publication-form" class="ui-button ui-button--primary" data-initial-publication-confirm>Publish to Public Dashboard</button>
+                        </div>
+                    </section>
+                </div>
             {% elif revision.status == 'approved' and operational.update_url and not operational.is_complete %}
                 <section class="publish-blocked">
                     {% if project_type == 'non_infrastructure' and operational.is_first_publication %}
@@ -256,4 +278,5 @@
 </main>
 {% include 'includes/image_viewer.html' %}
 <script src="{% static 'js/components/image_viewer.js' %}" defer></script>
+<script src="{% static 'js/templates/core/initial_publication_confirm.js' %}" defer></script>
 {% endblock %}

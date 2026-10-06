@@ -883,6 +883,79 @@
     text-align: center;
 }
 
+.initial-publication-confirm[hidden] {
+    display: none;
+}
+
+body.initial-publication-confirm-open {
+    overflow: hidden;
+}
+
+.initial-publication-confirm {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+}
+
+.initial-publication-confirm__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgb(15 23 42 / 42%);
+    backdrop-filter: blur(3px);
+}
+
+.initial-publication-confirm__dialog {
+    position: relative;
+    width: min(100%, 32rem);
+    padding: 1.4rem;
+    border: 1px solid var(--review-border);
+    border-radius: 14px;
+    background: var(--review-white);
+    box-shadow: 0 24px 64px rgb(22 79 50 / 22%);
+}
+
+.initial-publication-confirm__dialog h2 {
+    margin: 0;
+    color: var(--review-text);
+    font-size: 1.35rem;
+}
+
+.initial-publication-confirm__dialog p {
+    margin: .65rem 0 0;
+    color: var(--review-muted);
+    line-height: 1.55;
+}
+
+.initial-publication-confirm__status {
+    display: block;
+    margin-top: 1rem;
+    padding: .75rem 1rem;
+    border: 1px solid var(--review-border-strong);
+    border-radius: 9px;
+    background: var(--review-green-soft);
+    color: var(--review-green-dark);
+    font-size: 1.1rem;
+}
+
+.initial-publication-confirm__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .55rem;
+    margin-top: 1.35rem;
+}
+
+.initial-publication-confirm__actions .ui-button {
+    min-width: 9rem;
+}
+
+.initial-publication-confirm :is(button):focus-visible {
+    outline: 3px solid #e3a940;
+    outline-offset: 3px;
+}
+
 @media (max-width: 900px) {
     .review-workspace {
         width: min(100% - 2rem, 1240px);
@@ -943,6 +1016,22 @@
         align-items: flex-start;
         flex-direction: column;
         gap: 0.5rem;
+    }
+
+    .initial-publication-confirm {
+        padding: .75rem;
+    }
+
+    .initial-publication-confirm__dialog {
+        padding: 1.1rem;
+    }
+
+    .initial-publication-confirm__actions {
+        flex-direction: column-reverse;
+    }
+
+    .initial-publication-confirm__actions .ui-button {
+        width: 100%;
     }
 
     .review-card__meta div,

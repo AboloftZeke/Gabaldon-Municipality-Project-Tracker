@@ -3,6 +3,7 @@ from datetime import date
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -17,6 +18,7 @@ from .publication_public import (
     non_infrastructure_public_data,
 )
 from .publication_service import (
+    confirm_head_operational_information,
     publication_readiness,
     publish_publication_revision,
     revision_targets_current_public,
@@ -270,6 +272,14 @@ def _revision_page_context(revision, user, review_form=None):
             and can_publish_revision(user, revision)
             and revision_targets_current_public(revision, comparison['baseline'])
         ),
+        'can_publish_initial_non_infrastructure': (
+            project_type == 'non_infrastructure'
+            and revision.status == PublicationStatus.APPROVED
+            and operational['is_first_publication']
+            and not operational['is_complete']
+            and can_update_non_infrastructure_operations(user)
+            and revision_targets_current_public(revision, comparison['baseline'])
+        ),
         'can_archive': False,
     }
 
@@ -432,10 +442,25 @@ class PublicationRevisionPublishView(OfficeHeadRequiredMixin, View):
             ProjectRevision,
             pk=revision_id,
         )
-        if not can_publish_revision(request.user, revision):
+        readiness = publication_readiness(revision)
+        initial_non_infrastructure = (
+            revision.project.project_type == 'non_infrastructure'
+            and revision.status == PublicationStatus.APPROVED
+            and readiness['is_first_publication']
+            and not readiness['is_complete']
+            and can_update_non_infrastructure_operations(request.user)
+            and revision_targets_current_public(revision, None)
+        )
+        if not can_publish_revision(request.user, revision) and not initial_non_infrastructure:
             raise PermissionDenied('You cannot publish this revision.')
         try:
-            published = publish_publication_revision(revision, request.user)
+            with transaction.atomic():
+                if initial_non_infrastructure:
+                    revision = confirm_head_operational_information(
+                        revision,
+                        request.user,
+                    )
+                published = publish_publication_revision(revision, request.user)
         except ValidationError as exc:
             messages.error(request, '; '.join(exc.messages))
         else:
