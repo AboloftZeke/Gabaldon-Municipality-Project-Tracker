@@ -445,11 +445,15 @@ class NonInfrastructureProgressUpdateCreateView(MayorsOfficeOnlyMixin, FormView)
         if not can_create_non_infrastructure_progress_update(self.request.user, self.project):
             return self._permission_denied_response()
         try:
-            update = form.save(project=self.project, user=self.request.user)
+            update = form.save(
+                project=self.project,
+                user=self.request.user,
+                submit_for_review=True,
+            )
         except (OSError, SuspiciousFileOperation):
             form.add_error('evidence_files', 'The file could not be saved. Please try again.')
             return self.form_invalid(form)
-        messages.success(self.request, 'Project update saved as a draft.')
+        messages.success(self.request, 'Progress update submitted for Mayor Head review.')
         return redirect(
             'mayor_projects:non_infrastructure_progress_update_detail',
             pk=self.project.pk,

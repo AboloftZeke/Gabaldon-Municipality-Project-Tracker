@@ -15,11 +15,11 @@
     </nav>
 
     <header class="operational-header ui-page-header">
-        <p class="operational-eyebrow">Mayor's Office Staff · Draft Progress Update</p>
+        <p class="operational-eyebrow">Mayor's Office Staff · Progress Update</p>
         <h1>Add Project Progress Update</h1>
         <p class="operational-project-title">{{ project.title }}</p>
-        <div class="operational-header__meta"><span class="mayor-status mayor-status--draft">Draft</span><p>Current official status: {{ project.get_status_display }}</p></div>
-        <p class="operational-intro">Save your proposed status and evidence as a draft. You can review it before submitting it to the Mayor Head. The official status stays the same.</p>
+        <div class="operational-header__meta"><span class="mayor-status mayor-status--pending_review">Pending Review</span><p>Current official status: {{ project.get_status_display }}</p></div>
+        <p class="operational-intro">Submit your proposed status and evidence to the Mayor Head for review. The official status stays the same until approval and application.</p>
     </header>
 
     <form method="post" enctype="multipart/form-data" class="operational-form ui-form">
@@ -58,7 +58,7 @@
                 <div class="operational-field mayor-upload">
                     <label for="{{ form.evidence_files.id_for_label }}">Supporting Evidence</label>
                     {{ form.evidence_files }}
-                    <p class="operational-help">Choose one or more JPG, PNG, GIF, WebP, or PDF files (up to 10 MB per file). Evidence is required to save a draft.</p>
+                    <p class="operational-help">Choose one or more JPG, PNG, GIF, WebP, or PDF files (up to 10 MB per file). Evidence is required to submit for review.</p>
                     <div id="mayor-selected-files" class="mayor-upload__selection" aria-live="polite">No files selected.</div>
                     {% for error in form.evidence_files.errors %}<p class="operational-error" role="alert">{{ error }}</p>{% endfor %}
                 </div>
@@ -72,10 +72,22 @@
         </section>
 
         <div class="operational-actions">
-            <p>Your draft and files stay internal until review and publication.</p>
-            <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Save Draft</button>
+            <p>Your files stay internal until review and publication.</p>
+            <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary" data-progress-submit-trigger>Submit for Mayor Head Review</button>
         </div>
     </form>
 </div>
+<div class="progress-submit-confirm" data-progress-submit-confirm hidden>
+    <div class="progress-submit-confirm__backdrop" data-progress-submit-cancel></div>
+    <section class="progress-submit-confirm__dialog ui-card" role="dialog" aria-modal="true" aria-labelledby="progress-submit-confirm-title" aria-describedby="progress-submit-confirm-message" tabindex="-1">
+        <h2 id="progress-submit-confirm-title">Submit Progress Update?</h2>
+        <p id="progress-submit-confirm-message">Are you sure you want to submit this progress update for Mayor Head review? Once submitted, you will no longer be able to edit it.</p>
+        <div class="progress-submit-confirm__actions">
+            <button type="button" class="ui-button ui-button--secondary" data-progress-submit-cancel>Cancel</button>
+            <button type="button" class="ui-button ui-button--primary" data-progress-submit-confirm>Submit for Review</button>
+        </div>
+    </section>
+</div>
 <script defer src="{% static 'js/templates/non_infrastructure/mayor_evidence_upload.js' %}"></script>
+<script defer src="{% static 'js/templates/non_infrastructure/progress_update_submit.js' %}"></script>
 {% endblock %}

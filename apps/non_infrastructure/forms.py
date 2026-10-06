@@ -3,6 +3,7 @@ import os
 from django import forms
 from django.core.files.storage import default_storage
 from django.db import transaction
+from django.utils import timezone
 
 from apps.system.choices import BARANGAY_CHOICES
 from apps.system.models import (
@@ -76,7 +77,7 @@ class NonInfrastructureProgressUpdateForm(forms.Form):
                 raise forms.ValidationError('Each supporting file must be 10 MB or smaller.')
         return uploads
 
-    def save(self, *, project, user):
+    def save(self, *, project, user, submit_for_review=False):
         if not self.is_valid():
             raise ValueError('Cannot save an invalid progress update form.')
 
@@ -92,7 +93,12 @@ class NonInfrastructureProgressUpdateForm(forms.Form):
                     proposed_status=self.cleaned_data['proposed_status'],
                     remarks=self.cleaned_data['remarks'],
                     submitted_by=user,
-                    review_status=NonInfrastructureProgressUpdate.ReviewStatus.DRAFT,
+                    review_status=(
+                        NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW
+                        if submit_for_review
+                        else NonInfrastructureProgressUpdate.ReviewStatus.DRAFT
+                    ),
+                    submitted_at=timezone.now() if submit_for_review else None,
                 )
                 for upload in self.cleaned_data['evidence_files']:
                     evidence = NonInfrastructureEvidence.objects.create(

@@ -68,6 +68,16 @@
 .mayor-evidence [aria-invalid="true"] { border-color: #a51d2d; }
 .mayor-evidence :is(a, button, input, select, textarea):focus-visible { outline: 3px solid #e3a940; outline-offset: 3px; }
 .mayor-evidence .operational-actions { flex-wrap: wrap; }
+.progress-submit-confirm[hidden] { display: none; }
+body.progress-submit-confirm-open { overflow: hidden; }
+.progress-submit-confirm { position: fixed; z-index: 1100; inset: 0; display: grid; place-items: center; padding: 1rem; }
+.progress-submit-confirm__backdrop { position: absolute; inset: 0; background: rgb(15 23 42 / 42%); backdrop-filter: blur(3px); }
+.progress-submit-confirm__dialog { position: relative; width: min(100%, 28rem); padding: 1.25rem; border: 1px solid var(--ui-border); border-radius: var(--ui-radius-lg); background: var(--ui-surface); box-shadow: 0 24px 64px rgb(15 23 42 / 22%); }
+.progress-submit-confirm__dialog h2 { margin: 0; color: var(--ui-text); font-size: 1.35rem; line-height: 1.25; }
+.progress-submit-confirm__dialog p { margin: .5rem 0 0; color: var(--ui-muted); line-height: 1.55; }
+.progress-submit-confirm__actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1.25rem; }
+.progress-submit-confirm__actions .ui-button { min-width: 6rem; }
+.progress-submit-confirm :is(button):focus-visible { outline: 3px solid #e3a940; outline-offset: 3px; }
 .mayor-evidence-lightbox-open { overflow: hidden; }
 .mayor-evidence-lightbox { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: 1.5rem; background: rgb(20 35 26 / 82%); }
 .mayor-evidence-lightbox[hidden] { display: none; }
@@ -101,4 +111,8 @@
     .mayor-progress-entry__meta { grid-template-columns: minmax(0, 1fr); }
     .mayor-evidence .mayor-upload__preview-item { flex-wrap: wrap; }
     .mayor-evidence .mayor-upload__remove { width: 100%; }
+    .progress-submit-confirm { padding: .75rem; }
+    .progress-submit-confirm__dialog { padding: 1rem; }
+    .progress-submit-confirm__actions { flex-direction: column-reverse; }
+    .progress-submit-confirm__actions .ui-button { width: 100%; }
 }

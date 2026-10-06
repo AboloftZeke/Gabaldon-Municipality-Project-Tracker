@@ -73,7 +73,7 @@ class MayorStaffProgressUpdateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Community Program')
         self.assertContains(response, 'Current official status: Planned')
-        self.assertContains(response, 'Save Draft')
+        self.assertContains(response, 'Submit for Mayor Head Review')
         self.assertContains(response, 'enctype="multipart/form-data"')
 
     def test_other_roles_cannot_read_or_post(self):
@@ -105,7 +105,7 @@ class MayorStaffProgressUpdateTests(TestCase):
         )
         self.assertEqual(NonInfrastructureProgressUpdate.objects.count(), 0)
 
-    def test_one_evidence_file_saves_draft_and_leaves_official_status_unchanged(self):
+    def test_one_evidence_file_submits_for_review_and_leaves_official_status_unchanged(self):
         self.client.force_login(self.staff)
         response = self.client.post(self.url, self.form_data())
         update = NonInfrastructureProgressUpdate.objects.get()
@@ -119,8 +119,8 @@ class MayorStaffProgressUpdateTests(TestCase):
         self.assertEqual(update.proposed_status, 'ongoing')
         self.assertEqual(update.remarks, 'The program has started.')
         self.assertEqual(update.submitted_by, self.staff)
-        self.assertEqual(update.review_status, NonInfrastructureProgressUpdate.ReviewStatus.DRAFT)
-        self.assertIsNone(update.submitted_at)
+        self.assertEqual(update.review_status, NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW)
+        self.assertIsNotNone(update.submitted_at)
         self.assertEqual(evidence.uploaded_by, self.staff)
         self.assertEqual(evidence.description, 'Attendance and activity records')
         self.assertTrue(evidence.evidence_file.name.startswith('non_infrastructure/evidence/'))
@@ -145,7 +145,7 @@ class MayorStaffProgressUpdateTests(TestCase):
             [self.staff.pk, self.staff.pk],
         )
 
-    def test_previous_status_is_read_when_draft_is_saved(self):
+    def test_previous_status_is_read_when_update_is_submitted(self):
         self.client.force_login(self.staff)
         self.client.get(self.url)
         self.project.status = 'ongoing'

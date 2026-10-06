@@ -10,6 +10,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.non_infrastructure.forms import NonInfrastructureProgressUpdateForm
 from apps.system.models import (
     NonInfrastructureProgressUpdate, NonInfrastructureProject, Project,
     ProjectRevision, UserRole,
@@ -64,7 +65,6 @@ class MayorEvidenceLifecycleTests(TestCase):
 
     def create_draft(self, proposed='ongoing', description='Staff activity proof',
                      names=('attendance.pdf',)):
-        self.client.force_login(self.staff)
         files = [SimpleUploadedFile(
             name, b'%PDF-1.4\nexample' if name.endswith('.pdf') else b'image',
             content_type={
@@ -73,14 +73,15 @@ class MayorEvidenceLifecycleTests(TestCase):
                 '.webp': 'image/webp',
             }[name[name.rfind('.'):]],
         ) for name in names]
-        response = self.client.post(self.create_url, {
+        form = NonInfrastructureProgressUpdateForm({
             'proposed_status': proposed,
             'remarks': f'Activities for {proposed} are documented.',
             'evidence_description': description,
-            'evidence_files': files,
-        })
-        self.assertEqual(response.status_code, 302)
-        return NonInfrastructureProgressUpdate.objects.latest('pk')
+        }, {'evidence_files': files})
+        self.assertTrue(form.is_valid())
+        update = form.save(project=self.project, user=self.staff)
+        self.client.force_login(self.staff)
+        return update
 
     def staff_url(self, update):
         return reverse('mayor_projects:non_infrastructure_progress_update_detail',

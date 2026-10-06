@@ -88,12 +88,47 @@ class MayorStaffProgressSubmissionTests(TestCase):
         self.assertContains(form, 'id="id_remarks"')
         self.assertContains(form, 'id="id_evidence_files"')
         self.assertContains(form, 'id="id_evidence_description"')
-        self.assertContains(form, 'Save Draft')
+        self.assertContains(form, 'Submit for Mayor Head Review')
+        self.assertContains(form, 'Submit Progress Update?')
+        self.assertContains(form, 'Are you sure you want to submit this progress update for Mayor Head review?')
+        self.assertContains(form, 'progress_update_submit.js')
         detail = self.client.get(self.detail_url)
         self.assertContains(detail, 'Submit for Review')
         self.assertContains(detail, 'PDF document')
         self.assertContains(detail, 'Open file')
         self.assertContains(detail, 'Download file')
+
+    def test_create_submits_pending_update_and_shows_it_in_head_queue(self):
+        response = self.client.post(self.create_url, {
+            'proposed_status': 'ongoing',
+            'remarks': 'The program has started.',
+            'evidence_description': 'Attendance and activity records',
+            'evidence_files': SimpleUploadedFile(
+                'submitted-proof.pdf', b'%PDF-1.4\nproof', content_type='application/pdf',
+            ),
+        }, follow=True)
+        update = NonInfrastructureProgressUpdate.objects.exclude(pk=self.update.pk).get()
+        self.assertEqual(update.review_status, NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW)
+        self.assertIsNotNone(update.submitted_at)
+        self.assertEqual(update.evidence.count(), 1)
+        self.assertContains(response, 'Progress update submitted for Mayor Head review.')
+        head = self.make_user('mayor-head', 'mayor', 'head')
+        self.client.force_login(head)
+        queue = self.client.get(reverse('mayor_projects:non_infrastructure_progress_review_queue'))
+        self.assertIn(update.pk, [item.pk for item in queue.context['pending_progress_updates']])
+
+    def test_invalid_creation_does_not_create_or_submit_update(self):
+        response = self.client.post(self.create_url, {
+            'proposed_status': 'ongoing',
+            'remarks': ' ',
+            'evidence_files': SimpleUploadedFile(
+                'invalid.exe', b'executable', content_type='application/octet-stream',
+            ),
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('remarks', response.context['form'].errors)
+        self.assertIn('evidence_files', response.context['form'].errors)
+        self.assertEqual(NonInfrastructureProgressUpdate.objects.count(), 1)
 
     def test_progress_updates_require_current_published_revision(self):
         for status in (
@@ -338,8 +373,8 @@ class MayorStaffProgressSubmissionTests(TestCase):
         })
         self.assertEqual(response.status_code, 302)
         draft = NonInfrastructureProgressUpdate.objects.exclude(pk=self.update.pk).get()
-        self.assertEqual(draft.review_status, 'draft')
-        self.assertIsNone(draft.submitted_at)
+        self.assertEqual(draft.review_status, 'pending_review')
+        self.assertIsNotNone(draft.submitted_at)
         self.assertEqual(draft.submitted_by, self.staff)
 
     def test_update_cannot_be_submitted_under_another_project(self):
