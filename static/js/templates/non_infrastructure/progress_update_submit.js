@@ -30,6 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     confirmButton.addEventListener('click', () => {
         if (submitting) return;
+        if (!form.checkValidity()) {
+            closeModal();
+            form.reportValidity();
+            return;
+        }
         submitting = true;
         confirmButton.disabled = true;
         cancelButtons.forEach((button) => { button.disabled = true; });
