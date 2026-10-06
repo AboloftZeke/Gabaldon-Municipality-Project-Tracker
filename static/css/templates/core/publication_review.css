@@ -884,7 +884,7 @@
 }
 
 .initial-publication-confirm[hidden] {
-    display: none;
+    display: none !important;
 }
 
 body.initial-publication-confirm-open {
