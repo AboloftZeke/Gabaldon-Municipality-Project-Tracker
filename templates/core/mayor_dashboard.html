@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/templates/core/mayor_dashboard.css' %}?v=20260919-1">
+<link rel="stylesheet" href="{% static 'css/templates/core/mayor_dashboard.css' %}?v=20261008-1">
 {% endblock %}
 
 {% block show_header %}
@@ -72,24 +72,26 @@
     </div>
 
     {% if returned_progress_updates or publication_revision_items %}
-    <section class="dashboard-section" aria-labelledby="action-required-heading">
+    <section class="dashboard-section action-required" aria-labelledby="action-required-heading">
         <h3 id="action-required-heading">Action Required</h3>
 
         {% if returned_progress_updates %}
         <div class="action-required-group">
             <h4>Returned Progress Update</h4>
-            <div class="action-grid">
+            <div class="action-required__grid">
                 {% for item in returned_progress_updates %}
-                <article class="action-card ui-card">
-                    <div class="action-card-title">{{ item.update.non_infrastructure.title }}</div>
-                    <p>Mayor Head requested corrections.</p>
+                <article class="action-required__card ui-card">
+                    <div class="action-required__title">{{ item.update.non_infrastructure.title }}</div>
+                    <p class="action-required__description">Mayor Head requested corrections.</p>
                     {% if item.update.review_notes %}
-                    <p>{{ item.update.review_notes }}</p>
+                    <p class="action-required__note">{{ item.update.review_notes }}</p>
                     {% endif %}
                     {% if item.update.reviewed_at %}
-                    <p>Returned: {{ item.update.reviewed_at|date:"F j, Y" }}</p>
+                    <p class="action-required__date">Returned: {{ item.update.reviewed_at|date:"F j, Y" }}</p>
                     {% endif %}
-                    <a class="ui-button ui-button--primary" href="{{ item.edit_url }}">Edit &amp; Resubmit</a>
+                    <div class="action-required__actions">
+                        <a class="ui-button ui-button--primary" href="{{ item.edit_url }}">Edit &amp; Resubmit</a>
+                    </div>
                 </article>
                 {% endfor %}
             </div>
@@ -99,19 +101,21 @@
         {% if publication_revision_items %}
         <div class="action-required-group">
             <h4>Project Needs Revision</h4>
-            <div class="action-grid">
+            <div class="action-required__grid">
                 {% for item in publication_revision_items %}
-                <article class="action-card ui-card">
-                    <div class="action-card-title">{{ item.project.title }}</div>
-                    <p>Mayor Head returned the publication for revision.</p>
+                <article class="action-required__card ui-card">
+                    <div class="action-required__title">{{ item.project.title }}</div>
+                    <p class="action-required__description">Mayor Head returned the publication for revision.</p>
                     {% if item.revision.review_notes %}
-                    <p>{{ item.revision.review_notes }}</p>
+                    <p class="action-required__note">{{ item.revision.review_notes }}</p>
                     {% endif %}
                     {% if item.revision.reviewed_at %}
-                    <p>Returned: {{ item.revision.reviewed_at|date:"F j, Y" }}</p>
+                    <p class="action-required__date">Returned: {{ item.revision.reviewed_at|date:"F j, Y" }}</p>
                     {% endif %}
-                    <a class="ui-button ui-button--primary" href="{{ item.edit_url }}">Edit Project</a>
-                    <a class="ui-button ui-button--secondary" href="{{ item.detail_url }}">Review &amp; Resubmit</a>
+                    <div class="action-required__actions">
+                        <a class="ui-button ui-button--primary" href="{{ item.edit_url }}">Edit Project</a>
+                        <a class="ui-button ui-button--secondary" href="{{ item.detail_url }}">Review &amp; Resubmit</a>
+                    </div>
                 </article>
                 {% endfor %}
             </div>
