@@ -173,10 +173,14 @@ class MayorHeadProgressReviewTests(TestCase):
         self.assertContains(response, 'Current official status:')
         self.assertContains(response, 'Previous status at draft creation:')
         self.assertContains(response, 'Proposed status:')
+        self.assertContains(response, 'Requested status change')
+        self.assertContains(response, 'Staff proposed')
+        self.assertContains(response, 'mayor-transition__to')
         self.assertContains(response, 'Community outreach has started.')
         self.assertContains(response, 'proof.pdf')
         self.assertContains(response, 'Attendance record')
         self.assertContains(response, 'mayor-staff')
+        self.assertNotContains(response, 'Changes Since Last Review')
         self.assertContains(response, 'Submitted date:')
         self.assertContains(response, 'Review status: Pending Review')
         self.assertContains(response, 'Approve')
@@ -223,6 +227,14 @@ class MayorHeadProgressReviewTests(TestCase):
         self.assertEqual(self.pending.reviewed_by, self.head)
         self.assertIsNotNone(self.pending.reviewed_at)
         self.assertEqual(self.pending.evidence.count(), 1)
+        self.assertEqual(
+            self.pending.returned_snapshot,
+            {
+                'proposed_status': 'ongoing',
+                'remarks': 'Community outreach has started.',
+                'evidence_ids': [self.pending.evidence.get().pk],
+            },
+        )
         self.assert_official_state_unchanged()
         self.assertContains(self.client.get(self.detail_url), self.pending.review_notes)
         staff_detail = reverse(

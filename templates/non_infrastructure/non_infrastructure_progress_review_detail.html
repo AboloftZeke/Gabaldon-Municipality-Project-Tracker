@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static mayor_evidence %}
 {% block title %}Review Progress Update · {{ progress_update.non_infrastructure.title }}{% endblock %}
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/operational_update.css' %}?v=20260913-1">
-<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/mayor_evidence.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/mayor_evidence.css' %}?v=20261008-3">
 {% endblock %}
 {% block content %}
 <div class="operational-workspace operational-workspace--compact mayor-evidence">
@@ -22,7 +22,65 @@
 
     <section class="operational-card ui-card" aria-labelledby="head-update-heading">
         <div class="operational-section-heading"><span class="operational-section-number">01</span><h2 id="head-update-heading">Submitted Update</h2></div>
-        <p class="mayor-transition"><span>{{ progress_update.get_previous_status_display|default:"Not recorded" }}</span><span aria-hidden="true">→</span><span>{{ progress_update.get_proposed_status_display }}</span></p>
+        {% if returned_change_comparison %}
+        <section class="mayor-change-review" aria-labelledby="changes-since-review-heading">
+            <h3 id="changes-since-review-heading">Changes Since Last Review</h3>
+            {% if returned_change_comparison.status_changed %}
+            <div class="mayor-change-review__item">
+                <h4>Proposed status</h4>
+                <p>{{ returned_change_comparison.previous_status }} <span aria-hidden="true">→</span> <strong>{{ returned_change_comparison.current_status }}</strong></p>
+            </div>
+            {% endif %}
+            {% if returned_change_comparison.remarks_changed %}
+            <div class="mayor-change-review__remarks">
+                <h4>Remarks</h4>
+                <div>
+                    <section>
+                        <h5>Previous</h5>
+                        <p>{{ returned_change_comparison.previous_remarks|linebreaksbr }}</p>
+                    </section>
+                    <section>
+                        <h5>Revised</h5>
+                        <p>{{ returned_change_comparison.current_remarks|linebreaksbr }}</p>
+                    </section>
+                </div>
+            </div>
+            {% endif %}
+            {% if returned_change_comparison.added_evidence %}
+            <div class="mayor-change-review__evidence">
+                <section>
+                    <h4>Existing Evidence</h4>
+                    <ul>
+                        {% for item in returned_change_comparison.existing_evidence %}
+                        <li><a href="{{ item.evidence_file.url }}" target="_blank" rel="noopener">{{ item.evidence_file.name|evidence_filename }}</a>{% if item.description %}<span>{{ item.description }}</span>{% endif %}</li>
+                        {% empty %}
+                        <li>No evidence was attached when the update was returned.</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+                <section class="mayor-change-review__evidence-added">
+                    <h4>Added Evidence</h4>
+                    <ul>
+                        {% for item in returned_change_comparison.added_evidence %}
+                        <li><a href="{{ item.evidence_file.url }}" target="_blank" rel="noopener">{{ item.evidence_file.name|evidence_filename }}</a>{% if item.description %}<span>{{ item.description }}</span>{% endif %}</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+        <div class="mayor-change-summary" aria-label="Staff-proposed status change">
+            <span class="mayor-change-summary__label">Requested status change</span>
+            <p class="mayor-transition mayor-transition--change">
+                <span class="mayor-transition__from">{{ progress_update.get_previous_status_display|default:"Not recorded" }}</span>
+                <span class="mayor-transition__arrow" aria-hidden="true">→</span>
+                <span class="mayor-transition__to">
+                    <span class="mayor-transition__to-label">Staff proposed</span>
+                    {{ progress_update.get_proposed_status_display }}
+                </span>
+            </p>
+        </div>
         <dl class="mayor-summary">
             <div><dt>Current official status:</dt><dd>{{ progress_update.non_infrastructure.get_status_display }}</dd></div>
             <div><dt>Previous status at draft creation:</dt><dd>{{ progress_update.get_previous_status_display|default:"Not recorded" }}</dd></div>

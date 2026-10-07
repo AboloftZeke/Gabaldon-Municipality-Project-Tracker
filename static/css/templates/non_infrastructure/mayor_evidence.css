@@ -26,6 +26,32 @@
 .mayor-evidence .mayor-summary__wide { grid-column: 1 / -1; }
 .mayor-evidence .mayor-transition { display: flex; flex-wrap: wrap; gap: .55rem; align-items: center; margin: 0 0 1rem; font-weight: 750; }
 .mayor-evidence .mayor-transition span { padding: .55rem .75rem; border-radius: 9px; background: #edf6f0; overflow-wrap: anywhere; }
+.mayor-evidence .mayor-change-summary { margin: 0 0 1rem; padding: 1rem; border: 1px solid #d5e2d8; border-radius: 12px; background: #f8fbf8; }
+.mayor-evidence .mayor-change-summary__label { display: block; margin-bottom: .7rem; color: #425d4d; font-size: .76rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.mayor-evidence .mayor-transition--change { gap: .65rem; align-items: stretch; margin: 0; }
+.mayor-evidence .mayor-transition--change .mayor-transition__from,
+.mayor-evidence .mayor-transition--change .mayor-transition__to { display: flex; flex-direction: column; justify-content: center; min-width: 7rem; padding: .7rem .85rem; border: 1px solid #d5e2d8; border-radius: 9px; background: #fff; }
+.mayor-evidence .mayor-transition--change .mayor-transition__arrow { align-self: center; padding: 0; background: transparent; color: #66766d; font-size: 1.2rem; }
+.mayor-evidence .mayor-transition--change .mayor-transition__to { border-color: #d4a64d; background: #fff5dd; color: #593d08; box-shadow: inset 3px 0 #d4a64d; }
+.mayor-evidence .mayor-transition__to-label { margin-bottom: .2rem; padding: 0 !important; background: transparent !important; color: #765411; font-size: .68rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.mayor-evidence .mayor-change-review { display: grid; gap: .85rem; margin: 0 0 1rem; padding: 1rem; border: 1px solid #d4a64d; border-radius: 12px; background: #fffbef; }
+.mayor-evidence .mayor-change-review h3 { margin: 0; color: #593d08; font-size: 1.05rem; }
+.mayor-evidence .mayor-change-review h4 { margin: 0 0 .4rem; color: #684316; font-size: .87rem; }
+.mayor-evidence .mayor-change-review__item,
+.mayor-evidence .mayor-change-review__remarks,
+.mayor-evidence .mayor-change-review__evidence > section { min-width: 0; padding: .8rem; border: 1px solid #ead9ae; border-radius: 9px; background: #fff; }
+.mayor-evidence .mayor-change-review__item p { margin: 0; color: #593d08; line-height: 1.5; overflow-wrap: anywhere; }
+.mayor-evidence .mayor-change-review__remarks > div,
+.mayor-evidence .mayor-change-review__evidence { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.mayor-evidence .mayor-change-review__remarks section { min-width: 0; padding: .7rem; border-radius: 7px; background: #f8faf9; }
+.mayor-evidence .mayor-change-review__remarks section:last-child { background: #fff5dd; }
+.mayor-evidence .mayor-change-review__remarks h5 { margin: 0 0 .3rem; color: #425d4d; font-size: .76rem; }
+.mayor-evidence .mayor-change-review__remarks p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.mayor-evidence .mayor-change-review__evidence ul { display: grid; gap: .45rem; margin: 0; padding: 0; list-style: none; }
+.mayor-evidence .mayor-change-review__evidence li { display: grid; gap: .2rem; min-width: 0; overflow-wrap: anywhere; }
+.mayor-evidence .mayor-change-review__evidence li a { color: #1a5a3a; font-weight: 700; }
+.mayor-evidence .mayor-change-review__evidence li span { color: #425d4d; font-size: .84rem; }
+.mayor-evidence .mayor-change-review__evidence-added { border-color: #d4a64d !important; background: #fffaf0 !important; }
 .mayor-evidence .mayor-upload { padding: 1rem; border: 2px dashed #a5c5ae; border-radius: 12px; background: #f8fbf8; }
 .mayor-evidence .mayor-upload input[type="file"] { max-width: 100%; background: #fff; }
 .mayor-evidence .mayor-upload__selection { margin-top: .75rem; color: #334a39; font-size: .84rem; overflow-wrap: anywhere; }
@@ -107,6 +133,11 @@ body.progress-submit-confirm-open { overflow: hidden; }
 @media (max-width: 720px) {
     .mayor-evidence .mayor-summary, .mayor-evidence .mayor-decision { grid-template-columns: minmax(0, 1fr); }
     .mayor-evidence .mayor-summary__wide { grid-column: auto; }
+    .mayor-evidence .mayor-change-review__remarks > div,
+    .mayor-evidence .mayor-change-review__evidence { grid-template-columns: minmax(0, 1fr); }
+    .mayor-evidence .mayor-transition--change { align-items: center; }
+    .mayor-evidence .mayor-transition--change .mayor-transition__from,
+    .mayor-evidence .mayor-transition--change .mayor-transition__to { min-width: 0; flex: 1 1 8rem; }
     .mayor-evidence .mayor-decision .operational-button, .mayor-evidence .operational-actions .ui-button { width: 100%; }
     .mayor-progress-entry__meta { grid-template-columns: minmax(0, 1fr); }
     .mayor-evidence .mayor-upload__preview-item { flex-wrap: wrap; }

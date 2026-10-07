@@ -93,6 +93,46 @@ class MayorsOfficeEditMixin(LoginRequiredMixin, UserPassesTestMixin):
             return "/"
 
 
+def _returned_change_comparison(update):
+    snapshot = update.returned_snapshot
+    if (
+        update.review_status
+        != NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW
+        or snapshot is None
+    ):
+        return None
+
+    evidence = list(update.evidence.all())
+    returned_evidence_ids = set(snapshot['evidence_ids'])
+    existing_evidence = [
+        item for item in evidence
+        if item.pk in returned_evidence_ids
+    ]
+    added_evidence = [
+        item for item in evidence
+        if item.pk not in returned_evidence_ids
+    ]
+    status_changed = snapshot['proposed_status'] != update.proposed_status
+    remarks_changed = snapshot['remarks'] != update.remarks
+    if not (status_changed or remarks_changed or added_evidence):
+        return None
+
+    status_labels = dict(NonInfrastructureProject.STATUS_CHOICES)
+    return {
+        'status_changed': status_changed,
+        'previous_status': status_labels.get(
+            snapshot['proposed_status'],
+            snapshot['proposed_status'],
+        ),
+        'current_status': update.get_proposed_status_display(),
+        'remarks_changed': remarks_changed,
+        'previous_remarks': snapshot['remarks'],
+        'current_remarks': update.remarks,
+        'existing_evidence': existing_evidence,
+        'added_evidence': added_evidence,
+    }
+
+
 class NonInfrastructureProjectDashboardView(MayorsOfficeRequiredMixin, TemplateView):
         """Dashboard for Mayor's Office to manage non-infrastructure projects"""
         template_name = 'non_infrastructure/non_infrastructure_dashboard.html'
@@ -639,6 +679,9 @@ class NonInfrastructureProgressReviewDetailView(MayorHeadOnlyMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['return_form'] = kwargs.get('return_form') or NonInfrastructureProgressReturnForm()
+        comparison = _returned_change_comparison(self.object)
+        if comparison is not None:
+            context['returned_change_comparison'] = comparison
         return context
 
 
@@ -659,14 +702,25 @@ class NonInfrastructureProgressReviewDecisionView(MayorHeadOnlyMixin, View):
                 return redirect('mayor_projects:non_infrastructure_progress_review_detail', update_pk=update_pk)
 
             notes = ''
+            returned_snapshot = None
             if self.decision == NonInfrastructureProgressUpdate.ReviewStatus.RETURNED:
                 form = NonInfrastructureProgressReturnForm(request.POST)
                 if not form.is_valid():
                     return render(request, 'non_infrastructure/non_infrastructure_progress_review_detail.html', {
                         'progress_update': update,
                         'return_form': form,
+                        'returned_change_comparison': (
+                            _returned_change_comparison(update)
+                        ),
                     }, status=400)
                 notes = form.cleaned_data['review_notes']
+                returned_snapshot = {
+                    'proposed_status': update.proposed_status,
+                    'remarks': update.remarks,
+                    'evidence_ids': [
+                        item.pk for item in update.evidence.all()
+                    ],
+                }
             elif not update.evidence.exists():
                 messages.error(request, 'A progress update needs supporting evidence before approval.')
                 return redirect('mayor_projects:non_infrastructure_progress_review_detail', update_pk=update_pk)
@@ -675,9 +729,14 @@ class NonInfrastructureProgressReviewDecisionView(MayorHeadOnlyMixin, View):
             update.review_notes = notes
             update.reviewed_by = request.user
             update.reviewed_at = timezone.now()
-            update.save(update_fields=[
-                'review_status', 'review_notes', 'reviewed_by', 'reviewed_at', 'updated_at',
-            ])
+            update_fields = [
+                'review_status', 'review_notes', 'reviewed_by', 'reviewed_at',
+                'updated_at',
+            ]
+            if returned_snapshot is not None:
+                update.returned_snapshot = returned_snapshot
+                update_fields.append('returned_snapshot')
+            update.save(update_fields=update_fields)
             messages.success(request, f'Progress update {update.get_review_status_display().lower()}.')
         return redirect('mayor_projects:non_infrastructure_progress_review_detail', update_pk=update_pk)
 

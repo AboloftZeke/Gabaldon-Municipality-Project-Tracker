@@ -87,6 +87,25 @@ class MayorStaffProgressSubmissionTests(TestCase):
             args=[self.project.pk, update.pk],
         )
 
+    def return_update_to_staff(self):
+        head = self.make_user('mayor-head-for-diff', 'mayor', 'head')
+        self.update.review_status = (
+            NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW
+        )
+        self.update.submitted_at = timezone.now()
+        self.update.save(update_fields=['review_status', 'submitted_at'])
+        return_url = reverse(
+            'mayor_projects:non_infrastructure_progress_return',
+            args=[self.update.pk],
+        )
+        self.client.force_login(head)
+        response = self.client.post(return_url, {
+            'review_notes': 'Please make the requested corrections.',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.update.refresh_from_db()
+        self.client.force_login(self.staff)
+
     def test_internal_form_and_draft_show_evidence_actions(self):
         form = self.client.get(self.create_url)
         self.assertContains(form, 'id="mayor-selected-files"')
@@ -482,6 +501,181 @@ class MayorStaffProgressSubmissionTests(TestCase):
         self.assertEqual(self.update.remarks, 'The program is now complete.')
         self.assertEqual(NonInfrastructureProgressUpdate.objects.filter(non_infrastructure=self.project).count(), 1)
         self.assertEqual(self.update.evidence.count(), 1)
+
+    def test_resubmitted_status_change_is_shown_without_unchanged_fields(self):
+        self.return_update_to_staff()
+
+        response = self.client.post(self.edit_url, {
+            'proposed_status': 'completed',
+            'remarks': 'The program has started.',
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.update.refresh_from_db()
+        head = self.make_user('mayor-head-review-status', 'mayor', 'head')
+        self.client.force_login(head)
+        review = self.client.get(reverse(
+            'mayor_projects:non_infrastructure_progress_review_detail',
+            args=[self.update.pk],
+        ))
+
+        self.assertContains(review, 'Changes Since Last Review')
+        self.assertContains(review, 'Planned')
+        self.assertContains(review, 'Completed')
+        comparison = review.context['returned_change_comparison']
+        self.assertTrue(comparison['status_changed'])
+        self.assertFalse(comparison['remarks_changed'])
+        self.assertEqual(comparison['added_evidence'], [])
+        self.assertNotContains(review, 'mayor-change-review__remarks')
+        self.assertNotContains(review, 'mayor-change-review__evidence')
+
+    def test_resubmitted_remarks_show_previous_and_revised_values_only(self):
+        self.return_update_to_staff()
+
+        response = self.client.post(self.edit_url, {
+            'proposed_status': 'ongoing',
+            'remarks': 'The program is now 75% complete.',
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.update.refresh_from_db()
+        head = self.make_user('mayor-head-review-remarks', 'mayor', 'head')
+        self.client.force_login(head)
+        review = self.client.get(reverse(
+            'mayor_projects:non_infrastructure_progress_review_detail',
+            args=[self.update.pk],
+        ))
+
+        self.assertContains(review, 'Previous')
+        self.assertContains(review, 'The program has started.')
+        self.assertContains(review, 'Revised')
+        self.assertContains(review, 'The program is now 75% complete.')
+        comparison = review.context['returned_change_comparison']
+        self.assertFalse(comparison['status_changed'])
+        self.assertTrue(comparison['remarks_changed'])
+        self.assertEqual(comparison['added_evidence'], [])
+        self.assertNotContains(review, 'mayor-change-review__item')
+        self.assertNotContains(review, 'mayor-change-review__evidence')
+
+    def test_resubmitted_added_evidence_is_distinguished_from_existing(self):
+        self.return_update_to_staff()
+
+        response = self.client.post(self.edit_url, {
+            'proposed_status': 'ongoing',
+            'remarks': 'The program has started.',
+            'evidence_files': SimpleUploadedFile(
+                'new-report.pdf',
+                b'%PDF-1.4\nnew proof',
+                content_type='application/pdf',
+            ),
+            'evidence_description': 'Updated activity report',
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.update.refresh_from_db()
+        head = self.make_user('mayor-head-review-evidence', 'mayor', 'head')
+        self.client.force_login(head)
+        review = self.client.get(reverse(
+            'mayor_projects:non_infrastructure_progress_review_detail',
+            args=[self.update.pk],
+        ))
+
+        self.assertContains(review, 'Existing Evidence')
+        self.assertContains(review, 'new-report.pdf')
+        self.assertContains(review, 'Added Evidence')
+        self.assertContains(review, 'Updated activity report')
+        comparison = review.context['returned_change_comparison']
+        self.assertFalse(comparison['status_changed'])
+        self.assertFalse(comparison['remarks_changed'])
+        self.assertEqual(len(comparison['existing_evidence']), 1)
+        self.assertEqual(len(comparison['added_evidence']), 1)
+        self.assertNotContains(review, 'mayor-change-review__item')
+        self.assertNotContains(review, 'mayor-change-review__remarks')
+
+    def test_comparison_disappears_after_update_is_reviewed(self):
+        self.return_update_to_staff()
+        self.client.post(self.edit_url, {
+            'proposed_status': 'ongoing',
+            'remarks': 'The program has now started.',
+        })
+        self.update.refresh_from_db()
+        head = self.make_user('mayor-head-final-review', 'mayor', 'head')
+        self.client.force_login(head)
+        detail_url = reverse(
+            'mayor_projects:non_infrastructure_progress_review_detail',
+            args=[self.update.pk],
+        )
+        self.assertContains(
+            self.client.get(detail_url),
+            'Changes Since Last Review',
+        )
+
+        approve_url = reverse(
+            'mayor_projects:non_infrastructure_progress_approve',
+            args=[self.update.pk],
+        )
+        response = self.client.post(approve_url)
+
+        self.assertEqual(response.status_code, 302)
+        self.update.refresh_from_db()
+        self.assertEqual(
+            self.update.review_status,
+            NonInfrastructureProgressUpdate.ReviewStatus.APPROVED,
+        )
+        self.assertIsNotNone(self.update.returned_snapshot)
+        self.assertNotContains(
+            self.client.get(detail_url),
+            'Changes Since Last Review',
+        )
+
+    def test_second_return_replaces_snapshot_with_latest_reviewed_version(self):
+        self.return_update_to_staff()
+        first_resubmission = self.client.post(self.edit_url, {
+            'proposed_status': 'completed',
+            'remarks': 'The first correction is complete.',
+        })
+        self.assertEqual(first_resubmission.status_code, 302)
+
+        head = get_user_model().objects.get(username='mayor-head-for-diff')
+        return_url = reverse(
+            'mayor_projects:non_infrastructure_progress_return',
+            args=[self.update.pk],
+        )
+        self.client.force_login(head)
+        second_return = self.client.post(return_url, {
+            'review_notes': 'One more correction is needed.',
+        })
+
+        self.assertEqual(second_return.status_code, 302)
+        self.update.refresh_from_db()
+        self.assertEqual(
+            self.update.returned_snapshot['proposed_status'],
+            'completed',
+        )
+        self.assertEqual(
+            self.update.returned_snapshot['remarks'],
+            'The first correction is complete.',
+        )
+        self.client.force_login(self.staff)
+        second_resubmission = self.client.post(self.edit_url, {
+            'proposed_status': 'completed',
+            'remarks': 'The final correction is complete.',
+        })
+        self.assertEqual(second_resubmission.status_code, 302)
+        self.client.force_login(head)
+
+        review = self.client.get(reverse(
+            'mayor_projects:non_infrastructure_progress_review_detail',
+            args=[self.update.pk],
+        ))
+
+        self.assertContains(review, 'Changes Since Last Review')
+        self.assertContains(review, 'The first correction is complete.')
+        self.assertContains(review, 'The final correction is complete.')
+        self.assertNotContains(review, 'The program has started.')
+        comparison = review.context['returned_change_comparison']
+        self.assertFalse(comparison['status_changed'])
+        self.assertTrue(comparison['remarks_changed'])
 
     def test_returned_update_edit_is_restricted_to_owner(self):
         other_staff = self.make_user('other-mayor-staff', 'mayor', 'staff')

@@ -648,6 +648,7 @@ class NonInfrastructureProgressUpdate(models.Model):
     )
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_notes = models.TextField(blank=True, default='')
+    returned_snapshot = models.JSONField(null=True, blank=True)
     applied_at = models.DateTimeField(null=True, blank=True)
     applied_by = models.ForeignKey(
         User,
