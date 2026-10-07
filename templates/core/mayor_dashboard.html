@@ -71,6 +71,55 @@
         </div>
     </div>
 
+    {% if returned_progress_updates or publication_revision_items %}
+    <section class="dashboard-section" aria-labelledby="action-required-heading">
+        <h3 id="action-required-heading">Action Required</h3>
+
+        {% if returned_progress_updates %}
+        <div class="action-required-group">
+            <h4>Returned Progress Update</h4>
+            <div class="action-grid">
+                {% for item in returned_progress_updates %}
+                <article class="action-card ui-card">
+                    <div class="action-card-title">{{ item.update.non_infrastructure.title }}</div>
+                    <p>Mayor Head requested corrections.</p>
+                    {% if item.update.review_notes %}
+                    <p>{{ item.update.review_notes }}</p>
+                    {% endif %}
+                    {% if item.update.reviewed_at %}
+                    <p>Returned: {{ item.update.reviewed_at|date:"F j, Y" }}</p>
+                    {% endif %}
+                    <a class="ui-button ui-button--primary" href="{{ item.edit_url }}">Edit &amp; Resubmit</a>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if publication_revision_items %}
+        <div class="action-required-group">
+            <h4>Project Needs Revision</h4>
+            <div class="action-grid">
+                {% for item in publication_revision_items %}
+                <article class="action-card ui-card">
+                    <div class="action-card-title">{{ item.project.title }}</div>
+                    <p>Mayor Head returned the publication for revision.</p>
+                    {% if item.revision.review_notes %}
+                    <p>{{ item.revision.review_notes }}</p>
+                    {% endif %}
+                    {% if item.revision.reviewed_at %}
+                    <p>Returned: {{ item.revision.reviewed_at|date:"F j, Y" }}</p>
+                    {% endif %}
+                    <a class="ui-button ui-button--primary" href="{{ item.edit_url }}">Edit Project</a>
+                    <a class="ui-button ui-button--secondary" href="{{ item.detail_url }}">Review &amp; Resubmit</a>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </section>
+    {% endif %}
+
     <!-- Non-Infrastructure Projects Section -->
     <div class="dashboard-section">
         <h3><span class="section-icon">■</span>Program Management</h3>

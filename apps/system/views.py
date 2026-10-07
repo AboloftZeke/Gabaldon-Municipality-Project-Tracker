@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Prefetch, Q
+from django.db.models import OuterRef, Prefetch, Q, Subquery
 from django.conf import settings
 from .forms import (
     account_assignment, account_role_label,
@@ -471,7 +471,65 @@ class MayorDashboardView(StaffRequiredMixin, TemplateView):
         context['planned_projects'] = 0
         context['in_progress_projects'] = 0
         context['completed_projects'] = 0
-        
+
+        from django.urls import reverse
+        from .models import NonInfrastructureProgressUpdate, ProjectRevision
+        from .permissions import can_manage_non_infrastructure
+        from .publication_service import OPEN_REVISION_STATUSES
+        from .publication_workflow import PublicationStatus
+
+        if can_manage_non_infrastructure(self.request.user):
+            returned_updates = (
+                NonInfrastructureProgressUpdate.objects.filter(
+                    review_status=(
+                        NonInfrastructureProgressUpdate.ReviewStatus.RETURNED
+                    ),
+                    submitted_by_id=self.request.user.pk,
+                )
+                .select_related('non_infrastructure')
+                .order_by('-reviewed_at', '-progress_update_id')
+            )
+            context['returned_progress_updates'] = [
+                {
+                    'update': update,
+                    'edit_url': reverse(
+                        'mayor_projects:non_infrastructure_progress_update_edit',
+                        args=[update.non_infrastructure_id, update.pk],
+                    ),
+                }
+                for update in returned_updates
+            ]
+
+            active_revision = ProjectRevision.objects.filter(
+                project_id=OuterRef('project_id'),
+                status__in=OPEN_REVISION_STATUSES,
+            ).order_by('-revision_number', '-pk').values('pk')[:1]
+            revision_items = (
+                ProjectRevision.objects.filter(
+                    status=PublicationStatus.NEEDS_REVISION,
+                    project__project_type='non_infrastructure',
+                    project__non_infrastructure_project__isnull=False,
+                    pk=Subquery(active_revision),
+                )
+                .select_related('project__non_infrastructure_project')
+                .order_by('-reviewed_at', '-pk')
+            )
+            context['publication_revision_items'] = [
+                {
+                    'revision': revision,
+                    'project': revision.project.non_infrastructure_project,
+                    'edit_url': reverse(
+                        'mayor_projects:non_infrastructure_project_update',
+                        args=[revision.project.non_infrastructure_project.pk],
+                    ),
+                    'detail_url': reverse(
+                        'mayor_projects:non_infrastructure_project_detail',
+                        args=[revision.project.non_infrastructure_project.pk],
+                    ),
+                }
+                for revision in revision_items
+            ]
+
         return context
 
 
@@ -853,6 +911,7 @@ class PasswordChangeView(LoginRequiredMixin, View):
             {'form': form}
         )
 
+
     def post(self, request):
         form = UserPasswordChangeForm(
             request.user,
@@ -879,4 +938,3 @@ class PasswordChangeView(LoginRequiredMixin, View):
             self.template_name,
             {'form': form}
         )
-
