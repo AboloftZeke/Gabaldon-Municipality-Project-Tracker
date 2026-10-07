@@ -175,7 +175,6 @@ class InternalRouteAccessTests(TestCase):
             (self.engineer_head, 'revision_queue'),
             (self.engineer_head, 'infrastructure_report'),
             (self.mayor_staff, 'mayor_staff_dashboard'),
-            (self.mayor_staff, 'progress_create'),
             (self.mayor_head, 'mayor_head_dashboard'),
             (self.mayor_head, 'progress_queue'),
             (self.mayor_head, 'progress_review'),
@@ -185,6 +184,31 @@ class InternalRouteAccessTests(TestCase):
             with self.subTest(actor=actor.username, route=key):
                 self.client.force_login(actor)
                 self.assertEqual(self.client.get(routes[key]).status_code, 200)
+
+        self.client.force_login(self.mayor_staff)
+        response = self.client.get(routes['progress_create'])
+        self.assertRedirects(
+            response,
+            self.route('mayor_projects:non_infrastructure_project_detail', self.mayor.pk),
+            fetch_redirect_response=False,
+        )
+        self.assertEqual(
+            NonInfrastructureProgressUpdate.objects.filter(
+                non_infrastructure=self.mayor,
+            ).count(),
+            1,
+        )
+
+    def test_mayor_staff_can_create_progress_update_without_active_update(self):
+        self.update.delete()
+        self.client.force_login(self.mayor_staff)
+
+        response = self.client.get(
+            self.route('mayor_projects:non_infrastructure_progress_update_create', self.mayor.pk),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'form')
 
     def test_wrong_role_cannot_probe_missing_report_or_revision(self):
         for user in (self.engineer_staff, self.mayor_staff, self.public):
