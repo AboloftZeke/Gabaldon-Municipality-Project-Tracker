@@ -52,6 +52,10 @@ class MayorStaffProgressSubmissionTests(TestCase):
             'mayor_projects:non_infrastructure_progress_update_submit',
             args=[self.project.pk, self.update.pk],
         )
+        self.edit_url = reverse(
+            'mayor_projects:non_infrastructure_progress_update_edit',
+            args=[self.project.pk, self.update.pk],
+        )
 
     def make_user(self, username, department, role):
         user = get_user_model().objects.create_user(username=username, password='testpass123')
@@ -432,6 +436,87 @@ class MayorStaffProgressSubmissionTests(TestCase):
                 self.update.refresh_from_db()
                 self.assertEqual(self.update.review_status, status)
                 self.assertIsNone(self.update.submitted_at)
+
+    def test_returned_update_owner_can_see_edit_and_resubmit(self):
+        self.update.review_status = NonInfrastructureProgressUpdate.ReviewStatus.RETURNED
+        self.update.review_notes = 'Add the attendance sheet.'
+        self.update.save(update_fields=['review_status', 'review_notes'])
+
+        response = self.client.get(self.detail_url)
+
+        self.assertContains(response, 'Edit &amp; Resubmit')
+        self.assertContains(response, 'Reason for correction')
+        self.assertContains(response, 'Add the attendance sheet.')
+
+    def test_returned_update_owner_can_open_edit_form_with_existing_values(self):
+        self.update.review_status = NonInfrastructureProgressUpdate.ReviewStatus.RETURNED
+        self.update.save(update_fields=['review_status'])
+
+        response = self.client.get(self.edit_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['form'].fields['proposed_status'].initial, 'ongoing')
+        self.assertEqual(response.context['form'].fields['remarks'].initial, 'The program has started.')
+        self.assertEqual(response.context['form'].fields['evidence_description'].initial, 'Activity report')
+        self.assertContains(response, 'Resubmit for Mayor Head Review')
+        self.assertContains(response, 'Existing Evidence')
+
+    def test_returned_update_owner_can_edit_and_resubmit(self):
+        original_id = self.update.pk
+        self.update.review_status = NonInfrastructureProgressUpdate.ReviewStatus.RETURNED
+        self.update.review_notes = 'Add the attendance sheet.'
+        self.update.save(update_fields=['review_status', 'review_notes'])
+
+        response = self.client.post(self.edit_url, {
+            'proposed_status': 'completed',
+            'remarks': 'The program is now complete.',
+        }, follow=True)
+
+        self.assertRedirects(response, self.detail_url)
+        self.assertContains(response, 'Progress update resubmitted for Mayor Head review.')
+        self.update.refresh_from_db()
+        self.assertEqual(self.update.pk, original_id)
+        self.assertEqual(self.update.review_status, NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW)
+        self.assertIsNotNone(self.update.submitted_at)
+        self.assertEqual(self.update.proposed_status, 'completed')
+        self.assertEqual(self.update.remarks, 'The program is now complete.')
+        self.assertEqual(NonInfrastructureProgressUpdate.objects.filter(non_infrastructure=self.project).count(), 1)
+        self.assertEqual(self.update.evidence.count(), 1)
+
+    def test_returned_update_edit_is_restricted_to_owner(self):
+        other_staff = self.make_user('other-mayor-staff', 'mayor', 'staff')
+        self.update.review_status = NonInfrastructureProgressUpdate.ReviewStatus.RETURNED
+        self.update.save(update_fields=['review_status'])
+
+        self.client.force_login(other_staff)
+        self.assertEqual(self.client.get(self.edit_url).status_code, 404)
+        self.assertEqual(self.client.post(self.edit_url, {
+            'proposed_status': 'completed',
+            'remarks': 'Not permitted.',
+        }).status_code, 404)
+
+        self.client.force_login(self.make_user('mayor-head', 'mayor', 'head'))
+        self.assertEqual(self.client.get(self.edit_url).status_code, 404)
+        self.assertEqual(self.client.post(self.edit_url, {
+            'proposed_status': 'completed',
+            'remarks': 'Not permitted.',
+        }).status_code, 404)
+
+    def test_non_returned_update_cannot_be_edited_through_returned_update_path(self):
+        self.update.review_status = NonInfrastructureProgressUpdate.ReviewStatus.DRAFT
+        self.update.save(update_fields=['review_status'])
+
+        response = self.client.get(self.edit_url)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(self.client.post(self.edit_url, {
+            'proposed_status': 'completed',
+            'remarks': 'Changed.',
+        }).status_code, 404)
+
+        self.update.refresh_from_db()
+        self.assertEqual(self.update.review_status, NonInfrastructureProgressUpdate.ReviewStatus.DRAFT)
+        self.assertEqual(self.update.remarks, 'The program has started.')
 
     def test_only_owner_with_mayor_staff_role_can_view_and_submit(self):
         other_staff = self.make_user('other-mayor-staff', 'mayor', 'staff')

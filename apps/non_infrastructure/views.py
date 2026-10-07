@@ -499,6 +499,47 @@ class NonInfrastructureProgressUpdateDetailView(MayorsOfficeOnlyMixin, DetailVie
         ).select_related('non_infrastructure').prefetch_related('evidence')
 
 
+class NonInfrastructureProgressUpdateEditView(MayorsOfficeOnlyMixin, FormView):
+    """Let the original staff member correct and resubmit a returned update."""
+
+    form_class = NonInfrastructureProgressUpdateForm
+    template_name = 'non_infrastructure/non_infrastructure_progress_update_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.project = get_object_or_404(NonInfrastructureProject, pk=kwargs['pk'])
+        self.update = get_object_or_404(
+            NonInfrastructureProgressUpdate.objects.select_related('non_infrastructure').prefetch_related('evidence'),
+            pk=kwargs['update_pk'],
+            non_infrastructure_id=self.project.pk,
+            submitted_by=request.user,
+            review_status=NonInfrastructureProgressUpdate.ReviewStatus.RETURNED,
+        )
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['project'] = self.project
+        context['is_edit'] = True
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['project'] = self.project
+        kwargs['update_instance'] = self.update
+        return kwargs
+
+    def form_valid(self, form):
+        update = form.save_update(update=self.update, user=self.request.user)
+        if update is None:
+            return self.form_invalid(form)
+        messages.success(self.request, 'Progress update resubmitted for Mayor Head review.')
+        return redirect(
+            'mayor_projects:non_infrastructure_progress_update_detail',
+            pk=self.project.pk,
+            update_pk=self.update.pk,
+        )
+
+
 class NonInfrastructureProgressUpdateSubmitView(MayorsOfficeOnlyMixin, View):
     """Move an owned draft with evidence to pending review exactly once."""
 

@@ -49,6 +49,10 @@
             {% csrf_token %}<p>Submit only after checking the update and its evidence.</p>
             <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Submit for Review</button>
         </form>
+    {% elif progress_update.review_status == 'returned' and progress_update.submitted_by_id == request.user.pk %}
+        <form method="get" action="{% url 'mayor_projects:non_infrastructure_progress_update_edit' progress_update.non_infrastructure_id progress_update.pk %}" class="operational-actions">
+            <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Edit &amp; Resubmit</button>
+        </form>
     {% endif %}
 </div>
 <script defer src="{% static 'js/templates/non_infrastructure/mayor_evidence_upload.js' %}"></script>

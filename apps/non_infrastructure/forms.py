@@ -65,9 +65,16 @@ class NonInfrastructureProgressUpdateForm(forms.Form):
         widget=forms.Textarea(attrs={'rows': 2}),
     )
 
-    def __init__(self, *args, project=None, **kwargs):
+    def __init__(self, *args, project=None, update_instance=None, **kwargs):
         self.project = project
+        self.update_instance = update_instance
         super().__init__(*args, **kwargs)
+        if update_instance is not None:
+            self.fields['proposed_status'].initial = update_instance.proposed_status
+            self.fields['remarks'].initial = update_instance.remarks
+            self.fields['evidence_description'].initial = (
+                update_instance.evidence.first().description if update_instance.evidence.exists() else ''
+            )
 
     def clean_proposed_status(self):
         proposed_status = self.cleaned_data['proposed_status']
@@ -78,6 +85,8 @@ class NonInfrastructureProgressUpdateForm(forms.Form):
     def clean_evidence_files(self):
         uploads = self.cleaned_data['evidence_files']
         if not uploads:
+            if self.update_instance and self.update_instance.evidence.exists():
+                return []
             raise forms.ValidationError('Upload at least one supporting file.')
         for upload in uploads:
             extension = os.path.splitext(upload.name)[1].lower()
@@ -131,6 +140,40 @@ class NonInfrastructureProgressUpdateForm(forms.Form):
                 default_storage.delete(name)
             raise
         return update
+
+    def save_update(self, *, update, user):
+        if not self.is_valid():
+            raise ValueError('Cannot save an invalid progress update form.')
+
+        with transaction.atomic():
+            locked_update = NonInfrastructureProgressUpdate.objects.select_for_update().get(pk=update.pk)
+            if locked_update.review_status != NonInfrastructureProgressUpdate.ReviewStatus.RETURNED:
+                raise PermissionDenied('Only returned updates can be edited and resubmitted.')
+            if locked_update.submitted_by_id != user.pk:
+                raise PermissionDenied('You can only edit your own returned progress update.')
+            if self.cleaned_data['proposed_status'] == locked_update.non_infrastructure.status:
+                self.add_error('proposed_status', self.SAME_STATUS_ERROR)
+                return None
+
+            locked_update.proposed_status = self.cleaned_data['proposed_status']
+            locked_update.remarks = self.cleaned_data['remarks']
+            locked_update.review_status = NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW
+            locked_update.submitted_at = timezone.now()
+            locked_update.save(update_fields=[
+                'proposed_status',
+                'remarks',
+                'review_status',
+                'submitted_at',
+                'updated_at',
+            ])
+            for upload in self.cleaned_data['evidence_files']:
+                NonInfrastructureEvidence.objects.create(
+                    progress_update=locked_update,
+                    evidence_file=upload,
+                    description=self.cleaned_data['evidence_description'],
+                    uploaded_by=user,
+                )
+        return locked_update
 
 
 class NonInfrastructureProgressReturnForm(forms.Form):
