@@ -104,15 +104,6 @@
                     {% endfor %}
                 </dl>
 
-                {% if operational.reference_fields %}
-                    <h3>Calculated reference values</h3>
-                    <p class="operational-readiness__help">These values are calculated for context and do not replace actual progress.</p>
-                    <dl class="operational-readiness__grid operational-readiness__grid--reference">
-                        {% for field in operational.reference_fields %}
-                        <div><dt>{{ field.label }}</dt><dd>{% if field.value == None %}Not available{% elif field.is_percentage %}{{ field.value|floatformat:2 }}%{% else %}{{ field.value }}{% endif %}</dd></div>
-                        {% endfor %}
-                    </dl>
-                {% endif %}
                 {% if operational.update_url and not operational.is_complete and project_type == 'infrastructure' %}
                 <a class="review-primary-link ui-button ui-button--primary" href="{{ operational.update_url }}?from_review={{ revision.pk }}">{{ operational.update_label }}</a>
                 {% endif %}
