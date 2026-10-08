@@ -106,6 +106,7 @@ class HeadOperationalUpdateTests(TestCase):
             'status': 'completed',
             'physical_progress_percentage': '60',
             'head_remarks': 'Verified against the latest field report.',
+            'supporting_inspections': [str(self.inspection.pk)],
             'title': 'Crafted ordinary-field change',
             'expected_progress_percentage': '1',
         })
