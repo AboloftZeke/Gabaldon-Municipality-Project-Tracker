@@ -4,7 +4,7 @@
 {% block title %}Publication Revision {{ revision.revision_number }} - Municipality Project Tracker{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}?v=20260912-1">
+<link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}?v=20261008-1">
 <link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}?v=20260821-1">
 {% endblock %}
@@ -175,7 +175,12 @@
                 <ul>
                     {% for item in mayor_evidence_items %}
                         <li>
-                            {% if item.url %}<a href="{{ item.url }}" download>{{ item.file_path }}</a>{% else %}{{ item.file_path }}{% endif %}
+                            {% if item.url and item.is_image %}
+                                <button type="button" class="progress-evidence-file progress-evidence-file--image mayor-progress-evidence-image" data-image-viewer-trigger data-image-src="{{ item.url }}" data-image-alt="Progress update evidence: {{ item.file_path }}" aria-label="Enlarge progress update evidence {{ item.file_path }}">
+                                    <img src="{{ item.url }}" alt="Progress update evidence: {{ item.file_path }}" loading="lazy">
+                                    <span>{{ item.file_path }}</span>
+                                </button>
+                            {% elif item.url %}<a href="{{ item.url }}" download>{{ item.file_path }}</a>{% else %}{{ item.file_path }}{% endif %}
                             {% if item.description %} - {{ item.description }}{% endif %}
                             {% if item.uploaded_by %} · {{ item.uploaded_by.display_name }}{% endif %}
                             {% if item.uploaded_at %} · {{ item.uploaded_at }}{% endif %}

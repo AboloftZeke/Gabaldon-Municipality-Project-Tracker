@@ -9,6 +9,8 @@ from django.urls import reverse
 
 from .models import (
     InfrastructureProject,
+    NonInfrastructureEvidence,
+    NonInfrastructureProgressUpdate,
     NonInfrastructureProject,
     Project,
     ProjectInspection,
@@ -16,7 +18,10 @@ from .models import (
     UserRole,
 )
 from .publication_service import OPERATIONAL_CONFIRMATION_KEY
-from .publication_snapshots import build_project_publication_snapshot
+from .publication_snapshots import (
+    build_non_infrastructure_progress_update_snapshot,
+    build_project_publication_snapshot,
+)
 
 
 class PublicationOperationalUITests(TestCase):
@@ -134,6 +139,52 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(queue, 'Complete Operational Information')
         self.assertNotContains(queue, 'Preview &amp; Publish')
         self.assertContains(queue, 'Approved submissions')
+
+    def test_publication_review_opens_mayor_progress_update_image_evidence(self):
+        update = NonInfrastructureProgressUpdate.objects.create(
+            non_infrastructure=self.non_infrastructure,
+            previous_status='planned',
+            proposed_status='ongoing',
+            remarks='The program has started.',
+            submitted_by=self.users['mayor', 'staff'],
+            review_status='approved',
+        )
+        evidence = NonInfrastructureEvidence.objects.create(
+            progress_update=update,
+            evidence_file='non_infrastructure/evidence/activity-photo.jpg',
+            description='Program activity photo',
+            uploaded_by=self.users['mayor', 'staff'],
+        )
+        update.publication_revision = self.non_infrastructure_revision
+        update.save(update_fields=['publication_revision'])
+
+        revision_snapshot = deepcopy(
+            self.non_infrastructure_revision.snapshot,
+        )
+        revision_snapshot['non_infrastructure_progress_update'] = (
+            build_non_infrastructure_progress_update_snapshot(update)
+        )
+        self.non_infrastructure_revision.snapshot = revision_snapshot
+        self.non_infrastructure_revision.save(update_fields=['snapshot'])
+
+        self.client.force_login(self.users['mayor', 'head'])
+        response = self.client.get(self.revision_url(
+            self.non_infrastructure_revision,
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            'data-image-viewer-trigger data-image-src="/media/'
+            'non_infrastructure/evidence/activity-photo.jpg"',
+        )
+        self.assertContains(response, 'data-image-viewer')
+        self.assertContains(response, 'js/components/image_viewer.js')
+        self.assertContains(response, 'Program activity photo')
+        self.assertEqual(
+            response.context['mayor_evidence_items'][0]['url'],
+            evidence.evidence_file.url,
+        )
 
     def test_completed_infrastructure_readiness_enables_publish(self):
         self.infrastructure_revision.status = 'pending_review'

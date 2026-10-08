@@ -1,4 +1,5 @@
 from datetime import date
+from pathlib import PurePosixPath
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -212,15 +213,19 @@ def _revision_page_context(revision, user, review_form=None):
         } if source else {}
         for frozen in mayor_progress_update.get('evidence', []):
             item = current_evidence.get(frozen.get('id'))
+            file_path = frozen.get('file_path') or ''
             mayor_evidence_items.append({
                 **frozen,
-                # A stored file path is durable; resolve a download link only
-                # when the same evidence record still has that exact path.
+                # A stored file path is durable; resolve a link only when
+                # the same evidence record still has that exact path.
                 'url': (
                     item.evidence_file.url
-                    if item and item.evidence_file.name == frozen.get('file_path')
+                    if item and item.evidence_file.name == file_path
                     else None
                 ),
+                'is_image': PurePosixPath(file_path).suffix.lower() in {
+                    '.jpg', '.jpeg', '.png', '.gif', '.webp',
+                },
             })
         labels = dict(NonInfrastructureProject.STATUS_CHOICES)
         mayor_progress_update = {
