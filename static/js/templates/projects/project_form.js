@@ -129,6 +129,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function validatePanel(panel) {
+        // Hidden coordinates need explicit validation by the map picker;
+        // HTML constraint validation does not apply to hidden form inputs.
+        const picker = panel.querySelector('[data-location-picker]');
+        const locationValid = !picker || picker.dispatchEvent(new CustomEvent(
+            'location-picker:validate', { cancelable: true }
+        ));
         let firstInvalid = null;
         panelFields(panel).forEach(function (field) {
             if (field.checkValidity()) clearFieldError(field);
@@ -141,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
             firstInvalid.focus();
             return false;
         }
-        return true;
+        return locationValid;
     }
 
     backButton.addEventListener('click', function () { showStep(activeStep - 1, { focusPanel: true }); });

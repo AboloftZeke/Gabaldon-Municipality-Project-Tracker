@@ -52,6 +52,32 @@ def main():
                 subprocess.run([
                     'node', str(ROOT / 'tests/browser/check_public_gabaldon_map.cjs'),
                 ], cwd=ROOT, env={**os.environ, 'BASE_URL': base_url}, check=True)
+                from apps.infrastructure.tests import InfrastructureProjectFormTests
+                from apps.system.models import UserRole
+                from django.test import Client
+                from django.urls import reverse
+                fixture = InfrastructureProjectFormTests()
+                fixture.setUp()
+                fixture.user.is_staff = True
+                fixture.user.save(update_fields=['is_staff'])
+                UserRole.objects.update_or_create(
+                    user=fixture.user, defaults={'department': 'engineer', 'role': 'staff'},
+                )
+                saved = fixture.create_project(latitude='15.4541234', longitude='121.3375123')
+                missing = fixture.create_project(title='Site not yet confirmed')
+                missing.address.latitude = missing.address.longitude = None
+                missing.address.save(update_fields=['latitude', 'longitude'])
+                client = Client()
+                client.force_login(fixture.user)
+                subprocess.run([
+                    'node', str(ROOT / 'tests/browser/check_infrastructure_location_picker.cjs'),
+                ], cwd=ROOT, env={
+                    **os.environ, 'BASE_URL': base_url,
+                    'PICKER_SESSION': client.cookies['sessionid'].value,
+                    'PICKER_CREATE_PATH': reverse('engineering_projects:project_create'),
+                    'PICKER_EDIT_PATH': reverse('engineering_projects:project_update', args=[saved.pk]),
+                    'PICKER_MISSING_PATH': reverse('engineering_projects:project_update', args=[missing.pk]),
+                }, check=True)
             finally:
                 server.terminate()
                 server.wait(timeout=10)

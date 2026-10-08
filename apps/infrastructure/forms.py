@@ -148,8 +148,16 @@ class InfrastructureProjectForm(forms.Form):
             'class': 'form-select'
         }),
     )
-    latitude = forms.DecimalField(required=True, max_digits=10, decimal_places=7, min_value=-90, max_value=90)
-    longitude = forms.DecimalField(required=True, max_digits=10, decimal_places=7, min_value=-180, max_value=180)
+    latitude = forms.DecimalField(
+        required=True, max_digits=10, decimal_places=7, min_value=-90, max_value=90,
+        widget=forms.HiddenInput(),
+        error_messages={'required': 'Select the exact project location on the map.'},
+    )
+    longitude = forms.DecimalField(
+        required=True, max_digits=10, decimal_places=7, min_value=-180, max_value=180,
+        widget=forms.HiddenInput(),
+        error_messages={'required': 'Select the exact project location on the map.'},
+    )
     municipality = forms.CharField(
         required=False,
         max_length=200,

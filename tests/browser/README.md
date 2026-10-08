@@ -1,6 +1,7 @@
-Public Gabaldon map browser regression checks use an isolated SQLite database,
-published fixtures from the existing public-view tests, and a temporary Django
-server. They leave the development database untouched.
+Public Gabaldon map and Infrastructure location-picker browser regression checks
+use an isolated SQLite database, existing public/form fixtures, and a temporary
+Django server. They leave the development database untouched. The picker tests
+authenticate an Engineering Staff session only within that disposable database.
 
 Install Playwright in a directory outside the repository, install its Chromium
 browser, and make the Node package available through NODE_PATH. Then run:
@@ -12,7 +13,10 @@ NODE_PATH=/path/to/node_modules venv/bin/python tests/browser/run_public_gabaldo
 If using a system Chromium, set `CHROMIUM_EXECUTABLE=/usr/bin/chromium`.
 The checks use deterministic image tile fixtures to verify real Leaflet tile
 positioning, desktop/mobile controls, pan/zoom, registry filtering independence,
-and tile outage recovery. They do not verify live OpenStreetMap availability.
+and tile outage recovery. Picker checks also cover one-marker selection, drag,
+replacement, clearing, hidden coordinates, required-location validation, saved
+edit markers, and wizard step resizing. They do not verify live OpenStreetMap
+availability.
 
 For Django public dashboard, detail and GIS API regressions:
 
