@@ -120,9 +120,10 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(response, 'Operational Information: Incomplete')
         self.assertContains(response, 'Actual Physical Progress')
         self.assertContains(response, 'Inspection Completion')
-        self.assertContains(response, 'Expected / Scheduled Progress')
-        self.assertContains(response, 'Variance')
-        self.assertContains(response, 'Calculated Cost Progress')
+        self.assertNotContains(response, 'Expected / Scheduled Progress')
+        self.assertNotContains(response, 'Variance')
+        self.assertNotContains(response, 'Calculated Cost Progress')
+        self.assertNotContains(response, 'Calculated reference values')
         self.assertContains(response, 'Confirm Operational Information')
         self.assertContains(response, 'Operational Information Required')
         self.assertContains(
@@ -365,15 +366,9 @@ class PublicationOperationalUITests(TestCase):
         preview = self.client.get(self.revision_url(
             self.infrastructure_revision,
         ))
-        calculated = {
-            field['label']: field['value']
-            for field in preview.context['operational']['reference_fields']
-        }
-        self.assertEqual(
-            calculated['Calculated Cost Progress'],
-            Decimal('40.00'),
-        )
-        self.assertContains(preview, '40.00%')
+        self.assertEqual(preview.context['operational']['reference_fields'], [])
+        self.assertNotContains(preview, 'Calculated Cost Progress')
+        self.assertNotContains(preview, '40.00%')
 
     def test_mayor_head_gets_status_only_readiness_workflow(self):
         self.client.force_login(self.users['mayor', 'head'])
