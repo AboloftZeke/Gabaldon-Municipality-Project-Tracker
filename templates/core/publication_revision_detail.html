@@ -69,7 +69,7 @@
                 <div><span>{{ preview.code }}</span><h2>{{ preview.title }}</h2><p>{{ preview.description|default:"No description provided." }}</p></div>
             </section>
 
-            {% if operational.update_url %}
+            {% if operational.can_update %}
             <section class="revision-section operational-readiness ui-card ui-card--padded {% if operational.is_complete %}operational-readiness--complete{% else %}operational-readiness--incomplete{% endif %}">
                 <div class="operational-readiness__header">
                     <div>
@@ -83,7 +83,9 @@
                     </div>
                     <span class="operational-readiness__status ui-badge {% if operational.is_complete %}ui-badge--success{% else %}ui-badge--warning{% endif %}">{% if operational.is_complete %}Ready{% else %}Action required{% endif %}</span>
                 </div>
-                {% if project_type == 'non_infrastructure' and operational.is_first_publication %}
+                {% if revision.status == 'pending_review' and operational.is_first_publication %}
+                    <p>Operational information can be confirmed by the responsible office Head after this submission is approved.</p>
+                {% elif project_type == 'non_infrastructure' and operational.is_first_publication %}
                     <p>Before this project is published for the first time, the Mayor's Office Head must confirm its initial official status.</p>
                 {% elif not operational.is_complete %}
                     <p>Complete the required operational information before this first publication can be published.</p>

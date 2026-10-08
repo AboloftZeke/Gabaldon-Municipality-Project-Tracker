@@ -174,15 +174,24 @@ def _operational_information(revision, project_type, preview, user):
         )
 
     update_url = None
-    if can_update and preview and preview.get('record_id'):
+    if (
+        can_update
+        and revision.status == PublicationStatus.APPROVED
+        and readiness.get('is_first_publication')
+        and preview
+        and preview.get('record_id')
+    ):
         if project_type == 'infrastructure':
             update_url = reverse(update_url_name, args=[preview['record_id']])
-        elif readiness.get('is_first_publication'):
+        else:
             update_url = reverse(update_url_name, args=[preview['record_id']])
     return {
         **readiness,
         'controlled_fields': controlled,
         'reference_fields': reference,
+        'can_update': bool(
+            can_update and preview and preview.get('record_id')
+        ),
         'update_url': update_url,
         'update_label': update_label,
     }

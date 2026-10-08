@@ -140,6 +140,24 @@ class PublicationOperationalUITests(TestCase):
         self.assertNotContains(queue, 'Preview &amp; Publish')
         self.assertContains(queue, 'Approved submissions')
 
+    def test_pending_infrastructure_review_does_not_offer_early_confirmation_link(self):
+        self.infrastructure_revision.status = 'pending_review'
+        self.infrastructure_revision.save(update_fields=['status'])
+        self.client.force_login(self.users['engineer', 'head'])
+
+        response = self.client.get(self.revision_url(
+            self.infrastructure_revision,
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['can_review'])
+        self.assertIsNone(response.context['operational']['update_url'])
+        self.assertContains(
+            response,
+            'Operational information can be confirmed by the responsible office Head after this submission is approved.',
+        )
+        self.assertNotContains(response, 'Confirm Operational Information')
+
     def test_publication_review_opens_mayor_progress_update_image_evidence(self):
         update = NonInfrastructureProgressUpdate.objects.create(
             non_infrastructure=self.non_infrastructure,
