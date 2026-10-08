@@ -9,10 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20260928-1">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20261008-map">
   <link rel="stylesheet" href="{% static 'css/templates/projects/project_modal.css' %}">
   <link rel="stylesheet" href="{% static 'css/components/ui.css' %}?v=20260918-4">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ5A1C4H5iR4eKpD/UT3CXYu7bH1C7Q=" crossorigin="">
+  <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
 </head>
 <body>
   <header class="site-header">
@@ -81,28 +81,15 @@
       </article>
     </section>
 
-    <section class="gis-panel" aria-labelledby="gis-heading">
-      <div class="gis-panel__head">
-        <div>
-          <p class="section-kicker">Public Project Overview</p>
-          <h2 id="gis-heading">GIS Project Map</h2>
-          <p>Explore the location and current status of municipal projects across Gabaldon. The map follows the filters and search controls below.</p>
-        </div>
-        <div class="live-badge" id="gis-visible-count" aria-live="polite">Loading mapped projects…</div>
+    <section class="municipal-map-panel" aria-labelledby="municipal-map-heading">
+      <div class="municipal-map-panel__head">
+        <p class="section-kicker">Public Municipal Map</p>
+        <h2 id="municipal-map-heading">Explore Gabaldon</h2>
+        <p>Navigate the Municipality of Gabaldon, Nueva Ecija using the interactive map.</p>
       </div>
-
-      <div class="gis-panel__map-wrap">
-        <div id="project-gis-map" class="project-gis-map" aria-label="Interactive map of municipal projects"></div>
-        <p class="gis-panel__empty" id="gis-empty-state" hidden></p>
-      </div>
-
-      <div class="gis-legend" aria-label="Project status map legend">
-        <span class="gis-legend__title">Project status</span>
-        <span><i class="gis-legend__dot gis-legend__dot--not_yet_started"></i>Not Yet Started</span>
-        <span><i class="gis-legend__dot gis-legend__dot--ongoing"></i>Ongoing</span>
-        <span><i class="gis-legend__dot gis-legend__dot--on_hold"></i>On Hold</span>
-        <span><i class="gis-legend__dot gis-legend__dot--completed"></i>Completed</span>
-      </div>
+      <div id="gabaldon-public-map" class="municipal-map" role="region" aria-label="Interactive geographic map of Gabaldon, Nueva Ecija" aria-describedby="municipal-map-status"></div>
+      <p id="municipal-map-status" class="municipal-map-panel__status" role="status" hidden></p>
+      <noscript><p>Enable JavaScript to explore the interactive map.</p></noscript>
     </section>
 
     {% if show_project_registry %}
@@ -423,8 +410,9 @@
 
   {% include "projects/project_detail_modal.html" %}
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="{% static 'js/templates/Dashboard/dashboard.js' %}?v=20260918-1"></script>
+  <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+  <script src="{% static 'js/gis/public_gabaldon_map.js' %}?v=20261008-1"></script>
+  <script src="{% static 'js/templates/Dashboard/dashboard.js' %}?v=20261008-map"></script>
   <script src="{% static 'js/templates/projects/project_modal.js' %}"></script>
 </body>
 </html>
