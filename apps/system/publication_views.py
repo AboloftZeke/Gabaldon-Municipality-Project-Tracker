@@ -191,6 +191,32 @@ def _operational_information(revision, project_type, preview, user):
 def _revision_page_context(revision, user, review_form=None):
     project_type, preview = _revision_preview(revision)
     comparison = revision_comparison(revision)
+    project_information = {
+        'essential_fields': [],
+        'populated_optional_fields': [],
+        'empty_optional_fields': [],
+    }
+    project_section_labels = {'Project Information', 'Program Information'}
+    publication_comparison_sections = []
+    essential_roots = {
+        'category', 'address', 'status', 'project_type',
+    }
+    for section in comparison['sections']:
+        if section['label'] not in project_section_labels:
+            publication_comparison_sections.append(section)
+            continue
+        for field in section['fields']:
+            root = field['path'].split('.', 1)[0]
+            if root in {'title', 'code', 'description'}:
+                # These are already visible in the immutable snapshot hero.
+                continue
+            if root in essential_roots:
+                project_information['essential_fields'].append(field)
+            elif field['after'] == 'Not provided':
+                project_information['empty_optional_fields'].append(field)
+            else:
+                project_information['populated_optional_fields'].append(field)
+
     operational = _operational_information(
         revision,
         project_type,
@@ -248,6 +274,8 @@ def _revision_page_context(revision, user, review_form=None):
             )
         ),
         'comparison': comparison,
+        'publication_comparison_sections': publication_comparison_sections,
+        'project_information': project_information,
         'operational': operational,
         'progress_update': (
             (revision.snapshot or {}).get('progress_update')

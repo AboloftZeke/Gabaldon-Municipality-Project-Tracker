@@ -1,0 +1,11 @@
+{% for field in fields %}
+    <div{% if field.changed %} class="snapshot-change snapshot-change--{{ field.state }}"{% endif %}>
+        <dt>{{ field.label }} {% if field.changed %}<span class="snapshot-change-badge">{{ field.badge }}</span>{% endif %}</dt>
+        {% if field.changed %}
+            <dd class="snapshot-before"><span class="snapshot-value-label">Previously published</span>{{ field.before }}</dd>
+            <dd><span class="snapshot-value-label">Newly submitted{% if field.state == 'removed' %} · Cleared{% endif %}</span>{{ field.after }}</dd>
+        {% else %}
+            <dd>{{ field.after }}</dd>
+        {% endif %}
+    </div>
+{% endfor %}

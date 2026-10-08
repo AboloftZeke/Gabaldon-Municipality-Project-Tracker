@@ -367,6 +367,15 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(response, 'Initial Official Status')
         self.assertContains(response, 'Publish to Public Dashboard')
         self.assertContains(response, 'initial-publication-confirm')
+        self.assertEqual(
+            response.content.decode().count('id="initial-publication-form"'),
+            1,
+        )
+        html = response.content.decode()
+        self.assertLess(
+            html.index('class="publish-confirmation publish-confirmation--top'),
+            html.index('<div class="revision-layout">'),
+        )
         self.assertContains(response, 'Planned')
         self.assertNotContains(response, '<select')
         self.assertNotContains(response, 'Actual Physical Progress')
@@ -398,6 +407,61 @@ class PublicationOperationalUITests(TestCase):
         self.assertTrue(response.context['operational']['is_complete'])
         self.assertNotContains(response, 'initial-publication-confirm')
         self.assertContains(response, 'Publish to Public Dashboard')
+
+    def test_project_information_keeps_essential_and_optional_fields_discoverable(self):
+        self.non_infrastructure.fund_source = 'National Government'
+        self.non_infrastructure.save(update_fields=['fund_source'])
+        self.non_infrastructure_revision.snapshot = (
+            build_project_publication_snapshot(self.non_infrastructure.project)
+        )
+        self.non_infrastructure_revision.save(update_fields=['snapshot'])
+        self.client.force_login(self.users['mayor', 'head'])
+
+        response = self.client.get(self.revision_url(
+            self.non_infrastructure_revision,
+        ))
+
+        self.assertContains(response, 'Immutable Submitted Snapshot')
+        self.assertContains(response, 'Community Wellness Program')
+        self.assertContains(response, 'Project Information')
+        self.assertContains(response, 'Status')
+        self.assertContains(response, 'Additional Project Information')
+        self.assertContains(response, 'National Government')
+        self.assertContains(response, '<details class="project-information__optional">', html=False)
+        self.assertContains(response, 'View all optional fields')
+        self.assertContains(response, 'Contractor Supplier')
+        self.assertContains(response, 'Not provided')
+        self.assertEqual(response.content.decode().count('<dt>Fund Source'), 1)
+        information = response.context['project_information']
+        self.assertTrue(any(
+            field['label'] == 'Status'
+            for field in information['essential_fields']
+        ))
+        self.assertTrue(any(
+            field['label'] == 'Fund Source'
+            and field['after'] == 'National Government'
+            for field in information['populated_optional_fields']
+        ))
+        self.assertTrue(any(
+            field['label'] == 'Contractor Supplier'
+            and field['after'] == 'Not provided'
+            for field in information['empty_optional_fields']
+        ))
+
+    def test_users_without_publication_permission_do_not_get_top_publish_action(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(self.revision_url(
+            self.non_infrastructure_revision,
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context['can_publish'])
+        self.assertFalse(
+            response.context['can_publish_initial_non_infrastructure'],
+        )
+        self.assertNotContains(response, 'publish-confirmation--top')
+        self.assertNotContains(response, 'data-initial-publication-trigger')
 
     def test_non_infrastructure_initial_publish_confirms_status_and_publishes(self):
         self.client.force_login(self.users['mayor', 'head'])

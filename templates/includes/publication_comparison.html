@@ -14,7 +14,34 @@
     {% endif %}
 </section>
 
-{% for section in comparison.sections %}
+<section class="revision-section project-information" aria-labelledby="project-information-heading">
+    <h2 id="project-information-heading">Project Information</h2>
+    <p class="project-information__intro">Review the immutable submitted snapshot. The title, code, and description are shown above; other essential values remain visible here.</p>
+    <dl class="snapshot-grid">
+        {% include "includes/publication_comparison_fields.html" with fields=project_information.essential_fields %}
+    </dl>
+
+    {% if project_information.populated_optional_fields %}
+    <div class="project-information__additional">
+        <h3>Additional Project Information</h3>
+        <dl class="snapshot-grid">
+            {% include "includes/publication_comparison_fields.html" with fields=project_information.populated_optional_fields %}
+        </dl>
+    </div>
+    {% endif %}
+
+    {% if project_information.empty_optional_fields %}
+    <details class="project-information__optional">
+        <summary>View all optional fields</summary>
+        <p>These fields are part of the submitted project information but were not provided.</p>
+        <dl class="snapshot-grid">
+            {% include "includes/publication_comparison_fields.html" with fields=project_information.empty_optional_fields %}
+        </dl>
+    </details>
+    {% endif %}
+</section>
+
+{% for section in publication_comparison_sections %}
     <section class="revision-section">
         <h2>{{ section.label }} {% if section.changed %}<span class="snapshot-change-badge">Changed</span>{% endif %}</h2>
         {% if section.groups %}<div class="snapshot-group-grid">{% endif %}
