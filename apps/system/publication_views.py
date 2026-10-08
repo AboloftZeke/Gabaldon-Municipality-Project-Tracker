@@ -25,11 +25,6 @@ from .publication_service import (
     revision_targets_current_public,
     review_publication_revision,
 )
-from .progress import (
-    derived_cost_progress,
-    expected_progress,
-    progress_variance,
-)
 from .publication_workflow import PublicationStatus
 from .permissions import (
     can_access_publication_review, can_review_revision, can_publish_revision,
@@ -88,21 +83,11 @@ def _operational_information(revision, project_type, preview, user):
     snapshot = revision.snapshot or {}
     readiness = publication_readiness(revision)
     controlled = []
-    reference = []
 
     if project_type == 'infrastructure':
         infrastructure = snapshot.get('infrastructure') or {}
         inspection = snapshot.get('inspection')
-        financial = snapshot.get('financial') or {}
-        schedule = snapshot.get('schedule') or {}
         actual = infrastructure.get('physical_progress_percentage')
-        scheduled = expected_progress(
-            _snapshot_date(infrastructure.get('planned_start_date')),
-            _snapshot_date(infrastructure.get('planned_end_date')),
-            revised_end_date=_snapshot_date(
-                schedule.get('contract_expiry_date'),
-            ),
-        )
         controlled.extend([
             {
                 'label': 'Official Status',
@@ -127,26 +112,6 @@ def _operational_information(revision, project_type, preview, user):
                 'value': infrastructure.get('cost_progress_percentage'),
                 'is_percentage': True,
             })
-        reference.extend([
-            {
-                'label': 'Expected / Scheduled Progress',
-                'value': scheduled,
-                'is_percentage': True,
-            },
-            {
-                'label': 'Variance',
-                'value': progress_variance(actual, scheduled),
-                'is_percentage': True,
-            },
-            {
-                'label': 'Calculated Cost Progress',
-                'value': derived_cost_progress(
-                    financial.get('actual_expenditure'),
-                    financial.get('contract_price'),
-                ),
-                'is_percentage': True,
-            },
-        ])
         can_update = can_update_infrastructure_operations(user)
         update_url_name = 'engineering_projects:project_operations'
         set_label = 'Set Status & Progress'
@@ -188,7 +153,7 @@ def _operational_information(revision, project_type, preview, user):
     return {
         **readiness,
         'controlled_fields': controlled,
-        'reference_fields': reference,
+        'reference_fields': [],
         'can_update': bool(
             can_update and preview and preview.get('record_id')
         ),
