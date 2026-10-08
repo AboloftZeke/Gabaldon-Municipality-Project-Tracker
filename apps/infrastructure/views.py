@@ -40,11 +40,6 @@ from apps.system.permissions import (
     department_for_user as _department_for_user,
     is_system_admin,
 )
-from apps.system.progress import (
-    derived_cost_progress,
-    expected_progress,
-    progress_variance,
-)
 
 
 class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -735,54 +730,6 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
         except (TypeError, ValueError):
             return None
 
-    def reference_values(self, infrastructure, reference_revision=None):
-        if reference_revision is not None:
-            snapshot = reference_revision.snapshot or {}
-            project_data = snapshot.get('infrastructure') or {}
-            financial_data = snapshot.get('financial') or {}
-            schedule_data = snapshot.get('schedule') or {}
-            scheduled = expected_progress(
-                self.snapshot_date(project_data.get('planned_start_date')),
-                self.snapshot_date(project_data.get('planned_end_date')),
-                revised_end_date=self.snapshot_date(
-                    schedule_data.get('contract_expiry_date'),
-                ),
-            )
-            actual_progress = project_data.get(
-                'physical_progress_percentage',
-            )
-            return {
-                'expected_progress': scheduled,
-                'progress_variance': progress_variance(
-                    actual_progress,
-                    scheduled,
-                ),
-                'calculated_cost_progress': derived_cost_progress(
-                    financial_data.get('actual_expenditure'),
-                    financial_data.get('contract_price'),
-                ),
-            }
-
-        financial = infrastructure.financial_records.order_by(
-            '-financial_id',
-        ).first()
-        schedule = infrastructure.schedules.order_by('-schedule_id').first()
-        scheduled = expected_progress(
-            infrastructure.planned_start_date,
-            infrastructure.planned_end_date,
-            revised_end_date=getattr(schedule, 'contract_expiry_date', None),
-        )
-        return {
-            'expected_progress': scheduled,
-            'progress_variance': progress_variance(
-                infrastructure.physical_progress_percentage,
-                scheduled,
-            ),
-            'calculated_cost_progress': derived_cost_progress(
-                getattr(financial, 'actual_expenditure', None),
-                getattr(financial, 'bid_amount', None),
-            ),
-        }
 
     def return_revision(self, request, infrastructure):
         revision_id = (
@@ -843,7 +790,6 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
             ),
             'return_revision_id': getattr(return_revision, 'pk', None),
             'inspection_options': inspection_options,
-            **self.reference_values(infrastructure, reference_revision),
         }, status=status)
 
     def get(self, request, pk):

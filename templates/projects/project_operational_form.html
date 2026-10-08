@@ -22,7 +22,7 @@
         <p class="operational-eyebrow">Engineering Head · Operational Update</p>
         <h1>Update Status &amp; Progress</h1>
         <p class="operational-project-title">{{ operational_display_title }}</p>
-        <p class="operational-intro">Set the official status and actual operational values used in this project's publication record.</p>
+        <p class="operational-intro">Review the latest field inspection, then record the official status and physical progress based on that evidence.</p>
     </header>
 
     <form method="post" class="operational-form ui-form">
@@ -38,7 +38,7 @@
                 <span class="operational-section-number">01</span>
                 <div>
                     <h2 id="operational-information-heading">Operational Information</h2>
-                    <p>Official and actual values maintained by the Engineering Head.</p>
+                    <p>Official values recorded by the Infrastructure Head after reviewing the field inspection.</p>
                 </div>
             </div>
 
@@ -47,8 +47,8 @@
                     {% if field.name != 'supporting_inspections' %}
                     <div class="operational-field {% if field.name == 'head_remarks' %}operational-field--wide operational-field--remarks{% endif %}">
                         <label for="{{ field.id_for_label }}">
-                            {% if field.name == 'status' %}Official Status{% elif field.name == 'physical_progress_percentage' %}Official Physical Progress{% elif field.name == 'inspection_completion_percentage' %}Latest Inspection Observed Progress{% else %}{{ field.label }}{% endif %}
-                            {% if field.name == 'cost_progress_percentage' or field.name == 'head_remarks' %}<span class="operational-optional">Optional</span>{% endif %}
+                            {% if field.name == 'status' %}Official Status{% elif field.name == 'physical_progress_percentage' %}Official Physical Progress{% else %}{{ field.label }}{% endif %}
+                            {% if field.name == 'head_remarks' %}<span class="operational-optional">Optional</span>{% endif %}
                         </label>
                         {{ field }}
                         {% if field.name == 'physical_progress_percentage' %}
@@ -72,7 +72,7 @@
                 <span class="operational-section-number">02</span>
                 <div>
                     <h2 id="supporting-inspections-heading">Supporting Inspections</h2>
-                    <p>Select the field inspections that support this official decision. Their observed percentages remain evidence only.</p>
+                    <p>Select the inspection that provides the field evidence for this update. Review its findings and attached photos or documents before saving.</p>
                 </div>
             </div>
 
@@ -110,44 +110,15 @@
                 {% empty %}
                     <div class="operational-empty-state">
                         <strong>No inspections recorded</strong>
-                        <p>This update can still be saved without supporting inspections.</p>
+                        <p>A supporting inspection with evidence is required before this update can be saved.</p>
                     </div>
                 {% endfor %}
             </div>
         </section>
 
-        <section class="operational-card operational-card--reference ui-card" aria-labelledby="calculated-reference-heading">
-            <div class="operational-section-heading">
-                <span class="operational-section-number operational-section-number--muted">03</span>
-                <div>
-                    <div class="operational-heading-line">
-                        <h2 id="calculated-reference-heading">Calculated Reference</h2>
-                        <span class="operational-readonly-badge">Read-only</span>
-                    </div>
-                    <p>Calculated values provide context and cannot be edited here.</p>
-                </div>
-            </div>
-
-            <dl class="operational-reference-grid">
-                <div>
-                    <dt>Expected / Scheduled Progress</dt>
-                    <dd>{% if expected_progress is not None %}{{ expected_progress|floatformat:1 }}%{% else %}Not available{% endif %}</dd>
-                    <small>Calculated from the active project schedule.</small>
-                </div>
-                <div>
-                    <dt>Variance</dt>
-                    <dd>{% if progress_variance is not None %}{{ progress_variance|floatformat:1 }} percentage points{% else %}Not available{% endif %}</dd>
-                </div>
-                <div>
-                    <dt>Calculated Cost Progress</dt>
-                    <dd>{% if calculated_cost_progress is not None %}{{ calculated_cost_progress|floatformat:2 }}%{% else %}Not available{% endif %}</dd>
-                </div>
-            </dl>
-        </section>
-
         <div class="operational-actions">
-            <p>Saving records this Head decision and prepares its publication preview. It does not publish the update.</p>
-            <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Save Status &amp; Progress</button>
+            <p>Saving records this Infrastructure Head decision and links it to the selected inspection evidence. It does not publish the update.</p>
+            <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Save Progress Update</button>
         </div>
     </form>
 </div>
