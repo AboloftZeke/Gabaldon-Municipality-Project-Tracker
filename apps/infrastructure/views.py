@@ -18,6 +18,11 @@ from .forms import (
 from .inspection_evidence import update_inspection_evidence
 from .progress_history import record_progress_update
 from apps.system.formatting import format_peso
+from apps.system.progress import (
+    derived_cost_progress,
+    expected_progress,
+    progress_variance,
+)
 from apps.system.models import (
     InfrastructureCategory,
     InfrastructureProject,
