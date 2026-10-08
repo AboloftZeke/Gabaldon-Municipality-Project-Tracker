@@ -40,11 +40,6 @@ from apps.system.permissions import (
     department_for_user as _department_for_user,
     is_system_admin,
 )
-from apps.system.progress import (
-    derived_cost_progress,
-    expected_progress,
-    progress_variance,
-)
 
 
 class EngineeringOfficeRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
