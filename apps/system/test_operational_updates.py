@@ -9,6 +9,7 @@ from django.urls import reverse
 from .models import (
     FinancialRecord,
     InfrastructureProgressUpdate,
+    InspectionEvidence,
     NonInfrastructureCategory,
     NonInfrastructureProject,
     Project,
@@ -50,6 +51,13 @@ class HeadOperationalUpdateTests(TestCase):
             project=self.infrastructure.project,
             inspection_date=date.today(),
             completion_percentage=Decimal('30'),
+        )
+        InspectionEvidence.objects.create(
+            inspection=self.inspection,
+            evidence_type='image',
+            original_name='inspection.jpg',
+            storage_name='inspections/test/inspection.jpg',
+            file_url='/media/inspections/test/inspection.jpg',
         )
         FinancialRecord.objects.filter(infrastructure=self.infrastructure).update(
             bid_amount=Decimal('1000'), actual_expenditure=Decimal('400'),
@@ -97,8 +105,6 @@ class HeadOperationalUpdateTests(TestCase):
         response = self.client.post(self.infra_url(), {
             'status': 'completed',
             'physical_progress_percentage': '60',
-            'cost_progress_percentage': '55',
-            'inspection_completion_percentage': '70',
             'head_remarks': 'Verified against the latest field report.',
             'title': 'Crafted ordinary-field change',
             'expected_progress_percentage': '1',
@@ -108,8 +114,8 @@ class HeadOperationalUpdateTests(TestCase):
         self.inspection.refresh_from_db()
         self.assertEqual(self.infrastructure.status, 'completed')
         self.assertEqual(self.infrastructure.physical_progress_percentage, Decimal('60'))
-        self.assertEqual(self.infrastructure.cost_progress_percentage, Decimal('55'))
-        self.assertEqual(self.inspection.completion_percentage, Decimal('70'))
+        self.assertEqual(self.infrastructure.cost_progress_percentage, Decimal('20'))
+        self.assertEqual(self.inspection.completion_percentage, Decimal('30'))
         self.assertEqual(self.infrastructure.title, before_title)
         self.assertEqual(
             expected_progress(
@@ -163,9 +169,8 @@ class HeadOperationalUpdateTests(TestCase):
         response = self.client.post(self.infra_url(), {
             'status': 'not_yet_started',
             'physical_progress_percentage': '25',
-            'cost_progress_percentage': '35',
-            'inspection_completion_percentage': '45',
             'head_remarks': 'No official change.',
+            'supporting_inspections': [str(self.inspection.pk)],
         })
 
         self.assertEqual(response.status_code, 302)
@@ -178,11 +183,11 @@ class HeadOperationalUpdateTests(TestCase):
         )
         self.assertEqual(
             self.infrastructure.cost_progress_percentage,
-            Decimal('35'),
+            Decimal('20'),
         )
         self.assertEqual(
             self.inspection.completion_percentage,
-            Decimal('45'),
+            Decimal('30'),
         )
 
     def test_head_can_link_multiple_project_inspections_without_copying_progress(self):
@@ -193,13 +198,18 @@ class HeadOperationalUpdateTests(TestCase):
             completion_percentage=Decimal('82'),
             inspected_by_user=self.users['engineer', 'staff'],
         )
+        InspectionEvidence.objects.create(
+            inspection=earlier_inspection,
+            evidence_type='image',
+            original_name='earlier.jpg',
+            storage_name='inspections/test/earlier.jpg',
+            file_url='/media/inspections/test/earlier.jpg',
+        )
         self.client.force_login(self.users['engineer', 'head'])
 
         response = self.client.post(self.infra_url(), {
             'status': 'completed',
             'physical_progress_percentage': '61',
-            'cost_progress_percentage': '55',
-            'inspection_completion_percentage': '70',
             'head_remarks': 'Supported by two field inspections.',
             'supporting_inspections': [
                 str(self.inspection.pk), str(earlier_inspection.pk),
@@ -238,7 +248,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertContains(get_response, 'class="inspection-choice-card"')
         self.assertContains(
             get_response,
-            'does not automatically set official physical progress',
+            'Review its findings and attached photos or documents',
         )
         available = get_response.context['form'].fields[
             'supporting_inspections'
@@ -249,8 +259,6 @@ class HeadOperationalUpdateTests(TestCase):
         response = self.client.post(self.infra_url(), {
             'status': 'completed',
             'physical_progress_percentage': '61',
-            'cost_progress_percentage': '55',
-            'inspection_completion_percentage': '70',
             'supporting_inspections': [str(other_inspection.pk)],
         })
 
@@ -326,53 +334,32 @@ class HeadOperationalUpdateTests(TestCase):
                 self.assertContains(response, '100.00%')
                 self.assertNotContains(response, 'Edit Progress Update')
 
-    def test_operational_form_shows_derived_values_as_read_only(self):
+    def test_operational_form_hides_calculated_references_and_cost_progress(self):
         self.client.force_login(self.users['engineer', 'head'])
+        response = self.client.get(self.infra_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Official Status')
+        self.assertContains(response, 'Official Physical Progress')
+        self.assertContains(response, 'Supporting Inspections')
+        self.assertNotContains(response, 'Expected / Scheduled Progress')
+        self.assertNotContains(response, 'Variance')
+        self.assertNotContains(response, 'Calculated Cost Progress')
+        self.assertNotContains(response, 'Entered Cost Progress')
+        self.assertNotContains(response, 'Latest Inspection Observed Progress')
+        self.assertNotContains(response, 'Calculated reference')
+        self.assertNotContains(response, 'Read-only')
+        self.assertNotContains(response, 'name="cost_progress_percentage"')
+        self.assertNotContains(response, 'name="inspection_completion_percentage"')
+        self.assertContains(response, 'observed completion')
+        self.assertContains(response, 'inspection.jpg')
+
         detail = self.client.get(reverse(
             'engineering_projects:project_detail',
             args=[self.infrastructure.pk],
         ))
         self.assertContains(detail, 'Update Status &amp; Progress')
-        self.assertContains(detail, self.infra_url())
-        self.assertNotContains(detail, 'Edit Project')
-        self.assertNotContains(detail, 'Delete Project')
-        self.assertContains(detail, 'Expected / Scheduled Progress')
-        self.assertContains(detail, 'Actual Physical Progress')
-        self.assertContains(detail, 'Variance (Actual vs Scheduled)')
-        self.assertContains(detail, 'Entered Cost Progress')
-        self.assertContains(detail, 'Calculated Cost Progress')
-        self.assertContains(detail, 'Observed Completion')
-        self.assertContains(detail, 'Calculated reference', count=3)
-        self.assertContains(detail, 'class="information-card-grid"')
         self.assertContains(detail, 'Financial &amp; Funding Information')
-        self.assertContains(detail, 'Procurement &amp; Contractor Information')
         self.assertContains(detail, 'Status &amp; Progress')
-        response = self.client.get(self.infra_url())
-        self.assertContains(response, 'Expected / Scheduled Progress')
-        self.assertContains(response, 'Variance')
-        self.assertContains(response, 'Calculated Cost Progress')
-        self.assertContains(response, 'Read-only')
-        for field in [
-            'expected_progress', 'progress_variance',
-            'calculated_cost_progress', 'title',
-        ]:
-            self.assertNotContains(response, f'name="{field}"')
-        ProjectRevision.objects.filter(
-            pk=self.public_revision.pk,
-        ).update(review_notes='Retained review note')
-        self.client.force_login(self.users['engineer', 'staff'])
-        detail = self.client.get(reverse(
-            'engineering_projects:project_detail',
-            args=[self.infrastructure.pk],
-        ))
-        self.assertNotContains(detail, self.infra_url())
-        self.assertNotContains(detail, 'Update Status &amp; Progress')
-        self.assertContains(detail, 'Edit Project')
-        self.assertContains(detail, 'Submit Updated Version')
-        self.assertContains(detail, 'Office Head notes')
-        self.assertNotContains(detail, 'Administrator notes')
-        self.assertNotContains(detail, 'Record Decision')
-        self.assertNotContains(detail, 'Publish to Public Dashboard')
 
     def test_wrong_roles_are_denied_without_mutation(self):
         before = (
