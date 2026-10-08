@@ -1106,6 +1106,11 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
 
         login_response = self.client.get(reverse('login'))
         self.assertEqual(login_response.status_code, 200)
+        self.assertContains(
+            login_response,
+            f'href="{reverse("public_dashboard")}"',
+        )
+        self.assertContains(login_response, 'Visit Public Dashboard')
 
     def test_public_budget_preserves_zero_instead_of_using_contract_price(self):
         snapshot = self.public_revision.snapshot.copy()
