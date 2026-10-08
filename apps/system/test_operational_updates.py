@@ -290,6 +290,27 @@ class HeadOperationalUpdateTests(TestCase):
             )
         self.assertFalse(InfrastructureProgressUpdate.objects.exists())
 
+    def test_progress_update_requires_inspection_evidence(self):
+        self.client.force_login(self.users['engineer', 'head'])
+
+        response = self.client.post(self.infra_url(), {
+            'status': 'completed',
+            'physical_progress_percentage': '60',
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('supporting_inspections', response.context['form'].errors)
+
+        evidence = self.inspection.evidence.first()
+        evidence.delete()
+        response = self.client.post(self.infra_url(), {
+            'status': 'completed',
+            'physical_progress_percentage': '60',
+            'supporting_inspections': [str(self.inspection.pk)],
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('supporting_inspections', response.context['form'].errors)
+        self.assertFalse(InfrastructureProgressUpdate.objects.exists())
+
     def test_progress_history_is_read_only_for_staff_and_head(self):
         older = InfrastructureProgressUpdate.objects.create(
             infrastructure=self.infrastructure,
