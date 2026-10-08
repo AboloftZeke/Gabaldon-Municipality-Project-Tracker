@@ -16,12 +16,22 @@ def record_progress_update(
 ):
     """Record one Head decision only when official status/progress changed."""
     supporting_inspections = list(supporting_inspections)
+    if not supporting_inspections:
+        raise ValidationError(
+            'At least one supporting inspection is required for an Infrastructure progress update.'
+        )
+
     if any(
         inspection.project_id != infrastructure.project_id
         for inspection in supporting_inspections
     ):
         raise ValidationError(
             'Supporting inspections must belong to this Infrastructure project.'
+        )
+
+    if any(not inspection.evidence.exists() for inspection in supporting_inspections):
+        raise ValidationError(
+            'Every supporting inspection must include inspection evidence.'
         )
 
     if (
