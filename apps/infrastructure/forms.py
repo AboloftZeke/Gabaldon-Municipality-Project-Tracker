@@ -826,10 +826,6 @@ class InfrastructureOperationalForm(forms.Form):
         label='Physical Progress', max_digits=5, decimal_places=2,
         min_value=0, max_value=100, required=False,
     )
-    cost_progress_percentage = forms.DecimalField(
-        label='Entered Cost Progress', max_digits=5, decimal_places=2,
-        min_value=0, max_value=100, required=False,
-    )
     head_remarks = forms.CharField(
         label='Head Remarks',
         required=False,
@@ -839,12 +835,8 @@ class InfrastructureOperationalForm(forms.Form):
     supporting_inspections = SupportingInspectionChoiceField(
         label='Supporting Inspections',
         queryset=ProjectInspection.objects.none(),
-        required=False,
+        required=True,
         widget=forms.CheckboxSelectMultiple,
-    )
-    inspection_completion_percentage = forms.DecimalField(
-        label='Inspection Completion', max_digits=5, decimal_places=2,
-        min_value=0, max_value=100, required=True,
     )
 
     def __init__(
@@ -862,13 +854,9 @@ class InfrastructureOperationalForm(forms.Form):
         initial.update({
             'status': instance.status,
             'physical_progress_percentage': instance.physical_progress_percentage,
-            'cost_progress_percentage': instance.cost_progress_percentage,
         })
-        if self.inspection:
-            initial['inspection_completion_percentage'] = self.inspection.completion_percentage
         super().__init__(*args, **kwargs)
-        if require_initial_values:
-            self.fields['physical_progress_percentage'].required = True
+        self.fields['physical_progress_percentage'].required = True
         self.fields['supporting_inspections'].queryset = (
             instance.project.inspections.select_related(
                 'inspected_by_user',
@@ -876,19 +864,39 @@ class InfrastructureOperationalForm(forms.Form):
                 '-inspection_date', '-created_at', '-inspection_id',
             )
         )
-        if not self.inspection:
-            self.fields.pop('inspection_completion_percentage')
+        if not self.fields['supporting_inspections'].queryset.exists():
+            self.fields['supporting_inspections'].help_text = (
+                'A completed inspection with supporting evidence is required before '
+                'the Infrastructure Head can update project progress.'
+            )
+
+    def clean_supporting_inspections(self):
+        inspections = list(self.cleaned_data.get('supporting_inspections') or [])
+        if not inspections:
+            raise forms.ValidationError(
+                'Select at least one inspection before updating project progress.'
+            )
+
+        without_evidence = [
+            inspection for inspection in inspections
+            if not inspection.evidence.exists()
+        ]
+        if without_evidence:
+            dates = ', '.join(
+                inspection.inspection_date.strftime('%b %d, %Y')
+                for inspection in without_evidence
+            )
+            raise forms.ValidationError(
+                f'The selected inspection(s) have no supporting evidence: {dates}. '
+                'Staff must attach inspection evidence before this progress update can be saved.'
+            )
+        return inspections
 
     @transaction.atomic
     def save(self):
         self.instance.status = self.cleaned_data['status']
         self.instance.physical_progress_percentage = self.cleaned_data['physical_progress_percentage']
-        self.instance.cost_progress_percentage = self.cleaned_data['cost_progress_percentage']
         self.instance.save(update_fields=[
-            'status', 'physical_progress_percentage',
-            'cost_progress_percentage', 'updated_at',
+            'status', 'physical_progress_percentage', 'updated_at',
         ])
-        if self.inspection:
-            self.inspection.completion_percentage = self.cleaned_data['inspection_completion_percentage']
-            self.inspection.save(update_fields=['completion_percentage'])
         return self.instance
