@@ -60,6 +60,19 @@ class SharedEmptyStateTests(TestCase):
                     response, 'No results match your current filters.',
                 )
 
+    def test_project_lists_load_image_viewer_stylesheet(self):
+        for user, route in [
+            (self.engineer, 'engineering_projects:project_list'),
+            (self.mayor, 'mayor_projects:non_infrastructure_project_list'),
+        ]:
+            self.client.force_login(user)
+            response = self.client.get(reverse(route))
+            with self.subTest(route=route):
+                self.assertContains(
+                    response,
+                    '/static/css/components/image_viewer.css',
+                )
+
     def test_project_lists_offer_clear_filters_when_records_exist(self):
         infrastructure_base = Project.objects.create(
             project_type='infrastructure',
@@ -134,4 +147,3 @@ class SharedEmptyStateTests(TestCase):
             response,
             'There are currently no submissions or publication updates requiring attention.',
         )
-
