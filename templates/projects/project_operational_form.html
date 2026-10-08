@@ -53,10 +53,6 @@
                         {{ field }}
                         {% if field.name == 'physical_progress_percentage' %}
                             <p class="operational-help">Actual Physical Progress is your official assessment of completed work, from 0% to 100%.</p>
-                        {% elif field.name == 'cost_progress_percentage' %}
-                            <p class="operational-help">Enter a manually confirmed cost percentage only when available.</p>
-                        {% elif field.name == 'inspection_completion_percentage' %}
-                            <p class="operational-help">Inspection Completion is the latest observed field progress. It provides evidence and does not automatically set official physical progress.</p>
                         {% elif field.name == 'head_remarks' %}
                             <p class="operational-help">Add context for this official status or physical progress decision.</p>
                         {% endif %}
