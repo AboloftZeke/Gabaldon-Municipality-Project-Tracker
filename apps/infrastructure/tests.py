@@ -66,7 +66,6 @@ class InfrastructureProjectFormTests(TestCase):
             'bidding_date': '2025-11-01',
             'notice_award_date': '2025-11-15',
             'notice_to_proceed_date': '2025-12-01',
-            'duration_days': '365',
         }
         data.update(overrides)
         return data
@@ -123,6 +122,31 @@ class InfrastructureProjectFormTests(TestCase):
         self.assertContains(response, 'data-wizard-next')
         self.assertContains(response, 'data-wizard-back')
         self.assertContains(response, 'data-wizard-submit')
+        self.assertContains(response, 'data-planned-duration-output')
+        self.assertNotContains(response, 'name="duration_days"')
+
+    def test_duration_is_calculated_inclusively_from_planned_dates(self):
+        form = InfrastructureProjectForm(data=self.valid_data(
+            planned_start_date='2026-02-01',
+            planned_end_date='2026-02-28',
+            duration_days='999',
+        ))
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['duration_days'], 28)
+
+        infrastructure = form.save(user=self.user)
+        self.assertEqual(
+            infrastructure.schedules.get().duration_days,
+            28,
+        )
+
+        same_day_form = InfrastructureProjectForm(data=self.valid_data(
+            planned_start_date='2026-02-01',
+            planned_end_date='2026-02-01',
+        ))
+        self.assertTrue(same_day_form.is_valid(), same_day_form.errors)
+        self.assertEqual(same_day_form.cleaned_data['duration_days'], 1)
 
     def test_edit_form_renders_sections_and_existing_values(self):
         infrastructure = self.create_project()

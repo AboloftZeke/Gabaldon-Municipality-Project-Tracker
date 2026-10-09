@@ -6,7 +6,7 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_form.css' %}">
-<link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}?v=20261009-schedule-validation">
+<link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}?v=20261009-duration-auto">
 {% endblock %}
 
 {% block content %}
@@ -252,15 +252,13 @@
                 </div>
                 <div class="form-subsection">
                     <h4>Implementation dates</h4>
-                    <p>Set the planned timeline, duration, and actual dates when available.</p>
+                    <p>Set the planned timeline and actual dates when available. Duration is calculated from the planned dates.</p>
                 </div>
                 <div class="form-grid">
-                    <div class="form-group">
-                        <label for="{{ form.duration_days.id_for_label }}">Duration (days)</label>
-                        {{ form.duration_days }}
-                        {% if form.duration_days.errors %}
-                            <div class="error-message">{{ form.duration_days.errors.0 }}</div>
-                        {% endif %}
+                    <div class="form-group planned-duration" data-planned-duration>
+                        <label for="planned-duration-value">Duration (days)</label>
+                        <output id="planned-duration-value" data-planned-duration-output aria-live="polite">Enter both planned dates</output>
+                        <small class="helper-text">Calculated automatically from the planned start and end dates.</small>
                     </div>
                     <div class="form-group">
                         <label for="{{ form.planned_start_date.id_for_label }}">Planned Start Date</label>
@@ -973,5 +971,5 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
 <script src="{% static 'js/gis/infrastructure_location_picker.js' %}?v=20261008-1"></script>
-<script src="{% static 'js/templates/projects/project_form.js' %}?v=20261009-schedule-validation"></script>
+<script src="{% static 'js/templates/projects/project_form.js' %}?v=20261009-duration-auto"></script>
 {% endblock %}

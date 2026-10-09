@@ -358,6 +358,27 @@
     box-shadow: 0 0 0 3px rgba(26, 90, 58, 0.13);
 }
 
+.planned-duration output {
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: 2.85rem;
+    padding: 0.78rem 0.9rem;
+    border: 1px solid #d9e5dc;
+    border-radius: 9px;
+    background: #f3f8f4;
+    color: #173d2a;
+    font-size: 0.95rem;
+    font-weight: 750;
+    font-variant-numeric: tabular-nums;
+}
+
+.planned-duration output[data-duration-invalid="true"] {
+    border-color: #f3a5a5;
+    background: #fffafa;
+    color: #a61b1b;
+}
+
 /* System-fixed fields such as Municipality and Province */
 .form-group:has(input:disabled) {
     position: relative;

@@ -125,9 +125,11 @@ class InfrastructureInspectionHistoryTests(TestCase):
         self.assertContains(response, 'Field Observations')
         self.assertContains(response, 'Supporting Evidence')
         self.assertContains(response, 'No evidence attached yet')
+        self.assertContains(response, 'data-selected-evidence-grid')
+        self.assertContains(response, 'inspection_evidence_preview.js')
         self.assertContains(
             response,
-            '/static/css/templates/projects/inspection_form.css?v=20260914-1',
+            '/static/css/templates/projects/inspection_form.css?v=20261009-evidence-viewer',
         )
 
     def test_history_is_newest_first_and_visible_to_engineering_head(self):
@@ -337,6 +339,10 @@ class InfrastructureInspectionHistoryTests(TestCase):
             args=[self.infrastructure.pk, inspection.pk],
         )
         self.client.force_login(self.staff)
+        edit_form = self.client.get(update_url)
+        self.assertContains(edit_form, 'data-image-viewer-trigger')
+        self.assertContains(edit_form, 'data-image-src="/media/inspections/test/remove.jpg"')
+        self.assertContains(edit_form, 'href="/media/inspections/test/retain.pdf"')
 
         response = self.client.post(update_url, {
             'inspection_type': 'routine',

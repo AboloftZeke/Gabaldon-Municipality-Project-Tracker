@@ -259,7 +259,6 @@ class InfrastructureProjectForm(forms.Form):
         required=True,
         widget=forms.DateInput(attrs={'type': 'date'}),
     )
-    duration_days = forms.IntegerField(required=True, min_value=1)
     fund_source = forms.CharField(
         required=True,
         max_length=255,
@@ -372,7 +371,6 @@ class InfrastructureProjectForm(forms.Form):
             self.initial.setdefault('bidding_date', sched.bidding_date)
             self.initial.setdefault('notice_award_date', sched.notice_award_date)
             self.initial.setdefault('notice_to_proceed_date', getattr(sched, 'notice_proceed_date', None))
-            self.initial.setdefault('duration_days', sched.duration_days)
             self.initial.setdefault('actual_start_date', sched.actual_start_date)
             self.initial.setdefault('actual_completion_date', sched.actual_completion_date)
 
@@ -398,6 +396,11 @@ class InfrastructureProjectForm(forms.Form):
                 'planned_end_date',
                 'Planned end date cannot be earlier than the planned start date.',
             )
+        cleaned_data['duration_days'] = (
+            (planned_end - planned_start).days + 1
+            if planned_start and planned_end and planned_end >= planned_start
+            else None
+        )
 
         actual_start = cleaned_data.get('actual_start_date')
         actual_completion = cleaned_data.get('actual_completion_date')

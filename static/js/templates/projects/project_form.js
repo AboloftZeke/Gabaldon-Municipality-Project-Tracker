@@ -10,7 +10,34 @@ document.addEventListener('DOMContentLoaded', function () {
     const progressText = form.querySelector('[data-wizard-progress-text]');
     const progressDetail = form.querySelector('[data-wizard-progress-detail]');
     const reviewPanel = form.querySelector('[data-review-panel]');
+    const durationOutput = form.querySelector('[data-planned-duration-output]');
+    const plannedStartDate = form.querySelector('[name="planned_start_date"]');
+    const plannedEndDate = form.querySelector('[name="planned_end_date"]');
     if (!panels.length || !backButton || !nextButton || !submitButton) return;
+
+    function updatePlannedDuration() {
+        if (!durationOutput || !plannedStartDate || !plannedEndDate) return;
+
+        const start = plannedStartDate.value;
+        const end = plannedEndDate.value;
+        durationOutput.removeAttribute('data-duration-invalid');
+        if (!start || !end) {
+            durationOutput.textContent = 'Enter both planned dates';
+            return;
+        }
+
+        const [startYear, startMonth, startDay] = start.split('-').map(Number);
+        const [endYear, endMonth, endDay] = end.split('-').map(Number);
+        const startTime = Date.UTC(startYear, startMonth - 1, startDay);
+        const endTime = Date.UTC(endYear, endMonth - 1, endDay);
+        const duration = Math.round((endTime - startTime) / 86400000) + 1;
+        if (duration < 1) {
+            durationOutput.textContent = 'End date must be on or after start date';
+            durationOutput.setAttribute('data-duration-invalid', 'true');
+            return;
+        }
+        durationOutput.textContent = `${duration} ${duration === 1 ? 'day' : 'days'}`;
+    }
 
     let activeStep = 0;
     let hasUnsavedChanges = false;
@@ -214,6 +241,9 @@ document.addEventListener('DOMContentLoaded', function () {
         ['input', 'change'].forEach(function (eventName) {
             field.addEventListener(eventName, function () {
                 hasUnsavedChanges = true;
+                if (field === plannedStartDate || field === plannedEndDate) {
+                    updatePlannedDuration();
+                }
                 const procurementPanel = field.closest('[data-procurement-date-validation]');
                 const revalidateProcurementDates = procurementPanel &&
                     procurementPanel.querySelector('[data-procurement-date-error]');
@@ -244,5 +274,6 @@ document.addEventListener('DOMContentLoaded', function () {
         event.returnValue = '';
     });
 
+    updatePlannedDuration();
     showStep(activeStep, { focusPanel: Boolean(firstError) });
 });

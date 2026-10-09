@@ -27,6 +27,18 @@
     border-top: 1px solid #dfe8e2;
 }
 
+.inspection-selected-evidence {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    border: 1px solid #cfe0d4;
+    border-radius: 11px;
+    background: #f7fbf8;
+}
+
+.inspection-selected-evidence[hidden] {
+    display: none;
+}
+
 .inspection-subheading h4 {
     margin: 0;
     color: #173d2a;
@@ -58,6 +70,13 @@
     color: #173d2a;
     text-decoration: none;
     transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.inspection-file-card--image {
+    width: 100%;
+    font: inherit;
+    text-align: left;
+    cursor: zoom-in;
 }
 
 .inspection-file-card:hover {
