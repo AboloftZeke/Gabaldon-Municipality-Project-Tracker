@@ -591,8 +591,10 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(response, 'Actual Physical Progress')
         self.assertContains(response, 'Entered Cost Progress')
         self.assertContains(response, 'Inspection Completion')
-        self.assertContains(response, 'Calculated Reference')
-        self.assertContains(response, 'Expected / Scheduled Progress')
+        self.assertNotContains(response, 'Calculated Reference')
+        self.assertNotContains(response, 'Expected / Scheduled Progress')
+        self.assertNotContains(response, 'Variance (Actual vs Scheduled)')
+        self.assertNotContains(response, 'Calculated Cost Progress')
         self.assertContains(response, 'Read-only')
         self.assertContains(response, 'Save Status &amp; Progress')
         self.assertContains(

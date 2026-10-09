@@ -382,6 +382,10 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertContains(detail, 'Update Status &amp; Progress')
         self.assertContains(detail, 'Financial &amp; Funding Information')
         self.assertContains(detail, 'Status &amp; Progress')
+        self.assertNotContains(detail, 'Expected / Scheduled Progress')
+        self.assertNotContains(detail, 'Variance (Actual vs Scheduled)')
+        self.assertNotContains(detail, 'Calculated Cost Progress')
+        self.assertNotContains(detail, 'Calculated reference')
 
     def test_wrong_roles_are_denied_without_mutation(self):
         before = (

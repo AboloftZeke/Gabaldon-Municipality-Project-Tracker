@@ -20,11 +20,6 @@ from .inspection_evidence import update_inspection_evidence
 from .progress_history import record_progress_update
 from apps.system.formatting import format_peso
 from apps.system.schedule_indicators import infrastructure_schedule_indicator
-from apps.system.progress import (
-    derived_cost_progress,
-    expected_progress,
-    progress_variance,
-)
 from apps.system.models import (
     InfrastructureCategory,
     InfrastructureProject,
@@ -583,20 +578,6 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
             ).first()
             if infra and infra.project else None
         )
-        scheduled_progress = expected_progress(
-            planned_start_date,
-            planned_end_date,
-            revised_end_date=getattr(schedule, 'contract_expiry_date', None),
-        )
-        schedule_variance = progress_variance(
-            physical_progress,
-            scheduled_progress,
-        )
-        calculated_cost_progress = derived_cost_progress(
-            actual_expenditure,
-            contract_value,
-        )
-
         context['project_details'] = {
             'pk': project.pk,
             'title': (
@@ -654,9 +635,6 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
             'duration_days': getattr(schedule, 'duration_days', None),
             'cost_progress_percentage': cost_progress,
             'physical_progress_percentage': physical_progress,
-            'expected_progress_percentage': scheduled_progress,
-            'progress_variance_percentage': schedule_variance,
-            'derived_cost_progress_percentage': calculated_cost_progress,
             'inspection_date': getattr(
                 inspection,
                 'inspection_date',
