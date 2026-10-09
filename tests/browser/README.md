@@ -18,6 +18,10 @@ replacement, clearing, hidden coordinates, required-location validation, saved
 edit markers, and wizard step resizing. They do not verify live OpenStreetMap
 availability.
 
+The runner also checks shared public project-detail GIS: popup containment under
+dashboard table styles, long values on desktop/tablet/mobile, local Leaflet and
+marker-cluster assets, and retry/recovery after a tile-service outage.
+
 For Django public dashboard, detail and GIS API regressions:
 
 ```sh

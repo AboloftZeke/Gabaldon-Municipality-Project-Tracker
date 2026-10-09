@@ -52,6 +52,9 @@ def main():
                 subprocess.run([
                     'node', str(ROOT / 'tests/browser/check_public_gabaldon_map.cjs'),
                 ], cwd=ROOT, env={**os.environ, 'BASE_URL': base_url}, check=True)
+                subprocess.run([
+                    'node', str(ROOT / 'tests/browser/check_project_detail_gis.cjs'),
+                ], cwd=ROOT, env={**os.environ, 'BASE_URL': base_url}, check=True)
                 from apps.infrastructure.tests import InfrastructureProjectFormTests
                 from apps.system.models import UserRole
                 from django.test import Client

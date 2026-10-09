@@ -61,24 +61,46 @@
   );
 
   const osmTiles = L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
         maxZoom: 19,
-        attribution: "&copy; OpenStreetMap contributors",
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }
   );
-  osmTiles.addTo(map);
-
   // Fallback: if OSM tiles fail to load (offline, blocked, rate-limited),
   // fall back to a plain background and tell the user — never fabricate a
   // fake grid and pass it off as a real basemap.
-  let tileErrorShown = false;
-  osmTiles.on("tileerror", function () {
-    if (tileErrorShown) return;
-    tileErrorShown = true;
-    document.getElementById("gis-tile-fallback-banner").hidden = false;
-    document.getElementById("gabaldon-gis-map").classList.add("gis-no-basemap");
+  const tileBanner = document.getElementById("gis-tile-fallback-banner");
+  const mapElement = document.getElementById("gabaldon-gis-map");
+  function showTileFailure(failed) {
+    tileBanner.hidden = !failed;
+    mapElement.classList.toggle("gis-no-basemap", failed);
+  }
+  let loadedTiles = 0;
+  osmTiles.on("loading", () => { loadedTiles = 0; });
+  osmTiles.on("tileload", () => {
+    loadedTiles += 1;
+    showTileFailure(false);
   });
+  osmTiles.on("tileerror", function () {
+    if (!loadedTiles) showTileFailure(true);
+  });
+  osmTiles.on("load", () => showTileFailure(!loadedTiles));
+  document.getElementById("gis-retry-tiles").addEventListener("click", () => osmTiles.redraw());
+  osmTiles.addTo(map);
+
+  let pendingResize;
+  function resizeMap() {
+    cancelAnimationFrame(pendingResize);
+    pendingResize = requestAnimationFrame(() => {
+      mapElement.style.setProperty("--gis-popup-width", Math.max(120, Math.min(310, mapElement.clientWidth - 52)) + "px");
+      mapElement.style.setProperty("--gis-popup-height", Math.max(140, mapElement.clientHeight - 100) + "px");
+      map.invalidateSize({ pan: false });
+    });
+  }
+  if (window.ResizeObserver) new ResizeObserver(resizeMap).observe(mapElement);
+  window.addEventListener("resize", resizeMap);
+  resizeMap();
 
   // NOTE: to switch to self-hosted tiles once available, replace the
   // tileLayer URL above with your own, e.g.
@@ -604,7 +626,7 @@ function bindLightbox() {
     await loadProjects({});
     focusConfiguredProject();
 
-    window.addEventListener("resize", () => map.invalidateSize());
+    resizeMap();
   })();
 })();
 

@@ -1,10 +1,9 @@
 {% load static %}
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-<link rel="stylesheet" href="{% static 'css/gis/gabaldon_gis.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/leaflet-markercluster/MarkerCluster.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/leaflet-markercluster/MarkerCluster.Default.css' %}">
+<link rel="stylesheet" href="{% static 'css/gis/gabaldon_gis.css' %}?v=20261009-popup">
 
 <section class="gabaldon-gis" id="gabaldon-gis-root"
     {# Config is passed via data-* attributes, never hardcoded in the JS file,
@@ -66,10 +65,10 @@
             <div>🏠 Evacuation &nbsp; 🌳 Park &nbsp; 🌉 Bridge</div>
         </div>
 
-        <div class="gis-tile-fallback-banner" id="gis-tile-fallback-banner" hidden>
-            ⚠ Basemap tiles unavailable — showing vector layers on a plain
-            background. Boundaries, roads, facilities, and projects below are
-            still fully interactive.
+        <div class="gis-tile-fallback-banner" id="gis-tile-fallback-banner" role="status" hidden>
+            Map tiles are currently unavailable. Check your connection or try again.
+            Available project markers and layers remain interactive.
+            <button type="button" class="gis-btn" id="gis-retry-tiles">Retry map tiles</button>
         </div>
     </div>
 </section>
@@ -93,8 +92,6 @@
         alt="Project photo">
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-<script src="{% static 'js/gis/gabaldon_gis.js' %}"></script>
-
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'vendor/leaflet-markercluster/leaflet.markercluster.js' %}"></script>
+<script src="{% static 'js/gis/gabaldon_gis.js' %}?v=20261009-tiles"></script>
