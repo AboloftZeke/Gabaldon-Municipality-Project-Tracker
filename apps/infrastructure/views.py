@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.paginator import Paginator
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse, NoReverseMatch
@@ -689,7 +690,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
                 args=[project.pk],
             )
             context['can_manage_publication'] = can_manage_infrastructure(self.request.user)
-            context['inspection_history'] = (
+            inspections = (
                 infra.project.inspections.select_related(
                     'inspected_by_user',
                 ).prefetch_related('evidence').order_by(
@@ -698,6 +699,11 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
                     '-inspection_id',
                 )
             )
+            inspection_page = Paginator(inspections, 5).get_page(
+                self.request.GET.get('inspection_page'),
+            )
+            context['inspection_page'] = inspection_page
+            context['inspection_history'] = inspection_page.object_list
             context['can_manage_inspections'] = can_manage_infrastructure(
                 self.request.user,
             )

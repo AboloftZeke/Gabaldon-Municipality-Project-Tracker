@@ -4,7 +4,7 @@
 {% block title %}{{ project_details.title }} - Infrastructure Projects{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/templates/projects/project_detail.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/projects/project_detail.css' %}?v=20261009-inspections">
 <link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/head_information_cards.css' %}">
@@ -342,9 +342,9 @@
     </section>
 
     <!-- Inspection History Section -->
-    <section class="detail-section workflow-history-section">
+    <section class="detail-section workflow-history-section" id="inspection-history" aria-labelledby="inspection-history-heading">
         <div class="workflow-section-heading workflow-section-heading--actions ui-list-header">
-            <div><p class="workflow-eyebrow">Field records</p><h3>Inspection History</h3><p>Newest inspections appear first. Observed completion supports review but does not set official physical progress.</p><span class="ui-result-count">{{ inspection_history|length }} inspection{{ inspection_history|length|pluralize }}</span></div>
+            <div><p class="workflow-eyebrow">Field records</p><h3 id="inspection-history-heading">Inspection History</h3><p>Newest inspections appear first. Observed completion supports review but does not set official physical progress.</p><span class="ui-result-count">{% if inspection_page.paginator.count %}Showing inspections {{ inspection_page.start_index }}–{{ inspection_page.end_index }} of {{ inspection_page.paginator.count }}{% else %}0 inspections{% endif %}</span></div>
             {% if can_manage_inspections %}<a class="btn btn-edit workflow-add-button ui-button ui-button--primary" href="{{ inspection_create_url }}">Add Inspection</a>{% endif %}
         </div>
         <div class="inspection-timeline">
@@ -370,6 +370,13 @@
             <div class="workflow-empty-state ui-empty-state"><strong>No inspections recorded</strong><p>Field inspections and their supporting evidence will appear here.</p>{% if can_manage_inspections %}<a class="ui-button ui-button--primary ui-button--small" href="{{ inspection_create_url }}">Add the first inspection</a>{% endif %}</div>
         {% endfor %}
         </div>
+        {% if inspection_page.has_other_pages %}
+        <nav class="ui-pagination inspection-pagination" aria-label="Inspection history pages">
+            {% if inspection_page.has_previous %}<a href="{% querystring inspection_page=inspection_page.previous_page_number %}#inspection-history" aria-label="Previous page of inspection history">Previous</a>{% endif %}
+            <span aria-current="page">Page {{ inspection_page.number }} of {{ inspection_page.paginator.num_pages }}</span>
+            {% if inspection_page.has_next %}<a href="{% querystring inspection_page=inspection_page.next_page_number %}#inspection-history" aria-label="Next page of inspection history">Next</a>{% endif %}
+        </nav>
+        {% endif %}
     </section>
 
     <!-- GIS & Map Section -->

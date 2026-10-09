@@ -514,8 +514,18 @@ section.detail-section .workflow-section-heading h3 {
 
 .inspection-timeline {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
 }
+
+#inspection-history { scroll-margin-top: 6rem; }
+.inspection-timeline .inspection-card { min-width: 0; overflow-wrap: anywhere; }
+.inspection-timeline .inspection-card__header > div { min-width: 0; }
+.inspection-timeline .inspection-evidence-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(min(155px, 100%), 1fr));
+}
+.inspection-timeline .inspection-card__actions { flex-wrap: wrap; gap: .5rem; }
+.inspection-pagination { margin-top: 1rem; flex-wrap: wrap; }
 
 .inspection-card__header time {
     display: block;
