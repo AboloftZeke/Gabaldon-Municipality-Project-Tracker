@@ -1,0 +1,23 @@
+/* Shared detail-page component using the existing badge shape and palette. */
+.schedule-indicator { min-width: 0; overflow-wrap: anywhere; }
+.summary-item > .schedule-indicator { margin-top: .75rem; }
+.schedule-indicator .schedule-indicator__label {
+  margin: 0 0 .45rem; color: #597165; font-size: .75rem;
+  font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+}
+.schedule-indicator .schedule-indicator__badge {
+  display: inline-flex; max-width: 100%; box-sizing: border-box;
+  padding: .25rem .6rem; border: 1px solid #d4ddd7; border-radius: 999px;
+  font-size: .85rem; line-height: 1.45; font-weight: 800;
+  white-space: normal; color: #4a5d52; background: #f2f4f3;
+}
+.schedule-indicator .schedule-indicator--past-target {
+  color: #854d0e; background: #fff8e3; border-color: #efd28a;
+}
+.schedule-indicator .schedule-indicator--within-period,
+.schedule-indicator .schedule-indicator--completed {
+  color: #14532d; background: #eef8f0; border-color: #b9d9c4;
+}
+.schedule-indicator__deadline, .schedule-indicator__note {
+  margin: .5rem 0 0; font-size: .85rem; line-height: 1.5; color: #4a5d52;
+}

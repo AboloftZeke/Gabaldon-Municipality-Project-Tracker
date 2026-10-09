@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}">
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/infrastructure_detail.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
+<link rel="stylesheet" href="{% static 'css/components/schedule_indicator.css' %}">
 </head>
 <body>
   <header class="site-header">
@@ -48,7 +49,9 @@
         </div>
       </div>
       <div class="public-detail__summary" aria-label="Project summary">
-        <div class="summary-item"><span>Official Status</span><strong>{{ public_project.status_label|default:"N/A" }}</strong></div>
+        <div class="summary-item"><span>Official Status</span><strong>{{ public_project.status_label|default:"N/A" }}</strong>
+          {% include 'includes/infrastructure_schedule_indicator.html' with is_public=True %}
+        </div>
         <div class="summary-item"><span>Approved Budget</span><strong>{% if financial.approved_budget is not None %}{{ financial.approved_budget|peso }}{% else %}N/A{% endif %}</strong></div>
         <div class="summary-item"><span>Physical Progress</span><strong>{% if public_project.physical_progress_percentage is not None %}{{ public_project.physical_progress_percentage|floatformat:1 }}%{% else %}N/A{% endif %}</strong></div>
         <div class="summary-item"><span>Target Completion</span><strong>{{ public_project.planned_end_date|date:"F j, Y"|default:"N/A" }}</strong></div>

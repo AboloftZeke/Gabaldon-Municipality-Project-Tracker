@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/head_information_cards.css' %}">
+<link rel="stylesheet" href="{% static 'css/components/schedule_indicator.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -113,6 +114,9 @@
             <div class="detail-item">
                 <span class="detail-label">Status</span>
                 <span class="detail-value">{{ project_details.get_status_display }}</span>
+            </div>
+            <div class="detail-item">
+                {% include 'includes/infrastructure_schedule_indicator.html' with is_public=False %}
             </div>
             <div class="detail-item full-width">
                 <span class="detail-label">Description</span>

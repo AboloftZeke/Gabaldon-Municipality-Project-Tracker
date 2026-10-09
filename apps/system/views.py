@@ -205,6 +205,7 @@ class PublicInfrastructureProjectDetailView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from .publication_public import get_public_project
+        from .schedule_indicators import infrastructure_schedule_indicator
 
         project = get_public_project('infrastructure', self.kwargs['pk'])
         address = project['address']
@@ -216,6 +217,10 @@ class PublicInfrastructureProjectDetailView(TemplateView):
 
         context.update({
             'public_project': project,
+            'schedule_indicator': infrastructure_schedule_indicator(
+                project['status'], project['planned_end_date'],
+                planned_start_date=project['planned_start_date'],
+            ),
             'project_code': project['code'],
             'project_images': project['images'],
             'financial': project['financial'],
