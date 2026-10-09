@@ -6,7 +6,7 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_form.css' %}">
-<link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}?v=20261008-picker">
+<link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}?v=20261009-schedule-validation">
 {% endblock %}
 
 {% block content %}
@@ -227,7 +227,7 @@
                 </div>
             </div>
 
-            <div class="fieldset wizard-panel ui-form-section" id="project-schedule" data-wizard-step="3" hidden>
+            <div class="fieldset wizard-panel ui-form-section" id="project-schedule" data-wizard-step="3" data-procurement-date-validation hidden>
                 <div class="section-heading">
                     <span class="section-number">4</span>
                     <div><h3>Project Schedule</h3><p>Enter procurement milestones and the planned and actual delivery timeline.</p></div>
@@ -973,5 +973,5 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
 <script src="{% static 'js/gis/infrastructure_location_picker.js' %}?v=20261008-1"></script>
-<script src="{% static 'js/templates/projects/project_form.js' %}?v=20261008-picker"></script>
+<script src="{% static 'js/templates/projects/project_form.js' %}?v=20261009-schedule-validation"></script>
 {% endblock %}

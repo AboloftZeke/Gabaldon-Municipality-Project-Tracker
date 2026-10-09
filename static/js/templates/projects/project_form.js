@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function showFieldError(field) {
+    function showFieldError(field, customMessage, isProcurementDateError) {
         const group = field.closest('.form-group');
         if (!group) {
             field.reportValidity();
@@ -117,15 +117,65 @@ document.addEventListener('DOMContentLoaded', function () {
             message.dataset.clientErrorFor = field.id;
             group.appendChild(message);
         }
-        message.textContent = field.validity.valueMissing
+        if (isProcurementDateError) message.dataset.procurementDateError = 'true';
+        message.textContent = customMessage || (field.validity.valueMissing
             ? 'This field is required before you continue.'
-            : field.validationMessage;
+            : field.validationMessage);
     }
 
     function panelFields(panel) {
         return Array.from(panel.querySelectorAll(
             'input:not([type="hidden"]):not(:disabled), select:not(:disabled), textarea:not(:disabled)'
         ));
+    }
+
+    function validateProcurementDates(panel) {
+        if (!panel.hasAttribute('data-procurement-date-validation')) return null;
+
+        const milestones = [
+            ['posting_date', 'Posting date'],
+            ['pre_bid_date', 'Pre-bid date'],
+            ['bidding_date', 'Bidding date'],
+            ['notice_award_date', 'Notice of award date'],
+            ['notice_to_proceed_date', 'Notice to proceed date'],
+        ].map(function ([name, label]) {
+            return {
+                field: panel.querySelector(`[name="${name}"]`),
+                label: label,
+            };
+        }).filter(function (milestone) {
+            return milestone.field;
+        });
+
+        milestones.forEach(function (milestone) {
+            const group = milestone.field.closest('.form-group');
+            const message = group && group.querySelector('[data-procurement-date-error]');
+            if (message) {
+                message.remove();
+                milestone.field.removeAttribute('aria-invalid');
+                if (!group.querySelector('.client-error-message')) {
+                    group.classList.remove('has-client-error');
+                }
+            }
+        });
+
+        const populatedMilestones = milestones.filter(function (milestone) {
+            return milestone.field.value;
+        });
+        let firstInvalid = null;
+        for (let index = 1; index < populatedMilestones.length; index += 1) {
+            const previous = populatedMilestones[index - 1];
+            const current = populatedMilestones[index];
+            if (current.field.value < previous.field.value) {
+                showFieldError(
+                    current.field,
+                    `${current.label} cannot be earlier than ${previous.label.toLowerCase()}.`,
+                    true
+                );
+                firstInvalid = firstInvalid || current.field;
+            }
+        }
+        return firstInvalid;
     }
 
     function validatePanel(panel) {
@@ -143,8 +193,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 firstInvalid = firstInvalid || field;
             }
         });
+        const firstInvalidProcurementDate = validateProcurementDates(panel);
         if (firstInvalid) {
             firstInvalid.focus();
+            return false;
+        }
+        if (firstInvalidProcurementDate) {
+            firstInvalidProcurementDate.focus();
             return false;
         }
         return locationValid;
@@ -159,7 +214,11 @@ document.addEventListener('DOMContentLoaded', function () {
         ['input', 'change'].forEach(function (eventName) {
             field.addEventListener(eventName, function () {
                 hasUnsavedChanges = true;
+                const procurementPanel = field.closest('[data-procurement-date-validation]');
+                const revalidateProcurementDates = procurementPanel &&
+                    procurementPanel.querySelector('[data-procurement-date-error]');
                 if (field.checkValidity()) clearFieldError(field);
+                if (revalidateProcurementDates) validateProcurementDates(procurementPanel);
             });
         });
     });
