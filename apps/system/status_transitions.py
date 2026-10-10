@@ -9,9 +9,13 @@ _STATUS_STAGES = {
 
 def is_valid_project_status_transition(previous_status, proposed_status):
     """Return whether a status change moves forward without reopening completed work."""
-    previous_stage = _STATUS_STAGES.get(previous_status)
     proposed_stage = _STATUS_STAGES.get(proposed_status)
-    if previous_stage is None or proposed_stage is None:
+    if proposed_stage is None:
+        return False
+    if previous_status in (None, ''):
+        return True
+    previous_stage = _STATUS_STAGES.get(previous_status)
+    if previous_stage is None:
         return False
     if proposed_stage > previous_stage:
         return True

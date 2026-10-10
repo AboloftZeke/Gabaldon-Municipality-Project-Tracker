@@ -238,6 +238,28 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertEqual(self.infrastructure.physical_progress_percentage, before)
         self.assertFalse(InfrastructureProgressUpdate.objects.exists())
 
+    def test_unset_official_status_can_be_initialized(self):
+        self.infrastructure.status = None
+        self.infrastructure.save(update_fields=['status'])
+        self.client.force_login(self.users['engineer', 'head'])
+
+        response = self.client.post(self.infra_url(), {
+            'status': 'ongoing',
+            'physical_progress_percentage': '50',
+            'supporting_inspections': [str(self.inspection.pk)],
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.infrastructure.refresh_from_db()
+        self.assertEqual(self.infrastructure.status, 'ongoing')
+        self.assertEqual(
+            self.infrastructure.physical_progress_percentage,
+            Decimal('50'),
+        )
+        progress_update = InfrastructureProgressUpdate.objects.get()
+        self.assertEqual(progress_update.previous_official_status, '')
+        self.assertEqual(progress_update.new_official_status, 'ongoing')
+
     def test_unchanged_status_and_progress_do_not_create_history(self):
         self.client.force_login(self.users['engineer', 'head'])
 
