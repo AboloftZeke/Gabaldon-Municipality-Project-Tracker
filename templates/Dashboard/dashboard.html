@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/components/site_footer.css' %}?v=20261010-footer">
-  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20261010-footer">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20261011-centered-hero">
   <link rel="stylesheet" href="{% static 'css/templates/projects/project_modal.css' %}">
   <link rel="stylesheet" href="{% static 'css/components/ui.css' %}?v=20260918-4">
   <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
@@ -49,39 +49,40 @@
             <strong>{{ total_budget|peso }}</strong>
             <span>Total Investment</span>
           </div>
-          <div>
-            <strong>{{ completed_projects }}</strong>
-            <span>Completed</span>
-          </div>
-          <div>
-            <strong>{{ ongoing_projects }}</strong>
-            <span>Ongoing</span>
-          </div>
         </div>
+        <section class="summary-status-group" aria-labelledby="infrastructure-summary-heading">
+          <div class="summary-status-heading">
+            <h2 id="infrastructure-summary-heading">Infrastructure</h2>
+            <span>{{ infra_total }} projects</span>
+          </div>
+          <div class="summary-status-grid">
+            {% for summary in infrastructure_status_summaries %}
+            <div class="summary-status">
+              <strong>{{ summary.count }}</strong>
+              <span>{{ summary.label }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </section>
+        <section class="summary-status-group" aria-labelledby="noninfrastructure-summary-heading">
+          <div class="summary-status-heading">
+            <h2 id="noninfrastructure-summary-heading">Non-Infrastructure</h2>
+            <span>{{ noninfra_total }} projects</span>
+          </div>
+          <div class="summary-status-grid">
+            {% for summary in noninfrastructure_status_summaries %}
+            <div class="summary-status">
+              <strong>{{ summary.count }}</strong>
+              <span>{{ summary.label }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </section>
       </aside>
     </div>
   </header>
 
   <main class="main-wrap">
-    <section class="metrics-row" aria-label="Project summary statistics">
-      <article class="metric-card">
-        <span class="metric-label">Total Projects</span>
-        <strong class="metric-value">{{ total_projects }}</strong>
-      </article>
-      <article class="metric-card">
-        <span class="metric-label">Programmed Budget</span>
-        <strong class="metric-value">{{ total_budget|peso }}</strong>
-      </article>
-      <article class="metric-card">
-        <span class="metric-label">Completed</span>
-        <strong class="metric-value">{{ completed_projects }}</strong>
-      </article>
-      <article class="metric-card">
-        <span class="metric-label">Ongoing</span>
-        <strong class="metric-value">{{ ongoing_projects }}</strong>
-      </article>
-    </section>
-
     <section class="municipal-map-panel" aria-labelledby="municipal-map-heading">
       <div class="municipal-map-panel__head">
         <p class="section-kicker">Public Municipal Map</p>

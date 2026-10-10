@@ -287,17 +287,30 @@ class PublicDashboardView(TemplateView):
             public_projects,
         )
         from apps.system.choices import BARANGAY_CHOICES
+        from apps.system.models import (
+            InfrastructureProject,
+            NonInfrastructureProject,
+        )
         infra_projects, noninfra_projects = public_projects()
         infra_total = len(infra_projects)
         noninfra_total = len(noninfra_projects)
         total_projects = infra_total + noninfra_total
-        infra_completed = sum(p['status'] == 'completed' for p in infra_projects)
-        infra_ongoing = sum(p['status'] == 'ongoing' for p in infra_projects)
-        noninfra_completed = sum(p['status'] == 'completed' for p in noninfra_projects)
-        noninfra_ongoing = sum(p['status'] == 'ongoing' for p in noninfra_projects)
-        noninfra_planned = sum(p['status'] == 'planned' for p in noninfra_projects)
-        completed_projects = infra_completed + noninfra_completed
-        ongoing_projects = infra_ongoing + noninfra_ongoing
+        infrastructure_status_summaries = [
+            {
+                'key': status,
+                'label': label,
+                'count': sum(p['status'] == status for p in infra_projects),
+            }
+            for status, label in InfrastructureProject.STATUS_CHOICES
+        ]
+        noninfrastructure_status_summaries = [
+            {
+                'key': status,
+                'label': label,
+                'count': sum(p['status'] == status for p in noninfra_projects),
+            }
+            for status, label in NonInfrastructureProject.STATUS_CHOICES
+        ]
         infra_budget_total = sum(
             p['financial']['approved_budget']
             if p['financial'].get('approved_budget') is not None
@@ -307,10 +320,6 @@ class PublicDashboardView(TemplateView):
             for p in infra_projects
         )
         total_budget = infra_budget_total
-        portfolio_progress = (
-            round((completed_projects / total_projects) * 100)
-            if total_projects else 0
-        )
         location_options_map = {
             code: label
             for code, label in BARANGAY_CHOICES
@@ -360,10 +369,12 @@ class PublicDashboardView(TemplateView):
             'total_projects': total_projects,
             'infra_total': infra_total,
             'noninfra_total': noninfra_total,
-            'completed_projects': completed_projects,
-            'ongoing_projects': ongoing_projects,
-            'planned_projects': noninfra_planned,
-            'portfolio_progress': portfolio_progress,
+            'infrastructure_status_summaries': (
+                infrastructure_status_summaries
+            ),
+            'noninfrastructure_status_summaries': (
+                noninfrastructure_status_summaries
+            ),
             'total_budget': total_budget,
             'project_rows': registry_rows,
             'recent_rows': rows[:8],

@@ -1171,8 +1171,21 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['infra_total'], 1)
         self.assertEqual(response.context['total_budget'], 2500000)
-        self.assertEqual(response.context['ongoing_projects'], 1)
-        self.assertEqual(response.context['completed_projects'], 0)
+        infrastructure_statuses = {
+            item['key']: item['count']
+            for item in response.context['infrastructure_status_summaries']
+        }
+        self.assertEqual(infrastructure_statuses['ongoing'], 1)
+        self.assertEqual(infrastructure_statuses['on_hold'], 0)
+        self.assertEqual(
+            {
+                item['key']: item['count']
+                for item in response.context[
+                    'noninfrastructure_status_summaries'
+                ]
+            },
+            {'planned': 0, 'ongoing': 0, 'completed': 0},
+        )
         self.assertIn(
             ('infra:road-test', 'Road Test'),
             response.context['project_categories'],
@@ -1244,6 +1257,74 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
             response,
             'data-project-source-of-fund="Local Development Fund"',
         )
+
+    def test_public_dashboard_status_summaries_are_separate_and_update(self):
+        noninfra_project = Project.objects.create(
+            project_type='non_infrastructure',
+            created_by_user=self.user,
+            updated_by_user=self.user,
+        )
+        NonInfrastructureProject.objects.create(
+            project=noninfra_project,
+            title='Published Program',
+            status='ongoing',
+        )
+        publish_current_snapshot(noninfra_project)
+
+        response = self.client.get(reverse('public_dashboard'))
+        self.assertEqual(response.status_code, 200)
+        infrastructure_counts = {
+            item['key']: item['count']
+            for item in response.context['infrastructure_status_summaries']
+        }
+        noninfrastructure_counts = {
+            item['key']: item['count']
+            for item in response.context[
+                'noninfrastructure_status_summaries'
+            ]
+        }
+        self.assertEqual(infrastructure_counts['ongoing'], 1)
+        self.assertEqual(infrastructure_counts['on_hold'], 0)
+        self.assertEqual(noninfrastructure_counts['ongoing'], 1)
+        self.assertContains(response, 'Infrastructure Projects')
+        self.assertContains(response, 'Non-Infrastructure Projects')
+        self.assertContains(
+            response,
+            '<div class="summary-status">\n              <strong>0</strong>\n              <span>On Hold</span>\n            </div>',
+            html=True,
+        )
+        html = response.content.decode()
+        summary_card = html.split(
+            '<aside class="hero-summary-card">',
+            1,
+        )[1].split('</aside>', 1)[0]
+        self.assertIn('Infrastructure', summary_card)
+        self.assertIn('Non-Infrastructure', summary_card)
+        self.assertIn('On Hold', summary_card)
+        self.assertNotIn('project-summary', html)
+
+        self.infrastructure.status = 'on_hold'
+        self.infrastructure.save(update_fields=['status'])
+        self.public_revision.snapshot = build_project_publication_snapshot(
+            Project.objects.get(pk=self.infrastructure.project_id),
+        )
+        self.public_revision.save(update_fields=['snapshot'])
+
+        response = self.client.get(reverse('public_dashboard'))
+        self.assertEqual(response.status_code, 200)
+        infrastructure_counts = {
+            item['key']: item['count']
+            for item in response.context['infrastructure_status_summaries']
+        }
+        noninfrastructure_counts = {
+            item['key']: item['count']
+            for item in response.context[
+                'noninfrastructure_status_summaries'
+            ]
+        }
+        self.assertEqual(infrastructure_counts['ongoing'], 0)
+        self.assertEqual(infrastructure_counts['on_hold'], 1)
+        self.assertEqual(noninfrastructure_counts['ongoing'], 1)
         self.assertContains(
             response,
             'data-project-physical-progress-percentage="55.0%"',
@@ -1553,9 +1634,30 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['noninfra_total'], 3)
-        self.assertEqual(response.context['planned_projects'], 1)
-        self.assertEqual(response.context['ongoing_projects'], 1)
-        self.assertEqual(response.context['completed_projects'], 1)
+        noninfrastructure_statuses = {
+            item['key']: item['count']
+            for item in response.context[
+                'noninfrastructure_status_summaries'
+            ]
+        }
+        self.assertEqual(
+            noninfrastructure_statuses,
+            {'planned': 1, 'ongoing': 1, 'completed': 1},
+        )
+        self.assertEqual(
+            {
+                item['key']: item['count']
+                for item in response.context[
+                    'infrastructure_status_summaries'
+                ]
+            },
+            {
+                'not_yet_started': 0,
+                'ongoing': 0,
+                'on_hold': 0,
+                'completed': 0,
+            },
+        )
 
         statuses = {
             row['title']: (row['status_key'], row['status_label'])
@@ -1602,6 +1704,35 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
                     args=[project_pk],
                 ),
             )
+
+        ongoing_project = NonInfrastructureProject.objects.get(
+            title='Ongoing Program',
+        )
+        revision = ProjectRevision.objects.get(
+            project=ongoing_project.project,
+            is_current_public=True,
+        )
+        revision.snapshot = {
+            **revision.snapshot,
+            'non_infrastructure': {
+                **revision.snapshot['non_infrastructure'],
+                'status': 'planned',
+                'status_label': 'Planned',
+            },
+        }
+        revision.save(update_fields=['snapshot'])
+
+        updated_response = self.client.get(reverse('public_dashboard'))
+        updated_statuses = {
+            item['key']: item['count']
+            for item in updated_response.context[
+                'noninfrastructure_status_summaries'
+            ]
+        }
+        self.assertEqual(
+            updated_statuses,
+            {'planned': 2, 'ongoing': 0, 'completed': 1},
+        )
 
         mayor_detail_url = reverse(
             'mayor_projects:non_infrastructure_project_detail',
