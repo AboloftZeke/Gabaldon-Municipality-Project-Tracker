@@ -82,11 +82,6 @@ footer {
     color: rgba(255, 255, 255, 0.9) !important;
 }
 
-.footer-accent {
-    height: 4px;
-    background: linear-gradient(90deg, #8b5cf6, #6366f1, #8b5cf6);
-}
-
 @media (max-width: 768px) {
     .footer-content {
         grid-template-columns: repeat(2, 1fr);

@@ -1031,7 +1031,7 @@ class PublicDashboardFooterTests(TestCase):
             self.assertContains(response, f'<h3>{section}</h3>', html=True)
         self.assertContains(response, reverse('admin_dashboard'))
         self.assertContains(response, 'alt="Municipality of Gabaldon seal"')
-        self.assertContains(response, 'class="footer-accent"')
+        self.assertNotContains(response, 'class="footer-accent"')
         self.assertContains(
             response,
             '2026 Municipality of Gabaldon – Transparent Governance for the Community.',
