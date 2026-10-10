@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20261008-map">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20261010-progress">
   <link rel="stylesheet" href="{% static 'css/templates/projects/project_modal.css' %}">
   <link rel="stylesheet" href="{% static 'css/components/ui.css' %}?v=20260918-4">
   <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
@@ -302,7 +302,10 @@
               <p class="public-project-preview__location">{% if row.location %}Barangay {{ row.location }}{% else %}Location not specified{% endif %}</p>
               <dl class="public-project-preview__facts">
                 <div><dt>Budget</dt><dd>{% if row.has_financial %}{{ row.budget|peso }}{% else %}Not disclosed{% endif %}</dd></div>
-                <div><dt>Progress</dt><dd>{% if row.has_progress %}{{ row.progress|floatformat:0 }}%{% else %}Not available{% endif %}</dd></div>
+                <div class="public-project-preview__progress-fact">
+                  <div class="public-project-preview__progress-label"><dt>Progress</dt><dd>{% if row.has_progress %}{{ row.progress|floatformat:0 }}%{% else %}Not available{% endif %}</dd></div>
+                  {% if row.has_progress %}<div class="public-project-preview__progress-track" role="progressbar" aria-label="Physical progress for {{ row.title }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ row.progress|floatformat:1 }}"><span style="width: {{ row.progress|floatformat:1 }}%"></span></div>{% endif %}
+                </div>
               </dl>
               <a href="#"
                  class="public-project-preview__action ui-button ui-button--primary ui-button--small"

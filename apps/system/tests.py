@@ -1231,6 +1231,12 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         )
         self.assertContains(
             response,
+            'aria-label="Physical progress for Normalized Road Project"',
+        )
+        self.assertContains(response, 'aria-valuenow="55.0"')
+        self.assertContains(response, 'width: 55.0%')
+        self.assertContains(
+            response,
             '/media/projects/infrastructure-cover.jpg',
         )
         self.assertNotContains(response, 'images/infra-icon.png')
