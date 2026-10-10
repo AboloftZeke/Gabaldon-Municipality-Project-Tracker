@@ -333,11 +333,14 @@ body {
   min-width: 0;
   overflow: hidden;
   flex-direction: column;
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(19, 56, 38, 0.08);
 }
 
 .public-project-preview__image {
+  display: block;
   width: 100%;
-  height: 175px;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
   background: #e5eee7;
 }
@@ -346,7 +349,7 @@ body {
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding: 1rem;
+  padding: 1.1rem;
 }
 
 .public-project-preview__meta {
@@ -359,10 +362,18 @@ body {
   font-weight: 700;
 }
 
+.public-project-preview__meta > span:not(.status-chip) {
+  padding: 0.24rem 0.55rem;
+  border-radius: 999px;
+  background: #eff5ef;
+  color: var(--pine-800);
+}
+
 .public-project-preview__body h3 {
-  margin: 0.8rem 0 0;
+  margin: 0.7rem 0 0;
   color: var(--ink-900);
-  font-size: 1.12rem;
+  font-size: 1.15rem;
+  font-weight: 800;
   line-height: 1.35;
 }
 
@@ -374,13 +385,13 @@ body {
 
 .public-project-preview__facts {
   display: grid;
-  gap: 0.45rem;
-  margin: 1rem 0 0;
-  padding-top: 0.8rem;
+  gap: 0.55rem;
+  margin: 0.9rem 0 0;
+  padding-top: 0.85rem;
   border-top: 1px solid var(--line);
 }
 
-.public-project-preview__facts div {
+.public-project-preview__facts > div:not(.public-project-preview__progress-fact) {
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;

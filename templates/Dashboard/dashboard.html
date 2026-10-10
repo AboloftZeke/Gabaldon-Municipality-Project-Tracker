@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20261010-progress">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20261010-cards">
   <link rel="stylesheet" href="{% static 'css/templates/projects/project_modal.css' %}">
   <link rel="stylesheet" href="{% static 'css/components/ui.css' %}?v=20260918-4">
   <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
@@ -372,6 +372,7 @@
               <h3>{{ row.title }}</h3>
               <p class="public-project-preview__location">{% if row.location %}Barangay {{ row.location }}{% elif row.venue_name %}{{ row.venue_name }}{% else %}Location not specified{% endif %}</p>
               <dl class="public-project-preview__facts">
+                <div><dt>Proponent</dt><dd>{{ row.proponent|default:"Not specified" }}</dd></div>
                 <div><dt>Beneficiaries</dt><dd>{{ row.beneficiaries|default_if_none:"Not specified" }}</dd></div>
                 <div><dt>Event date</dt><dd>{{ row.event_date|date:"M d, Y"|default:"Not scheduled" }}</dd></div>
               </dl>

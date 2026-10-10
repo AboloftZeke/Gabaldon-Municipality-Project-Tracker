@@ -1479,10 +1479,10 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
             password='password123',
         )
 
-        for name, status in (
-            ('Planned Program', 'planned'),
-            ('Ongoing Program', 'ongoing'),
-            ('Completed Program', 'completed'),
+        for name, status, proponent in (
+            ('Planned Program', 'planned', ''),
+            ('Ongoing Program', 'ongoing', 'Municipal Health Office'),
+            ('Completed Program', 'completed', ''),
         ):
             project = Project.objects.create(
                 project_type='non_infrastructure',
@@ -1493,6 +1493,7 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
                 project=project,
                 title=name,
                 status=status,
+                proponent=proponent,
                 project_cost=Decimal('1250000.50') if status == 'ongoing' else None,
             )
 
@@ -1515,6 +1516,18 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
         ))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '₱1,250,000.50')
+
+    def test_public_dashboard_shows_non_infrastructure_proponent(self):
+        response = self.client.get(reverse('public_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        ongoing_row = next(
+            row for row in response.context['noninfrastructure_preview_rows']
+            if row['title'] == 'Ongoing Program'
+        )
+        self.assertEqual(ongoing_row['proponent'], 'Municipal Health Office')
+        self.assertContains(response, '<dt>Proponent</dt>', html=True)
+        self.assertContains(response, 'Municipal Health Office')
 
     def test_public_dashboard_uses_saved_non_infrastructure_statuses(self):
         response = self.client.get(reverse('public_dashboard'))
