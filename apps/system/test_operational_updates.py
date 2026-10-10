@@ -194,6 +194,50 @@ class HeadOperationalUpdateTests(TestCase):
                 self.assertFalse(InfrastructureProgressUpdate.objects.exists())
                 self.assertEqual(self.infrastructure.project.revisions.count(), 1)
 
+    def test_physical_progress_uses_five_percent_steps_and_validates_server_side(self):
+        self.client.force_login(self.users['engineer', 'head'])
+        page = self.client.get(self.infra_url())
+        form_class = type(page.context['form'])
+
+        for value in range(0, 101, 5):
+            with self.subTest(accepted=value):
+                form = form_class(data={
+                    'status': 'not_yet_started',
+                    'physical_progress_percentage': str(value),
+                    'supporting_inspections': [str(self.inspection.pk)],
+                }, instance=self.infrastructure)
+                self.assertTrue(form.is_valid(), form.errors)
+                self.assertEqual(
+                    form.cleaned_data['physical_progress_percentage'],
+                    Decimal(value),
+                )
+
+        self.assertContains(page, 'type="range"')
+        self.assertContains(page, 'step="5"')
+        self.assertContains(page, 'data-progress-slider')
+        self.assertContains(page, 'data-progress-output')
+        self.assertContains(
+            page,
+            'js/templates/infrastructure/physical_progress_slider.js',
+        )
+
+        before = self.infrastructure.physical_progress_percentage
+        for value in ('1', '63', '99'):
+            with self.subTest(rejected=value):
+                response = self.client.post(self.infra_url(), {
+                    'status': 'not_yet_started',
+                    'physical_progress_percentage': value,
+                    'supporting_inspections': [str(self.inspection.pk)],
+                })
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(
+                    'Physical progress must be a multiple of 5',
+                    response.context['form'].errors['physical_progress_percentage'][0],
+                )
+        self.infrastructure.refresh_from_db()
+        self.assertEqual(self.infrastructure.physical_progress_percentage, before)
+        self.assertFalse(InfrastructureProgressUpdate.objects.exists())
+
     def test_unchanged_status_and_progress_do_not_create_history(self):
         self.client.force_login(self.users['engineer', 'head'])
 
@@ -240,7 +284,7 @@ class HeadOperationalUpdateTests(TestCase):
 
         response = self.client.post(self.infra_url(), {
             'status': 'completed',
-            'physical_progress_percentage': '61',
+            'physical_progress_percentage': '60',
             'head_remarks': 'Supported by two field inspections.',
             'supporting_inspections': [
                 str(self.inspection.pk), str(earlier_inspection.pk),
@@ -256,7 +300,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.infrastructure.refresh_from_db()
         self.assertEqual(
             self.infrastructure.physical_progress_percentage,
-            Decimal('61'),
+            Decimal('60'),
         )
         self.assertNotEqual(
             self.infrastructure.physical_progress_percentage,
@@ -289,7 +333,7 @@ class HeadOperationalUpdateTests(TestCase):
 
         response = self.client.post(self.infra_url(), {
             'status': 'completed',
-            'physical_progress_percentage': '61',
+            'physical_progress_percentage': '60',
             'supporting_inspections': [str(other_inspection.pk)],
         })
 

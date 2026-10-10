@@ -830,8 +830,14 @@ class SupportingInspectionChoiceField(forms.ModelMultipleChoiceField):
 
 
 class InfrastructureOperationalForm(forms.Form):
+    class RangeInput(forms.NumberInput):
+        input_type = 'range'
+
     STATUS_TRANSITION_ERROR = (
         'Project status cannot move backwards or change after completion.'
+    )
+    PHYSICAL_PROGRESS_INCREMENT_ERROR = (
+        'Physical progress must be a multiple of 5 between 0 and 100.'
     )
 
     status = forms.ChoiceField(
@@ -841,6 +847,13 @@ class InfrastructureOperationalForm(forms.Form):
     physical_progress_percentage = forms.DecimalField(
         label='Physical Progress', max_digits=5, decimal_places=2,
         min_value=0, max_value=100, required=False,
+        widget=RangeInput(attrs={
+            'min': '0',
+            'max': '100',
+            'step': '5',
+            'class': 'operational-progress-slider',
+            'data-progress-slider': '',
+        }),
     )
     head_remarks = forms.CharField(
         label='Head Remarks',
@@ -916,6 +929,12 @@ class InfrastructureOperationalForm(forms.Form):
         ):
             raise forms.ValidationError(self.STATUS_TRANSITION_ERROR)
         return status
+
+    def clean_physical_progress_percentage(self):
+        progress = self.cleaned_data['physical_progress_percentage']
+        if progress % 5:
+            raise forms.ValidationError(self.PHYSICAL_PROGRESS_INCREMENT_ERROR)
+        return progress
 
     @transaction.atomic
     def save(self):

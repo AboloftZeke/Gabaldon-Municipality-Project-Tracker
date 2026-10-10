@@ -177,6 +177,30 @@
     gap: 1.15rem 1.25rem;
 }
 
+.operational-progress-control {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.operational-progress-slider {
+    width: 100%;
+    min-width: 0;
+    accent-color: var(--operational-green);
+    cursor: pointer;
+}
+
+.operational-progress-output {
+    min-width: 4.25rem;
+    padding: 0.4rem 0.65rem;
+    border-radius: 999px;
+    background: var(--operational-green-soft);
+    color: var(--operational-green-dark);
+    font-weight: 850;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
 .operational-field-grid--single {
     grid-template-columns: minmax(0, 460px);
 }

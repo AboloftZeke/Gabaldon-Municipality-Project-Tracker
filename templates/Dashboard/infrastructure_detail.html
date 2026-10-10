@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}">
-  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/infrastructure_detail.css' %}">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/infrastructure_detail.css' %}?v=20261010-progress">
 <link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/schedule_indicator.css' %}">
 </head>
@@ -53,7 +53,7 @@
           {% include 'includes/infrastructure_schedule_indicator.html' with is_public=True %}
         </div>
         <div class="summary-item"><span>Approved Budget</span><strong>{% if financial.approved_budget is not None %}{{ financial.approved_budget|peso }}{% else %}N/A{% endif %}</strong></div>
-        <div class="summary-item"><span>Physical Progress</span><strong>{% if public_project.physical_progress_percentage is not None %}{{ public_project.physical_progress_percentage|floatformat:1 }}%{% else %}N/A{% endif %}</strong></div>
+        <div class="summary-item"><span>Physical Progress</span>{% if public_project.physical_progress_percentage is not None %}<div class="public-progress-display"><div class="public-progress-track" role="progressbar" aria-label="Physical progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ public_project.physical_progress_percentage }}"><span style="width: {{ public_project.physical_progress_percentage }}%"></span></div><strong>{{ public_project.physical_progress_percentage|floatformat:1 }}%</strong></div>{% else %}<strong>N/A</strong>{% endif %}</div>
         <div class="summary-item"><span>Target Completion</span><strong>{{ public_project.planned_end_date|date:"F j, Y"|default:"N/A" }}</strong></div>
       </div>
     </section>
@@ -110,7 +110,7 @@
         <div class="detail-item"><span>Actual Start</span><strong>{{ schedule.actual_start_date|date:"F j, Y"|default:"N/A" }}</strong></div>
         <div class="detail-item"><span>Actual Completion</span><strong>{{ schedule.actual_completion_date|date:"F j, Y"|default:"N/A" }}</strong></div>
         <div class="detail-item"><span>Cost Progress</span><strong>{% if public_project.cost_progress_percentage is not None %}{{ public_project.cost_progress_percentage|floatformat:1 }}%{% else %}N/A{% endif %}</strong></div>
-        <div class="detail-item"><span>Physical Progress</span><strong>{% if public_project.physical_progress_percentage is not None %}{{ public_project.physical_progress_percentage|floatformat:1 }}%{% else %}N/A{% endif %}</strong></div>
+        <div class="detail-item"><span>Physical Progress</span>{% if public_project.physical_progress_percentage is not None %}<div class="public-progress-display"><div class="public-progress-track" role="progressbar" aria-label="Physical progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ public_project.physical_progress_percentage }}"><span style="width: {{ public_project.physical_progress_percentage }}%"></span></div><strong>{{ public_project.physical_progress_percentage|floatformat:1 }}%</strong></div>{% else %}<strong>N/A</strong>{% endif %}</div>
       </div>
     </section>
 

@@ -226,7 +226,7 @@ class HeadOperationalRevisionTests(TestCase):
             args=[self.infrastructure.pk],
         ), {
             'status': 'completed',
-            'physical_progress_percentage': '62',
+            'physical_progress_percentage': '65',
             'cost_progress_percentage': '55',
             'inspection_completion_percentage': '70',
             'head_remarks': 'Official decision based on the field report.',
@@ -239,7 +239,7 @@ class HeadOperationalRevisionTests(TestCase):
         )
         progress_snapshot = revision.snapshot['progress_update']
         self.assertEqual(progress_snapshot['official_status'], 'completed')
-        self.assertEqual(progress_snapshot['official_physical_progress'], '62.00')
+        self.assertEqual(progress_snapshot['official_physical_progress'], '65.00')
         self.assertEqual(
             progress_snapshot['head_remarks'],
             'Official decision based on the field report.',
