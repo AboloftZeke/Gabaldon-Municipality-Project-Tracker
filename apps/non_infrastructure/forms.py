@@ -16,6 +16,7 @@ from apps.system.models import (
     ProjectImage,
 )
 from apps.system.publication_images import retire_project_images
+from apps.system.status_transitions import is_valid_project_status_transition
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -40,6 +41,9 @@ class NonInfrastructureProgressUpdateForm(forms.Form):
 
     SAME_STATUS_ERROR = (
         'The proposed status must be different from the current official status.'
+    )
+    INVALID_TRANSITION_ERROR = (
+        'The proposed status must move forward and cannot revert a project status.'
     )
 
     IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
@@ -78,8 +82,14 @@ class NonInfrastructureProgressUpdateForm(forms.Form):
 
     def clean_proposed_status(self):
         proposed_status = self.cleaned_data['proposed_status']
-        if self.project and proposed_status == self.project.status:
-            raise forms.ValidationError(self.SAME_STATUS_ERROR)
+        if self.project:
+            if proposed_status == self.project.status:
+                raise forms.ValidationError(self.SAME_STATUS_ERROR)
+            if not is_valid_project_status_transition(
+                self.project.status,
+                proposed_status,
+            ):
+                raise forms.ValidationError(self.INVALID_TRANSITION_ERROR)
         return proposed_status
 
     def clean_evidence_files(self):
@@ -112,6 +122,12 @@ class NonInfrastructureProgressUpdateForm(forms.Form):
                 project = NonInfrastructureProject.objects.select_for_update().get(pk=project.pk)
                 if self.cleaned_data['proposed_status'] == project.status:
                     self.add_error('proposed_status', self.SAME_STATUS_ERROR)
+                    return None
+                if not is_valid_project_status_transition(
+                    project.status,
+                    self.cleaned_data['proposed_status'],
+                ):
+                    self.add_error('proposed_status', self.INVALID_TRANSITION_ERROR)
                     return None
                 update = NonInfrastructureProgressUpdate.objects.create(
                     non_infrastructure=project,
@@ -151,16 +167,27 @@ class NonInfrastructureProgressUpdateForm(forms.Form):
                 raise PermissionDenied('Only returned updates can be edited and resubmitted.')
             if locked_update.submitted_by_id != user.pk:
                 raise PermissionDenied('You can only edit your own returned progress update.')
-            if self.cleaned_data['proposed_status'] == locked_update.non_infrastructure.status:
+            project = NonInfrastructureProject.objects.select_for_update().get(
+                pk=locked_update.non_infrastructure_id,
+            )
+            if self.cleaned_data['proposed_status'] == project.status:
                 self.add_error('proposed_status', self.SAME_STATUS_ERROR)
                 return None
+            if not is_valid_project_status_transition(
+                project.status,
+                self.cleaned_data['proposed_status'],
+            ):
+                self.add_error('proposed_status', self.INVALID_TRANSITION_ERROR)
+                return None
 
+            locked_update.previous_status = project.status
             locked_update.proposed_status = self.cleaned_data['proposed_status']
             locked_update.remarks = self.cleaned_data['remarks']
             locked_update.review_status = NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW
             locked_update.submitted_at = timezone.now()
             locked_update.save(update_fields=[
                 'proposed_status',
+                'previous_status',
                 'remarks',
                 'review_status',
                 'submitted_at',

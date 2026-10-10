@@ -7,7 +7,7 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
-from .models import Project, ProjectRevision
+from .models import NonInfrastructureProgressUpdate, Project, ProjectRevision
 from .publication_snapshots import (
     build_progress_update_snapshot,
     build_non_infrastructure_progress_update_snapshot,
@@ -23,6 +23,7 @@ from .publication_workflow import (
     PublicationStatus,
     validate_publication_transition,
 )
+from .status_transitions import is_valid_project_status_transition
 
 
 OPEN_REVISION_STATUSES = (
@@ -40,6 +41,28 @@ def _operational_confirmation(project, actor):
         'confirmed_by_user_id': actor.pk,
         'confirmed_at': timezone.now().isoformat(),
     }
+
+
+def _validate_linked_progress_status(revision):
+    progress_update = NonInfrastructureProgressUpdate.objects.select_for_update().filter(
+        publication_revision_id=revision.pk,
+    ).first()
+    if progress_update is None:
+        return
+
+    snapshot_status = (
+        (revision.snapshot or {}).get('non_infrastructure') or {}
+    ).get('status')
+    if (
+        not is_valid_project_status_transition(
+            progress_update.previous_status,
+            progress_update.proposed_status,
+        )
+        or snapshot_status != progress_update.proposed_status
+    ):
+        raise ValidationError(
+            'This publication revision contains an invalid progress status transition.',
+        )
 
 
 def _synchronize_head_operational_snapshot(
@@ -332,6 +355,8 @@ def review_publication_revision(revision, reviewer, decision, notes=''):
         raise ValidationError('Unknown publication review decision.') from exc
     if normalized_decision not in allowed_decisions:
         raise ValidationError('That status is not a review decision.')
+    if normalized_decision == PublicationStatus.APPROVED:
+        _validate_linked_progress_status(locked_revision)
 
     normalized_notes = (notes or '').strip()
     if (
@@ -369,6 +394,7 @@ def publish_publication_revision(revision, publisher):
     locked_revision = _locked_project_revision(revision)
     if not can_publish_revision(publisher, locked_revision):
         raise PermissionDenied("Only the responsible office Head can publish an approved revision.")
+    _validate_linked_progress_status(locked_revision)
     validate_publication_transition(
         locked_revision.status,
         PublicationStatus.PUBLISHED,

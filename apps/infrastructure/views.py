@@ -884,6 +884,20 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
                 Project.objects.select_for_update().get(
                     pk=infrastructure.project_id,
                 )
+                infrastructure = InfrastructureProject.objects.select_for_update().select_related(
+                    'project',
+                ).get(pk=infrastructure.pk)
+                form = InfrastructureOperationalForm(
+                    request.POST,
+                    instance=infrastructure,
+                )
+                if not form.is_valid():
+                    return self.render_form(
+                        request,
+                        infrastructure,
+                        form,
+                        status=400,
+                    )
                 previous_status = infrastructure.status
                 previous_physical_progress = (
                     infrastructure.physical_progress_percentage

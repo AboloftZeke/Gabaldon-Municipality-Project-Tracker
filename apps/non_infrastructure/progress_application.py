@@ -8,6 +8,7 @@ from apps.system.models import NonInfrastructureProgressUpdate, NonInfrastructur
 from apps.system.permissions import can_update_non_infrastructure_operations
 from apps.system.publication_service import create_head_operational_revision
 from apps.system.publication_workflow import PublicationStatus
+from apps.system.status_transitions import is_valid_project_status_transition
 
 
 @transaction.atomic
@@ -43,11 +44,12 @@ def apply_approved_progress_update(update_id, actor):
             'The official status changed since this draft was created. '
             'This update cannot be applied.',
         )
-    if (
-        update.proposed_status not in valid_statuses
-        or update.proposed_status == project.status
-    ):
-        raise ValidationError('The proposed status must be a different valid project status.')
+    if update.proposed_status not in valid_statuses:
+        raise ValidationError('The proposed status is not a valid project status.')
+    if not is_valid_project_status_transition(project.status, update.proposed_status):
+        raise ValidationError(
+            'The proposed status must move forward and cannot revert a project status.',
+        )
     if not update.evidence.exists():
         raise ValidationError('Supporting evidence is required before applying this update.')
 

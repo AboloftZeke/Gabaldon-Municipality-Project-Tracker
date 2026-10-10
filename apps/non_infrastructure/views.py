@@ -27,6 +27,7 @@ from apps.system.publication_service import (
     submit_project_for_review,
 )
 from apps.system.publication_workflow import PublicationStatus
+from apps.system.status_transitions import is_valid_project_status_transition
 
 
 from apps.system.permissions import (
@@ -593,13 +594,30 @@ class NonInfrastructureProgressUpdateSubmitView(MayorsOfficeOnlyMixin, View):
                 non_infrastructure_id=pk,
                 submitted_by=request.user,
             )
+            project = NonInfrastructureProject.objects.select_for_update().get(
+                pk=update.non_infrastructure_id,
+            )
             if update.review_status != NonInfrastructureProgressUpdate.ReviewStatus.DRAFT:
                 messages.error(request, 'Only Draft updates can be submitted for review.')
+            elif update.previous_status != project.status:
+                messages.error(
+                    request,
+                    'The official status changed since this draft was created. '
+                    'Edit the update before submitting it.',
+                )
             elif (
                 update.proposed_status not in dict(NonInfrastructureProject.STATUS_CHOICES)
                 or not update.remarks.strip()
             ):
                 messages.error(request, 'Add a valid proposed status and remarks before submitting.')
+            elif not is_valid_project_status_transition(
+                project.status,
+                update.proposed_status,
+            ):
+                messages.error(
+                    request,
+                    'The proposed status must move forward and cannot revert a project status.',
+                )
             elif not update.evidence.exists():
                 messages.error(request, 'Add supporting evidence before submitting this update.')
             else:
@@ -700,6 +718,26 @@ class NonInfrastructureProgressReviewDecisionView(MayorHeadOnlyMixin, View):
             if update.review_status != NonInfrastructureProgressUpdate.ReviewStatus.PENDING_REVIEW:
                 messages.error(request, 'Only Pending Review updates can be reviewed.')
                 return redirect('mayor_projects:non_infrastructure_progress_review_detail', update_pk=update_pk)
+
+            project = NonInfrastructureProject.objects.select_for_update().get(
+                pk=update.non_infrastructure_id,
+            )
+            if self.decision == NonInfrastructureProgressUpdate.ReviewStatus.APPROVED and (
+                update.previous_status != project.status
+                or not is_valid_project_status_transition(
+                    project.status,
+                    update.proposed_status,
+                )
+            ):
+                messages.error(
+                    request,
+                    'The proposed status is no longer a valid forward transition from '
+                    'the current official status. The update cannot be approved.',
+                )
+                return redirect(
+                    'mayor_projects:non_infrastructure_progress_review_detail',
+                    update_pk=update_pk,
+                )
 
             notes = ''
             returned_snapshot = None

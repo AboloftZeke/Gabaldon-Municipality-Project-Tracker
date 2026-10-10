@@ -135,6 +135,44 @@ class ApplyApprovedProgressUpdateTests(TestCase):
         self.assertContains(self.client.get(self.public_detail_url), 'support.pdf')
         self.assertContains(self.client.get(self.head_detail_url), 'Published')
 
+    def test_ongoing_to_completed_can_be_applied(self):
+        self.project.status = 'ongoing'
+        self.project.save(update_fields=['status'])
+        self.update.previous_status = 'ongoing'
+        self.update.proposed_status = 'completed'
+        self.update.save(update_fields=['previous_status', 'proposed_status'])
+
+        applied = apply_approved_progress_update(self.update.pk, self.head)
+
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.status, 'completed')
+        self.assertEqual(
+            applied.publication_revision.snapshot['non_infrastructure']['status'],
+            'completed',
+        )
+
+    def test_invalid_linked_progress_update_cannot_be_published(self):
+        applied = apply_approved_progress_update(self.update.pk, self.head)
+        applied.proposed_status = 'planned'
+        applied.save(update_fields=['proposed_status'])
+        publish_url = reverse(
+            'publication_revision_publish',
+            args=[applied.publication_revision_id],
+        )
+
+        response = self.client.post(publish_url, follow=True)
+
+        self.assertContains(
+            response,
+            'This publication revision contains an invalid progress status transition.',
+        )
+        applied.publication_revision.refresh_from_db()
+        self.public_revision.refresh_from_db()
+        self.project.refresh_from_db()
+        self.assertEqual(applied.publication_revision.status, PublicationStatus.APPROVED)
+        self.assertTrue(self.public_revision.is_current_public)
+        self.assertEqual(self.project.status, 'ongoing')
+
     def test_second_application_is_rejected_even_after_publication(self):
         apply_approved_progress_update(self.update.pk, self.head)
         self.update.refresh_from_db()
@@ -158,7 +196,9 @@ class ApplyApprovedProgressUpdateTests(TestCase):
 
     def test_stale_or_invalid_status_is_rejected_without_revision(self):
         for before, proposed in (
+            ('ongoing', 'planned'),
             ('completed', 'ongoing'),
+            ('completed', 'planned'),
             ('invalid', 'ongoing'),
             ('planned', 'planned'),
             ('planned', 'invalid'),
@@ -166,8 +206,9 @@ class ApplyApprovedProgressUpdateTests(TestCase):
             with self.subTest(before=before, proposed=proposed):
                 self.project.status = before
                 self.project.save(update_fields=['status'])
+                self.update.previous_status = before
                 self.update.proposed_status = proposed
-                self.update.save(update_fields=['proposed_status'])
+                self.update.save(update_fields=['previous_status', 'proposed_status'])
                 response = self.client.post(self.apply_url, follow=True)
                 self.assertEqual(response.status_code, 200)
                 self.update.refresh_from_db()

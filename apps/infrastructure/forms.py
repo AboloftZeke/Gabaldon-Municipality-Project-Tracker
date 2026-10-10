@@ -20,6 +20,7 @@ from apps.system.models import (
     ProjectInspection,
 )
 from apps.system.publication_images import retire_project_images
+from apps.system.status_transitions import is_valid_project_status_transition
 
 
 def _get_or_create_named_lookup(model, name_field, raw_name):
@@ -829,6 +830,10 @@ class SupportingInspectionChoiceField(forms.ModelMultipleChoiceField):
 
 
 class InfrastructureOperationalForm(forms.Form):
+    STATUS_TRANSITION_ERROR = (
+        'Project status cannot move backwards or change after completion.'
+    )
+
     status = forms.ChoiceField(
         label='Official Status',
         choices=InfrastructureProject.STATUS_CHOICES,
@@ -902,6 +907,15 @@ class InfrastructureOperationalForm(forms.Form):
                 'Staff must attach inspection evidence before this progress update can be saved.'
             )
         return inspections
+
+    def clean_status(self):
+        status = self.cleaned_data['status']
+        if (
+            status != self.instance.status
+            and not is_valid_project_status_transition(self.instance.status, status)
+        ):
+            raise forms.ValidationError(self.STATUS_TRANSITION_ERROR)
+        return status
 
     @transaction.atomic
     def save(self):

@@ -145,6 +145,30 @@ class MayorStaffProgressUpdateTests(TestCase):
         self.assertEqual(NonInfrastructureProgressUpdate.objects.count(), 0)
         self.assertEqual(NonInfrastructureEvidence.objects.count(), 0)
 
+    def test_status_reversions_are_rejected_without_records_or_evidence(self):
+        self.client.force_login(self.staff)
+        for current_status, proposed_status in (
+            ('ongoing', 'planned'),
+            ('completed', 'ongoing'),
+            ('completed', 'planned'),
+        ):
+            with self.subTest(current_status=current_status, proposed_status=proposed_status):
+                self.project.status = current_status
+                self.project.save(update_fields=['status'])
+
+                response = self.client.post(
+                    self.url,
+                    self.form_data(proposed_status=proposed_status),
+                )
+
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(
+                    response,
+                    'The proposed status must move forward and cannot revert a project status.',
+                )
+                self.assertEqual(NonInfrastructureProgressUpdate.objects.count(), 0)
+                self.assertEqual(NonInfrastructureEvidence.objects.count(), 0)
+
     def test_multiple_evidence_files_are_linked_to_one_update(self):
         self.client.force_login(self.staff)
         data = self.form_data(evidence_files=[self.upload('first.pdf'), self.upload('second.pdf')])

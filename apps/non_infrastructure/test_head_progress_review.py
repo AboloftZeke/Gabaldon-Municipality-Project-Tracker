@@ -206,6 +206,26 @@ class MayorHeadProgressReviewTests(TestCase):
         self.assertContains(queue, self.detail_url)
         self.assertContains(queue, 'Approved / Awaiting Application')
 
+    def test_invalid_status_transition_cannot_be_approved(self):
+        self.project.status = 'ongoing'
+        self.project.save(update_fields=['status'])
+        self.pending.previous_status = 'ongoing'
+        self.pending.proposed_status = 'planned'
+        self.pending.save(update_fields=['previous_status', 'proposed_status'])
+
+        response = self.client.post(self.approve_url, follow=True)
+
+        self.assertContains(
+            response,
+            'The proposed status is no longer a valid forward transition',
+        )
+        self.pending.refresh_from_db()
+        self.project.refresh_from_db()
+        self.assertEqual(self.pending.review_status, 'pending_review')
+        self.assertIsNone(self.pending.reviewed_at)
+        self.assertEqual(self.project.status, 'ongoing')
+        self.assertFalse(self.project.project.revisions.exists())
+
     def test_return_requires_reason_and_stores_trimmed_note(self):
         for reason in ('', '   '):
             with self.subTest(reason=reason):

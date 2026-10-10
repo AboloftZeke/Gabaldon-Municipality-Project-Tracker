@@ -164,6 +164,36 @@ class HeadOperationalUpdateTests(TestCase):
         )
         self.assertIsNotNone(progress_update.created_at)
 
+    def test_operational_update_rejects_status_reversions(self):
+        self.client.force_login(self.users['engineer', 'head'])
+
+        for current_status, proposed_status in (
+            ('ongoing', 'not_yet_started'),
+            ('completed', 'ongoing'),
+            ('completed', 'not_yet_started'),
+        ):
+            with self.subTest(current_status=current_status, proposed_status=proposed_status):
+                self.infrastructure.status = current_status
+                self.infrastructure.save(update_fields=['status'])
+
+                response = self.client.post(self.infra_url(), {
+                    'status': proposed_status,
+                    'physical_progress_percentage': '60',
+                    'head_remarks': 'Attempted invalid status change.',
+                    'supporting_inspections': [str(self.inspection.pk)],
+                })
+
+                self.assertEqual(response.status_code, 400)
+                self.assertIn('status', response.context['form'].errors)
+                self.infrastructure.refresh_from_db()
+                self.assertEqual(self.infrastructure.status, current_status)
+                self.assertEqual(
+                    self.infrastructure.physical_progress_percentage,
+                    Decimal('25'),
+                )
+                self.assertFalse(InfrastructureProgressUpdate.objects.exists())
+                self.assertEqual(self.infrastructure.project.revisions.count(), 1)
+
     def test_unchanged_status_and_progress_do_not_create_history(self):
         self.client.force_login(self.users['engineer', 'head'])
 
