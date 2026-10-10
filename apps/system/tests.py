@@ -1524,6 +1524,11 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
         self.assertEqual(statuses['Planned Program'], ('planned', 'Planned'))
         self.assertEqual(statuses['Ongoing Program'], ('ongoing', 'Ongoing'))
         self.assertEqual(statuses['Completed Program'], ('completed', 'Completed'))
+        self.assertContains(response, 'data-project-modal-status-badge')
+        self.assertContains(
+            response,
+            'data-project-modal-group="status"',
+        )
 
         ongoing_row = next(
             row

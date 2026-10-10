@@ -6,7 +6,7 @@
     }
 
     const titleField = modal.querySelector('[data-project-modal-field="title"]');
-    const statusField = modal.querySelector('[data-project-modal-field="status"]');
+    const statusBadge = modal.querySelector('[data-project-modal-status-badge]');
     const detailLink = modal.querySelector('[data-project-modal-detail-link]');
     const fieldMap = {
         type: modal.querySelector('[data-project-modal-field="type"]'),
@@ -17,7 +17,9 @@
         venue: modal.querySelector('[data-project-modal-field="venue"]'),
         contractor: modal.querySelector('[data-project-modal-field="contractor"]'),
         procurement_method: modal.querySelector('[data-project-modal-field="procurement_method"]'),
-        status: modal.querySelector('[data-project-modal-field="status"]'),
+        status: modal.querySelector(
+            '[data-project-modal-group="status"] [data-project-modal-field="status"]',
+        ),
         source_of_fund: modal.querySelector('[data-project-modal-field="source_of_fund"]'),
         budget_amount: modal.querySelector('[data-project-modal-field="budget_amount"]'),
         abc_amount: modal.querySelector('[data-project-modal-field="abc_amount"]'),
@@ -90,15 +92,15 @@
     }
 
     function setModalStatus(statusText, statusClass) {
-        if (!statusField) {
+        if (!statusBadge) {
             return;
         }
 
-        statusField.textContent = statusText || '';
-        statusField.className = 'project-modal__status';
+        statusBadge.textContent = statusText || '';
+        statusBadge.className = 'project-modal__status';
 
         if (statusClass) {
-            statusField.classList.add(statusClass);
+            statusBadge.classList.add(statusClass);
         }
     }
 
