@@ -4,7 +4,7 @@
 {% block title %}Publication Revision {{ revision.revision_number }} - Municipality Project Tracker{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}?v=20261008-2">
+<link rel="stylesheet" href="{% static 'css/templates/core/publication_review.css' %}?v=20261010-1">
 <link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}?v=20260821-1">
 {% endblock %}
@@ -167,7 +167,7 @@
                 {% if mayor_progress_update.remarks %}<div class="progress-evidence-remarks"><strong>Staff remarks</strong><p>{{ mayor_progress_update.remarks|linebreaksbr }}</p></div>{% endif %}
                 {% if mayor_progress_update.review_notes %}<div class="progress-evidence-remarks"><strong>Head review notes</strong><p>{{ mayor_progress_update.review_notes|linebreaksbr }}</p></div>{% endif %}
                 <h3>Evidence for this update</h3>
-                <ul>
+                <ul class="mayor-progress-evidence-list">
                     {% for item in mayor_evidence_items %}
                         <li>
                             {% if item.url and item.is_image %}
@@ -175,10 +175,12 @@
                                     <img src="{{ item.url }}" alt="Progress update evidence: {{ item.file_path }}" loading="lazy">
                                     <span>{{ item.file_path }}</span>
                                 </button>
-                            {% elif item.url %}<a href="{{ item.url }}" download>{{ item.file_path }}</a>{% else %}{{ item.file_path }}{% endif %}
-                            {% if item.description %} - {{ item.description }}{% endif %}
-                            {% if item.uploaded_by %} · {{ item.uploaded_by.display_name }}{% endif %}
-                            {% if item.uploaded_at %} · {{ item.uploaded_at }}{% endif %}
+                            {% elif item.url %}<a class="mayor-progress-evidence-document" href="{{ item.url }}" download>{{ item.file_path }}</a>{% else %}<span class="mayor-progress-evidence-document">{{ item.file_path }}</span>{% endif %}
+                            <div class="mayor-progress-evidence-meta">
+                                {% if item.description %}<span>{{ item.description }}</span>{% endif %}
+                                {% if item.uploaded_by %}<span>{{ item.uploaded_by.display_name }}</span>{% endif %}
+                                {% if item.uploaded_at %}<time datetime="{{ item.uploaded_at|date:'c' }}">{{ item.uploaded_at }}</time>{% endif %}
+                            </div>
                         </li>
                     {% empty %}<li>No evidence was retained for this update.</li>{% endfor %}
                 </ul>

@@ -200,6 +200,9 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(response, 'data-image-viewer')
         self.assertContains(response, 'js/components/image_viewer.js')
         self.assertContains(response, 'Program activity photo')
+        self.assertContains(response, 'class="mayor-progress-evidence-list"')
+        self.assertContains(response, 'class="mayor-progress-evidence-meta"')
+        self.assertContains(response, 'publication_review.css?v=20261010-1')
         self.assertEqual(
             response.context['mayor_evidence_items'][0]['url'],
             evidence.evidence_file.url,

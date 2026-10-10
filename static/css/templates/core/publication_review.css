@@ -949,8 +949,9 @@
 }
 
 .mayor-progress-evidence-image {
-    display: inline-flex;
-    max-width: min(100%, 240px);
+    display: flex;
+    width: 100%;
+    max-width: 300px;
     flex-direction: column;
     padding: 0;
     border: 1px solid var(--review-border);
@@ -963,7 +964,44 @@
     display: block;
     width: 100%;
     aspect-ratio: 4 / 3;
-    object-fit: cover;
+    object-fit: contain;
+    background: #f4f7f5;
+}
+
+.mayor-progress-evidence-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 0.75rem;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mayor-progress-evidence-list li {
+    min-width: 0;
+    padding: 0.65rem;
+    border: 1px solid var(--review-border);
+    border-radius: 9px;
+    background: var(--review-surface);
+}
+
+.mayor-progress-evidence-image span {
+    overflow-wrap: anywhere;
+}
+
+.mayor-progress-evidence-document {
+    display: inline-block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.mayor-progress-evidence-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+    margin-top: 0.45rem;
+    color: var(--review-muted);
+    font-size: 0.75rem;
 }
 
 .progress-evidence-empty {
