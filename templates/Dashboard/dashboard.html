@@ -9,7 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20261010-cards">
+  <link rel="stylesheet" href="{% static 'css/components/site_footer.css' %}?v=20261010-footer">
+  <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20261010-footer">
   <link rel="stylesheet" href="{% static 'css/templates/projects/project_modal.css' %}">
   <link rel="stylesheet" href="{% static 'css/components/ui.css' %}?v=20260918-4">
   <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
@@ -408,9 +409,7 @@
     {% endif %}
   </main>
 
-  <footer class="site-footer">
-    <p>(c) 2026 Municipality of Gabaldon - Transparent Governance for the Community.</p>
-  </footer>
+  {% include "includes/site_footer.html" with footer_class="public-dashboard-footer" %}
 
   {% include "projects/project_detail_modal.html" %}
 

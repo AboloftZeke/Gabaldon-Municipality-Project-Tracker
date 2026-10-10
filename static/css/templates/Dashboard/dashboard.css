@@ -745,17 +745,8 @@ th {
   white-space: nowrap;
 }
 
-.site-footer {
+.public-dashboard-footer {
   margin-top: 2.2rem;
-  text-align: center;
-  color: #dce7de;
-  background: #1a593a;
-  border-top: 4px solid var(--lime-400);
-  padding: 1rem;
-}
-
-.site-footer p {
-  margin: 0;
 }
 
 @media (max-width: 1080px) {
@@ -1055,10 +1046,8 @@ th {
     font-size: 0.85rem;
   }
 
-  .site-footer {
+  .public-dashboard-footer {
     margin-top: 1.5rem;
-    padding: 0.8rem 0.6rem;
-    font-size: 0.85rem;
   }
 }
 

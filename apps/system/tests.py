@@ -1020,6 +1020,25 @@ class ProjectPublicationImageRetentionTests(TestCase):
         )
 
 
+class PublicDashboardFooterTests(TestCase):
+    def test_public_dashboard_renders_the_shared_footer_once(self):
+        response = self.client.get(reverse('public_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertEqual(html.count('<footer'), 1)
+        for section in ('Quick Links', 'Departments', 'Resources', 'Connect'):
+            self.assertContains(response, f'<h3>{section}</h3>', html=True)
+        self.assertContains(response, reverse('admin_dashboard'))
+        self.assertContains(response, 'alt="Municipality of Gabaldon seal"')
+        self.assertContains(response, 'class="footer-accent"')
+        self.assertContains(
+            response,
+            '2026 Municipality of Gabaldon – Transparent Governance for the Community.',
+        )
+        self.assertContains(response, 'css/components/site_footer.css')
+
+
 class PublicDashboardInfrastructureDataSourceTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
