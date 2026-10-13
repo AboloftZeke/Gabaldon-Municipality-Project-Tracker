@@ -9,6 +9,7 @@ from django.urls import reverse
 
 from .models import (
     InfrastructureProject,
+    InfrastructureProgressUpdate,
     NonInfrastructureEvidence,
     NonInfrastructureProgressUpdate,
     NonInfrastructureProject,
@@ -324,6 +325,82 @@ class PublicationOperationalUITests(TestCase):
             self.infrastructure_revision.snapshot,
         )
         self.assertEqual(self.infrastructure_revision.status, 'approved')
+
+    def test_infrastructure_initial_confirmation_succeeds_without_inspection(self):
+        self.client.force_login(self.users['engineer', 'head'])
+        operational_url = reverse(
+            'engineering_projects:project_operations',
+            args=[self.infrastructure.pk],
+        )
+        form_page = self.client.get(operational_url, {
+            'from_review': str(self.infrastructure_revision.pk),
+        })
+        self.assertEqual(form_page.status_code, 200)
+        self.assertContains(form_page, 'Initial Publication Confirmation')
+        self.assertContains(
+            form_page,
+            'Inspection evidence is not required',
+        )
+
+        response = self.client.post(reverse(
+            'engineering_projects:project_operations',
+            args=[self.infrastructure.pk],
+        ), {
+            'status': 'ongoing',
+            'physical_progress_percentage': '45',
+            'from_review': str(self.infrastructure_revision.pk),
+        })
+
+        self.assertRedirects(
+            response,
+            self.revision_url(self.infrastructure_revision),
+        )
+        self.infrastructure.refresh_from_db()
+        self.infrastructure_revision.refresh_from_db()
+        self.assertEqual(
+            self.infrastructure.physical_progress_percentage,
+            Decimal('45'),
+        )
+        self.assertEqual(
+            self.infrastructure_revision.snapshot['infrastructure'][
+                'physical_progress_percentage'
+            ],
+            '45.00',
+        )
+        self.assertEqual(
+            self.infrastructure_revision.snapshot[
+                OPERATIONAL_CONFIRMATION_KEY
+            ]['project_type'],
+            'infrastructure',
+        )
+        progress_update = InfrastructureProgressUpdate.objects.get(
+            infrastructure=self.infrastructure,
+        )
+        self.assertFalse(progress_update.supporting_inspections.exists())
+
+    def test_initial_confirmation_rejects_selected_inspection_without_evidence(self):
+        self.client.force_login(self.users['engineer', 'head'])
+        response = self.client.post(reverse(
+            'engineering_projects:project_operations',
+            args=[self.infrastructure.pk],
+        ), {
+            'status': 'ongoing',
+            'physical_progress_percentage': '45',
+            'supporting_inspections': [str(self.inspection.pk)],
+            'from_review': str(self.infrastructure_revision.pk),
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            'supporting_inspections',
+            response.context['form'].errors,
+        )
+        self.infrastructure.refresh_from_db()
+        self.assertIsNone(self.infrastructure.physical_progress_percentage)
+        self.assertNotIn(
+            OPERATIONAL_CONFIRMATION_KEY,
+            self.infrastructure_revision.snapshot,
+        )
 
     def test_calculated_cost_progress_uses_retained_submission_values(self):
         snapshot = deepcopy(self.infrastructure_revision.snapshot)

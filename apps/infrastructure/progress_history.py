@@ -13,10 +13,11 @@ def record_progress_update(
     previous_physical_progress,
     remarks='',
     supporting_inspections=(),
+    require_supporting_inspections=True,
 ):
     """Record one Head decision only when official status/progress changed."""
     supporting_inspections = list(supporting_inspections)
-    if not supporting_inspections:
+    if require_supporting_inspections and not supporting_inspections:
         raise ValidationError(
             'At least one supporting inspection is required for an Infrastructure progress update.'
         )

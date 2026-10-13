@@ -1,6 +1,7 @@
+from decimal import Decimal
+
 from django.db import IntegrityError, transaction
 from django.utils.text import slugify
-
 from django import forms
 from django.db import transaction
 from django.core.files.storage import default_storage
@@ -824,7 +825,14 @@ class InfrastructureOperationalForm(forms.Form):
     )
     physical_progress_percentage = forms.DecimalField(
         label='Physical Progress', max_digits=5, decimal_places=2,
-        min_value=0, max_value=100, required=False,
+        min_value=0, max_value=100, required=True,
+        widget=forms.NumberInput(attrs={
+            'type': 'range',
+            'min': '0',
+            'max': '100',
+            'step': '5',
+            'data-physical-progress-slider': '',
+        }),
     )
     head_remarks = forms.CharField(
         label='Head Remarks',
@@ -847,16 +855,29 @@ class InfrastructureOperationalForm(forms.Form):
         **kwargs,
     ):
         self.instance = instance
+        self.require_initial_values = require_initial_values
         self.inspection = instance.project.inspections.order_by(
             '-inspection_date', '-created_at',
         ).first()
         initial = kwargs.setdefault('initial', {})
         initial.update({
             'status': instance.status,
-            'physical_progress_percentage': instance.physical_progress_percentage,
+            'physical_progress_percentage': (
+                instance.physical_progress_percentage
+                if instance.physical_progress_percentage is not None
+                else 0
+            ),
         })
         super().__init__(*args, **kwargs)
-        self.fields['physical_progress_percentage'].required = True
+        self.fields['supporting_inspections'].required = (
+            not require_initial_values
+        )
+        self.fields['supporting_inspections'].help_text = (
+            'Inspection evidence is optional for initial publication confirmation. '
+            'If you select an inspection, it must have evidence.'
+            if require_initial_values else
+            'Select at least one inspection with evidence for this operational update.'
+        )
         self.fields['supporting_inspections'].queryset = (
             instance.project.inspections.select_related(
                 'inspected_by_user',
@@ -866,13 +887,28 @@ class InfrastructureOperationalForm(forms.Form):
         )
         if not self.fields['supporting_inspections'].queryset.exists():
             self.fields['supporting_inspections'].help_text = (
-                'A completed inspection with supporting evidence is required before '
-                'the Infrastructure Head can update project progress.'
+                'No inspections are recorded. '
+                + (
+                    'You can still confirm initial publication status and progress.'
+                    if require_initial_values else
+                    'A completed inspection with evidence is required before '
+                    'the Infrastructure Head can update project progress.'
+                )
             )
+
+    def clean_physical_progress_percentage(self):
+        value = self.cleaned_data['physical_progress_percentage']
+        if value % Decimal('5') != 0:
+            raise forms.ValidationError(
+                'Physical progress must be in 5% increments.',
+            )
+        return value
 
     def clean_supporting_inspections(self):
         inspections = list(self.cleaned_data.get('supporting_inspections') or [])
         if not inspections:
+            if self.require_initial_values:
+                return inspections
             raise forms.ValidationError(
                 'Select at least one inspection before updating project progress.'
             )

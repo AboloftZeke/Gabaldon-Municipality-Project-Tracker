@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
+from apps.infrastructure.forms import InfrastructureOperationalForm
 from .models import (
     FinancialRecord,
     InfrastructureProgressUpdate,
@@ -361,6 +362,12 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Official Status')
         self.assertContains(response, 'Official Physical Progress')
+        self.assertContains(response, 'type="range"')
+        self.assertContains(response, 'min="0"')
+        self.assertContains(response, 'max="100"')
+        self.assertContains(response, 'step="5"')
+        self.assertContains(response, 'data-physical-progress-output')
+        self.assertContains(response, '5% increments')
         self.assertContains(response, 'Supporting Inspections')
         self.assertNotContains(response, 'Expected / Scheduled Progress')
         self.assertNotContains(response, 'Variance')
@@ -381,6 +388,41 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertContains(detail, 'Update Status &amp; Progress')
         self.assertContains(detail, 'Financial &amp; Funding Information')
         self.assertContains(detail, 'Status &amp; Progress')
+
+    def test_operational_update_rejects_non_five_percent_progress(self):
+        self.client.force_login(self.users['engineer', 'head'])
+
+        response = self.client.post(self.infra_url(), {
+            'status': 'completed',
+            'physical_progress_percentage': '62',
+            'supporting_inspections': [str(self.inspection.pk)],
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            'physical_progress_percentage',
+            response.context['form'].errors,
+        )
+        self.infrastructure.refresh_from_db()
+        self.assertEqual(
+            self.infrastructure.physical_progress_percentage,
+            Decimal('25'),
+        )
+        self.assertFalse(InfrastructureProgressUpdate.objects.exists())
+
+    def test_operational_update_accepts_zero_and_one_hundred_percent(self):
+        for progress in ('0', '100'):
+            with self.subTest(progress=progress):
+                form = InfrastructureOperationalForm(
+                    {
+                        'status': 'ongoing',
+                        'physical_progress_percentage': progress,
+                        'supporting_inspections': [str(self.inspection.pk)],
+                    },
+                    instance=self.infrastructure,
+                )
+
+                self.assertTrue(form.is_valid(), form.errors)
 
     def test_wrong_roles_are_denied_without_mutation(self):
         before = (

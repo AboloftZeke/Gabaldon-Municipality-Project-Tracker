@@ -860,6 +860,7 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
                         supporting_inspections=(
                             form.cleaned_data['supporting_inspections']
                         ),
+                        require_supporting_inspections=False,
                     )
                     confirm_head_operational_information(
                         locked_revision,

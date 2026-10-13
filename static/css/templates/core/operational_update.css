@@ -222,6 +222,28 @@
     box-shadow: 0 0 0 3px rgba(26, 90, 58, 0.13);
 }
 
+.operational-field input[type="range"] {
+    min-height: 1.5rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    accent-color: var(--operational-green);
+    cursor: pointer;
+}
+
+.operational-field input[type="range"]:focus {
+    box-shadow: none;
+}
+
+.operational-progress-output {
+    display: block;
+    color: var(--operational-green);
+    font-size: 1.2rem;
+    font-weight: 850;
+    line-height: 1.4;
+    text-align: center;
+}
+
 .operational-field ul[id$="supporting_inspections"] {
     display: grid;
     gap: 0.55rem;
