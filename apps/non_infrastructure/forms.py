@@ -201,13 +201,6 @@ NON_INFRA_CATEGORY_DEFAULTS = [
 
 class NonInfrastructureProjectForm(forms.Form):
     title = forms.CharField(required=True, max_length=255)
-    project_type = forms.ChoiceField(
-        # Defaults preserve compatibility with older form posts and records.
-        required=False,
-        choices=NonInfrastructureProject.ProjectType.choices,
-        initial=NonInfrastructureProject.ProjectType.EVENT,
-        label='Project Type',
-    )
     description = forms.CharField(required=True, widget=forms.Textarea(attrs={'rows': 4}), max_length=2000)
     category = forms.ModelChoiceField(
         queryset=NonInfrastructureCategory.objects.none(),
@@ -293,7 +286,6 @@ class NonInfrastructureProjectForm(forms.Form):
                         f'existing:{existing_cover.pk}'
                     )
                 self.fields['title'].initial = normalized.title
-                self.fields['project_type'].initial = normalized.project_type
                 self.fields['description'].initial = normalized.description
                 self.fields['category'].initial = normalized.category_id
                 self.fields['proponent'].initial = normalized.proponent
@@ -334,26 +326,8 @@ class NonInfrastructureProjectForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        project_type = (
-            cleaned_data.get('project_type')
-            or NonInfrastructureProject.ProjectType.EVENT
-        )
-        cleaned_data['project_type'] = project_type
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
-
-        if project_type == NonInfrastructureProject.ProjectType.EVENT:
-            for field_name in ('event_date', 'start_time', 'end_time', 'venue_name'):
-                if not cleaned_data.get(field_name):
-                    self.add_error(field_name, 'This field is required for an Event / Activity project.')
-        elif project_type == NonInfrastructureProject.ProjectType.TRAINING:
-            if not cleaned_data.get('venue_name'):
-                self.add_error('venue_name', 'Venue is required for a Training / Seminar project.')
-            if not cleaned_data.get('target_beneficiaries'):
-                self.add_error(
-                    'target_beneficiaries',
-                    'Target participants are required for a Training / Seminar project.',
-                )
 
         implementation_start = cleaned_data.get('implementation_start_date')
         implementation_end = cleaned_data.get('implementation_end_date')
@@ -478,25 +452,28 @@ class NonInfrastructureProjectForm(forms.Form):
                 non = NonInfrastructureProject(project=project)
 
         non.title = data.get('title') or non.title
-        non.project_type = data.get('project_type') or non.project_type
         non.description = data.get('description') or ''
         non.category = data.get('category')
         non.proponent = data.get('proponent') or ''
         non.beneficiaries = data.get('beneficiaries')
-        non.target_beneficiaries = data.get('target_beneficiaries') or ''
-        non.implementation_start_date = data.get('implementation_start_date')
-        non.implementation_end_date = data.get('implementation_end_date')
-        non.event_date = data.get('event_date')
-        non.start_time = data.get('start_time')
-        non.end_time = data.get('end_time')
-        non.venue_name = data.get('venue_name') or ''
-        non.project_cost = data.get('project_cost')
-        non.fund_source = data.get('fund_source') or ''
-        non.contractor_supplier = data.get('contractor_supplier') or ''
-        non.procurement_description = data.get('procurement_description') or ''
-        non.quantity = data.get('quantity')
-        non.expected_delivery_date = data.get('expected_delivery_date')
-        non.remarks = data.get('remarks') or ''
+        for field_name in (
+            'target_beneficiaries',
+            'implementation_start_date',
+            'implementation_end_date',
+            'event_date',
+            'start_time',
+            'end_time',
+            'venue_name',
+            'project_cost',
+            'fund_source',
+            'contractor_supplier',
+            'procurement_description',
+            'quantity',
+            'expected_delivery_date',
+            'remarks',
+        ):
+            if field_name in self.data:
+                setattr(non, field_name, data.get(field_name))
 
         street = data.get('street') or ''
         barangay = data.get('barangay') or ''

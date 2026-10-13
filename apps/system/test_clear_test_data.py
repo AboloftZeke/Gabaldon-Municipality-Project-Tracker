@@ -88,7 +88,6 @@ class ClearTestDataCommandTests(TestCase):
             project=self.non_infrastructure_base,
             title='Test Non-Infrastructure Project',
             category=self.category,
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
         )
         self.manual_non_infrastructure = NonInfrastructureProject.objects.create(
             project=Project.objects.create(
@@ -97,7 +96,6 @@ class ClearTestDataCommandTests(TestCase):
             ),
             title='Manual Non-Infrastructure Test Project',
             category=self.category,
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
         )
         self.update = NonInfrastructureProgressUpdate.objects.create(
             non_infrastructure=self.non_infrastructure,
@@ -137,7 +135,6 @@ class ClearTestDataCommandTests(TestCase):
                 created_by_user=self.required_user,
             ),
             title='Required Non-Infrastructure Record',
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
         )
 
     def test_scope_is_required_and_scopes_are_mutually_exclusive(self):

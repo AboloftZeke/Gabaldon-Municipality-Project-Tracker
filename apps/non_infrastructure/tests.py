@@ -78,7 +78,6 @@ class NonInfrastructureProjectFormTests(TestCase):
     def training_form(self, **overrides):
         data = {
             'title': 'Community Health Training',
-            'project_type': 'TRAINING',
             'description': 'A training program for local residents.',
             'category': str(self.category.non_infrastructure_category_id),
             'proponent': 'Municipal Health Office',
@@ -96,6 +95,8 @@ class NonInfrastructureProjectFormTests(TestCase):
             {'form': NonInfrastructureProjectForm(), 'action': 'Create'},
         )
 
+        self.assertNotIn('Project Type', content)
+        self.assertNotIn('data-project-types', content)
         self.assertIn('data-project-wizard', content)
         self.assertIn('Step 1 of 6', content)
         for step in range(6):
@@ -234,10 +235,9 @@ class NonInfrastructureProjectFormTests(TestCase):
             ['End time must be later than the start time.'],
         )
 
-    def test_program_is_valid_without_event_schedule_or_venue(self):
+    def test_project_is_valid_without_event_schedule_or_venue(self):
         form = NonInfrastructureProjectForm(data={
             'title': 'Educational Assistance Program',
-            'project_type': 'PROGRAM',
             'description': 'Assistance for qualified students of Gabaldon.',
             'category': str(self.category.non_infrastructure_category_id),
             'proponent': "Mayor's Office",
@@ -250,7 +250,6 @@ class NonInfrastructureProjectFormTests(TestCase):
 
         self.assertTrue(form.is_valid(), form.errors)
         project = form.save(user=self.user)
-        self.assertEqual(project.project_type, 'PROGRAM')
         self.assertIsNone(project.event_date)
         self.assertEqual(project.target_beneficiaries, 'Qualified students of Gabaldon')
 
@@ -287,13 +286,12 @@ class NonInfrastructureProjectFormTests(TestCase):
             '2026-10-01',
         )
 
-    def test_training_still_requires_venue_and_target_participants(self):
+    def test_specialized_fields_remain_optional(self):
         for field_name in ('venue_name', 'target_beneficiaries'):
             with self.subTest(field=field_name):
                 form = self.training_form(**{field_name: ''})
 
-                self.assertFalse(form.is_valid())
-                self.assertIn(field_name, form.errors)
+                self.assertTrue(form.is_valid(), form.errors)
 
     def test_beneficiaries_count_is_required(self):
         form = self.training_form(beneficiaries='')
@@ -309,7 +307,7 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.client.force_login(self.user)
         base = Project.objects.create(project_type='non_infrastructure')
         project = NonInfrastructureProject.objects.create(
-            project=base, title='Health Program', project_type='PROGRAM',
+            project=base, title='Health Program',
             project_cost='1250000.50',
         )
         url = reverse('mayor_projects:non_infrastructure_project_detail',
@@ -322,10 +320,9 @@ class NonInfrastructureProjectFormTests(TestCase):
         project.save(update_fields=['project_cost'])
         self.assertNotContains(self.client.get(url), '₱None')
 
-    def test_event_requires_its_schedule_and_venue_on_the_server(self):
+    def test_activity_schedule_fields_are_optional(self):
         form = NonInfrastructureProjectForm(data={
             'title': 'Community Event',
-            'project_type': 'EVENT',
             'description': 'An event record.',
             'category': str(self.category.non_infrastructure_category_id),
             'proponent': "Mayor's Office",
@@ -333,9 +330,7 @@ class NonInfrastructureProjectFormTests(TestCase):
             'barangay': 'bagting',
         })
 
-        self.assertFalse(form.is_valid())
-        for field_name in ('event_date', 'start_time', 'end_time', 'venue_name'):
-            self.assertIn(field_name, form.errors)
+        self.assertTrue(form.is_valid(), form.errors)
 
     def test_form_updates_existing_project_and_images(self):
         proj = Project.objects.create(project_type='non_infrastructure', created_by_user=self.user, updated_by_user=self.user)
@@ -346,6 +341,11 @@ class NonInfrastructureProjectFormTests(TestCase):
             category=self.category,
             event_date='2026-01-10',
             venue_name='Old Venue',
+            target_beneficiaries='Saved participants',
+            contractor_supplier='Saved supplier',
+            procurement_description='Saved materials',
+            quantity=12,
+            expected_delivery_date='2026-02-10',
         )
         old_image = ProjectImage.objects.create(
             project=proj,
@@ -386,6 +386,14 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.assertEqual(updated.beneficiaries, 180)
         self.assertEqual(updated.event_date.isoformat(), '2026-09-15')
         self.assertEqual(updated.venue_name, 'New Event Grounds')
+        self.assertEqual(updated.target_beneficiaries, 'Saved participants')
+        self.assertEqual(updated.contractor_supplier, 'Saved supplier')
+        self.assertEqual(updated.procurement_description, 'Saved materials')
+        self.assertEqual(updated.quantity, 12)
+        self.assertEqual(
+            str(updated.expected_delivery_date),
+            '2026-02-10',
+        )
         self.assertEqual(updated.address.barangay, 'bagting')
         self.assertEqual(updated.project.images.count(), 3)
         self.assertEqual(

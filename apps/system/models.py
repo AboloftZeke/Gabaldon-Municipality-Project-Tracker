@@ -491,15 +491,6 @@ class InfrastructureProgressUpdate(models.Model):
 
 class NonInfrastructureProject(models.Model):
     """Normalized non-infrastructure project details linked to the base Project model."""
-    class ProjectType(models.TextChoices):
-        EVENT = 'EVENT', 'Event / Activity'
-        PROGRAM = 'PROGRAM', 'Program'
-        SERVICE = 'SERVICE', 'Service'
-        PROCUREMENT = 'PROCUREMENT', 'Procurement / Acquisition'
-        TRAINING = 'TRAINING', 'Training / Seminar'
-        CAMPAIGN = 'CAMPAIGN', 'Campaign / Initiative'
-        OTHER = 'OTHER', 'Other'
-
     non_infra_id = models.BigAutoField(primary_key=True)
     project = models.OneToOneField(
         Project,
@@ -513,13 +504,6 @@ class NonInfrastructureProject(models.Model):
         null=True,
         blank=True,
         related_name='non_infrastructure_projects'
-    )
-    # Existing records were created through the event-oriented form.  Keep
-    # them compatible by treating their unspecified type as an event.
-    project_type = models.CharField(
-        max_length=20,
-        choices=ProjectType.choices,
-        default=ProjectType.EVENT,
     )
     event_date = models.DateField(null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True)
@@ -570,23 +554,7 @@ class NonInfrastructureProject(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
 
     def clean(self):
-        """Keep event-only schedule requirements consistent outside the form."""
         errors = {}
-        if self.project_type == self.ProjectType.EVENT:
-            for field_name in ('event_date', 'start_time', 'end_time', 'venue_name'):
-                if not getattr(self, field_name):
-                    errors[field_name] = (
-                        'This field is required for an Event / Activity project.'
-                    )
-        elif self.project_type == self.ProjectType.TRAINING:
-            if not self.venue_name:
-                errors['venue_name'] = (
-                    'Venue is required for a Training / Seminar project.'
-                )
-            if not self.target_beneficiaries:
-                errors['target_beneficiaries'] = (
-                    'Target participants are required for a Training / Seminar project.'
-                )
         if (
             self.implementation_start_date
             and self.implementation_end_date

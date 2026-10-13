@@ -168,6 +168,8 @@ class ReportAccessTests(TestCase):
                 'id': 202, 'code': 'NINF-00202',
                 'title': 'Community Health Day',
                 'description': 'Published community health services.',
+                'project_type': 'EVENT',
+                'project_type_label': 'Event / Activity',
                 'category': {
                     'id': 2, 'code': 'health', 'name': 'Health Services',
                 },
@@ -493,6 +495,13 @@ class ReportAccessTests(TestCase):
     def test_non_infrastructure_filters_work_individually(self):
         self.client.force_login(self.users['mayor', 'head'])
         route = reverse('reports:non_infrastructure_summary')
+        unfiltered = self.client.get(route)
+        self.assertNotIn('project_type', unfiltered.context['form'].fields)
+        self.assertNotContains(unfiltered, 'Project Type')
+        self.assertNotIn(
+            'project_type',
+            unfiltered.context['summary']['rows'][0],
+        )
         cases = [
             ({'barangay': 'North Poblacion'}, 'Community Health Day'),
             ({'category': 'education'}, 'Youth Skills Training'),

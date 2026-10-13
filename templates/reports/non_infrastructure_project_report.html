@@ -43,7 +43,6 @@
         </div>
         <dl class="report-detail-grid">
             <div><dt>Category</dt><dd>{{ report.category.name|default:"N/A" }}</dd></div>
-            <div><dt>Project Type</dt><dd>{{ report.project_type_label }}</dd></div>
             <div><dt>Status</dt><dd>{{ report.status_label|default:"N/A" }}</dd></div>
             <div><dt>Proponent</dt><dd>{{ report.proponent|default:"N/A" }}</dd></div>
             <div><dt>Beneficiaries</dt><dd>{{ report.beneficiaries|default_if_none:"N/A" }}</dd></div>

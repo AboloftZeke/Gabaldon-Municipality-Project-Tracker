@@ -84,7 +84,6 @@ class HeadOperationalUpdateTests(TestCase):
         self.non_infrastructure = NonInfrastructureProject.objects.create(
             project=base,
             title='Community Program',
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
             status='planned',
             category=self.non_infrastructure_category,
         )

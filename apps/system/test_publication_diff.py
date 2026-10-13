@@ -57,6 +57,19 @@ class SnapshotDiffTests(SimpleTestCase):
         self.assertEqual(rows['status']['after'], 'Completed')
         self.assertNotIn('status_label', rows)
 
+    def test_legacy_non_infrastructure_project_type_is_ignored(self):
+        rows = self.rows(
+            {
+                'title': 'Community Activity',
+                'project_type': 'EVENT',
+                'project_type_label': 'Event / Activity',
+            },
+            {'title': 'Community Activity'},
+            'non_infrastructure',
+        )
+        self.assertEqual(set(rows), {'title'})
+        self.assertFalse(rows['title']['changed'])
+
     def test_large_information_sections_are_grouped_for_head_review(self):
         infrastructure = compare_snapshots({'infrastructure': {
             'title': 'Bridge', 'address': {'barangay': 'South Poblacion'},

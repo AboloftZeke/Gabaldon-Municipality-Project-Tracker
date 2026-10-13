@@ -39,7 +39,6 @@ class MayorEvidenceLifecycleTests(TestCase):
         )
         self.project = NonInfrastructureProject.objects.create(
             project=self.base, title='Community skills program',
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
             status='planned',
         )
         self.original = ProjectRevision.objects.create(

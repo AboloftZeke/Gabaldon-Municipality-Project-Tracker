@@ -917,6 +917,7 @@ class ProjectPublicationSnapshotTests(TestCase):
         self.assertEqual(content['code'], f'NINF-{non_infrastructure.pk:05d}')
         self.assertEqual(content['title'], 'Community Health Day')
         self.assertEqual(content['category']['name'], 'Health Program')
+        self.assertNotIn('project_type', content)
         self.assertEqual(content['status_label'], 'Planned')
         self.assertEqual(content['event_date'], '2026-09-01')
         self.assertEqual(content['start_time'], '08:30:00')

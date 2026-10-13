@@ -74,7 +74,6 @@ class HeadOperationalRevisionTests(TestCase):
         self.non_infrastructure = NonInfrastructureProject.objects.create(
             project=base,
             title='Community Program',
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
             description='Published description',
             status='planned',
             category=self.category,
@@ -512,7 +511,6 @@ class HeadOperationalRevisionTests(TestCase):
         unpublished = NonInfrastructureProject.objects.create(
             project=project,
             title='Unpublished Program',
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
             status='planned',
             category=self.category,
         )

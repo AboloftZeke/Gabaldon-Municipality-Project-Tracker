@@ -11,8 +11,8 @@ from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, FormView
 from django.urls import reverse_lazy, reverse, NoReverseMatch
 from django.db import models, transaction
-from django.db.models import Case, DateField, F, Prefetch, Q, Sum, When
-from django.db.models.functions import Coalesce, ExtractMonth
+from django.db.models import Prefetch, Q, Sum
+from django.db.models.functions import ExtractMonth
 from django.templatetags.static import static
 from django.utils import timezone
 from .forms import NonInfrastructureProgressReturnForm, NonInfrastructureProgressUpdateForm, NonInfrastructureProjectForm
@@ -181,33 +181,23 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
         if category:
             queryset = queryset.filter(category_id=category)
 
-        project_type = self.request.GET.get('project_type', '').strip()
-        if project_type:
-            queryset = queryset.filter(project_type=project_type)
-
         raw_month = self.request.GET.get('month', '').strip()
         self.selected_month = (
             int(raw_month) if raw_month.isascii() and raw_month.isdecimal()
             and 1 <= int(raw_month) <= 12 else None
         )
         if self.selected_month is not None:
-            # The date describes the activity, not when its record was entered.
-            # Trainings may use an event date or an implementation start;
-            # procurements use delivery first. Other projects use their start.
-            primary_date = Case(
-                When(project_type=NonInfrastructureProject.ProjectType.EVENT,
-                     then=F('event_date')),
-                When(project_type=NonInfrastructureProject.ProjectType.TRAINING,
-                     then=Coalesce('event_date', 'implementation_start_date')),
-                When(project_type=NonInfrastructureProject.ProjectType.PROCUREMENT,
-                     then=Coalesce('expected_delivery_date', 'implementation_start_date')),
-                default=Coalesce('implementation_start_date', 'event_date',
-                                 'expected_delivery_date'),
-                output_field=DateField(),
-            )
             queryset = queryset.annotate(
-                project_month=ExtractMonth(primary_date),
-            ).filter(project_month=self.selected_month)
+                implementation_start_month=ExtractMonth(
+                    'implementation_start_date',
+                ),
+                implementation_end_month=ExtractMonth(
+                    'implementation_end_date',
+                ),
+            ).filter(
+                Q(implementation_start_month=self.selected_month)
+                | Q(implementation_end_month=self.selected_month)
+            )
 
         return queryset.order_by('-created_at')
 
@@ -235,7 +225,6 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
             locations.append((normalized, normalized.replace('_', ' ').title()))
         context['locations'] = sorted(locations, key=lambda item: item[1].casefold())
         context['categories'] = NonInfrastructureCategory.objects.all()
-        context['project_types'] = NonInfrastructureProject.ProjectType.choices
         context['months'] = [(str(i), month_name[i]) for i in range(1, 13)]
         context['selected_month'] = str(self.selected_month or '')
         query = self.request.GET.copy()
@@ -246,7 +235,7 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
         context['has_any_projects'] = NonInfrastructureProject.objects.exists()
         context['has_active_filters'] = any(
             self.request.GET.get(name, '').strip()
-            for name in ('location', 'category', 'project_type')
+            for name in ('location', 'category')
         ) or self.selected_month is not None
         context['can_update_operations'] = (
             can_update_non_infrastructure_operations(self.request.user)
@@ -314,7 +303,6 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
             )
 
         context['project_code'] = f'NINF-{project_record.pk:05d}'
-        context['project_type_label'] = project.get_project_type_display()
         context['project_name'] = project_name
         context['project_manager'] = project_manager
 

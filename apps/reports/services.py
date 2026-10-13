@@ -56,11 +56,6 @@ def _apply_common_filters(projects, filters, *, status_key, date_key):
             project for project in rows
             if project[status_key] == filters['status']
         ]
-    if filters.get('project_type'):
-        rows = [
-            project for project in rows
-            if project.get('project_type') == filters['project_type']
-        ]
     if filters.get('date_from'):
         rows = [
             project for project in rows
@@ -135,4 +130,3 @@ def get_non_infrastructure_summary_report_data(filters):
         )),
         'total_beneficiaries': sum(beneficiary_values),
     }
-

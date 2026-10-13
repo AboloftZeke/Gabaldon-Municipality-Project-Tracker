@@ -49,7 +49,6 @@ class MayorStaffActionRequiredTests(TestCase):
         return NonInfrastructureProject.objects.create(
             project=base,
             title=title,
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
         )
 
     def make_progress_update(self, *, submitted_by=None, review_status=None):

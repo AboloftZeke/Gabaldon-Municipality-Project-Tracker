@@ -30,7 +30,6 @@ class NonInfrastructureEvidenceModelTests(TestCase):
         self.project = NonInfrastructureProject.objects.create(
             project=base,
             title='Community program',
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
             status='planned',
         )
 

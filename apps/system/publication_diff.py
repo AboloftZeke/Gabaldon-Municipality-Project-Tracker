@@ -21,7 +21,7 @@ SECTIONS = (
 )
 IGNORED = {
     'id', 'schema_version', 'created_at', 'updated_at', 'cover_image_url',
-    'supporting_inspections',
+    'supporting_inspections', 'project_type',
 }
 LABELS = {
     'creator': 'Published By Attribution', 'status': 'Status',

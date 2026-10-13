@@ -40,7 +40,7 @@
         </div>
         <div class="public-detail__hero-overlay"></div>
         <div class="public-detail__heading-content">
-          <p class="public-detail__eyebrow">Public {{ public_project.project_type_label }} · {{ project_code }}</p>
+          <p class="public-detail__eyebrow">Public Non-Infrastructure Project · {{ project_code }}</p>
           <h1>{{ public_project.title }}</h1>
           <p>{{ project_category|default:"Uncategorized" }}</p>
         </div>
@@ -66,7 +66,7 @@
 
     {% if public_project.event_date or public_project.start_time or public_project.end_time or public_project.venue_name or public_project.implementation_start_date or public_project.implementation_end_date %}
     <section class="public-detail__section">
-      <h2>{% if public_project.project_type == 'EVENT' %}Schedule and Venue{% else %}Implementation Details{% endif %}</h2>
+      <h2>Schedule and Implementation Details</h2>
       <div class="detail-grid">
         {% if public_project.event_date %}<div class="detail-item"><span>Event Date</span><strong>{{ public_project.event_date|date:"F j, Y" }}</strong></div>{% endif %}
         {% if public_project.start_time %}<div class="detail-item"><span>Start Time</span><strong>{{ public_project.start_time|time:"g:i A" }}</strong></div>{% endif %}

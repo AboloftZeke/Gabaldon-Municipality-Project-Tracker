@@ -39,7 +39,6 @@ class ApplyApprovedProgressUpdateTests(TestCase):
         )
         self.project = NonInfrastructureProject.objects.create(
             project=self.base, title='Community Program', status='planned',
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
         )
         self.public_revision = ProjectRevision.objects.create(
             project=self.base,

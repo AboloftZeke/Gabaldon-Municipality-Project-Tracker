@@ -182,8 +182,6 @@ def non_infrastructure_public_data(revision):
         'code': noninfra.get('code') or f'NINF-{record_id:05d}',
         'title': noninfra.get('title') or '',
         'description': noninfra.get('description') or '',
-        'project_type': noninfra.get('project_type') or 'EVENT',
-        'project_type_label': noninfra.get('project_type_label') or 'Event / Activity',
         'category': noninfra.get('category') or {},
         'status': noninfra.get('status') or 'planned',
         'status_label': noninfra.get('status_label') or 'Planned',
@@ -205,7 +203,9 @@ def non_infrastructure_public_data(revision):
         'remarks': noninfra.get('remarks') or '',
         'report_date': (
             _date(noninfra.get('implementation_start_date'))
+            or _date(noninfra.get('implementation_end_date'))
             or _date(noninfra.get('event_date'))
+            or _date(noninfra.get('expected_delivery_date'))
         ),
         'address': noninfra.get('address') or {},
         'images': images,

@@ -32,15 +32,6 @@
     <form class="ui-form" method="get" aria-label="Filter non-infrastructure projects">
         <div class="form-grid">
             <div class="form-group">
-                <label for="project-type-filter">Project Type</label>
-                <select id="project-type-filter" name="project_type">
-                    <option value="">All project types</option>
-                    {% for value, label in project_types %}
-                        <option value="{{ value }}" {% if request.GET.project_type == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
                 <label for="category-filter">Category</label>
                 <select id="category-filter" name="category">
                     <option value="">All categories</option>
@@ -87,21 +78,18 @@
                         <div class="project-title">{{ project.title }}</div>
                         <div class="project-location">📍 {{ project.address.barangay|barangay_label|default:'Barangay not specified' }}</div>
                         <div class="project-category">{{ project.category|default:'Uncategorized' }}</div>
-                        <div class="project-category">{{ project.get_project_type_display }}</div>
 
-                        {% if project.project_type == 'EVENT' and project.event_date %}
+                        {% if project.event_date %}
                             <div class="project-dates">
-                                <strong>Date:</strong> {{ project.event_date|date:"M d, Y" }}
+                                <strong>Activity date:</strong> {{ project.event_date|date:"M d, Y" }}
                             </div>
-                        {% elif project.project_type == 'PROCUREMENT' and project.expected_delivery_date %}
+                        {% endif %}
+                        {% if project.expected_delivery_date %}
                             <div class="project-dates">
                                 <strong>Expected delivery:</strong> {{ project.expected_delivery_date|date:"M d, Y" }}
                             </div>
-                        {% elif project.project_type == 'TRAINING' and project.event_date %}
-                            <div class="project-dates">
-                                <strong>Training date:</strong> {{ project.event_date|date:"M d, Y" }}
-                            </div>
-                        {% elif project.implementation_start_date or project.implementation_end_date %}
+                        {% endif %}
+                        {% if project.implementation_start_date or project.implementation_end_date %}
                             <div class="project-dates">
                                 <strong>Implementation:</strong>
                                 {{ project.implementation_start_date|date:"M d, Y"|default:"TBA" }} – {{ project.implementation_end_date|date:"M d, Y"|default:"TBA" }}

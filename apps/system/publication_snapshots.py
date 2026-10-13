@@ -303,8 +303,6 @@ def build_non_infrastructure_snapshot(non_infrastructure):
         'code': f'NINF-{non_infrastructure.pk:05d}',
         'title': non_infrastructure.title,
         'description': non_infrastructure.description or '',
-        'project_type': non_infrastructure.project_type,
-        'project_type_label': non_infrastructure.get_project_type_display(),
         'category': (
             {
                 'id': non_infrastructure.category_id,

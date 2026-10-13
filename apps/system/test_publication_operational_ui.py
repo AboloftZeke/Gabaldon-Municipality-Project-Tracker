@@ -92,7 +92,6 @@ class PublicationOperationalUITests(TestCase):
         self.non_infrastructure = NonInfrastructureProject.objects.create(
             project=non_infrastructure_base,
             title='Community Wellness Program',
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
         )
         self.non_infrastructure_revision = (
             ProjectRevision.objects.create(

@@ -24,7 +24,6 @@ class NonInfrastructureNoOpSubmissionTests(TestCase):
             title='Published Program',
             description='Published description',
             category=category,
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
             proponent='Mayor Office',
             beneficiaries=10,
         )

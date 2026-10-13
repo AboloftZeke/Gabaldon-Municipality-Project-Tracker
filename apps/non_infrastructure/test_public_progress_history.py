@@ -37,7 +37,6 @@ class PublicMayorHistoryTests(TestCase):
         )
         self.project = NonInfrastructureProject.objects.create(
             project=self.base, title='Skills training', status='planned',
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
         )
         self.initial = ProjectRevision.objects.create(
             project=self.base, revision_number=1, status=PublicationStatus.PUBLISHED,

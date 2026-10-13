@@ -28,7 +28,6 @@ class InternalRouteAccessTests(TestCase):
         mayor_base = Project.objects.create(project_type='non_infrastructure')
         self.mayor = NonInfrastructureProject.objects.create(
             project=mayor_base, title='Mayor program',
-            project_type=NonInfrastructureProject.ProjectType.PROGRAM,
         )
         ProjectRevision.objects.create(
             project=mayor_base,

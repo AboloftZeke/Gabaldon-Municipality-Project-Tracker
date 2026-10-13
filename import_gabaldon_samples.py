@@ -144,7 +144,7 @@ def create_noninfra(row, actor):
     )
     non = NonInfrastructureProject(
         project=project, title=row['title'], description=row['description'],
-        category=category, project_type=row['project_type'],
+        category=category,
         proponent=row['proponent'], target_beneficiaries=row['target_beneficiaries'],
         beneficiaries=int(row['beneficiaries']),
         implementation_start_date=optional_date(row['implementation_start_date']),

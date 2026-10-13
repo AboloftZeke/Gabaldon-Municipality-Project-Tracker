@@ -55,7 +55,7 @@
         <div class="project-detail-header-content">
             <div class="project-detail-heading">
                 <div class="project-title-block">
-                    <p class="project-eyebrow">{{ project_type_label }} · {{ project_code }}</p>
+                    <p class="project-eyebrow">{{ project_code }}</p>
                     <h2>{{ project_name }}</h2>
                     <p class="project-subtitle">{{ project_category|default:"Uncategorized" }}</p>
                 </div>
@@ -90,11 +90,6 @@
                         {{ project_category|default:"N/A" }}
                     </div>
                 </div>
-                <div class="meta-item">
-                    <div class="meta-label">Project Type</div>
-                    <div class="meta-value">{{ project_type_label }}</div>
-                </div>
-
             </div>
         </div>
 
@@ -127,7 +122,7 @@
     <section class="project-section information-card ui-card">
         <div class="information-card__heading">
             <span class="information-card__eyebrow">Timeline</span>
-            <h3>{% if project.project_type == 'EVENT' %}Event Schedule{% else %}Implementation Period{% endif %}</h3>
+            <h3>Schedule &amp; Implementation Period</h3>
         </div>
 
         <div class="section-content">
