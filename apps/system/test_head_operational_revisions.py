@@ -48,7 +48,7 @@ class HeadOperationalRevisionTests(TestCase):
         fixture = InfrastructureProjectFormTests()
         fixture.setUp()
         self.infrastructure = fixture.create_project()
-        self.infrastructure.status = 'not_yet_started'
+        self.infrastructure.status = 'ongoing'
         self.infrastructure.physical_progress_percentage = Decimal('25')
         self.infrastructure.cost_progress_percentage = Decimal('20')
         self.infrastructure.planned_start_date = date.today() - timedelta(days=5)
@@ -143,7 +143,7 @@ class HeadOperationalRevisionTests(TestCase):
         ))
         self.assertEqual(public_response.status_code, 200)
         public_project = public_response.context['public_project']
-        self.assertEqual(public_project['status'], 'not_yet_started')
+        self.assertEqual(public_project['status'], 'ongoing')
         self.assertEqual(public_project['physical_progress_percentage'], Decimal('25.00'))
 
         preview = self.client.get(reverse(
@@ -281,7 +281,7 @@ class HeadOperationalRevisionTests(TestCase):
         ))
         self.assertEqual(
             public_response.context['public_project']['status'],
-            'not_yet_started',
+            'ongoing',
         )
 
         retained_snapshot = deepcopy(revision.snapshot)
@@ -352,7 +352,7 @@ class HeadOperationalRevisionTests(TestCase):
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
         ), {
-            'status': 'not_yet_started',
+            'status': 'ongoing',
             'physical_progress_percentage': '30',
             'cost_progress_percentage': '20',
             'inspection_completion_percentage': '35',
@@ -368,7 +368,7 @@ class HeadOperationalRevisionTests(TestCase):
         )
         self.infrastructure.refresh_from_db()
         self.inspection.refresh_from_db()
-        self.assertEqual(self.infrastructure.status, 'not_yet_started')
+        self.assertEqual(self.infrastructure.status, 'ongoing')
         self.assertEqual(
             self.infrastructure.physical_progress_percentage,
             Decimal('30.00'),
@@ -567,7 +567,7 @@ class HeadOperationalRevisionTests(TestCase):
         self.infrastructure.refresh_from_db()
         self.inspection.refresh_from_db()
         pending.refresh_from_db()
-        self.assertEqual(self.infrastructure.status, 'not_yet_started')
+        self.assertEqual(self.infrastructure.status, 'ongoing')
         self.assertEqual(self.infrastructure.physical_progress_percentage, Decimal('25'))
         self.assertEqual(self.infrastructure.cost_progress_percentage, Decimal('20'))
         self.assertEqual(self.inspection.completion_percentage, Decimal('30'))

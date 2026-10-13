@@ -5,7 +5,6 @@ from apps.system.models import InfrastructureProject, InfrastructureProgressUpda
 
 
 EXPECTED_OFFICIAL_STATUS_CHOICES = [
-    ("not_yet_started", "Not Yet Started"),
     ("ongoing", "Ongoing"),
     ("on_hold", "On Hold"),
     ("completed", "Completed"),

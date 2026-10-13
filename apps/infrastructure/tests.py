@@ -48,7 +48,7 @@ class InfrastructureProjectFormTests(TestCase):
             'implementing_office': self.office.office_name,
             'contractor': self.contractor.contractor_name,
             'procurement_method': 'competitive_bidding',
-            'status': 'not_yet_started',
+            'status': 'ongoing',
             'street': 'Main Street',
             'barangay': 'Bagting',
             'latitude': '15.1234567',

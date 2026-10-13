@@ -292,8 +292,8 @@ class OfficeReviewPermissionTests(TestCase):
         revision = self.revisions['engineer']
         snapshot = deepcopy(revision.snapshot)
         snapshot['infrastructure'].update({
-            'status': 'not_yet_started',
-            'status_label': 'Not Yet Started',
+            'status': 'ongoing',
+            'status_label': 'Ongoing',
             'physical_progress_percentage': '20.00',
         })
         snapshot['_head_operational_confirmation'] = {
@@ -322,7 +322,7 @@ class OfficeReviewPermissionTests(TestCase):
         InfrastructureProject.objects.create(
             project=project,
             title='Seed verification',
-            status='not_yet_started',
+            status='ongoing',
             physical_progress_percentage=0,
         )
         Command()._publish_project(project, employee=self.users['engineer', 'staff'], admin=self.admin)

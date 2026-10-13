@@ -359,7 +359,6 @@ class InfrastructureProject(models.Model):
     ]
 
     STATUS_CHOICES = [
-        ('not_yet_started', 'Not Yet Started'),
         ('ongoing', 'Ongoing'),
         ('on_hold', 'On Hold'),
         ('completed', 'Completed'),

@@ -66,7 +66,7 @@ class ClearTestDataCommandTests(TestCase):
         )
         infrastructure_update = InfrastructureProgressUpdate.objects.create(
             infrastructure=self.infrastructure,
-            previous_official_status='not_yet_started',
+            previous_official_status='ongoing',
             new_official_status='ongoing',
             updated_by=self.seed_user,
         )

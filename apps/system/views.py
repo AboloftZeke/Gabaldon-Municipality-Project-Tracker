@@ -429,9 +429,6 @@ class EngineeringDashboardView(StaffRequiredMixin, TemplateView):
         
         user_projects = InfrastructureProject.objects.all()
         context['total_projects'] = user_projects.count()
-        context['not_yet_started_projects'] = user_projects.filter(
-            status='not_yet_started',
-        ).count()
         context['ongoing_projects'] = user_projects.filter(
             status='ongoing',
         ).count()

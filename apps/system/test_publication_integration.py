@@ -83,7 +83,7 @@ class OfficePublicationIntegrationTests(TestCase):
                             args=[record.pk],
                         )
                         operational_payload = {
-                            'status': 'not_yet_started',
+                            'status': 'ongoing',
                             'physical_progress_percentage': '0',
                             'cost_progress_percentage': '',
                             'inspection_completion_percentage': '0',

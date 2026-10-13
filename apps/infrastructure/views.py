@@ -102,9 +102,6 @@ class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
         )
 
         context['total_projects'] = projects.count()
-        context['not_yet_started_projects'] = projects.filter(
-            status='not_yet_started'
-        ).count()
         context['ongoing_projects'] = projects.filter(
             status='ongoing'
         ).count()

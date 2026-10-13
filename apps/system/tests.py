@@ -220,7 +220,7 @@ class PublicationServiceTests(TestCase):
         self.infrastructure = InfrastructureProject.objects.create(
             project=self.project,
             title='Working Project Title',
-            status='not_yet_started',
+            status='ongoing',
         )
 
     def _approve_and_publish(self, revision):
@@ -378,7 +378,7 @@ class EmployeePublicationWorkflowViewTests(TestCase):
         self.infrastructure = InfrastructureProject.objects.create(
             project=infra_base,
             title='Employee Submission Road',
-            status='not_yet_started',
+            status='ongoing',
         )
         noninfra_base = Project.objects.create(
             project_type='non_infrastructure',
@@ -518,7 +518,7 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
             project=project,
             title='Submitted Admin Preview Project',
             description='Snapshot reviewed by the administrator.',
-            status='not_yet_started',
+            status='ongoing',
         )
         ProjectImage.objects.create(
             project=project,
@@ -673,7 +673,7 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
                 args=[self.infrastructure.pk],
             ),
             {
-                'status': 'not_yet_started',
+                'status': 'ongoing',
                 'physical_progress_percentage': '0',
                 'cost_progress_percentage': '',
                 'from_review': str(self.revision.pk),
@@ -803,7 +803,7 @@ class ProjectPublicationSnapshotTests(TestCase):
             contractor=contractor,
             implementing_office=office,
             procurement_method='competitive_bidding',
-            status='not_yet_started',
+            status='ongoing',
             planned_start_date=date(2026, 1, 15),
             planned_end_date=date(2026, 8, 30),
             cost_progress_percentage=Decimal('42.50'),

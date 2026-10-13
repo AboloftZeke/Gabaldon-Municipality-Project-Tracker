@@ -61,7 +61,7 @@ def _location_key(value):
 
 
 def _status_key(value):
-    return value or 'not_yet_started'
+    return value or 'unknown'
 
 
 def _creator_name(snapshot):
@@ -120,7 +120,7 @@ def infrastructure_public_data(revision):
         ),
         'status': infrastructure.get('status') or '',
         'status_label': (
-            infrastructure.get('status_label') or 'Not Yet Started'
+            infrastructure.get('status_label') or 'Not recorded'
         ),
         'planned_start_date': _date(
             infrastructure.get('planned_start_date'),
