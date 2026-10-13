@@ -1395,6 +1395,20 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Inspection Details')
 
+    def test_public_infrastructure_detail_resolves_missing_status_label(self):
+        snapshot = self.public_revision.snapshot
+        snapshot['infrastructure']['status_label'] = ''
+        self.public_revision.snapshot = snapshot
+        self.public_revision.save(update_fields=['snapshot'])
+
+        response = self.client.get(reverse(
+            'public_infrastructure_project_detail',
+            args=[self.infrastructure.pk],
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<strong>Ongoing</strong>', html=False)
+
     def test_public_infrastructure_detail_handles_missing_coordinates(self):
         snapshot = self.public_revision.snapshot
         snapshot['infrastructure']['address']['latitude'] = None
@@ -1524,15 +1538,21 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
         ))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '₱1,250,000.50')
-        self.assertContains(response, 'September 5, 2026')
+        self.assertNotContains(response, 'September 5, 2026')
         self.assertContains(response, 'Gabaldon residents needing health services')
         self.assertContains(response, 'Local Development Fund')
         self.assertContains(response, 'Medical kits and supplies')
+        self.assertContains(response, 'Proponent')
+        self.assertNotContains(response, 'Event Date')
 
     def test_public_dashboard_uses_saved_non_infrastructure_statuses(self):
         response = self.client.get(reverse('public_dashboard'))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<dt>Proponent</dt>', html=True)
+        self.assertContains(response, 'Municipal Health Office')
+        self.assertNotContains(response, 'Event date')
+        self.assertNotContains(response, 'data-project-service-period=')
         self.assertEqual(response.context['noninfra_total'], 3)
         self.assertEqual(response.context['planned_projects'], 1)
         self.assertEqual(response.context['ongoing_projects'], 1)

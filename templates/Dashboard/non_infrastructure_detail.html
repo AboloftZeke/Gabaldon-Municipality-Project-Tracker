@@ -48,7 +48,6 @@
       <div class="public-detail__summary" aria-label="Program summary">
         <div class="summary-item"><span>Status</span><strong>{{ public_project.status_label|default:"N/A" }}</strong></div>
         <div class="summary-item"><span>Beneficiaries</span><strong>{{ public_project.beneficiaries|default_if_none:"N/A" }}</strong></div>
-        {% if public_project.event_date %}<div class="summary-item"><span>Event Date</span><strong>{{ public_project.event_date|date:"F j, Y" }}</strong></div>{% endif %}
         {% if public_project.implementation_start_date or public_project.implementation_end_date %}<div class="summary-item"><span>Implementation</span><strong>{{ public_project.implementation_start_date|date:"M j, Y"|default:"TBA" }} – {{ public_project.implementation_end_date|date:"M j, Y"|default:"TBA" }}</strong></div>{% endif %}
         {% if public_project.venue_name %}<div class="summary-item"><span>Venue</span><strong>{{ public_project.venue_name }}</strong></div>{% endif %}
       </div>
@@ -64,12 +63,11 @@
       </div>
     </section>
 
-    {% if public_project.event_date or public_project.start_time or public_project.end_time or public_project.venue_name or public_project.implementation_start_date or public_project.implementation_end_date %}
+    {% if public_project.start_time or public_project.end_time or public_project.venue_name or public_project.implementation_start_date or public_project.implementation_end_date %}
     <section class="public-detail__section">
       <h2>Schedule and Implementation Details</h2>
       <div class="detail-grid">
-        {% if public_project.event_date %}<div class="detail-item"><span>Event Date</span><strong>{{ public_project.event_date|date:"F j, Y" }}</strong></div>{% endif %}
-        {% if public_project.start_time %}<div class="detail-item"><span>Start Time</span><strong>{{ public_project.start_time|time:"g:i A" }}</strong></div>{% endif %}
+      {% if public_project.start_time %}<div class="detail-item"><span>Start Time</span><strong>{{ public_project.start_time|time:"g:i A" }}</strong></div>{% endif %}
         {% if public_project.end_time %}<div class="detail-item"><span>End Time</span><strong>{{ public_project.end_time|time:"g:i A" }}</strong></div>{% endif %}
         {% if public_project.venue_name %}<div class="detail-item"><span>Venue</span><strong>{{ public_project.venue_name }}</strong></div>{% endif %}
         {% if public_project.implementation_start_date %}<div class="detail-item"><span>Implementation Start</span><strong>{{ public_project.implementation_start_date|date:"F j, Y" }}</strong></div>{% endif %}

@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/templates/Dashboard/dashboard.css' %}?v=20261013-public-layout">
+  <link rel="stylesheet" href="{% static 'css/components/site_footer.css' %}?v=20261013-footer">
   <link rel="stylesheet" href="{% static 'css/templates/projects/project_modal.css' %}">
   <link rel="stylesheet" href="{% static 'css/components/ui.css' %}?v=20260918-4">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
@@ -224,7 +225,6 @@
                    data-project-proponent="{{ row.proponent }}"
                    data-project-beneficiaries-description="{{ row.beneficiaries|default_if_none:'' }}"
                    data-project-venue="{{ row.venue_name }}"
-                   data-project-service-period="{{ row.event_date|date:'F j, Y' }}"
                    data-project-service-time="{% if row.start_time %}{{ row.start_time }}{% if row.end_time %} – {{ row.end_time }}{% endif %}{% endif %}"
                    data-project-created-by="{{ row.created_by_name }}"
                    data-project-created-at="{{ row.created_at|date:'F j, Y' }}"
@@ -369,8 +369,8 @@
               <h3>{{ row.title }}</h3>
               <p class="public-project-preview__location">{% if row.location %}Barangay {{ row.location }}{% elif row.venue_name %}{{ row.venue_name }}{% else %}Location not specified{% endif %}</p>
               <dl class="public-project-preview__facts">
+                <div><dt>Proponent</dt><dd>{{ row.proponent|default:"Not specified" }}</dd></div>
                 <div><dt>Beneficiaries</dt><dd>{{ row.beneficiaries|default_if_none:"Not specified" }}</dd></div>
-                <div><dt>Event date</dt><dd>{{ row.event_date|date:"M d, Y"|default:"Not scheduled" }}</dd></div>
               </dl>
               <a href="#"
                  class="public-project-preview__action ui-button ui-button--primary ui-button--small"
@@ -383,7 +383,6 @@
                  data-project-proponent="{{ row.proponent }}"
                  data-project-beneficiaries-description="{{ row.beneficiaries|default_if_none:'' }}"
                  data-project-venue="{{ row.venue_name }}"
-                 data-project-service-period="{{ row.event_date|date:'F j, Y' }}"
                  data-project-service-time="{% if row.start_time %}{{ row.start_time }}{% if row.end_time %} – {{ row.end_time }}{% endif %}{% endif %}"
                  data-project-created-by="{{ row.created_by_name }}"
                  data-project-created-at="{{ row.created_at|date:'F j, Y' }}"
@@ -404,9 +403,7 @@
     {% endif %}
   </main>
 
-  <footer class="site-footer">
-    <p>(c) 2026 Municipality of Gabaldon - Transparent Governance for the Community.</p>
-  </footer>
+  {% include "includes/site_footer.html" with footer_class="public-dashboard-footer" %}
 
   {% include "projects/project_detail_modal.html" %}
 

@@ -1,0 +1,111 @@
+.public-dashboard-footer {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 3rem clamp(1.5rem, 5vw, 4rem) 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    background: #12452f;
+}
+
+.public-dashboard-footer .footer-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.public-dashboard-footer .footer-content {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 0 clamp(1.5rem, 5vw, 4rem);
+}
+
+.public-dashboard-footer .footer-section h3 {
+    margin: 0 0 1.25rem;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.public-dashboard-footer .footer-section ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.public-dashboard-footer .footer-section li {
+    margin-bottom: 0.75rem;
+}
+
+.public-dashboard-footer .footer-section a {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: color 180ms ease;
+}
+
+.public-dashboard-footer .footer-section a:hover {
+    color: #fff;
+}
+
+.public-dashboard-footer .footer-middle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.public-dashboard-footer .footer-seal {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+}
+
+.public-dashboard-footer .footer-bottom {
+    padding: 2rem clamp(1.5rem, 5vw, 4rem);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.public-dashboard-footer .footer-bottom p {
+    margin: 0;
+    color: inherit;
+}
+
+.public-dashboard-footer .footer-accent {
+    height: 4px;
+    background: linear-gradient(90deg, #8b5cf6, #6366f1, #8b5cf6);
+}
+
+@media (max-width: 768px) {
+    .public-dashboard-footer .footer-content {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .public-dashboard-footer {
+        padding: 2rem clamp(1rem, 5vw, 2rem) 0;
+    }
+
+    .public-dashboard-footer .footer-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+        padding: 0 clamp(1rem, 5vw, 2rem);
+    }
+
+    .public-dashboard-footer .footer-bottom {
+        padding: 1.5rem clamp(1rem, 5vw, 4rem);
+    }
+
+    .public-dashboard-footer .footer-seal {
+        width: 70px;
+        height: 70px;
+    }
+}

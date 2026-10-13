@@ -8,7 +8,11 @@ from django.core.files.storage import default_storage
 from django.http import Http404
 from django.urls import reverse
 
-from .models import NonInfrastructureProject, ProjectRevision
+from .models import (
+    InfrastructureProject,
+    NonInfrastructureProject,
+    ProjectRevision,
+)
 from .publication_workflow import PublicationStatus
 
 
@@ -90,6 +94,11 @@ def infrastructure_public_data(revision):
     physical_progress = _decimal(
         infrastructure.get('physical_progress_percentage'),
     )
+    status = infrastructure.get('status') or ''
+    status_label = dict(InfrastructureProject.STATUS_CHOICES).get(
+        status,
+        infrastructure.get('status_label') or 'Not recorded',
+    )
     record_id = infrastructure.get('id')
     if record_id is None:
         return None
@@ -118,10 +127,8 @@ def infrastructure_public_data(revision):
         'procurement_method_label': (
             infrastructure.get('procurement_method_label') or ''
         ),
-        'status': infrastructure.get('status') or '',
-        'status_label': (
-            infrastructure.get('status_label') or 'Not recorded'
-        ),
+        'status': status,
+        'status_label': status_label,
         'planned_start_date': _date(
             infrastructure.get('planned_start_date'),
         ),
@@ -166,6 +173,11 @@ def non_infrastructure_public_data(revision):
     record_id = noninfra.get('id')
     if record_id is None:
         return None
+    status = noninfra.get('status') or 'planned'
+    status_label = dict(NonInfrastructureProject.STATUS_CHOICES).get(
+        status,
+        noninfra.get('status_label') or 'Not recorded',
+    )
     images = [
         {
             'id': image.get('id'),
@@ -183,8 +195,8 @@ def non_infrastructure_public_data(revision):
         'title': noninfra.get('title') or '',
         'description': noninfra.get('description') or '',
         'category': noninfra.get('category') or {},
-        'status': noninfra.get('status') or 'planned',
-        'status_label': noninfra.get('status_label') or 'Planned',
+        'status': status,
+        'status_label': status_label,
         'proponent': noninfra.get('proponent') or '',
         'beneficiaries': noninfra.get('beneficiaries'),
         'target_beneficiaries': noninfra.get('target_beneficiaries') or '',
