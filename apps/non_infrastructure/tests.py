@@ -94,9 +94,26 @@ class NonInfrastructureProjectFormTests(TestCase):
             'non_infrastructure/non_infrastructure_form.html',
             {'form': NonInfrastructureProjectForm(), 'action': 'Create'},
         )
+        project_details = content.split(
+            '<legend>Project Details</legend>', 1,
+        )[1].split('<legend>Schedule &amp; Additional Details</legend>', 1)[0]
 
         self.assertNotIn('Project Type', content)
         self.assertNotIn('data-project-types', content)
+        self.assertIn('>Proponent</label>', project_details)
+        self.assertIn('>Beneficiaries</label>', project_details)
+        for field_name in (
+            'target_beneficiaries',
+            'project_cost',
+            'fund_source',
+            'contractor_supplier',
+            'procurement_description',
+            'quantity',
+            'expected_delivery_date',
+            'remarks',
+        ):
+            with self.subTest(field=field_name):
+                self.assertNotIn(field_name, project_details)
         self.assertIn('data-project-wizard', content)
         self.assertIn('Step 1 of 6', content)
         for step in range(6):
@@ -342,10 +359,13 @@ class NonInfrastructureProjectFormTests(TestCase):
             event_date='2026-01-10',
             venue_name='Old Venue',
             target_beneficiaries='Saved participants',
+            project_cost='1250000.50',
+            fund_source='Local Development Fund',
             contractor_supplier='Saved supplier',
             procurement_description='Saved materials',
             quantity=12,
             expected_delivery_date='2026-02-10',
+            remarks='Retain these details during edits.',
         )
         old_image = ProjectImage.objects.create(
             project=proj,
@@ -387,6 +407,8 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.assertEqual(updated.event_date.isoformat(), '2026-09-15')
         self.assertEqual(updated.venue_name, 'New Event Grounds')
         self.assertEqual(updated.target_beneficiaries, 'Saved participants')
+        self.assertEqual(str(updated.project_cost), '1250000.50')
+        self.assertEqual(updated.fund_source, 'Local Development Fund')
         self.assertEqual(updated.contractor_supplier, 'Saved supplier')
         self.assertEqual(updated.procurement_description, 'Saved materials')
         self.assertEqual(updated.quantity, 12)
@@ -394,6 +416,7 @@ class NonInfrastructureProjectFormTests(TestCase):
             str(updated.expected_delivery_date),
             '2026-02-10',
         )
+        self.assertEqual(updated.remarks, 'Retain these details during edits.')
         self.assertEqual(updated.address.barangay, 'bagting')
         self.assertEqual(updated.project.images.count(), 3)
         self.assertEqual(

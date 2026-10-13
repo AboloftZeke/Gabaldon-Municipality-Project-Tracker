@@ -1486,6 +1486,22 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
                 title=name,
                 status=status,
                 project_cost=Decimal('1250000.50') if status == 'ongoing' else None,
+                proponent='Municipal Health Office' if status == 'ongoing' else '',
+                beneficiaries=125 if status == 'ongoing' else None,
+                target_beneficiaries=(
+                    'Gabaldon residents needing health services'
+                    if status == 'ongoing' else ''
+                ),
+                fund_source='Local Development Fund' if status == 'ongoing' else '',
+                contractor_supplier='Community Health Supplies' if status == 'ongoing' else '',
+                procurement_description=(
+                    'Medical kits and supplies' if status == 'ongoing' else ''
+                ),
+                quantity=25 if status == 'ongoing' else None,
+                expected_delivery_date=(
+                    date(2026, 9, 15) if status == 'ongoing' else None
+                ),
+                remarks='Existing public record notes.' if status == 'ongoing' else '',
             )
 
             if status == 'ongoing':
@@ -1507,6 +1523,9 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
         ))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '₱1,250,000.50')
+        self.assertContains(response, 'Gabaldon residents needing health services')
+        self.assertContains(response, 'Local Development Fund')
+        self.assertContains(response, 'Medical kits and supplies')
 
     def test_public_dashboard_uses_saved_non_infrastructure_statuses(self):
         response = self.client.get(reverse('public_dashboard'))

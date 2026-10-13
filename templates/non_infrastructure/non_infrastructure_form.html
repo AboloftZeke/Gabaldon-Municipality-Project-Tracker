@@ -86,7 +86,7 @@
 
             <div class="fieldset wizard-panel ui-form-section" data-wizard-step="1" hidden>
                 <legend>Project Details</legend>
-                <p class="section-description">Record the implementing office, intended beneficiaries, budget, and any relevant delivery details.</p>
+                <p class="section-description">Record the proponent and number of beneficiaries.</p>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="{{ form.proponent.id_for_label }}">Proponent</label>
@@ -102,48 +102,6 @@
                         {% if form.beneficiaries.errors %}
                             <div class="error-message">{{ form.beneficiaries.errors.0 }}</div>
                         {% endif %}
-                    </div>
-
-                    <div class="form-group full-span">
-                        <label for="{{ form.target_beneficiaries.id_for_label }}">Target Beneficiaries / Participants</label>
-                        {{ form.target_beneficiaries }}
-                        {% if form.target_beneficiaries.errors %}<div class="error-message">{{ form.target_beneficiaries.errors.0 }}</div>{% endif %}
-                    </div>
-
-                    <div class="form-group">
-                        <label for="{{ form.project_cost.id_for_label }}">Budget / Project Cost</label>
-                        {{ form.project_cost }}
-                        {% if form.project_cost.errors %}<div class="error-message">{{ form.project_cost.errors.0 }}</div>{% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label for="{{ form.fund_source.id_for_label }}">Fund Source</label>
-                        {{ form.fund_source }}
-                        {% if form.fund_source.errors %}<div class="error-message">{{ form.fund_source.errors.0 }}</div>{% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label for="{{ form.contractor_supplier.id_for_label }}">Contractor / Supplier</label>
-                        {{ form.contractor_supplier }}
-                        {% if form.contractor_supplier.errors %}<div class="error-message">{{ form.contractor_supplier.errors.0 }}</div>{% endif %}
-                    </div>
-                    <div class="form-group full-span">
-                        <label for="{{ form.procurement_description.id_for_label }}">Item / Procurement Description</label>
-                        {{ form.procurement_description }}
-                        {% if form.procurement_description.errors %}<div class="error-message">{{ form.procurement_description.errors.0 }}</div>{% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label for="{{ form.quantity.id_for_label }}">Quantity</label>
-                        {{ form.quantity }}
-                        {% if form.quantity.errors %}<div class="error-message">{{ form.quantity.errors.0 }}</div>{% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label for="{{ form.expected_delivery_date.id_for_label }}">Expected Delivery Date</label>
-                        {{ form.expected_delivery_date }}
-                        {% if form.expected_delivery_date.errors %}<div class="error-message">{{ form.expected_delivery_date.errors.0 }}</div>{% endif %}
-                    </div>
-                    <div class="form-group full-span">
-                        <label for="{{ form.remarks.id_for_label }}">Remarks</label>
-                        {{ form.remarks }}
-                        {% if form.remarks.errors %}<div class="error-message">{{ form.remarks.errors.0 }}</div>{% endif %}
                     </div>
                 </div>
             </div>
