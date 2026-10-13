@@ -194,9 +194,15 @@ class NonInfrastructureProjectListView(MayorsOfficeRequiredMixin, ListView):
                 implementation_end_month=ExtractMonth(
                     'implementation_end_date',
                 ),
+                event_month=ExtractMonth('event_date'),
+                expected_delivery_month=ExtractMonth(
+                    'expected_delivery_date',
+                ),
             ).filter(
                 Q(implementation_start_month=self.selected_month)
                 | Q(implementation_end_month=self.selected_month)
+                | Q(event_month=self.selected_month)
+                | Q(expected_delivery_month=self.selected_month)
             )
 
         return queryset.order_by('-created_at')

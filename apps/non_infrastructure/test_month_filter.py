@@ -37,7 +37,8 @@ class NonInfrastructureMonthFilterTests(TestCase):
                   implementation_end_date='2026-03-08',
                   expected_delivery_date='2026-03-08')
         self.make('Event April, Implementation May',
-                  event_date='2026-04-10', implementation_start_date='2026-05-10')
+                  event_date='2026-04-10', implementation_start_date='2026-05-10',
+                  expected_delivery_date='2026-07-10')
         self.make('Implementation Start May',
                   implementation_start_date='2026-05-10')
         self.make('No Schedule')
@@ -64,9 +65,11 @@ class NonInfrastructureMonthFilterTests(TestCase):
                 self.assertIn('No Schedule', names)
                 self.assertContains(response, 'All Months')
 
-    def test_month_matches_implementation_start_or_end_dates(self):
+    def test_month_matches_implementation_and_event_dates(self):
         response, names = self.titles({'month': '1'})
-        self.assertEqual(names, {'January Program'})
+        self.assertEqual(names, {
+            'January Event Only', 'Another January Event Only', 'January Program',
+        })
         self.assertEqual(response.context['selected_month'], '1')
 
     def test_september_combines_with_location_and_category(self):
@@ -79,16 +82,20 @@ class NonInfrastructureMonthFilterTests(TestCase):
         _, names = self.titles({'month': '9', 'location': 'Calabasa'})
         self.assertEqual(names, {'Other Barangay Program'})
 
-    def test_month_ignores_non_implementation_dates_and_uses_end_date(self):
+    def test_month_matches_all_applicable_dates_independently(self):
         march, march_names = self.titles({'month': '3'})
         self.assertEqual(march_names, {'Implementation Ends March'})
         self.assertNotIn('Implementation Ends March', self.titles({'month': '1'})[1])
         april, april_names = self.titles({'month': '4'})
-        self.assertEqual(april_names, set())
+        self.assertEqual(april_names, {'Event April, Implementation May'})
         self.assertEqual(self.titles({'month': '5'})[1], {
             'Event April, Implementation May', 'Implementation Start May',
         })
-        self.assertNotIn('January Event Only', march_names)
+        self.assertEqual(
+            self.titles({'month': '7'})[1],
+            {'Event April, Implementation May'},
+        )
+        self.assertNotIn('September Event Only', march_names)
         self.assertNotIn('No Schedule', self.titles({'month': '9'})[1])
 
     def test_invalid_month_is_ignored_safely(self):
@@ -109,12 +116,12 @@ class NonInfrastructureMonthFilterTests(TestCase):
             'category': str(self.health.pk),
         }
         first, _ = self.titles(params)
-        self.assertEqual(first.context['page_obj'].paginator.count, 11)
+        self.assertEqual(first.context['page_obj'].paginator.count, 13)
         self.assertEqual(len(first.context['projects']), 10)
         self.assertContains(first, 'page=2')
         for key, value in params.items():
             self.assertContains(first, f'{key}={value}')
         second, names = self.titles({**params, 'page': '2'})
-        self.assertEqual(len(names), 1)
+        self.assertEqual(len(names), 3)
         self.assertEqual(second.context['selected_month'], '1')
         self.assertContains(second, 'page=1')

@@ -1602,6 +1602,26 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
         self.assertNotContains(response, 'Edit Project')
         self.assertNotContains(response, 'Delete Project')
 
+    def test_public_detail_reads_legacy_snapshot_project_type(self):
+        project = NonInfrastructureProject.objects.get(status='ongoing')
+        revision = ProjectRevision.objects.get(
+            project=project.project,
+            is_current_public=True,
+        )
+        revision.snapshot['non_infrastructure'].update(
+            project_type='EVENT',
+            project_type_label='Event / Activity',
+        )
+        revision.save(update_fields=['snapshot'])
+
+        response = self.client.get(reverse(
+            'public_non_infrastructure_project_detail', args=[project.pk],
+        ))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, project.title)
+        self.assertNotContains(response, 'Project Type')
+
 
 class UserDeactivateViewTests(TestCase):
     def test_current_user_deactivation_shows_warning(self):
