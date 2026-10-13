@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.template.loader import render_to_string
@@ -83,6 +84,8 @@ class NonInfrastructureProjectFormTests(TestCase):
             'proponent': 'Municipal Health Office',
             'target_beneficiaries': 'Community health volunteers',
             'beneficiaries': '25',
+            'implementation_start_date': '2026-10-01',
+            'implementation_end_date': '2026-10-15',
             'venue_name': 'Municipal Hall',
             'barangay': 'bagting',
         }
@@ -90,16 +93,25 @@ class NonInfrastructureProjectFormTests(TestCase):
         return NonInfrastructureProjectForm(data=data)
 
     def test_create_form_renders_six_step_wizard(self):
+        form = NonInfrastructureProjectForm()
         content = render_to_string(
             'non_infrastructure/non_infrastructure_form.html',
-            {'form': NonInfrastructureProjectForm(), 'action': 'Create'},
+            {'form': form, 'action': 'Create'},
         )
         project_details = content.split(
             '<legend>Project Details</legend>', 1,
         )[1].split('<legend>Schedule &amp; Additional Details</legend>', 1)[0]
 
         self.assertNotIn('Project Type', content)
+        self.assertNotIn('Event Date', content)
         self.assertNotIn('data-project-types', content)
+        self.assertNotIn('event_date', form.fields)
+        self.assertTrue(form.fields['implementation_start_date'].required)
+        self.assertTrue(form.fields['implementation_end_date'].required)
+        self.assertFalse(form.fields['start_time'].required)
+        self.assertFalse(form.fields['end_time'].required)
+        self.assertIn('name="implementation_start_date" required', content)
+        self.assertIn('name="implementation_end_date" required', content)
         self.assertIn('>Proponent</label>', project_details)
         self.assertIn('>Beneficiaries</label>', project_details)
         for field_name in (
@@ -162,6 +174,7 @@ class NonInfrastructureProjectFormTests(TestCase):
 
         self.assertIn('Existing Community Program', content)
         self.assertIn('Municipal Hall', content)
+        self.assertNotIn('Event Date', content)
         self.assertIn(f'data-image-id="{image.pk}"', content)
         self.assertIn('Edit Project', content)
 
@@ -174,7 +187,8 @@ class NonInfrastructureProjectFormTests(TestCase):
                 'category': str(self.category.non_infrastructure_category_id),
                 'proponent': 'Municipal Health Office',
                 'beneficiaries': '250',
-                'event_date': '2026-08-20',
+                'implementation_start_date': '2026-08-01',
+                'implementation_end_date': '2026-08-20',
                 'start_time': '08:00',
                 'end_time': '12:00',
                 'venue_name': 'Municipal Plaza',
@@ -218,7 +232,8 @@ class NonInfrastructureProjectFormTests(TestCase):
             'category': str(self.category.non_infrastructure_category_id),
             'proponent': 'Mayor Office',
             'beneficiaries': '100',
-            'event_date': '2026-08-20',
+            'implementation_start_date': '2026-08-01',
+            'implementation_end_date': '2026-08-20',
             'start_time': '13:00',
             'end_time': '12:00',
             'venue_name': 'Municipal Hall',
@@ -239,7 +254,8 @@ class NonInfrastructureProjectFormTests(TestCase):
             'category': str(self.category.non_infrastructure_category_id),
             'proponent': 'Mayor Office',
             'beneficiaries': '100',
-            'event_date': '2026-08-20',
+            'implementation_start_date': '2026-08-01',
+            'implementation_end_date': '2026-08-20',
             'start_time': '13:00',
             'end_time': '13:00',
             'venue_name': 'Municipal Hall',
@@ -252,7 +268,7 @@ class NonInfrastructureProjectFormTests(TestCase):
             ['End time must be later than the start time.'],
         )
 
-    def test_project_is_valid_without_event_schedule_or_venue(self):
+    def test_project_is_valid_without_times_or_venue(self):
         form = NonInfrastructureProjectForm(data={
             'title': 'Educational Assistance Program',
             'description': 'Assistance for qualified students of Gabaldon.',
@@ -270,37 +286,47 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.assertIsNone(project.event_date)
         self.assertEqual(project.target_beneficiaries, 'Qualified students of Gabaldon')
 
-    def test_training_saves_with_both_date_fields_blank(self):
+    def test_implementation_dates_are_required(self):
         form = self.training_form()
 
-        self.assertFalse(form.fields['event_date'].required)
-        self.assertFalse(form.fields['implementation_start_date'].required)
+        self.assertTrue(form.fields['implementation_start_date'].required)
+        self.assertTrue(form.fields['implementation_end_date'].required)
+        form = self.training_form(
+            implementation_start_date='',
+            implementation_end_date='',
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('implementation_start_date', form.errors)
+        self.assertIn('implementation_end_date', form.errors)
+
+    def test_model_validation_requires_implementation_dates(self):
+        project = NonInfrastructureProject(title='Undated Program')
+
+        with self.assertRaises(ValidationError) as raised:
+            project.full_clean()
+
+        self.assertIn('implementation_start_date', raised.exception.message_dict)
+        self.assertIn('implementation_end_date', raised.exception.message_dict)
+
+    def test_projects_with_dates_and_no_times_save_successfully(self):
+        form = self.training_form(
+            start_time='',
+            end_time='',
+        )
+
         self.assertTrue(form.is_valid(), form.errors)
         project = form.save(user=self.user)
-        project.full_clean()
 
         self.assertIsNone(project.event_date)
-        self.assertIsNone(project.implementation_start_date)
-
-    def test_training_saves_with_only_event_date(self):
-        form = self.training_form(event_date='2026-10-01')
-
-        self.assertTrue(form.is_valid(), form.errors)
-        project = form.save(user=self.user)
-
-        self.assertEqual(project.event_date.isoformat(), '2026-10-01')
-        self.assertIsNone(project.implementation_start_date)
-
-    def test_training_saves_with_only_implementation_start_date(self):
-        form = self.training_form(implementation_start_date='2026-10-01')
-
-        self.assertTrue(form.is_valid(), form.errors)
-        project = form.save(user=self.user)
-
-        self.assertIsNone(project.event_date)
+        self.assertIsNone(project.start_time)
+        self.assertIsNone(project.end_time)
         self.assertEqual(
             project.implementation_start_date.isoformat(),
             '2026-10-01',
+        )
+        self.assertEqual(
+            project.implementation_end_date.isoformat(),
+            '2026-10-15',
         )
 
     def test_specialized_fields_remain_optional(self):
@@ -337,17 +363,21 @@ class NonInfrastructureProjectFormTests(TestCase):
         project.save(update_fields=['project_cost'])
         self.assertNotContains(self.client.get(url), '₱None')
 
-    def test_activity_schedule_fields_are_optional(self):
+    def test_activity_times_are_optional_when_implementation_dates_exist(self):
         form = NonInfrastructureProjectForm(data={
             'title': 'Community Event',
             'description': 'An event record.',
             'category': str(self.category.non_infrastructure_category_id),
             'proponent': "Mayor's Office",
             'beneficiaries': '25',
+            'implementation_start_date': '2026-09-01',
+            'implementation_end_date': '2026-09-02',
             'barangay': 'bagting',
         })
 
         self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['start_time'], None)
+        self.assertEqual(form.cleaned_data['end_time'], None)
 
     def test_form_updates_existing_project_and_images(self):
         proj = Project.objects.create(project_type='non_infrastructure', created_by_user=self.user, updated_by_user=self.user)
@@ -383,6 +413,8 @@ class NonInfrastructureProjectFormTests(TestCase):
                 'proponent': 'Barangay Nutrition Council',
                 'beneficiaries': '180',
                 'event_date': '2026-09-15',
+                'implementation_start_date': '2026-09-01',
+                'implementation_end_date': '2026-09-30',
                 'start_time': '09:00',
                 'end_time': '13:00',
                 'venue_name': 'New Event Grounds',
@@ -404,7 +436,15 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.assertEqual(updated.title, 'Updated Community Fair')
         self.assertEqual(updated.proponent, 'Barangay Nutrition Council')
         self.assertEqual(updated.beneficiaries, 180)
-        self.assertEqual(updated.event_date.isoformat(), '2026-09-15')
+        self.assertEqual(str(updated.event_date), '2026-01-10')
+        self.assertEqual(
+            updated.implementation_start_date.isoformat(),
+            '2026-09-01',
+        )
+        self.assertEqual(
+            updated.implementation_end_date.isoformat(),
+            '2026-09-30',
+        )
         self.assertEqual(updated.venue_name, 'New Event Grounds')
         self.assertEqual(updated.target_beneficiaries, 'Saved participants')
         self.assertEqual(str(updated.project_cost), '1250000.50')

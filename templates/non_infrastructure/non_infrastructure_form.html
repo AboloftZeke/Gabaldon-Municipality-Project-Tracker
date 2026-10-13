@@ -108,7 +108,7 @@
 
             <div class="fieldset wizard-panel ui-form-section" data-wizard-step="2" hidden>
                 <legend>Schedule &amp; Additional Details</legend>
-                <p class="section-description">Enter implementation dates and any applicable activity dates and times.</p>
+                <p class="section-description">Enter the required implementation dates. Start and end times are optional.</p>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="{{ form.implementation_start_date.id_for_label }}">Implementation Start Date</label>
@@ -120,14 +120,6 @@
                         {{ form.implementation_end_date }}
                         {% if form.implementation_end_date.errors %}<div class="error-message">{{ form.implementation_end_date.errors.0 }}</div>{% endif %}
                     </div>
-                    <div class="form-group">
-                        <label for="{{ form.event_date.id_for_label }}">Event Date</label>
-                        {{ form.event_date }}
-                        {% if form.event_date.errors %}
-                            <div class="error-message">{{ form.event_date.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
                     <div class="form-group">
                         <label for="{{ form.start_time.id_for_label }}">Start Time</label>
                         {{ form.start_time }}
@@ -510,7 +502,6 @@
             <dl>
                 <div><dt>Implementation start</dt><dd data-review-value="{{ form.implementation_start_date.id_for_label }}">—</dd></div>
                 <div><dt>Implementation end</dt><dd data-review-value="{{ form.implementation_end_date.id_for_label }}">—</dd></div>
-                <div><dt>Event date</dt><dd data-review-value="{{ form.event_date.id_for_label }}">—</dd></div>
                 <div><dt>Start time</dt><dd data-review-value="{{ form.start_time.id_for_label }}">—</dd></div>
                 <div><dt>End time</dt><dd data-review-value="{{ form.end_time.id_for_label }}">—</dd></div>
             </dl>

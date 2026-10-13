@@ -213,9 +213,8 @@ class NonInfrastructureProjectForm(forms.Form):
         required=False, max_length=2000, widget=forms.Textarea(attrs={'rows': 3}),
     )
     beneficiaries = forms.IntegerField(required=True, min_value=0, label='Number of Beneficiaries')
-    implementation_start_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    implementation_end_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    event_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    implementation_start_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
+    implementation_end_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
     start_time = forms.TimeField(required=False, widget=forms.TimeInput(attrs={'type': 'time'}))
     end_time = forms.TimeField(required=False, widget=forms.TimeInput(attrs={'type': 'time'}))
     venue_name = forms.CharField(required=False, max_length=255)
@@ -293,7 +292,6 @@ class NonInfrastructureProjectForm(forms.Form):
                 self.fields['target_beneficiaries'].initial = normalized.target_beneficiaries
                 self.fields['implementation_start_date'].initial = normalized.implementation_start_date
                 self.fields['implementation_end_date'].initial = normalized.implementation_end_date
-                self.fields['event_date'].initial = normalized.event_date
                 self.fields['start_time'].initial = normalized.start_time
                 self.fields['end_time'].initial = normalized.end_time
                 self.fields['venue_name'].initial = normalized.venue_name
@@ -336,7 +334,6 @@ class NonInfrastructureProjectForm(forms.Form):
                 'implementation_end_date',
                 'Implementation end date cannot be earlier than the start date.',
             )
-
         if start_time and end_time and end_time <= start_time:
             self.add_error(
                 'end_time',
@@ -460,7 +457,6 @@ class NonInfrastructureProjectForm(forms.Form):
             'target_beneficiaries',
             'implementation_start_date',
             'implementation_end_date',
-            'event_date',
             'start_time',
             'end_time',
             'venue_name',

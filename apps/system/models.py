@@ -555,6 +555,14 @@ class NonInfrastructureProject(models.Model):
 
     def clean(self):
         errors = {}
+        if self.implementation_start_date is None:
+            errors['implementation_start_date'] = (
+                'Implementation start date is required.'
+            )
+        if self.implementation_end_date is None:
+            errors['implementation_end_date'] = (
+                'Implementation end date is required.'
+            )
         if (
             self.implementation_start_date
             and self.implementation_end_date

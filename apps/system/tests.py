@@ -1486,6 +1486,7 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
                 title=name,
                 status=status,
                 project_cost=Decimal('1250000.50') if status == 'ongoing' else None,
+                event_date=date(2026, 9, 5) if status == 'ongoing' else None,
                 proponent='Municipal Health Office' if status == 'ongoing' else '',
                 beneficiaries=125 if status == 'ongoing' else None,
                 target_beneficiaries=(
@@ -1523,6 +1524,7 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
         ))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '₱1,250,000.50')
+        self.assertContains(response, 'September 5, 2026')
         self.assertContains(response, 'Gabaldon residents needing health services')
         self.assertContains(response, 'Local Development Fund')
         self.assertContains(response, 'Medical kits and supplies')
