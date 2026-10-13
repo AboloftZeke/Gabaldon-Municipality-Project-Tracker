@@ -61,7 +61,7 @@ class PublicationOperationalUITests(TestCase):
         self.infrastructure = InfrastructureProject.objects.create(
             project=infrastructure_base,
             title='Municipal Hall Rehabilitation',
-            status='not_yet_started',
+            status='ongoing',
             planned_start_date=date.today() - timedelta(days=5),
             planned_end_date=date.today() + timedelta(days=5),
         )
@@ -320,7 +320,7 @@ class PublicationOperationalUITests(TestCase):
         self.infrastructure.refresh_from_db()
         self.inspection.refresh_from_db()
         self.infrastructure_revision.refresh_from_db()
-        self.assertEqual(self.infrastructure.status, 'not_yet_started')
+        self.assertEqual(self.infrastructure.status, 'ongoing')
         self.assertIsNone(self.infrastructure.physical_progress_percentage)
         self.assertEqual(self.inspection.completion_percentage, Decimal('30'))
         self.assertNotIn(
@@ -352,7 +352,7 @@ class PublicationOperationalUITests(TestCase):
         self.assertNotContains(response, 'name="calculated_cost_progress"')
 
         response = self.client.post(operational_url, {
-            'status': 'not_yet_started',
+            'status': 'ongoing',
             'physical_progress_percentage': '45',
             'cost_progress_percentage': '',
             'inspection_completion_percentage': '50',
@@ -648,7 +648,7 @@ class PublicationOperationalUITests(TestCase):
         response = self.client.get(reverse('engineering_head_dashboard'))
 
         self.assertContains(response, 'Municipal Hall Rehabilitation')
-        self.assertContains(response, 'Not Yet Started')
+        self.assertContains(response, 'Ongoing')
         self.assertNotContains(response, 'Unpublished Staff Title')
         self.assertNotContains(response, 'Completed')
         self.assertContains(response, 'Update Status &amp; Progress')

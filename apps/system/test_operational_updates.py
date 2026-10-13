@@ -41,7 +41,7 @@ class HeadOperationalUpdateTests(TestCase):
         fixture = InfrastructureProjectFormTests()
         fixture.setUp()
         self.infrastructure = fixture.create_project()
-        self.infrastructure.status = 'not_yet_started'
+        self.infrastructure.status = 'ongoing'
         self.infrastructure.physical_progress_percentage = Decimal('25')
         self.infrastructure.cost_progress_percentage = Decimal('20')
         self.infrastructure.planned_start_date = date.today() - timedelta(days=5)
@@ -144,7 +144,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertTrue(self.public_revision.is_current_public)
         progress_update = InfrastructureProgressUpdate.objects.get()
         self.assertEqual(progress_update.infrastructure, self.infrastructure)
-        self.assertEqual(progress_update.previous_official_status, 'not_yet_started')
+        self.assertEqual(progress_update.previous_official_status, 'ongoing')
         self.assertEqual(progress_update.new_official_status, 'completed')
         self.assertEqual(
             progress_update.previous_physical_progress,
@@ -202,7 +202,7 @@ class HeadOperationalUpdateTests(TestCase):
         for value in range(0, 101, 5):
             with self.subTest(accepted=value):
                 form = form_class(data={
-                    'status': 'not_yet_started',
+                    'status': 'ongoing',
                     'physical_progress_percentage': str(value),
                     'supporting_inspections': [str(self.inspection.pk)],
                 }, instance=self.infrastructure)
@@ -225,7 +225,7 @@ class HeadOperationalUpdateTests(TestCase):
         for value in ('1', '63', '99'):
             with self.subTest(rejected=value):
                 response = self.client.post(self.infra_url(), {
-                    'status': 'not_yet_started',
+                    'status': 'ongoing',
                     'physical_progress_percentage': value,
                     'supporting_inspections': [str(self.inspection.pk)],
                 })
@@ -260,11 +260,55 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertEqual(progress_update.previous_official_status, '')
         self.assertEqual(progress_update.new_official_status, 'ongoing')
 
+    def test_legacy_status_is_preserved_until_head_selects_current_status(self):
+        self.infrastructure.status = 'not_yet_started'
+        self.infrastructure.save(update_fields=['status'])
+        self.client.force_login(self.users['engineer', 'head'])
+
+        page = self.client.get(self.infra_url())
+        self.assertContains(page, 'Legacy: Not Yet Started')
+        self.assertEqual(page.context['form']['status'].value(), '')
+        self.assertEqual(
+            list(page.context['form'].fields['status'].choices),
+            [
+                ('', 'Select an official status'),
+                ('ongoing', 'Ongoing'),
+                ('on_hold', 'On-Hold'),
+                ('completed', 'Completed'),
+            ],
+        )
+
+        response = self.client.post(self.infra_url(), {
+            'physical_progress_percentage': '30',
+            'supporting_inspections': [str(self.inspection.pk)],
+        })
+        self.assertEqual(response.status_code, 400)
+        self.infrastructure.refresh_from_db()
+        self.assertEqual(self.infrastructure.status, 'not_yet_started')
+
+        response = self.client.post(self.infra_url(), {
+            'status': 'ongoing',
+            'physical_progress_percentage': '30',
+            'supporting_inspections': [str(self.inspection.pk)],
+        })
+        self.assertEqual(response.status_code, 302)
+        self.infrastructure.refresh_from_db()
+        self.assertEqual(self.infrastructure.status, 'ongoing')
+        progress_update = InfrastructureProgressUpdate.objects.get()
+        self.assertEqual(
+            progress_update.previous_official_status,
+            'not_yet_started',
+        )
+        self.assertEqual(
+            progress_update.get_previous_official_status_display(),
+            'Legacy: Not Yet Started',
+        )
+
     def test_unchanged_status_and_progress_do_not_create_history(self):
         self.client.force_login(self.users['engineer', 'head'])
 
         response = self.client.post(self.infra_url(), {
-            'status': 'not_yet_started',
+            'status': 'ongoing',
             'physical_progress_percentage': '25',
             'head_remarks': 'No official change.',
             'supporting_inspections': [str(self.inspection.pk)],
@@ -366,7 +410,7 @@ class HeadOperationalUpdateTests(TestCase):
         )
         self.assertFalse(InfrastructureProgressUpdate.objects.exists())
         self.infrastructure.refresh_from_db()
-        self.assertEqual(self.infrastructure.status, 'not_yet_started')
+        self.assertEqual(self.infrastructure.status, 'ongoing')
         self.assertEqual(
             self.infrastructure.physical_progress_percentage,
             Decimal('25'),
@@ -380,7 +424,7 @@ class HeadOperationalUpdateTests(TestCase):
             record_progress_update(
                 self.infrastructure,
                 self.users['engineer', 'head'],
-                previous_status='not_yet_started',
+                previous_status='ongoing',
                 previous_physical_progress=Decimal('25'),
                 supporting_inspections=[other_inspection],
             )
@@ -406,6 +450,12 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('supporting_inspections', response.context['form'].errors)
         self.assertFalse(InfrastructureProgressUpdate.objects.exists())
+        self.infrastructure.refresh_from_db()
+        self.assertEqual(self.infrastructure.status, 'ongoing')
+        self.assertEqual(
+            self.infrastructure.physical_progress_percentage,
+            Decimal('25'),
+        )
 
     def test_progress_history_is_read_only_for_staff_and_head(self):
         older = InfrastructureProgressUpdate.objects.create(
@@ -523,7 +573,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.infrastructure.refresh_from_db()
         self.inspection.refresh_from_db()
         self.assertEqual(self.infrastructure.title, 'Changed by Engineering Staff')
-        self.assertEqual(self.infrastructure.status, 'not_yet_started')
+        self.assertEqual(self.infrastructure.status, 'ongoing')
         self.assertEqual(self.infrastructure.physical_progress_percentage, Decimal('25'))
         self.assertEqual(self.infrastructure.cost_progress_percentage, Decimal('20'))
         self.assertEqual(self.inspection.completion_percentage, Decimal('30'))
@@ -558,7 +608,7 @@ class HeadOperationalUpdateTests(TestCase):
         before = self.infrastructure.physical_progress_percentage
         for value in ['-0.01', '100.01']:
             response = self.client.post(self.infra_url(), {
-                'status': 'not_yet_started',
+                'status': 'ongoing',
                 'physical_progress_percentage': value,
                 'cost_progress_percentage': value,
                 'inspection_completion_percentage': value,

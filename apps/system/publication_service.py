@@ -7,7 +7,12 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
-from .models import NonInfrastructureProgressUpdate, Project, ProjectRevision
+from .models import (
+    InfrastructureProject,
+    NonInfrastructureProgressUpdate,
+    Project,
+    ProjectRevision,
+)
 from .publication_snapshots import (
     build_progress_update_snapshot,
     build_non_infrastructure_progress_update_snapshot,
@@ -146,12 +151,16 @@ def _missing_first_publication_requirements(revision):
 
     if revision.project.project_type == 'infrastructure':
         infrastructure = snapshot.get('infrastructure') or {}
+        if infrastructure.get('status') not in dict(
+            InfrastructureProject.STATUS_CHOICES,
+        ):
+            missing.append(
+                'official status must be Ongoing, On-Hold, or Completed',
+            )
         if not confirmed:
             missing.append(
                 'Engineering Head must explicitly confirm the official status',
             )
-        if not infrastructure.get('status'):
-            missing.append('official status is required')
         if infrastructure.get('physical_progress_percentage') in (None, ''):
             missing.append('actual physical progress is required')
         inspection = snapshot.get('inspection')
@@ -190,6 +199,16 @@ def publication_readiness(revision):
         _missing_first_publication_requirements(revision)
         if is_first_publication else []
     )
+    if (
+        revision.project.project_type == 'infrastructure'
+        and not is_first_publication
+    ):
+        infrastructure = snapshot.get('infrastructure') or {}
+        status = infrastructure.get('status')
+        if status not in dict(InfrastructureProject.STATUS_CHOICES):
+            missing.append(
+                'official status must be Ongoing, On-Hold, or Completed',
+            )
     return {
         'is_first_publication': is_first_publication,
         'is_confirmed': is_confirmed,

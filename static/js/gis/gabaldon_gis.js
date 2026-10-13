@@ -21,7 +21,7 @@
   };
 
   const STATUS_COLORS = {
-    not_yet_started: "#64748b",
+    legacy_not_yet_started: "#64748b",
     ongoing: "#d97706",
     on_hold: "#b7791f",
     completed: "#15803d",
@@ -465,7 +465,7 @@
     document.getElementById("stat-noninfra").textContent = nonInfra;
     document.getElementById("stat-ongoing").textContent = byStatus("ongoing");
     document.getElementById("stat-completed").textContent = byStatus("completed");
-    document.getElementById("stat-not-yet-started").textContent = byStatus("not_yet_started");
+    document.getElementById("stat-legacy-not-yet-started").textContent = byStatus("legacy_not_yet_started");
   }
 
   // ---------------------------------------------------------------
@@ -629,4 +629,3 @@ function bindLightbox() {
     resizeMap();
   })();
 })();
-

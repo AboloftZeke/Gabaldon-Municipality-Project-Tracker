@@ -220,7 +220,7 @@ class PublicationServiceTests(TestCase):
         self.infrastructure = InfrastructureProject.objects.create(
             project=self.project,
             title='Working Project Title',
-            status='not_yet_started',
+            status='ongoing',
         )
 
     def _approve_and_publish(self, revision):
@@ -378,7 +378,7 @@ class EmployeePublicationWorkflowViewTests(TestCase):
         self.infrastructure = InfrastructureProject.objects.create(
             project=infra_base,
             title='Employee Submission Road',
-            status='not_yet_started',
+            status='ongoing',
         )
         noninfra_base = Project.objects.create(
             project_type='non_infrastructure',
@@ -518,7 +518,7 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
             project=project,
             title='Submitted Admin Preview Project',
             description='Snapshot reviewed by the administrator.',
-            status='not_yet_started',
+            status='ongoing',
         )
         ProjectImage.objects.create(
             project=project,
@@ -673,7 +673,7 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
                 args=[self.infrastructure.pk],
             ),
             {
-                'status': 'not_yet_started',
+                'status': 'ongoing',
                 'physical_progress_percentage': '0',
                 'cost_progress_percentage': '',
                 'from_review': str(self.revision.pk),
@@ -867,6 +867,10 @@ class ProjectPublicationSnapshotTests(TestCase):
         self.assertEqual(
             snapshot['inspection']['completion_percentage'],
             '55.25',
+        )
+        self.assertEqual(
+            snapshot['infrastructure']['status_label'],
+            'Legacy: Not Yet Started',
         )
         self.assertEqual(
             snapshot['project']['cover_image_url'],
@@ -1290,7 +1294,7 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertContains(response, 'Non-Infrastructure Projects')
         self.assertContains(
             response,
-            '<div class="summary-status">\n              <strong>0</strong>\n              <span>On Hold</span>\n            </div>',
+            '<div class="summary-status">\n              <strong>0</strong>\n                          <span>On-Hold</span>\n            </div>',
             html=True,
         )
         html = response.content.decode()
@@ -1300,7 +1304,7 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         )[1].split('</aside>', 1)[0]
         self.assertIn('Infrastructure', summary_card)
         self.assertIn('Non-Infrastructure', summary_card)
-        self.assertIn('On Hold', summary_card)
+        self.assertIn('On-Hold', summary_card)
         self.assertNotIn('project-summary', html)
 
         self.infrastructure.status = 'on_hold'
@@ -1652,10 +1656,10 @@ class PublicDashboardNonInfrastructureStatusTests(TestCase):
                 ]
             },
             {
-                'not_yet_started': 0,
                 'ongoing': 0,
                 'on_hold': 0,
                 'completed': 0,
+                'legacy_not_yet_started': 0,
             },
         )
 

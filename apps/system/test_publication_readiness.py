@@ -50,16 +50,22 @@ class FirstPublicationReadinessTests(TestCase):
 
         message = ' '.join(caught.exception.messages)
         self.assertIn('explicitly confirm the official status', message)
-        self.assertIn('official status is required', message)
+        self.assertEqual(
+            message.count(
+                'official status must be Ongoing, On-Hold, or Completed',
+            ),
+            1,
+        )
         self.assertIn('actual physical progress is required', message)
         self.assertIn('inspection completion percentage is required', message)
         revision.refresh_from_db()
         self.assertEqual(revision.status, PublicationStatus.APPROVED)
         self.assertFalse(revision.is_current_public)
 
-    def test_head_confirmation_updates_only_operational_snapshot_values(self):
+    def test_head_confirmation_without_inspection_evidence_updates_operational_values(self):
         revision = self.approved_revision(self.infrastructure.project)
         reviewed_title = revision.snapshot['infrastructure']['title']
+        self.assertFalse(self.inspection.evidence.exists())
         self.infrastructure.title = 'Unreviewed working title'
         self.infrastructure.save(update_fields=['title'])
 
@@ -72,6 +78,7 @@ class FirstPublicationReadinessTests(TestCase):
             'physical_progress_percentage': '45',
             'cost_progress_percentage': '',
             'inspection_completion_percentage': '65',
+            'from_review': str(revision.pk),
         })
         self.assertEqual(response.status_code, 302)
 
@@ -80,10 +87,10 @@ class FirstPublicationReadinessTests(TestCase):
         self.assertEqual(infrastructure['title'], reviewed_title)
         self.assertEqual(infrastructure['status'], 'completed')
         self.assertEqual(infrastructure['physical_progress_percentage'], '45.00')
-        self.assertIsNone(infrastructure['cost_progress_percentage'])
+        self.assertEqual(infrastructure['cost_progress_percentage'], '20.00')
         self.assertEqual(
             revision.snapshot['inspection']['completion_percentage'],
-            '65.00',
+            '30.00',
         )
 
         published = publish_publication_revision(
@@ -102,7 +109,10 @@ class FirstPublicationReadinessTests(TestCase):
             public_project['physical_progress_percentage'],
             Decimal('45.00'),
         )
-        self.assertIsNone(public_project['cost_progress_percentage'])
+        self.assertEqual(
+            public_project['cost_progress_percentage'],
+            Decimal('20.00'),
+        )
 
     def test_non_infrastructure_default_status_requires_head_confirmation(self):
         revision = self.approved_revision(self.non_infrastructure.project)

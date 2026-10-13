@@ -359,11 +359,13 @@ class InfrastructureProject(models.Model):
     ]
 
     STATUS_CHOICES = [
-        ('not_yet_started', 'Not Yet Started'),
         ('ongoing', 'Ongoing'),
-        ('on_hold', 'On Hold'),
+        ('on_hold', 'On-Hold'),
         ('completed', 'Completed'),
     ]
+    LEGACY_STATUS_LABELS = {
+        'not_yet_started': 'Legacy: Not Yet Started',
+    }
 
     infrastructure_id = models.BigAutoField(primary_key=True)
     project = models.OneToOneField(
@@ -428,6 +430,15 @@ class InfrastructureProject(models.Model):
         verbose_name_plural = 'Infrastructure Projects'
         ordering = ['-created_at']
 
+    @classmethod
+    def status_display_for_value(cls, value, default=''):
+        if value in cls.LEGACY_STATUS_LABELS:
+            return cls.LEGACY_STATUS_LABELS[value]
+        return dict(cls.STATUS_CHOICES).get(value, default or value or '')
+
+    def get_status_display(self):
+        return self.status_display_for_value(self.status)
+
     def __str__(self):
         return self.title
 
@@ -484,6 +495,16 @@ class InfrastructureProgressUpdate(models.Model):
         verbose_name = 'Infrastructure Progress Update'
         verbose_name_plural = 'Infrastructure Progress Updates'
         ordering = ('-created_at', '-progress_update_id')
+
+    def get_previous_official_status_display(self):
+        return InfrastructureProject.status_display_for_value(
+            self.previous_official_status,
+        )
+
+    def get_new_official_status_display(self):
+        return InfrastructureProject.status_display_for_value(
+            self.new_official_status,
+        )
 
     def __str__(self):
         return f'{self.infrastructure} progress update {self.progress_update_id}'

@@ -22,7 +22,11 @@
         <p class="operational-eyebrow">Engineering Head · Operational Update</p>
         <h1>Update Status &amp; Progress</h1>
         <p class="operational-project-title">{{ operational_display_title }}</p>
-        <p class="operational-intro">Review the latest field inspection, then record the official status and physical progress based on that evidence.</p>
+        {% if is_initial_confirmation %}
+            <p class="operational-intro">Confirm the official status and actual physical progress for first publication. Supporting inspection evidence is optional.</p>
+        {% else %}
+            <p class="operational-intro">Review the latest field inspection, then record the official status and physical progress based on that evidence.</p>
+        {% endif %}
     </header>
 
     <form method="post" class="operational-form ui-form">
@@ -32,13 +36,22 @@
         {% if form.non_field_errors %}
             <div class="operational-alert" role="alert">{{ form.non_field_errors }}</div>
         {% endif %}
+        {% if has_legacy_status %}
+            <div class="operational-alert" role="alert">
+                This project still stores Legacy: Not Yet Started. It has not been changed. Select Ongoing, On-Hold, or Completed to explicitly replace it.
+            </div>
+        {% endif %}
 
         <section class="operational-card ui-card" aria-labelledby="operational-information-heading">
             <div class="operational-section-heading">
                 <span class="operational-section-number">01</span>
                 <div>
                     <h2 id="operational-information-heading">Operational Information</h2>
-                    <p>Official values recorded by the Infrastructure Head after reviewing the field inspection.</p>
+                    {% if is_initial_confirmation %}
+                        <p>Confirm the official status and actual physical progress for first publication.</p>
+                    {% else %}
+                        <p>Official values recorded by the Infrastructure Head after reviewing the field inspection.</p>
+                    {% endif %}
                 </div>
             </div>
 
@@ -61,6 +74,7 @@
                             <p class="operational-help">Add context for this official status or physical progress decision.</p>
                         {% else %}
                             {{ field }}
+                            {% if field.help_text %}<p class="operational-help">{{ field.help_text }}</p>{% endif %}
                         {% endif %}
                         {% for error in field.errors %}<p class="operational-error">{{ error }}</p>{% endfor %}
                     </div>
@@ -74,7 +88,11 @@
                 <span class="operational-section-number">02</span>
                 <div>
                     <h2 id="supporting-inspections-heading">Supporting Inspections</h2>
-                    <p>Select the inspection that provides the field evidence for this update. Review its findings and attached photos or documents before saving.</p>
+                    {% if is_initial_confirmation %}
+                        <p>Supporting inspections are optional for first-publication confirmation. Any inspection selected here must include evidence.</p>
+                    {% else %}
+                        <p>Select the inspection that provides the field evidence for this update. Review its findings and attached photos or documents before saving.</p>
+                    {% endif %}
                 </div>
             </div>
 
@@ -112,14 +130,22 @@
                 {% empty %}
                     <div class="operational-empty-state">
                         <strong>No inspections recorded</strong>
-                        <p>A supporting inspection with evidence is required before this update can be saved.</p>
+                        {% if is_initial_confirmation %}
+                            <p>You can confirm initial operational information without an inspection.</p>
+                        {% else %}
+                            <p>A supporting inspection with evidence is required before this update can be saved.</p>
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>
         </section>
 
         <div class="operational-actions">
-            <p>Saving records this Infrastructure Head decision and links it to the selected inspection evidence. It does not publish the update.</p>
+            {% if is_initial_confirmation %}
+                <p>Saving confirms the Infrastructure Head's official status and physical progress for first publication. It does not publish the project.</p>
+            {% else %}
+                <p>Saving records this Infrastructure Head decision and links it to the selected inspection evidence. It does not publish the update.</p>
+            {% endif %}
             <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Save Progress Update</button>
         </div>
     </form>

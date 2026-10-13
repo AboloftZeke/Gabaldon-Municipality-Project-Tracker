@@ -42,12 +42,10 @@
 
 
             <div class="stat-card ui-card ui-card--padded">
-                <div class="stat-label">
-                    Not Yet Started
-                </div>
+                <div class="stat-label">Legacy: Not Yet Started</div>
 
                 <div class="stat-value">
-                    {{ not_yet_started_projects }}
+                    {{ legacy_not_yet_started_projects }}
                 </div>
             </div>
 
@@ -62,6 +60,10 @@
                 </div>
             </div>
 
+            <div class="stat-card ui-card ui-card--padded">
+                <div class="stat-label">On-Hold</div>
+                <div class="stat-value">{{ on_hold_projects }}</div>
+            </div>
 
             <div class="stat-card ui-card ui-card--padded">
                 <div class="stat-label">

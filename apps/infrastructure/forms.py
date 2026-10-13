@@ -842,7 +842,10 @@ class InfrastructureOperationalForm(forms.Form):
 
     status = forms.ChoiceField(
         label='Official Status',
-        choices=InfrastructureProject.STATUS_CHOICES,
+        choices=[
+            ('', 'Select an official status'),
+            *InfrastructureProject.STATUS_CHOICES,
+        ],
     )
     physical_progress_percentage = forms.DecimalField(
         label='Physical Progress', max_digits=5, decimal_places=2,
@@ -876,16 +879,21 @@ class InfrastructureOperationalForm(forms.Form):
         **kwargs,
     ):
         self.instance = instance
+        self.require_initial_values = require_initial_values
+        self.has_legacy_status = (
+            instance.status in InfrastructureProject.LEGACY_STATUS_LABELS
+        )
         self.inspection = instance.project.inspections.order_by(
             '-inspection_date', '-created_at',
         ).first()
         initial = kwargs.setdefault('initial', {})
         initial.update({
-            'status': instance.status,
+            'status': '' if self.has_legacy_status else instance.status,
             'physical_progress_percentage': instance.physical_progress_percentage,
         })
         super().__init__(*args, **kwargs)
         self.fields['physical_progress_percentage'].required = True
+        self.fields['supporting_inspections'].required = not require_initial_values
         self.fields['supporting_inspections'].queryset = (
             instance.project.inspections.select_related(
                 'inspected_by_user',
@@ -898,10 +906,19 @@ class InfrastructureOperationalForm(forms.Form):
                 'A completed inspection with supporting evidence is required before '
                 'the Infrastructure Head can update project progress.'
             )
+        if self.has_legacy_status:
+            self.fields['status'].help_text = (
+                'This project has a legacy Not Yet Started value. Select one of '
+                'the current official statuses (Ongoing, On-Hold, or Completed) '
+                'to replace it; the stored value '
+                'will not change until you save.'
+            )
 
     def clean_supporting_inspections(self):
         inspections = list(self.cleaned_data.get('supporting_inspections') or [])
         if not inspections:
+            if self.require_initial_values:
+                return inspections
             raise forms.ValidationError(
                 'Select at least one inspection before updating project progress.'
             )

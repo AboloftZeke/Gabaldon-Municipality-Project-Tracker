@@ -123,7 +123,7 @@ class InfrastructureLocationPickerTests(TestCase):
         revision = submit_project_for_review(project.project, self.user)
         revision = review_publication_revision(revision, head, 'approved')
         # Staff creation leaves official operational values for the Head.
-        project.status = 'not_yet_started'
+        project.status = 'ongoing'
         project.physical_progress_percentage = Decimal('0')
         project.save(update_fields=['status', 'physical_progress_percentage'])
         revision = confirm_head_operational_information(revision, head)

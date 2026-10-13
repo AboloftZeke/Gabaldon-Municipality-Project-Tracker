@@ -55,9 +55,14 @@
             <div class="stat-subtitle">All infrastructure projects</div>
         </div>
         <div class="stat-card ui-card ui-card--padded">
-            <h3>Not Yet Started</h3>
-            <p class="stat-value">{{ not_yet_started_projects }}</p>
-            <div class="stat-subtitle">Projects preparing for implementation</div>
+            <h3>Legacy: Not Yet Started</h3>
+            <p class="stat-value">{{ legacy_not_yet_started_projects }}</p>
+            <div class="stat-subtitle">Existing records requiring official status confirmation</div>
+        </div>
+        <div class="stat-card ui-card ui-card--padded">
+            <h3>On-Hold</h3>
+            <p class="stat-value">{{ on_hold_projects }}</p>
+            <div class="stat-subtitle">Temporarily paused projects</div>
         </div>
         <div class="stat-card ui-card ui-card--padded">
             <h3>Ongoing</h3>

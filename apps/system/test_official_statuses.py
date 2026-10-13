@@ -2,12 +2,12 @@ from django.test import SimpleTestCase
 
 from apps.infrastructure.forms import InfrastructureOperationalForm
 from apps.system.models import InfrastructureProject, InfrastructureProgressUpdate
+from apps.system.status_transitions import is_valid_project_status_transition
 
 
 EXPECTED_OFFICIAL_STATUS_CHOICES = [
-    ("not_yet_started", "Not Yet Started"),
     ("ongoing", "Ongoing"),
-    ("on_hold", "On Hold"),
+    ("on_hold", "On-Hold"),
     ("completed", "Completed"),
 ]
 
@@ -22,7 +22,10 @@ class OfficialStatusChoicesTests(SimpleTestCase):
     def test_operational_form_and_history_use_official_status_choices(self):
         self.assertEqual(
             list(InfrastructureOperationalForm.base_fields["status"].choices),
-            EXPECTED_OFFICIAL_STATUS_CHOICES,
+            [
+                ("", "Select an official status"),
+                *EXPECTED_OFFICIAL_STATUS_CHOICES,
+            ],
         )
         self.assertEqual(
             list(
@@ -36,6 +39,23 @@ class OfficialStatusChoicesTests(SimpleTestCase):
     def test_obsolete_choices_are_not_available(self):
         values = {value for value, _label in EXPECTED_OFFICIAL_STATUS_CHOICES}
         self.assertFalse(values & {
+            "not_yet_started",
             "pre_construction", "suspended", "for_inspection", "for_turnover",
             "turned_over", "cancelled",
         })
+
+    def test_legacy_status_is_not_official_but_can_be_explicitly_replaced(self):
+        for status, _label in EXPECTED_OFFICIAL_STATUS_CHOICES:
+            with self.subTest(status=status):
+                self.assertTrue(
+                    is_valid_project_status_transition(
+                        'not_yet_started',
+                        status,
+                    ),
+                )
+        self.assertFalse(
+            is_valid_project_status_transition('ongoing', 'not_yet_started'),
+        )
+        self.assertFalse(
+            is_valid_project_status_transition('completed', 'not_yet_started'),
+        )

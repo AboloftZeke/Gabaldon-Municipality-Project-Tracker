@@ -80,7 +80,7 @@ class InternalScheduleIndicatorTests(TestCase):
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Past target date — 10 days')
-        self.assertContains(response, 'On Hold')
+        self.assertContains(response, 'On-Hold')
         self.assertContains(response, 'Planned target:')
         self.assertContains(response, '<time datetime="2026-09-01">September 1, 2026</time>', html=True)
         self.assertNotContains(response, 'Based on the latest published update.')

@@ -48,7 +48,7 @@ class HeadOperationalRevisionTests(TestCase):
         fixture = InfrastructureProjectFormTests()
         fixture.setUp()
         self.infrastructure = fixture.create_project()
-        self.infrastructure.status = 'not_yet_started'
+        self.infrastructure.status = 'ongoing'
         self.infrastructure.physical_progress_percentage = Decimal('25')
         self.infrastructure.cost_progress_percentage = Decimal('20')
         self.infrastructure.planned_start_date = date.today() - timedelta(days=5)
@@ -92,6 +92,13 @@ class HeadOperationalRevisionTests(TestCase):
 
     def test_infrastructure_update_creates_approved_snapshot_without_republishing(self):
         previous_snapshot = deepcopy(self.infrastructure_public.snapshot)
+        InspectionEvidence.objects.create(
+            inspection=self.inspection,
+            evidence_type='image',
+            original_name='operational-update.jpg',
+            storage_name='inspections/operational-update.jpg',
+            file_url='/media/inspections/operational-update.jpg',
+        )
         self.client.force_login(self.users['engineer', 'head'])
         response = self.client.post(reverse(
             'engineering_projects:project_operations',
@@ -101,8 +108,13 @@ class HeadOperationalRevisionTests(TestCase):
             'physical_progress_percentage': '60',
             'cost_progress_percentage': '55',
             'inspection_completion_percentage': '70',
+            'supporting_inspections': [str(self.inspection.pk)],
         })
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.status_code,
+            302,
+            response.context['form'].errors if response.context else None,
+        )
 
         revision = self.infrastructure.project.revisions.get(
             status=PublicationStatus.APPROVED,
@@ -127,11 +139,11 @@ class HeadOperationalRevisionTests(TestCase):
         )
         self.assertEqual(
             revision.snapshot['infrastructure']['cost_progress_percentage'],
-            '55.00',
+            '20.00',
         )
         self.assertEqual(
             revision.snapshot['inspection']['completion_percentage'],
-            '70.00',
+            '30.00',
         )
 
         self.infrastructure_public.refresh_from_db()
@@ -144,7 +156,7 @@ class HeadOperationalRevisionTests(TestCase):
         ))
         self.assertEqual(public_response.status_code, 200)
         public_project = public_response.context['public_project']
-        self.assertEqual(public_project['status'], 'not_yet_started')
+        self.assertEqual(public_project['status'], 'ongoing')
         self.assertEqual(public_project['physical_progress_percentage'], Decimal('25.00'))
 
         preview = self.client.get(reverse(
@@ -164,11 +176,11 @@ class HeadOperationalRevisionTests(TestCase):
             ('Project Information', 'physical_progress_percentage'),
             changed,
         )
-        self.assertIn(
+        self.assertNotIn(
             ('Project Information', 'cost_progress_percentage'),
             changed,
         )
-        self.assertIn(('Latest Inspection', 'completion_percentage'), changed)
+        self.assertNotIn(('Latest Inspection', 'completion_percentage'), changed)
         self.assertContains(preview, 'Replaces public revision')
         self.assertContains(preview, 'Publish Update to Public Dashboard')
 
@@ -193,10 +205,10 @@ class HeadOperationalRevisionTests(TestCase):
         public_project = public_response.context['public_project']
         self.assertEqual(public_project['status'], 'completed')
         self.assertEqual(public_project['physical_progress_percentage'], Decimal('60.00'))
-        self.assertEqual(public_project['cost_progress_percentage'], Decimal('55.00'))
+        self.assertEqual(public_project['cost_progress_percentage'], Decimal('20.00'))
         self.assertEqual(
             public_project['inspection']['completion_percentage'],
-            Decimal('70.00'),
+            Decimal('30.00'),
         )
 
     def test_progress_evidence_is_retained_until_explicit_publication(self):
@@ -247,7 +259,7 @@ class HeadOperationalRevisionTests(TestCase):
         inspection_snapshot = progress_snapshot['supporting_inspections'][0]
         self.assertEqual(inspection_snapshot['id'], self.inspection.pk)
         self.assertEqual(inspection_snapshot['inspection_type'], 'progress')
-        self.assertEqual(inspection_snapshot['completion_percentage'], '70.00')
+        self.assertEqual(inspection_snapshot['completion_percentage'], '30.00')
         self.assertEqual(
             inspection_snapshot['findings'],
             'Verified structural work on site.',
@@ -282,7 +294,7 @@ class HeadOperationalRevisionTests(TestCase):
         ))
         self.assertEqual(
             public_response.context['public_project']['status'],
-            'not_yet_started',
+            'ongoing',
         )
 
         retained_snapshot = deepcopy(revision.snapshot)
@@ -353,7 +365,7 @@ class HeadOperationalRevisionTests(TestCase):
             'engineering_projects:project_operations',
             args=[self.infrastructure.pk],
         ), {
-            'status': 'not_yet_started',
+            'status': 'ongoing',
             'physical_progress_percentage': '30',
             'cost_progress_percentage': '20',
             'inspection_completion_percentage': '35',
@@ -362,14 +374,18 @@ class HeadOperationalRevisionTests(TestCase):
             'from_review': str(pending.pk),
         })
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.status_code,
+            302,
+            response.context['form'].errors if response.context else None,
+        )
         self.assertEqual(
             self.infrastructure.project.revisions.count(),
             1,
         )
         self.infrastructure.refresh_from_db()
         self.inspection.refresh_from_db()
-        self.assertEqual(self.infrastructure.status, 'not_yet_started')
+        self.assertEqual(self.infrastructure.status, 'ongoing')
         self.assertEqual(
             self.infrastructure.physical_progress_percentage,
             Decimal('30.00'),
@@ -378,7 +394,7 @@ class HeadOperationalRevisionTests(TestCase):
             self.infrastructure.cost_progress_percentage,
             Decimal('20.00'),
         )
-        self.assertEqual(self.inspection.completion_percentage, Decimal('35.00'))
+        self.assertEqual(self.inspection.completion_percentage, Decimal('30.00'))
         pending.refresh_from_db()
         self.assertIn(OPERATIONAL_CONFIRMATION_KEY, pending.snapshot)
         self.assertEqual(
@@ -387,7 +403,7 @@ class HeadOperationalRevisionTests(TestCase):
         )
         self.assertEqual(
             pending.snapshot['inspection']['completion_percentage'],
-            '35.00',
+            '30.00',
         )
         self.assertEqual(
             pending.snapshot['progress_update']['head_remarks'],
@@ -555,6 +571,13 @@ class HeadOperationalRevisionTests(TestCase):
             submitted_by=self.users['engineer', 'staff'],
         )
         before_snapshot = deepcopy(pending.snapshot)
+        InspectionEvidence.objects.create(
+            inspection=self.inspection,
+            evidence_type='image',
+            original_name='operational-update.jpg',
+            storage_name='inspections/operational-update.jpg',
+            file_url='/media/inspections/operational-update.jpg',
+        )
         self.client.force_login(self.users['engineer', 'head'])
         response = self.client.post(reverse(
             'engineering_projects:project_operations',
@@ -564,12 +587,13 @@ class HeadOperationalRevisionTests(TestCase):
             'physical_progress_percentage': '80',
             'cost_progress_percentage': '75',
             'inspection_completion_percentage': '90',
+            'supporting_inspections': [str(self.inspection.pk)],
         })
         self.assertEqual(response.status_code, 409)
         self.infrastructure.refresh_from_db()
         self.inspection.refresh_from_db()
         pending.refresh_from_db()
-        self.assertEqual(self.infrastructure.status, 'not_yet_started')
+        self.assertEqual(self.infrastructure.status, 'ongoing')
         self.assertEqual(self.infrastructure.physical_progress_percentage, Decimal('25'))
         self.assertEqual(self.infrastructure.cost_progress_percentage, Decimal('20'))
         self.assertEqual(self.inspection.completion_percentage, Decimal('30'))

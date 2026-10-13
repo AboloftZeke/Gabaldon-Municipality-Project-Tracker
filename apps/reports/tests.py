@@ -125,7 +125,8 @@ class ReportAccessTests(TestCase):
                 },
                 'procurement_method': 'competitive_bidding',
                 'procurement_method_label': 'Competitive Bidding / Public Bidding',
-                'status': 'not_yet_started', 'status_label': 'Not Yet Started',
+                'status': 'not_yet_started',
+                'status_label': 'Legacy: Not Yet Started',
                 'planned_start_date': '2026-02-01',
                 'planned_end_date': '2026-10-31',
                 'cost_progress_percentage': '48.50',
@@ -336,7 +337,7 @@ class ReportAccessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         for expected in [
             'Barangay Bridge Improvement', 'Calabasa', 'Bridges',
-            'Municipal Engineering Office', 'Not Yet Started', '55.0%',
+            'Municipal Engineering Office', 'Legacy: Not Yet Started', '55.0%',
             'Published bridge improvement details.', 'Local Development Fund',
             '₱12,500,000.00', '₱11,900,000.00',
             'Competitive Bidding / Public Bidding', 'Public Works Builder',
@@ -474,7 +475,10 @@ class ReportAccessTests(TestCase):
         )
         summary = response.context['summary']
         self.assertEqual(summary['total_projects'], 1)
-        self.assertEqual(summary['status_counts'], {'Not Yet Started': 1})
+        self.assertEqual(
+            summary['status_counts'],
+            {'Legacy: Not Yet Started': 1},
+        )
         self.assertEqual(summary['total_contract_value'], 11900000)
         self.assertEqual(summary['average_physical_progress'], 55)
         self.assertContains(response, 'Barangay Bridge Improvement')
@@ -485,7 +489,10 @@ class ReportAccessTests(TestCase):
         self.client.force_login(self.users['engineer', 'head'])
         response = self.client.get(reverse('reports:infrastructure_summary'))
         summary = response.context['summary']
-        self.assertEqual(summary['status_counts'], {'Not Yet Started': 1, 'Completed': 1})
+        self.assertEqual(
+            summary['status_counts'],
+            {'Legacy: Not Yet Started': 1, 'Completed': 1},
+        )
         self.assertEqual(summary['total_contract_value'], 16900000)
         self.assertEqual(summary['average_physical_progress'], 77.5)
         self.assertNotContains(response, '4900000.00')

@@ -8,7 +8,11 @@ from django.core.files.storage import default_storage
 from django.http import Http404
 from django.urls import reverse
 
-from .models import NonInfrastructureProject, ProjectRevision
+from .models import (
+    InfrastructureProject,
+    NonInfrastructureProject,
+    ProjectRevision,
+)
 from .publication_workflow import PublicationStatus
 
 
@@ -61,7 +65,9 @@ def _location_key(value):
 
 
 def _status_key(value):
-    return value or 'not_yet_started'
+    if value == 'not_yet_started':
+        return 'legacy_not_yet_started'
+    return value or 'unknown'
 
 
 def _creator_name(snapshot):
@@ -120,7 +126,10 @@ def infrastructure_public_data(revision):
         ),
         'status': infrastructure.get('status') or '',
         'status_label': (
-            infrastructure.get('status_label') or 'Not Yet Started'
+            InfrastructureProject.status_display_for_value(
+                infrastructure.get('status'),
+                infrastructure.get('status_label') or 'Status not set',
+            )
         ),
         'planned_start_date': _date(
             infrastructure.get('planned_start_date'),

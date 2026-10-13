@@ -431,12 +431,9 @@ class Command(BaseCommand):
         start_date = date(2026, 1, 15) + timedelta(days=index * 18)
         duration = 120 + (index % 5) * 30
         end_date = start_date + timedelta(days=duration)
-        statuses = [
-            'not_yet_started', 'ongoing', 'on_hold', 'completed',
-        ]
+        statuses = ['ongoing', 'on_hold', 'completed']
         status = statuses[index % len(statuses)]
         progress_by_status = {
-            'not_yet_started': Decimal('0.00'),
             'ongoing': Decimal('25.00') + Decimal(index % 4) * Decimal('10.00'),
             'on_hold': Decimal('35.00'),
             'completed': Decimal('100.00'),

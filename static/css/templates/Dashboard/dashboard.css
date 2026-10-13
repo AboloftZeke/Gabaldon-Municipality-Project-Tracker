@@ -675,7 +675,8 @@ th {
 }
 
 /* Official infrastructure status badges */
-.status-not_yet_started { background: #eef2f7; color: #334155; border-color: #cbd5e1; }
+.status-not_yet_started,
+.status-legacy_not_yet_started { background: #eef2f7; color: #334155; border-color: #cbd5e1; }
 .status-pre_construction { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
 .status-ongoing { background: #fff4cc; color: #854d0e; border-color: #f4cf67; }
 .status-on_hold { background: #fef3c7; color: #854d0e; border-color: #fcd34d; }

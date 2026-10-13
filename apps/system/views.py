@@ -303,6 +303,16 @@ class PublicDashboardView(TemplateView):
             }
             for status, label in InfrastructureProject.STATUS_CHOICES
         ]
+        infrastructure_status_summaries.append({
+            'key': 'legacy_not_yet_started',
+            'label': InfrastructureProject.LEGACY_STATUS_LABELS[
+                'not_yet_started'
+            ],
+            'count': sum(
+                p['status'] == 'not_yet_started'
+                for p in infra_projects
+            ),
+        })
         noninfrastructure_status_summaries = [
             {
                 'key': status,
@@ -445,11 +455,14 @@ class EngineeringDashboardView(StaffRequiredMixin, TemplateView):
         
         user_projects = InfrastructureProject.objects.all()
         context['total_projects'] = user_projects.count()
-        context['not_yet_started_projects'] = user_projects.filter(
+        context['legacy_not_yet_started_projects'] = user_projects.filter(
             status='not_yet_started',
         ).count()
         context['ongoing_projects'] = user_projects.filter(
             status='ongoing',
+        ).count()
+        context['on_hold_projects'] = user_projects.filter(
+            status='on_hold',
         ).count()
         context['completed_projects'] = user_projects.filter(status='completed').count()
         

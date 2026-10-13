@@ -99,11 +99,14 @@ class ProjectDashboardView(EngineeringOfficeRequiredMixin, TemplateView):
         )
 
         context['total_projects'] = projects.count()
-        context['not_yet_started_projects'] = projects.filter(
+        context['legacy_not_yet_started_projects'] = projects.filter(
             status='not_yet_started'
         ).count()
         context['ongoing_projects'] = projects.filter(
             status='ongoing'
+        ).count()
+        context['on_hold_projects'] = projects.filter(
+            status='on_hold'
         ).count()
         context['completed_projects'] = projects.filter(
             status='completed'
@@ -181,7 +184,11 @@ class ProjectListView(EngineeringOfficeRequiredMixin, ListView):
         context['categories'] = InfrastructureCategory.objects.filter(
             is_active=True
         ).order_by('category_name')
-        context['statuses'] = InfrastructureProject.STATUS_CHOICES
+        context['statuses'] = list(InfrastructureProject.STATUS_CHOICES)
+        if InfrastructureProject.objects.filter(status='not_yet_started').exists():
+            context['statuses'].append(
+                ('not_yet_started', 'Legacy: Not Yet Started'),
+            )
         context['has_any_projects'] = InfrastructureProject.objects.exists()
         context['has_active_filters'] = any(
             self.request.GET.get(name, '').strip()
@@ -778,6 +785,10 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
         return render(request, self.template_name, {
             'project': infrastructure,
             'form': form,
+            'has_legacy_status': (
+                infrastructure.status
+                in InfrastructureProject.LEGACY_STATUS_LABELS
+            ),
             'is_initial_confirmation': bool(return_revision),
             'operational_display_title': (
                 revision_snapshot.get('title')
@@ -844,15 +855,19 @@ class InfrastructureOperationalUpdateView(EngineeringHeadOnlyMixin, View):
                         infrastructure.physical_progress_percentage
                     )
                     form.save()
-                    progress_update = record_progress_update(
-                        infrastructure,
-                        request.user,
-                        previous_status=previous_status,
-                        previous_physical_progress=previous_physical_progress,
-                        remarks=form.cleaned_data['head_remarks'],
-                        supporting_inspections=(
-                            form.cleaned_data['supporting_inspections']
-                        ),
+                    supporting_inspections = form.cleaned_data[
+                        'supporting_inspections'
+                    ]
+                    progress_update = (
+                        record_progress_update(
+                            infrastructure,
+                            request.user,
+                            previous_status=previous_status,
+                            previous_physical_progress=previous_physical_progress,
+                            remarks=form.cleaned_data['head_remarks'],
+                            supporting_inspections=supporting_inspections,
+                        )
+                        if supporting_inspections else None
                     )
                     confirm_head_operational_information(
                         locked_revision,

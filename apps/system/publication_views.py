@@ -25,6 +25,7 @@ from .publication_service import (
     revision_targets_current_public,
     review_publication_revision,
 )
+from .models import InfrastructureProject
 from .publication_workflow import PublicationStatus
 from .permissions import (
     can_access_publication_review, can_review_revision, can_publish_revision,
@@ -91,7 +92,10 @@ def _operational_information(revision, project_type, preview, user):
         controlled.extend([
             {
                 'label': 'Official Status',
-                'value': infrastructure.get('status_label'),
+                'value': InfrastructureProject.status_display_for_value(
+                    infrastructure.get('status'),
+                    infrastructure.get('status_label') or 'Status not set',
+                ),
                 'is_percentage': False,
             },
             {
