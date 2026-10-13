@@ -33,6 +33,19 @@ from .permissions import (
     is_system_admin, review_project_type,
 )
 
+NON_INFRASTRUCTURE_REVIEW_FIELD_ROOTS = {
+    'address',
+    'beneficiaries',
+    'category',
+    'end_time',
+    'implementation_end_date',
+    'implementation_start_date',
+    'proponent',
+    'start_time',
+    'status',
+    'venue_name',
+}
+
 
 class SuperuserRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     login_url = 'login'
@@ -181,6 +194,11 @@ def _revision_page_context(revision, user, review_form=None):
             continue
         for field in section['fields']:
             root = field['path'].split('.', 1)[0]
+            if (
+                project_type == 'non_infrastructure'
+                and root not in NON_INFRASTRUCTURE_REVIEW_FIELD_ROOTS
+            ):
+                continue
             if root in {'title', 'code', 'description'}:
                 # These are already visible in the immutable snapshot hero.
                 continue

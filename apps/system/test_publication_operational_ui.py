@@ -422,7 +422,15 @@ class PublicationOperationalUITests(TestCase):
 
     def test_project_information_keeps_essential_and_optional_fields_discoverable(self):
         self.non_infrastructure.fund_source = 'National Government'
-        self.non_infrastructure.save(update_fields=['fund_source'])
+        self.non_infrastructure.event_date = date(2026, 9, 20)
+        self.non_infrastructure.project_cost = Decimal('1250.00')
+        self.non_infrastructure.contractor_supplier = 'Saved supplier'
+        self.non_infrastructure.target_beneficiaries = 'Saved audience'
+        self.non_infrastructure.procurement_description = 'Saved supplies'
+        self.non_infrastructure.quantity = 12
+        self.non_infrastructure.expected_delivery_date = date(2026, 10, 1)
+        self.non_infrastructure.remarks = 'Saved internal remark'
+        self.non_infrastructure.save()
         self.non_infrastructure_revision.snapshot = (
             build_project_publication_snapshot(self.non_infrastructure.project)
         )
@@ -437,28 +445,61 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(response, 'Community Wellness Program')
         self.assertContains(response, 'Project Information')
         self.assertContains(response, 'Status')
-        self.assertContains(response, 'Additional Project Information')
-        self.assertContains(response, 'National Government')
-        self.assertContains(response, '<details class="project-information__optional">', html=False)
-        self.assertContains(response, 'View all optional fields')
-        self.assertContains(response, 'Contractor Supplier')
-        self.assertContains(response, 'Not provided')
-        self.assertEqual(response.content.decode().count('<dt>Fund Source'), 1)
         information = response.context['project_information']
         self.assertTrue(any(
             field['label'] == 'Status'
             for field in information['essential_fields']
         ))
-        self.assertTrue(any(
-            field['label'] == 'Fund Source'
-            and field['after'] == 'National Government'
-            for field in information['populated_optional_fields']
-        ))
-        self.assertTrue(any(
-            field['label'] == 'Contractor Supplier'
-            and field['after'] == 'Not provided'
-            for field in information['empty_optional_fields']
-        ))
+        visible_fields = (
+            information['essential_fields']
+            + information['populated_optional_fields']
+            + information['empty_optional_fields']
+        )
+        visible_roots = {
+            field['path'].split('.', 1)[0]
+            for field in visible_fields
+        }
+        self.assertTrue(visible_roots <= {
+            'address',
+            'beneficiaries',
+            'category',
+            'end_time',
+            'implementation_end_date',
+            'implementation_start_date',
+            'proponent',
+            'start_time',
+            'status',
+            'venue_name',
+        })
+        for removed_label in (
+            'Fund Source',
+            'Event Date',
+            'Project Cost',
+            'Contractor Supplier',
+            'Target Beneficiaries',
+            'Procurement Description',
+            'Quantity',
+            'Expected Delivery Date',
+            'Remarks',
+        ):
+            with self.subTest(field=removed_label):
+                self.assertNotContains(response, removed_label)
+
+        saved_fields = self.non_infrastructure_revision.snapshot[
+            'non_infrastructure'
+        ]
+        self.assertEqual(saved_fields['fund_source'], 'National Government')
+        self.assertEqual(saved_fields['event_date'], '2026-09-20')
+        self.assertEqual(saved_fields['project_cost'], '1250.00')
+        self.assertEqual(saved_fields['contractor_supplier'], 'Saved supplier')
+        self.assertEqual(saved_fields['target_beneficiaries'], 'Saved audience')
+        self.assertEqual(
+            saved_fields['procurement_description'],
+            'Saved supplies',
+        )
+        self.assertEqual(saved_fields['quantity'], 12)
+        self.assertEqual(saved_fields['expected_delivery_date'], '2026-10-01')
+        self.assertEqual(saved_fields['remarks'], 'Saved internal remark')
 
     def test_users_without_publication_permission_do_not_get_top_publish_action(self):
         self.client.force_login(self.admin)

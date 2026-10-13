@@ -282,10 +282,30 @@ class PublicDashboardView(TemplateView):
             public_projects,
         )
         from apps.system.choices import BARANGAY_CHOICES
+        from apps.system.models import (
+            InfrastructureProject,
+            NonInfrastructureProject,
+        )
         infra_projects, noninfra_projects = public_projects()
         infra_total = len(infra_projects)
         noninfra_total = len(noninfra_projects)
         total_projects = infra_total + noninfra_total
+        infrastructure_status_summaries = [
+            {
+                'key': status,
+                'label': label,
+                'count': sum(p['status'] == status for p in infra_projects),
+            }
+            for status, label in InfrastructureProject.STATUS_CHOICES
+        ]
+        noninfrastructure_status_summaries = [
+            {
+                'key': status,
+                'label': label,
+                'count': sum(p['status'] == status for p in noninfra_projects),
+            }
+            for status, label in NonInfrastructureProject.STATUS_CHOICES
+        ]
         infra_completed = sum(p['status'] == 'completed' for p in infra_projects)
         infra_ongoing = sum(p['status'] == 'ongoing' for p in infra_projects)
         noninfra_completed = sum(p['status'] == 'completed' for p in noninfra_projects)
@@ -355,6 +375,12 @@ class PublicDashboardView(TemplateView):
             'total_projects': total_projects,
             'infra_total': infra_total,
             'noninfra_total': noninfra_total,
+            'infrastructure_status_summaries': (
+                infrastructure_status_summaries
+            ),
+            'noninfrastructure_status_summaries': (
+                noninfrastructure_status_summaries
+            ),
             'completed_projects': completed_projects,
             'ongoing_projects': ongoing_projects,
             'planned_projects': noninfra_planned,
