@@ -65,6 +65,8 @@ class DashboardPresentationTests(TestCase):
                 self.assertContains(response, 'Change Password')
                 self.assertContains(response, reverse('logout'))
                 self.assertNotContains(response, 'class="ui-toast"')
+                if route == 'admin_dashboard':
+                    self.assertNotContains(response, 'Awaiting Publication')
 
     def test_message_types_float_outside_sidebar_and_are_dismissible(self):
         self.client.force_login(self.admin)

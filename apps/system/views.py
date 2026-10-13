@@ -417,17 +417,10 @@ class AdminDashboardView(StaffRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from .models import ProjectRevision
-        from .publication_workflow import PublicationStatus
 
         context['total_users'] = User.objects.count()
         context['total_admins'] = User.objects.filter(is_superuser=True).count()
         context['total_staff'] = User.objects.filter(is_staff=True, is_superuser=False).count()
-        context['approved_revisions'] = (
-            ProjectRevision.objects.filter(
-                status=PublicationStatus.APPROVED,
-            ).count()
-        )
         return context
 
 

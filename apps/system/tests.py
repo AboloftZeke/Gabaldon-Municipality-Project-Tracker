@@ -544,10 +544,8 @@ class OfficeHeadPublicationReviewViewTests(TestCase):
         self.assertContains(queue, 'Submitted Admin Preview Project')
         self.assertContains(queue, 'Pending Review')
         self.assertContains(dashboard, 'Publication Lifecycle')
-        self.assertEqual(
-            dashboard.context['approved_revisions'],
-            0,
-        )
+        self.assertNotContains(dashboard, 'Awaiting Publication')
+        self.assertNotIn('approved_revisions', dashboard.context)
         self.assertContains(detail, 'Submitted Admin Preview Project')
         self.assertNotContains(detail, 'Later Working Copy Edit')
         self.assertContains(detail, '/media/projects/admin-review-cover.jpg')
