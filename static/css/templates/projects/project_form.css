@@ -555,6 +555,49 @@
         margin-top: 1rem;
     }
 
+    .location-picker {
+        display: grid;
+        gap: 0.65rem;
+    }
+
+    .location-picker h4 {
+        margin: 0;
+        color: #173d2a;
+    }
+
+    .location-picker__map {
+        min-height: 320px;
+        border: 1px solid #cbd8d0;
+        border-radius: 12px;
+        background: #e8efeb;
+        z-index: 0;
+    }
+
+    .location-picker__map:focus-visible {
+        outline: 3px solid #7eaa8f;
+        outline-offset: 3px;
+    }
+
+    .location-picker__coordinates {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem 1rem;
+        color: #40554a;
+        font-size: 0.85rem;
+    }
+
+    .location-picker__coordinates strong {
+        color: #173d2a;
+    }
+
+    .location-picker.has-client-error .location-picker__map {
+        border-color: #b42318;
+    }
+
+    .location-picker [data-location-error] {
+        margin: 0;
+    }
+
     .form-card h2 {
         font-size: 1.5rem;
     }

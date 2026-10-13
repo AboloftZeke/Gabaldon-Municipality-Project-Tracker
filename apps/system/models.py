@@ -360,7 +360,7 @@ class InfrastructureProject(models.Model):
 
     STATUS_CHOICES = [
         ('ongoing', 'Ongoing'),
-        ('on_hold', 'On Hold'),
+        ('on_hold', 'On-Hold'),
         ('completed', 'Completed'),
     ]
 

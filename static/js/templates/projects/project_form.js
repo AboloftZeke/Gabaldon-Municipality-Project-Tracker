@@ -129,6 +129,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function validatePanel(panel) {
+        const picker = panel.querySelector('[data-location-picker]');
+        const locationValid = !picker || picker.dispatchEvent(new CustomEvent(
+            'location-picker:validate',
+            { cancelable: true }
+        ));
         let firstInvalid = null;
         panelFields(panel).forEach(function (field) {
             if (field.checkValidity()) clearFieldError(field);
@@ -141,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function () {
             firstInvalid.focus();
             return false;
         }
-        return true;
+        return locationValid;
     }
 
     backButton.addEventListener('click', function () { showStep(activeStep - 1, { focusPanel: true }); });

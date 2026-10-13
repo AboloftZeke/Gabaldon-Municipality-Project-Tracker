@@ -125,6 +125,11 @@ class InfrastructureInspectionHistoryTests(TestCase):
         self.assertContains(response, 'Field Observations')
         self.assertContains(response, 'Supporting Evidence')
         self.assertContains(response, 'No evidence attached yet')
+        self.assertContains(response, 'data-selected-evidence')
+        self.assertContains(
+            response,
+            '/static/js/templates/projects/inspection_evidence_preview.js',
+        )
         self.assertContains(
             response,
             '/static/css/templates/projects/inspection_form.css?v=20260914-1',

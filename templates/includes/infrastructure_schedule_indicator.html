@@ -1,0 +1,6 @@
+<div class="schedule-indicator" role="group" aria-label="Infrastructure schedule">
+  <p class="schedule-indicator__label">Schedule</p>
+  <strong class="schedule-indicator__badge schedule-indicator--{{ schedule_indicator.kind }}">{{ schedule_indicator.label }}</strong>
+  <p class="schedule-indicator__deadline">Planned target: {% if schedule_indicator.deadline %}<time datetime="{{ schedule_indicator.deadline|date:'Y-m-d' }}">{{ schedule_indicator.deadline|date:"F j, Y" }}</time>{% else %}Not available{% endif %}</p>
+  {% if is_public %}<p class="schedule-indicator__note">Based on the latest published update.</p>{% endif %}
+</div>

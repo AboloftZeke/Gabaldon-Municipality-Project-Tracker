@@ -6,7 +6,7 @@ from apps.system.models import InfrastructureProject, InfrastructureProgressUpda
 
 EXPECTED_OFFICIAL_STATUS_CHOICES = [
     ("ongoing", "Ongoing"),
-    ("on_hold", "On Hold"),
+    ("on_hold", "On-Hold"),
     ("completed", "Completed"),
 ]
 
@@ -38,3 +38,21 @@ class OfficialStatusChoicesTests(SimpleTestCase):
             "pre_construction", "suspended", "for_inspection", "for_turnover",
             "turned_over", "cancelled",
         })
+
+    def test_completed_status_cannot_be_reopened(self):
+        from apps.system.status_transitions import (
+            is_valid_project_status_transition,
+        )
+
+        self.assertTrue(
+            is_valid_project_status_transition('ongoing', 'on_hold'),
+        )
+        self.assertTrue(
+            is_valid_project_status_transition('on_hold', 'completed'),
+        )
+        self.assertFalse(
+            is_valid_project_status_transition('completed', 'ongoing'),
+        )
+        self.assertFalse(
+            is_valid_project_status_transition('completed', 'on_hold'),
+        )

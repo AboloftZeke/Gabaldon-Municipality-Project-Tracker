@@ -57,6 +57,50 @@ class FirstPublicationReadinessTests(TestCase):
         self.assertEqual(revision.status, PublicationStatus.APPROVED)
         self.assertFalse(revision.is_current_public)
 
+    def test_invalid_infrastructure_status_blocks_first_publication(self):
+        revision = self.approved_revision(self.infrastructure.project)
+        snapshot = deepcopy(revision.snapshot)
+        snapshot['infrastructure']['status'] = 'unrecognized'
+        revision.snapshot = snapshot
+        revision.save(update_fields=['snapshot'])
+
+        with self.assertRaises(ValidationError) as caught:
+            publish_publication_revision(
+                revision,
+                self.users['engineer', 'head'],
+            )
+
+        self.assertIn(
+            'official status must be Ongoing, On-Hold, or Completed',
+            ' '.join(caught.exception.messages),
+        )
+
+    def test_invalid_infrastructure_status_blocks_later_publication(self):
+        self._publish_current(self.infrastructure.project)
+        revision = ProjectRevision.objects.create(
+            project=self.infrastructure.project,
+            revision_number=2,
+            status=PublicationStatus.APPROVED,
+            snapshot=build_project_publication_snapshot(
+                self.infrastructure.project,
+            ),
+        )
+        snapshot = deepcopy(revision.snapshot)
+        snapshot['infrastructure']['status'] = 'unrecognized'
+        revision.snapshot = snapshot
+        revision.save(update_fields=['snapshot'])
+
+        with self.assertRaises(ValidationError) as caught:
+            publish_publication_revision(
+                revision,
+                self.users['engineer', 'head'],
+            )
+
+        self.assertIn(
+            'official status must be Ongoing, On-Hold, or Completed',
+            ' '.join(caught.exception.messages),
+        )
+
     def test_head_confirmation_updates_only_operational_snapshot_values(self):
         revision = self.approved_revision(self.infrastructure.project)
         reviewed_title = revision.snapshot['infrastructure']['title']

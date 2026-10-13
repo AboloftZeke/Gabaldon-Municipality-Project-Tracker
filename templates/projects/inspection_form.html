@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_form.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/projects/inspection_form.css' %}?v=20260914-1">
+<link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -82,6 +83,11 @@
                     {% endif %}{% endfor %}
                 </div>
 
+                <div class="inspection-selected-evidence" data-selected-evidence hidden aria-live="polite">
+                    <div class="inspection-subheading"><h4>Selected Evidence</h4><p>Click a photo to preview it here, or click a PDF to open it before saving.</p></div>
+                    <div class="inspection-evidence-grid" data-selected-evidence-grid></div>
+                </div>
+
                 {% if inspection and inspection.evidence.exists %}
                 <div class="inspection-current-evidence">
                     <div class="inspection-subheading"><h4>Current Evidence</h4><p>Open a file to inspect it before deciding whether to remove it.</p></div>
@@ -103,7 +109,7 @@
                     {% endif %}
                 </div>
                 {% else %}
-                <div class="inspection-empty-evidence"><strong>No evidence attached yet</strong><span>Uploaded photos and PDF reports will appear here after saving.</span></div>
+                <div class="inspection-empty-evidence"><strong>No evidence attached yet</strong><span>Choose files above to preview them here. Selected files are saved with this inspection.</span></div>
                 {% endif %}
             </div>
             <div class="form-actions">
@@ -113,4 +119,9 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/templates/projects/inspection_evidence_preview.js' %}" defer></script>
+<script src="{% static 'js/components/image_viewer.js' %}" defer></script>
 {% endblock %}

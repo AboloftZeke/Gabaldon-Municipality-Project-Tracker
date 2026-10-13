@@ -21,6 +21,9 @@ from apps.system.models import (
     ProjectInspection,
 )
 from apps.system.publication_images import retire_project_images
+from apps.system.status_transitions import (
+    is_valid_project_status_transition,
+)
 
 
 def _get_or_create_named_lookup(model, name_field, raw_name):
@@ -149,8 +152,24 @@ class InfrastructureProjectForm(forms.Form):
             'class': 'form-select'
         }),
     )
-    latitude = forms.DecimalField(required=True, max_digits=10, decimal_places=7, min_value=-90, max_value=90)
-    longitude = forms.DecimalField(required=True, max_digits=10, decimal_places=7, min_value=-180, max_value=180)
+    latitude = forms.DecimalField(
+        required=True,
+        max_digits=10,
+        decimal_places=7,
+        min_value=-90,
+        max_value=90,
+        widget=forms.HiddenInput(),
+        error_messages={'required': 'Select the exact project location on the map.'},
+    )
+    longitude = forms.DecimalField(
+        required=True,
+        max_digits=10,
+        decimal_places=7,
+        min_value=-180,
+        max_value=180,
+        widget=forms.HiddenInput(),
+        error_messages={'required': 'Select the exact project location on the map.'},
+    )
     municipality = forms.CharField(
         required=False,
         max_length=200,
@@ -819,6 +838,10 @@ class SupportingInspectionChoiceField(forms.ModelMultipleChoiceField):
 
 
 class InfrastructureOperationalForm(forms.Form):
+    STATUS_TRANSITION_ERROR = (
+        'Project status cannot move backwards or change after completion.'
+    )
+
     status = forms.ChoiceField(
         label='Official Status',
         choices=InfrastructureProject.STATUS_CHOICES,
@@ -903,6 +926,18 @@ class InfrastructureOperationalForm(forms.Form):
                 'Physical progress must be in 5% increments.',
             )
         return value
+
+    def clean_status(self):
+        status = self.cleaned_data['status']
+        if (
+            status != self.instance.status
+            and not is_valid_project_status_transition(
+                self.instance.status,
+                status,
+            )
+        ):
+            raise forms.ValidationError(self.STATUS_TRANSITION_ERROR)
+        return status
 
     def clean_supporting_inspections(self):
         inspections = list(self.cleaned_data.get('supporting_inspections') or [])

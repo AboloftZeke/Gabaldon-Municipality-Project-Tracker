@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.paginator import Paginator
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse, NoReverseMatch
@@ -18,6 +19,7 @@ from .forms import (
 from .inspection_evidence import update_inspection_evidence
 from .progress_history import record_progress_update
 from apps.system.formatting import format_peso
+from apps.system.schedule_indicators import infrastructure_schedule_indicator
 from apps.system.progress import (
     derived_cost_progress,
     expected_progress,
@@ -400,6 +402,11 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
         context['project_progress_value'] = progress_value
         context['project_budget_value'] = budget_value
         context['project_target_completion_date'] = planned_end_date
+        context['schedule_indicator'] = infrastructure_schedule_indicator(
+            infra.status if infra else None,
+            planned_end_date,
+            planned_start_date=planned_start_date,
+        )
 
         context['project_google_maps_url'] = (
             f'https://www.google.com/maps?q={map_lat},{map_lng}'
@@ -686,7 +693,7 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
                 args=[project.pk],
             )
             context['can_manage_publication'] = can_manage_infrastructure(self.request.user)
-            context['inspection_history'] = (
+            inspections = (
                 infra.project.inspections.select_related(
                     'inspected_by_user',
                 ).prefetch_related('evidence').order_by(
@@ -695,6 +702,11 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
                     '-inspection_id',
                 )
             )
+            inspection_page = Paginator(inspections, 5).get_page(
+                self.request.GET.get('inspection_page'),
+            )
+            context['inspection_page'] = inspection_page
+            context['inspection_history'] = inspection_page.object_list
             context['can_manage_inspections'] = can_manage_infrastructure(
                 self.request.user,
             )

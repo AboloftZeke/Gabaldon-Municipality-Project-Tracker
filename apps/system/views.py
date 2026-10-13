@@ -207,6 +207,8 @@ class PublicInfrastructureProjectDetailView(TemplateView):
         from .publication_public import get_public_project
 
         project = get_public_project('infrastructure', self.kwargs['pk'])
+        from .schedule_indicators import infrastructure_schedule_indicator
+
         address = project['address']
         has_coordinates = bool(
             address
@@ -220,6 +222,11 @@ class PublicInfrastructureProjectDetailView(TemplateView):
             'project_images': project['images'],
             'financial': project['financial'],
             'schedule': project['schedule'],
+            'schedule_indicator': infrastructure_schedule_indicator(
+                project['status'],
+                project['planned_end_date'],
+                planned_start_date=project['planned_start_date'],
+            ),
             'created_by_name': project['created_by_name'],
             'project_gis': {
                 'project_id': project['record_id'],

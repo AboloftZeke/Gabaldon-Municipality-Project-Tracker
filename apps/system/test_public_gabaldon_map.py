@@ -31,7 +31,7 @@ class PublicGabaldonDashboardTests(TestCase):
                             'infrastructure_status_summaries'
                         ]
                     ],
-                    ['Ongoing', 'On Hold', 'Completed'],
+                    ['Ongoing', 'On-Hold', 'Completed'],
                 )
                 self.assertEqual(
                     [

@@ -6,6 +6,7 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_form.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -149,20 +150,27 @@
                         {% endif %}
                     </div>
 
-                    <div class="form-group">
-                        <label for="{{ form.latitude.id_for_label }}">Latitude</label>
+                    <div class="form-group full-span location-picker" data-location-picker>
+                        <h4 id="location-picker-heading">Exact Project Location <span class="required-marker" aria-label="required">*</span></h4>
+                        <p id="location-picker-help" class="helper-text">Click the map to place the project marker. Drag it or click another point to move it. Select a location before saving.</p>
                         {{ form.latitude }}
-                        {% if form.latitude.errors %}
-                            <div class="error-message">{{ form.latitude.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group">
-                        <label for="{{ form.longitude.id_for_label }}">Longitude</label>
                         {{ form.longitude }}
-                        {% if form.longitude.errors %}
-                            <div class="error-message">{{ form.longitude.errors.0 }}</div>
+                        <div id="infrastructure-location-map" class="location-picker__map" data-location-map tabindex="0" role="region" aria-labelledby="location-picker-heading" aria-describedby="location-picker-help location-picker-error"></div>
+                        <div class="location-picker__coordinates" role="status" aria-live="polite">
+                            <strong>Selected location:</strong>
+                            <span>Latitude: <output data-selected-latitude>Not selected</output></span>
+                            <span>Longitude: <output data-selected-longitude>Not selected</output></span>
+                        </div>
+                        <button type="button" class="ui-button ui-button--subtle ui-button--small" data-clear-location disabled>Clear selected location</button>
+                        <p id="location-picker-error" class="error-message" data-location-error role="alert" hidden></p>
+                        <p class="helper-text" data-location-map-status role="status" hidden></p>
+                        {% if form.latitude.errors or form.longitude.errors %}
+                        <div data-location-server-errors>
+                            {% for error in form.latitude.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
+                            {% for error in form.longitude.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
+                        </div>
                         {% endif %}
+                        <noscript><p class="error-message">Enable JavaScript to select the exact project location.</p></noscript>
                     </div>
                 </div>
             </div>
@@ -960,5 +968,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'js/gis/infrastructure_location_picker.js' %}"></script>
 <script src="{% static 'js/templates/projects/project_form.js' %}"></script>
 {% endblock %}
