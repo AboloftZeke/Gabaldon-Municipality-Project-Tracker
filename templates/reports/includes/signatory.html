@@ -1,0 +1,8 @@
+{% if prepared_by %}
+<section class="report-signatory" aria-label="Report preparer">
+    <p>Prepared by:</p>
+    <div class="report-signatory__signature" aria-hidden="true"></div>
+    <strong>{{ prepared_by.name }}</strong>
+    {% if prepared_by.position %}<p>{{ prepared_by.position }}</p>{% endif %}
+</section>
+{% endif %}

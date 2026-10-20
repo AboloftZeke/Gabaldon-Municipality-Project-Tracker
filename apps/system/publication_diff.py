@@ -28,6 +28,8 @@ LABELS = {
     'status': 'Status', 'procurement_method': 'Procurement Method',
     'inspected_by': 'Inspected By', 'duration_days': 'Duration (days)',
     'official_physical_progress': 'Official Physical Progress',
+    'target_beneficiaries': 'Beneficiary Type',
+    'sponsored_by': 'Sponsored By',
 }
 NUMERIC = {
     'approved_budget', 'contract_price', 'actual_expenditure', 'percentage',
@@ -58,7 +60,9 @@ INFORMATION_GROUPS = {
         }),
         ('Location & Venue', {'address', 'venue_name'}),
         ('Schedule', {'event_date', 'start_time', 'end_time'}),
-        ('Service & Beneficiaries', {'proponent', 'beneficiaries'}),
+        ('Service & Beneficiaries', {
+            'proponent', 'beneficiaries', 'target_beneficiaries', 'sponsored_by',
+        }),
         ('Status & Operational Information', {'status'}),
     ),
 }

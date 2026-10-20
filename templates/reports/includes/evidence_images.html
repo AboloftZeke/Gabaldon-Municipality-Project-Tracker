@@ -1,0 +1,13 @@
+{% if report.evidence_images %}
+<section class="head-section" aria-label="Disclosed supporting evidence">
+    <h2>Disclosed Supporting Images</h2>
+    <div class="report-gallery">
+        {% for image in report.evidence_images|slice:':12' %}
+        <figure class="public-image-card">
+            <button type="button" class="image-preview-trigger" data-image-viewer-trigger data-image-src="{{ image.image_url }}" data-image-alt="{{ image.caption }}" aria-label="Enlarge {{ image.caption }}"><img src="{{ image.image_url }}" alt="{{ image.caption }}" loading="lazy"></button>
+            <figcaption>{{ image.caption }}</figcaption>
+        </figure>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}

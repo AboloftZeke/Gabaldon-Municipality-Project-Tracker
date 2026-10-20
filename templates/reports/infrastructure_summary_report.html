@@ -5,11 +5,12 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
-<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20260918-2">
+<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20261020-report-enhancements">
 {% endblock %}
 
 {% block content %}
 <div class="head-dashboard" data-report-scope="infrastructure">
+    {% include 'reports/includes/municipal_header.html' %}
     <nav class="report-breadcrumb" aria-label="Breadcrumb">
         <a href="{% url 'reports:infrastructure' %}">Reports</a>
         <span aria-hidden="true">/</span>
@@ -151,5 +152,6 @@
         {% endif %}
     </section>
     {% endif %}
+    {% include 'reports/includes/signatory.html' %}
 </div>
 {% endblock %}

@@ -14,6 +14,7 @@ from .forms import (
     InfrastructureSummaryReportFilterForm,
     NonInfrastructureSummaryReportFilterForm,
 )
+from .presentation import report_preparer
 from .generation import (
     generate_individual_report,
     generate_summary_report,
@@ -127,6 +128,7 @@ class ScopedIndividualProjectReportView(
         context['report'] = REPORT_DATA_GETTERS[self.report_type](
             self.kwargs['project_id'],
         )
+        context['prepared_by'] = report_preparer(self.request.user)
         return context
 
 
@@ -154,6 +156,7 @@ class ScopedSummaryReportView(OfficeHeadRequiredMixin, TemplateView):
             SUMMARY_DATA_GETTERS[self.report_type](form.cleaned_data)
             if form.is_valid() else None
         )
+        context['prepared_by'] = report_preparer(self.request.user)
         return context
 
 

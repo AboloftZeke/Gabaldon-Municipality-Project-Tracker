@@ -590,7 +590,7 @@
 
 .report-gallery {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr));
     gap: 0.8rem;
 }
 
@@ -606,10 +606,11 @@
     display: block;
     width: 100%;
     aspect-ratio: 4 / 3;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 .report-gallery figcaption {
+    overflow-wrap: anywhere;
     padding: 0.6rem 0.7rem;
     color: var(--report-muted);
     font-size: 0.75rem;
@@ -697,3 +698,16 @@
         grid-template-columns: 1fr;
     }
 }
+
+.report-municipal-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    overflow-wrap: anywhere;
+}
+.report-municipal-header img { width: 72px; height: 72px; object-fit: contain; }
+.report-municipal-header p, .report-signatory p { margin: .35rem 0; }
+.report-signatory { margin-top: 2rem; break-inside: avoid; overflow-wrap: anywhere; }
+.report-signatory__signature { margin-top: 3rem; border-bottom: 1px solid; width: min(18rem, 100%); }
+.report-signatory strong { display: block; margin-top: .5rem; }

@@ -217,7 +217,13 @@ class NonInfrastructureProjectForm(forms.Form):
 
     proponent = forms.CharField(required=True, max_length=255, label='Implementing Office')
     target_beneficiaries = forms.CharField(
-        required=False, max_length=2000, widget=forms.Textarea(attrs={'rows': 3}),
+        required=False, max_length=2000, label='Beneficiary Type',
+        help_text='Describe the beneficiary group or intended participants.',
+        widget=forms.Textarea(attrs={'rows': 3}),
+    )
+    sponsored_by = forms.CharField(
+        required=False, max_length=255, label='Sponsored By',
+        help_text='Optional organization, agency, group or individual sponsoring this activity.',
     )
     beneficiaries = forms.IntegerField(required=True, min_value=0, label='Number of Beneficiaries')
     implementation_start_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
@@ -299,6 +305,7 @@ class NonInfrastructureProjectForm(forms.Form):
                 self.fields['proponent'].initial = normalized.proponent
                 self.fields['beneficiaries'].initial = normalized.beneficiaries
                 self.fields['target_beneficiaries'].initial = normalized.target_beneficiaries
+                self.fields['sponsored_by'].initial = normalized.sponsored_by
                 self.fields['implementation_start_date'].initial = normalized.implementation_start_date
                 self.fields['implementation_end_date'].initial = normalized.implementation_end_date
                 self.fields['event_date'].initial = normalized.event_date
@@ -484,6 +491,7 @@ class NonInfrastructureProjectForm(forms.Form):
         non.proponent = data.get('proponent') or ''
         non.beneficiaries = data.get('beneficiaries')
         non.target_beneficiaries = data.get('target_beneficiaries') or ''
+        non.sponsored_by = data.get('sponsored_by') or ''
         non.implementation_start_date = data.get('implementation_start_date')
         non.implementation_end_date = data.get('implementation_end_date')
         non.event_date = data.get('event_date')

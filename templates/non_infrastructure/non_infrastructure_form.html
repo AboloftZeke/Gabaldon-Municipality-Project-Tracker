@@ -110,10 +110,18 @@
                         {% endif %}
                     </div>
 
-                    <div class="form-group full-span" data-project-types="PROGRAM SERVICE TRAINING CAMPAIGN">
-                        <label for="{{ form.target_beneficiaries.id_for_label }}">Target Beneficiaries / Participants</label>
+                    <div class="form-group full-span">
+                        <label for="{{ form.target_beneficiaries.id_for_label }}">Beneficiary Type</label>
                         {{ form.target_beneficiaries }}
+                        <small class="helper-text" id="{{ form.target_beneficiaries.id_for_label }}_helptext">{{ form.target_beneficiaries.help_text }}</small>
                         {% if form.target_beneficiaries.errors %}<div class="error-message">{{ form.target_beneficiaries.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="form-group full-span">
+                        <label for="{{ form.sponsored_by.id_for_label }}">Sponsored By</label>
+                        {{ form.sponsored_by }}
+                        <small class="helper-text" id="{{ form.sponsored_by.id_for_label }}_helptext">{{ form.sponsored_by.help_text }}</small>
+                        {% for error in form.sponsored_by.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
                     </div>
 
                     <div class="form-group">
@@ -551,6 +559,8 @@
                 <div><dt>Type</dt><dd data-review-value="{{ form.project_type.id_for_label }}">—</dd></div>
                 <div><dt>Category</dt><dd data-review-value="{{ form.category.id_for_label }}">—</dd></div>
                 <div><dt>Proponent</dt><dd data-review-value="{{ form.proponent.id_for_label }}">—</dd></div>
+                <div><dt>Beneficiary Type</dt><dd data-review-value="{{ form.target_beneficiaries.id_for_label }}">—</dd></div>
+                <div><dt>Sponsored By</dt><dd data-review-value="{{ form.sponsored_by.id_for_label }}">—</dd></div>
                 <div><dt>Beneficiaries</dt><dd data-review-value="{{ form.beneficiaries.id_for_label }}">—</dd></div>
             </dl>
         </section>

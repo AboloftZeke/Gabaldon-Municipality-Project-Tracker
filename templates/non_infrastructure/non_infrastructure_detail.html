@@ -237,7 +237,8 @@
                 <div class="content-label">Beneficiaries</div>
                 <div class="content-value content-value--long">{{ project_beneficiaries|default:"Not specified" }}</div>
             </div>
-            {% if project_target_beneficiaries %}<div class="content-item information-card__full-row"><div class="content-label">Target Beneficiaries / Participants</div><div class="content-value content-value--long">{{ project_target_beneficiaries }}</div></div>{% endif %}
+            {% if object.sponsored_by %}<div class="content-item information-card__full-row"><div class="content-label">Sponsored By</div><div class="content-value content-value--long">{{ object.sponsored_by }}</div></div>{% endif %}
+            {% if project_target_beneficiaries %}<div class="content-item information-card__full-row"><div class="content-label">Beneficiary Type</div><div class="content-value content-value--long">{{ project_target_beneficiaries }}</div></div>{% endif %}
         </div>
     </section>
 

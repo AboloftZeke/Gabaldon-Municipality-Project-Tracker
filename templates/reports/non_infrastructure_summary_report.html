@@ -5,11 +5,12 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
-<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20260918-2">
+<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20261020-report-enhancements">
 {% endblock %}
 
 {% block content %}
 <div class="head-dashboard" data-report-scope="non_infrastructure">
+    {% include 'reports/includes/municipal_header.html' %}
     <nav class="report-breadcrumb" aria-label="Breadcrumb">
         <a href="{% url 'reports:non_infrastructure' %}">Reports</a>
         <span aria-hidden="true">/</span>
@@ -132,7 +133,7 @@
                 {% for project in summary.rows %}
                     <tr>
                         <td>{{ project.code }}</td>
-                        <td class="report-table__title">{{ project.title }}</td>
+                        <td class="report-table__title">{{ project.title }}{% if project.target_beneficiaries %}<br><small>Beneficiary Type: {{ project.target_beneficiaries }}</small>{% endif %}{% if project.sponsored_by %}<br><small>Sponsored By: {{ project.sponsored_by }}</small>{% endif %}</td>
                         <td>{{ project.project_type_label }}</td>
                         <td>{{ project.category.name|default:"N/A" }}</td>
                         <td>{{ project.status_label|default:"N/A" }}</td>
@@ -157,5 +158,6 @@
         {% endif %}
     </section>
     {% endif %}
+    {% include 'reports/includes/signatory.html' %}
 </div>
 {% endblock %}

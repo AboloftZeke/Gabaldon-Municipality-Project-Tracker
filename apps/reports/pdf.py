@@ -7,7 +7,9 @@ from io import BytesIO
 
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.contrib.staticfiles import finders
 from django.utils import timezone
+from PIL import Image as PillowImage
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 from reportlab.lib.pagesizes import A4, landscape
@@ -139,6 +141,21 @@ def _page_frame(canvas, doc):
 
 
 def _title_block(story, title, subtitle, styles):
+    logo_path = finders.find('images/gabaldon-seal.png')
+    identity = Paragraph(
+        '<b>Municipality of Gabaldon</b><br/>Nueva Ecija', styles['body'],
+    )
+    if logo_path:
+        logo = Image(logo_path, width=20 * mm, height=20 * mm, kind='proportional')
+        header = Table([[logo, identity]], colWidths=[25 * mm, 145 * mm], hAlign='LEFT')
+        header.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ]))
+        story.append(header)
+    else:
+        story.append(identity)
+    story.append(Spacer(1, 4 * mm))
     story.append(Paragraph(escape(title), styles['title']))
     story.append(Paragraph(escape(subtitle), styles['subtitle']))
 
@@ -161,7 +178,7 @@ def _details_table(rows, styles, *, columns=2):
     else:
         paired = cells
         widths = [42 * mm, 130 * mm]
-    table = Table(paired, colWidths=widths, hAlign='LEFT')
+    table = Table(paired, colWidths=widths, hAlign='LEFT', splitInRow=1)
     table.setStyle(TableStyle([
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('BACKGROUND', (0, 0), (-1, -1), ROW_ALT),
@@ -184,17 +201,35 @@ def _section(story, heading, rows, styles, *, columns=2):
 
 
 def _local_image(image_url, max_width=170 * mm, max_height=85 * mm):
-    if not image_url:
+    if not isinstance(image_url, str) or not image_url:
         return None
     media_url = settings.MEDIA_URL or '/media/'
     if not image_url.startswith(media_url):
         return None
     storage_name = image_url[len(media_url):].lstrip('/')
-    if not storage_name or not default_storage.exists(storage_name):
+    if not storage_name or '..' in storage_name.split('/') or '\\' in storage_name:
         return None
     try:
+        if not default_storage.exists(storage_name):
+            return None
         with default_storage.open(storage_name, 'rb') as source:
-            image = Image(BytesIO(source.read()))
+            content = source.read(20 * 1024 * 1024 + 1)
+        if len(content) > 20 * 1024 * 1024:
+            return None
+        # Decode now so broken files cannot fail later during PDF layout.
+        with PillowImage.open(BytesIO(content)) as original:
+            if original.width * original.height > 30_000_000:
+                return None
+            original.thumbnail((1200, 600))
+            if original.mode in ('RGBA', 'LA') or 'transparency' in original.info:
+                rgba = original.convert('RGBA')
+                prepared = PillowImage.new('RGB', rgba.size, 'white')
+                prepared.paste(rgba, mask=rgba.getchannel('A'))
+            else:
+                prepared = original.convert('RGB')
+            output = BytesIO()
+            prepared.save(output, format='JPEG', quality=80, optimize=True)
+        image = Image(BytesIO(output.getvalue()))
         scale = min(
             max_width / image.imageWidth,
             max_height / image.imageHeight,
@@ -214,25 +249,44 @@ def _append_images(story, images, styles):
     for image_data in images:
         image = _local_image(image_data.get('image_url'))
         if image:
-            available.append(image)
+            available.append((image, image_data.get('caption')))
+        if len(available) == 12:
+            break
     if not available:
         return
     story.extend([
         PageBreak(),
-        Paragraph('Disclosed Project Images', styles['section']),
+        Paragraph('Disclosed Project Images and Supporting Evidence', styles['section']),
+        Paragraph('Up to 12 available published images, resized for printing.', styles['small']),
+        Spacer(1, 3 * mm),
     ])
-    for index, image in enumerate(available, 1):
+    for index, (image, caption) in enumerate(available, 1):
         story.extend([
             KeepTogether([
                 image,
                 Spacer(1, 1.5 * mm),
-                Paragraph(f'Project image {index}', styles['small']),
+                Paragraph(_text(caption or f'Project image {index}'), styles['small']),
             ]),
             Spacer(1, 4 * mm),
         ])
 
 
-def build_individual_report_pdf(report_type, report):
+def _append_signatory(story, prepared_by, styles):
+    if not prepared_by:
+        return
+    content = [
+        Spacer(1, 8 * mm),
+        Paragraph('Prepared by:', styles['body']),
+        Spacer(1, 14 * mm),
+        Paragraph('_____________________________', styles['body']),
+        Paragraph(_text(prepared_by['name']), styles['body']),
+    ]
+    if prepared_by.get('position'):
+        content.append(Paragraph(_text(prepared_by['position']), styles['body']))
+    story.append(KeepTogether(content))
+
+
+def build_individual_report_pdf(report_type, report, *, prepared_by=None):
     """Return a portrait A4 individual-project PDF as bytes."""
     styles = _styles()
     buffer = BytesIO()
@@ -282,14 +336,19 @@ def build_individual_report_pdf(report_type, report):
         inspection = report.get('inspection') or {}
     else:
         inspection = None
-        _section(story, 'Project Information', [
+        information = [
             ('Category', report['category'].get('name')),
             ('Status', report['status_label']),
             ('Proponent', report['proponent']),
             ('Beneficiaries', report['beneficiaries']),
+            ('Beneficiary Type', report.get('target_beneficiaries')),
             ('Published By', report['created_by_name']),
             ('Last Updated', report['updated_at']),
-        ], styles)
+            ('Project Type', report.get('project_type_label')),
+        ]
+        if report.get('sponsored_by'):
+            information.append(('Sponsored By', report['sponsored_by']))
+        _section(story, 'Project Information', information, styles)
         _section(story, 'Location and Venue', [
             ('Venue', report['venue_name']),
             ('Street', report['address'].get('street')),
@@ -301,6 +360,17 @@ def build_individual_report_pdf(report_type, report):
             ('Event or Service Date', report['event_date']),
             ('Start Time', report['start_time']),
             ('End Time', report['end_time']),
+            ('Implementation Start', report.get('implementation_start_date')),
+            ('Implementation End', report.get('implementation_end_date')),
+            ('Expected Delivery', report.get('expected_delivery_date')),
+        ], styles)
+        _section(story, 'Funding and Procurement', [
+            ('Budget / Project Cost', _currency(report.get('project_cost'))),
+            ('Fund Source', report.get('fund_source')),
+            ('Contractor / Supplier', report.get('contractor_supplier')),
+            ('Quantity', report.get('quantity')),
+            ('Procurement Description', report.get('procurement_description')),
+            ('Remarks', report.get('remarks')),
         ], styles)
 
     story.extend([
@@ -316,7 +386,10 @@ def build_individual_report_pdf(report_type, report):
             ('Findings', inspection.get('findings')),
             ('Remarks', inspection.get('remarks')),
         ], styles)
-    _append_images(story, report.get('images') or [], styles)
+    _append_images(story, [
+        *(report.get('images') or []), *(report.get('evidence_images') or []),
+    ], styles)
+    _append_signatory(story, prepared_by, styles)
     doc.build(story, onFirstPage=_page_frame, onLaterPages=_page_frame)
     return buffer.getvalue()
 
@@ -385,7 +458,7 @@ def _summary_table(report_type, rows, styles):
     return table
 
 
-def build_summary_report_pdf(report_type, summary, active_filters):
+def build_summary_report_pdf(report_type, summary, active_filters, *, prepared_by=None):
     """Return a landscape A4 summary PDF as bytes."""
     styles = _styles()
     buffer = BytesIO()
@@ -458,10 +531,18 @@ def build_summary_report_pdf(report_type, summary, active_filters):
     ])
     if summary['rows']:
         story.append(_summary_table(report_type, summary['rows'], styles))
+        if report_type == 'non_infrastructure':
+            for project in summary['rows']:
+                if project.get('target_beneficiaries') or project.get('sponsored_by'):
+                    rows = [('Beneficiary Type', project.get('target_beneficiaries'))]
+                    if project.get('sponsored_by'):
+                        rows.append(('Sponsored By', project['sponsored_by']))
+                    _section(story, f"{project['code']} — {project['title']}", rows, styles)
     else:
         story.append(Paragraph(
             'No disclosed projects match the selected filters.',
             styles['empty'],
         ))
+    _append_signatory(story, prepared_by, styles)
     doc.build(story, onFirstPage=_page_frame, onLaterPages=_page_frame)
     return buffer.getvalue()
