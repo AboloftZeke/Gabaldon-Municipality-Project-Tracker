@@ -1,15 +1,16 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static project_formatting %}
 
 {% block title %}{{ report.title }} — Individual Non-Infrastructure Project Report{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
-<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20260918-2">
+<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20261020-report-enhancements">
 {% endblock %}
 
 {% block content %}
 <div class="head-dashboard" data-report-scope="non_infrastructure">
+    {% include 'reports/includes/municipal_header.html' %}
     <nav class="report-breadcrumb" aria-label="Breadcrumb">
         <a href="{% url 'reports:non_infrastructure' %}">Reports</a>
         <span aria-hidden="true">/</span>
@@ -46,6 +47,8 @@
             <div><dt>Status</dt><dd>{{ report.status_label|default:"N/A" }}</dd></div>
             <div><dt>Proponent</dt><dd>{{ report.proponent|default:"N/A" }}</dd></div>
             <div><dt>Beneficiaries</dt><dd>{{ report.beneficiaries|default_if_none:"N/A" }}</dd></div>
+            <div><dt>Beneficiary Type</dt><dd>{{ report.target_beneficiaries|default:"N/A" }}</dd></div>
+            {% if report.sponsored_by %}<div><dt>Sponsored By</dt><dd>{{ report.sponsored_by }}</dd></div>{% endif %}
             <div><dt>Published By</dt><dd>{{ report.created_by_name|default:"N/A" }}</dd></div>
             <div><dt>Last Updated</dt><dd>{{ report.updated_at|date:"F j, Y"|default:"N/A" }}</dd></div>
         </dl>
@@ -77,6 +80,21 @@
     </section>
     {% endif %}
 
+    {% if report.project_cost is not None or report.fund_source or report.contractor_supplier or report.procurement_description or report.remarks %}
+    <section class="head-section" aria-labelledby="funding-heading">
+        <div class="head-section__heading"><h2 id="funding-heading">Funding and Procurement</h2></div>
+        <dl class="report-detail-grid">
+            <div><dt>Budget / Project Cost</dt><dd>{% if report.project_cost is not None %}{{ report.project_cost|peso }}{% else %}N/A{% endif %}</dd></div>
+            <div><dt>Fund Source</dt><dd>{{ report.fund_source|default:"N/A" }}</dd></div>
+            <div><dt>Contractor / Supplier</dt><dd>{{ report.contractor_supplier|default:"N/A" }}</dd></div>
+            <div><dt>Quantity</dt><dd>{{ report.quantity|default_if_none:"N/A" }}</dd></div>
+            <div><dt>Expected Delivery</dt><dd>{{ report.expected_delivery_date|date:"F j, Y"|default:"N/A" }}</dd></div>
+            <div><dt>Procurement Description</dt><dd>{{ report.procurement_description|default:"N/A" }}</dd></div>
+            <div><dt>Remarks</dt><dd>{{ report.remarks|default:"N/A" }}</dd></div>
+        </dl>
+    </section>
+    {% endif %}
+
     <section class="head-section" aria-labelledby="description-heading">
         <div class="head-section__heading"><p class="head-section__eyebrow">About the program</p><h2 id="description-heading">Description</h2></div>
         <p class="report-section-copy">{{ report.description|default:"No description provided." }}</p>
@@ -95,6 +113,8 @@
         </div>
     </section>
     {% endif %}
+    {% include 'reports/includes/evidence_images.html' %}
+    {% include 'reports/includes/signatory.html' %}
 </div>
 {% include 'includes/image_viewer.html' %}
 {% endblock %}

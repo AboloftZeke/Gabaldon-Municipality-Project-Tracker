@@ -34,6 +34,7 @@ from .permissions import (
 )
 
 NON_INFRASTRUCTURE_REVIEW_FIELD_ROOTS = {
+    'target_beneficiaries', 'sponsored_by',
     'address',
     'beneficiaries',
     'category',

@@ -5,11 +5,12 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260914-1">
-<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20260918-2">
+<link rel="stylesheet" href="{% static 'css/templates/reports/reports.css' %}?v=20261020-report-enhancements">
 {% endblock %}
 
 {% block content %}
 <div class="head-dashboard" data-report-scope="infrastructure">
+    {% include 'reports/includes/municipal_header.html' %}
     <nav class="report-breadcrumb" aria-label="Breadcrumb">
         <a href="{% url 'reports:infrastructure' %}">Reports</a>
         <span aria-hidden="true">/</span>
@@ -68,6 +69,7 @@
             <div><dt>Source of Fund</dt><dd>{{ report.financial.fund_source.name|default:"N/A" }}</dd></div>
             <div><dt>Approved Budget for the Contract</dt><dd>{% if report.financial.approved_budget is not None %}{{ report.financial.approved_budget|peso }}{% else %}N/A{% endif %}</dd></div>
             <div><dt>Contract Price</dt><dd>{% if report.financial.contract_price is not None %}{{ report.financial.contract_price|peso }}{% else %}N/A{% endif %}</dd></div>
+            <div><dt>Actual Expenditure</dt><dd>{% if report.financial.actual_expenditure is not None %}{{ report.financial.actual_expenditure|peso }}{% else %}N/A{% endif %}</dd></div>
         </dl>
     </section>
 
@@ -126,6 +128,8 @@
         </div>
     </section>
     {% endif %}
+    {% include 'reports/includes/evidence_images.html' %}
+    {% include 'reports/includes/signatory.html' %}
 </div>
 {% include 'includes/image_viewer.html' %}
 {% endblock %}

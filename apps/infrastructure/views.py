@@ -961,13 +961,18 @@ class InfrastructureInspectionCreateView(EngineerOnlyMixin, View):
         infrastructure = self.get_project(pk)
         return render(request, self.template_name, {
             'infrastructure': infrastructure,
-            'form': InfrastructureInspectionForm(),
+            'form': InfrastructureInspectionForm(project=infrastructure.project),
             'action': 'Add',
         })
 
+    @transaction.atomic
     def post(self, request, pk):
         infrastructure = self.get_project(pk)
-        form = InfrastructureInspectionForm(request.POST, request.FILES)
+        # Serialise inspection writes for the project before checking chronology.
+        Project.objects.select_for_update().get(pk=infrastructure.project_id)
+        form = InfrastructureInspectionForm(
+            request.POST, request.FILES, project=infrastructure.project,
+        )
         if not form.is_valid():
             return render(request, self.template_name, {
                 'infrastructure': infrastructure,
@@ -1017,7 +1022,10 @@ class InfrastructureInspectionUpdateView(EngineerOnlyMixin, View):
             'action': 'Edit',
         })
 
+    @transaction.atomic
     def post(self, request, project_pk, inspection_pk):
+        infrastructure = get_object_or_404(InfrastructureProject, pk=project_pk)
+        Project.objects.select_for_update().get(pk=infrastructure.project_id)
         infrastructure, inspection = self.get_objects(
             project_pk,
             inspection_pk,

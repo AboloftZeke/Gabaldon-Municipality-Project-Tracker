@@ -200,6 +200,7 @@ def non_infrastructure_public_data(revision):
         'proponent': noninfra.get('proponent') or '',
         'beneficiaries': noninfra.get('beneficiaries'),
         'target_beneficiaries': noninfra.get('target_beneficiaries') or '',
+        'sponsored_by': noninfra.get('sponsored_by') or '',
         'implementation_start_date': _date(noninfra.get('implementation_start_date')),
         'implementation_end_date': _date(noninfra.get('implementation_end_date')),
         'event_date': _date(noninfra.get('event_date')),

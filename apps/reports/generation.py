@@ -9,6 +9,7 @@ from django.utils.text import slugify
 from apps.system.models import ProjectReport
 
 from .pdf import build_individual_report_pdf, build_summary_report_pdf
+from .presentation import report_preparer
 from .services import (
     get_infrastructure_project_report_data,
     get_non_infrastructure_project_report_data,
@@ -68,7 +69,9 @@ def _store_pdf(*, pdf_bytes, report_name, report_type, project, notes=''):
 
 def generate_individual_report(report_type, project_id, generated_by):
     report = INDIVIDUAL_GETTERS[report_type](project_id)
-    pdf_bytes = build_individual_report_pdf(report_type, report)
+    pdf_bytes = build_individual_report_pdf(
+        report_type, report, prepared_by=report_preparer(generated_by),
+    )
     scope_label = (
         'Infrastructure' if report_type == 'infrastructure'
         else 'Non-Infrastructure'
@@ -97,6 +100,7 @@ def generate_summary_report(
         report_type,
         summary,
         active_filters,
+        prepared_by=report_preparer(generated_by),
     )
     scope_label = (
         'Infrastructure' if report_type == 'infrastructure'

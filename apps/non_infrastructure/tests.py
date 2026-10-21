@@ -114,8 +114,9 @@ class NonInfrastructureProjectFormTests(TestCase):
         self.assertIn('name="implementation_end_date" required', content)
         self.assertIn('>Proponent</label>', project_details)
         self.assertIn('>Beneficiaries</label>', project_details)
+        self.assertIn('Beneficiary Type', project_details)
+        self.assertIn('Sponsored By', project_details)
         for field_name in (
-            'target_beneficiaries',
             'project_cost',
             'fund_source',
             'contractor_supplier',

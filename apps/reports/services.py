@@ -3,6 +3,8 @@
 from collections import Counter
 from decimal import Decimal
 
+from .presentation import disclosed_evidence_images
+
 from apps.system.publication_public import (
     current_public_revisions,
     get_public_project,
@@ -32,11 +34,19 @@ def disclosed_projects_for_report(report_type):
 
 
 def get_infrastructure_project_report_data(project_id):
-    return get_public_project('infrastructure', project_id)
+    return _project_report_data('infrastructure', project_id)
 
 
 def get_non_infrastructure_project_report_data(project_id):
-    return get_public_project('non_infrastructure', project_id)
+    return _project_report_data('non_infrastructure', project_id)
+
+
+def _project_report_data(report_type, project_id):
+    report = get_public_project(report_type, project_id)
+    report['evidence_images'] = disclosed_evidence_images(
+        report_type, report['revision'].snapshot or {},
+    )
+    return report
 
 
 def _apply_common_filters(projects, filters, *, status_key, date_key):

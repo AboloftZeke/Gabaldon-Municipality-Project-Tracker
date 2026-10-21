@@ -76,9 +76,10 @@
     </section>
     {% endif %}
 
-    {% if public_project.target_beneficiaries or public_project.project_cost is not None or public_project.procurement_description %}
+    {% if public_project.sponsored_by or public_project.target_beneficiaries or public_project.project_cost is not None or public_project.procurement_description %}
     <section class="public-detail__section"><h2>Project-Specific Information</h2><div class="detail-grid">
-      {% if public_project.target_beneficiaries %}<div class="detail-item"><span>Target Beneficiaries / Participants</span><strong>{{ public_project.target_beneficiaries }}</strong></div>{% endif %}
+      {% if public_project.sponsored_by %}<div class="detail-item"><span>Sponsored By</span><strong>{{ public_project.sponsored_by }}</strong></div>{% endif %}
+      {% if public_project.target_beneficiaries %}<div class="detail-item"><span>Beneficiary Type</span><strong>{{ public_project.target_beneficiaries }}</strong></div>{% endif %}
       {% if public_project.procurement_description %}<div class="detail-item"><span>Procurement Description</span><strong>{{ public_project.procurement_description }}</strong></div>{% endif %}
       {% if public_project.quantity %}<div class="detail-item"><span>Quantity</span><strong>{{ public_project.quantity }}</strong></div>{% endif %}
       {% if public_project.project_cost is not None %}<div class="detail-item"><span>Project Cost</span><strong>{{ public_project.project_cost|peso }}</strong></div>{% endif %}

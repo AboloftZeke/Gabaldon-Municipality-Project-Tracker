@@ -316,6 +316,7 @@ def build_non_infrastructure_snapshot(non_infrastructure):
         'proponent': non_infrastructure.proponent or '',
         'beneficiaries': non_infrastructure.beneficiaries,
         'target_beneficiaries': non_infrastructure.target_beneficiaries or '',
+        'sponsored_by': non_infrastructure.sponsored_by or '',
         'implementation_start_date': _isoformat(
             non_infrastructure.implementation_start_date,
         ),

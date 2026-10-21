@@ -2,6 +2,8 @@ from decimal import Decimal
 
 from django.db import IntegrityError, transaction
 from django.utils.text import slugify
+from django.utils import timezone
+
 from django import forms
 from django.db import transaction
 from django.core.files.storage import default_storage
@@ -763,7 +765,11 @@ class InfrastructureInspectionForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.project = kwargs.pop('project', None)
         super().__init__(*args, **kwargs)
+        if self.project is None and self.instance.project_id:
+            self.project = self.instance.project
+        self.fields['inspection_date'].widget.attrs['max'] = timezone.localdate().isoformat()
         evidence = (
             self.instance.evidence.all()
             if self.instance and self.instance.pk
@@ -777,6 +783,32 @@ class InfrastructureInspectionForm(forms.ModelForm):
             self.fields['evidence_to_remove'].choices = removal_choices
         else:
             self.fields.pop('evidence_to_remove')
+
+    def clean_inspection_date(self):
+        inspection_date = self.cleaned_data['inspection_date']
+        if inspection_date > timezone.localdate():
+            raise forms.ValidationError('Inspection date cannot be in the future.')
+        if self.project is None:
+            return inspection_date
+        others = self.project.inspections.exclude(pk=self.instance.pk)
+        if others.filter(inspection_date=inspection_date).exists():
+            raise forms.ValidationError('An inspection already exists for this project on this date.')
+        if self.instance.pk:
+            # Keep an edited record between its original chronological neighbours.
+            original_date = type(self.instance).objects.values_list(
+                'inspection_date', flat=True,
+            ).get(pk=self.instance.pk)
+            previous = others.filter(inspection_date__lt=original_date).order_by('-inspection_date').first()
+            following = others.filter(inspection_date__gt=original_date).order_by('inspection_date').first()
+            if previous and inspection_date <= previous.inspection_date:
+                raise forms.ValidationError('Inspection date must be later than the previous inspection date.')
+            if following and inspection_date >= following.inspection_date:
+                raise forms.ValidationError('Inspection date must be earlier than the following inspection date.')
+        else:
+            latest = others.order_by('-inspection_date').first()
+            if latest and inspection_date <= latest.inspection_date:
+                raise forms.ValidationError('The next inspection date must be later than the previous inspection date.')
+        return inspection_date
 
     def _validate_uploads(
         self,

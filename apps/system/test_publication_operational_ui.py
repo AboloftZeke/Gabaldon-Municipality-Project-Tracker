@@ -503,6 +503,7 @@ class PublicationOperationalUITests(TestCase):
         self.non_infrastructure.project_cost = Decimal('1250.00')
         self.non_infrastructure.contractor_supplier = 'Saved supplier'
         self.non_infrastructure.target_beneficiaries = 'Saved audience'
+        self.non_infrastructure.sponsored_by = 'Saved Sponsor'
         self.non_infrastructure.procurement_description = 'Saved supplies'
         self.non_infrastructure.quantity = 12
         self.non_infrastructure.expected_delivery_date = date(2026, 10, 1)
@@ -522,6 +523,10 @@ class PublicationOperationalUITests(TestCase):
         self.assertContains(response, 'Community Wellness Program')
         self.assertContains(response, 'Project Information')
         self.assertContains(response, 'Status')
+        self.assertContains(response, 'Beneficiary Type')
+        self.assertContains(response, 'Saved audience')
+        self.assertContains(response, 'Sponsored By')
+        self.assertContains(response, 'Saved Sponsor')
         information = response.context['project_information']
         self.assertTrue(any(
             field['label'] == 'Status'
@@ -537,6 +542,8 @@ class PublicationOperationalUITests(TestCase):
             for field in visible_fields
         }
         self.assertTrue(visible_roots <= {
+            'target_beneficiaries',
+            'sponsored_by',
             'address',
             'beneficiaries',
             'category',
@@ -570,6 +577,7 @@ class PublicationOperationalUITests(TestCase):
         self.assertEqual(saved_fields['project_cost'], '1250.00')
         self.assertEqual(saved_fields['contractor_supplier'], 'Saved supplier')
         self.assertEqual(saved_fields['target_beneficiaries'], 'Saved audience')
+        self.assertEqual(saved_fields['sponsored_by'], 'Saved Sponsor')
         self.assertEqual(
             saved_fields['procurement_description'],
             'Saved supplies',

@@ -511,6 +511,7 @@ class NonInfrastructureProject(models.Model):
     proponent = models.CharField(max_length=255, blank=True, default='')
     beneficiaries = models.IntegerField(null=True, blank=True)
     target_beneficiaries = models.TextField(blank=True, default='')
+    sponsored_by = models.CharField(max_length=255, blank=True, default='')
     implementation_start_date = models.DateField(null=True, blank=True)
     implementation_end_date = models.DateField(null=True, blank=True)
     project_cost = models.DecimalField(
