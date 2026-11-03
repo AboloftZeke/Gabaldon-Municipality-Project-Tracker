@@ -83,6 +83,13 @@
                     </div>
                 </div>
 
+                <div class="meta-item">
+                    <div class="meta-label">Physical Completion</div>
+                    <div class="meta-value">
+                        {% if project_completion_percentage != None %}{{ project_completion_percentage|floatformat:2 }}%{% else %}Not recorded{% endif %}
+                    </div>
+                </div>
+
                 <!-- Category -->
                 <div class="meta-item">
                     <div class="meta-label">Category</div>
@@ -95,6 +102,17 @@
 
     </div>
 
+    {% if can_confirm_completion %}
+    <section class="project-section ui-card" aria-labelledby="completion-confirmation-heading">
+        <h3 id="completion-confirmation-heading">Confirm Project Completion</h3>
+        <p>The project has reached 100% physical completion. This does not automatically mean it is officially Completed. Confirm the official status only when the project is ready to be closed.</p>
+        <form method="post" action="{{ completion_confirmation_url }}">
+            {% csrf_token %}
+            <button class="ui-button ui-button--primary" type="submit" name="decision" value="yes">Yes, mark as Completed</button>
+            <button class="ui-button ui-button--secondary" type="submit" name="decision" value="no">No, not yet</button>
+        </form>
+    </section>
+    {% endif %}
 
     <div class="information-card-grid" aria-label="Program information">
     <section class="project-section information-card information-card--wide ui-card">

@@ -343,10 +343,22 @@
         </div>
     </section>
 
+    {% if can_confirm_completion %}
+    <section class="detail-section" aria-labelledby="completion-confirmation-heading">
+        <h3 id="completion-confirmation-heading">Confirm Project Completion</h3>
+        <p>The project has reached 100% physical completion. This does not automatically mean it is officially Completed. Confirm the official status only when the project is ready to be closed.</p>
+        <form method="post" action="{{ completion_confirmation_url }}">
+            {% csrf_token %}
+            <button class="ui-button ui-button--primary" type="submit" name="decision" value="yes">Yes, mark as Completed</button>
+            <button class="ui-button ui-button--secondary" type="submit" name="decision" value="no">No, not yet</button>
+        </form>
+    </section>
+    {% endif %}
+
     <!-- Inspection History Section -->
     <section class="detail-section workflow-history-section" id="inspection-history" aria-labelledby="inspection-history-heading">
         <div class="workflow-section-heading workflow-section-heading--actions ui-list-header">
-            <div><p class="workflow-eyebrow">Field records</p><h3 id="inspection-history-heading">Inspection History</h3><p>Newest inspections appear first. Observed completion supports review but does not set official physical progress.</p><span class="ui-result-count">{% if inspection_page.paginator.count %}Showing inspections {{ inspection_page.start_index }}–{{ inspection_page.end_index }} of {{ inspection_page.paginator.count }}{% else %}0 inspections{% endif %}</span></div>
+            <div><p class="workflow-eyebrow">Field records</p><h3 id="inspection-history-heading">Inspection History</h3><p>Each inspection records cumulative observed completion. The project's completion keeps its highest recorded value; official status requires separate confirmation.</p><p>Current cumulative project completion: {% if project_completion_percentage != None %}{{ project_completion_percentage|floatformat:2 }}%{% else %}Not recorded{% endif %}</p><span class="ui-result-count">{% if inspection_page.paginator.count %}Showing inspections {{ inspection_page.start_index }}–{{ inspection_page.end_index }} of {{ inspection_page.paginator.count }}{% else %}0 inspections{% endif %}</span></div>
             {% if can_manage_inspections %}<a class="btn btn-edit workflow-add-button ui-button ui-button--primary" href="{{ inspection_create_url }}">Add Inspection</a>{% endif %}
         </div>
         <div class="inspection-timeline">

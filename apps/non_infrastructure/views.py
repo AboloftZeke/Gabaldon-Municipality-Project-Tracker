@@ -27,6 +27,7 @@ from apps.system.publication_service import (
     submit_project_for_review,
 )
 from apps.system.publication_workflow import PublicationStatus
+from apps.system.completion_views import ProjectCompletionConfirmationView
 
 
 from apps.system.permissions import (
@@ -313,6 +314,9 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
         context['project_manager'] = project_manager
 
         context['project_status'] = project.get_status_display()
+        context['project_completion_percentage'] = (
+            project.project.completion_percentage
+        )
         context['project_category'] = (
             getattr(
                 getattr(project, 'category', None),
@@ -376,6 +380,16 @@ class NonInfrastructureProjectDetailView(MayorsOfficeRequiredMixin, DetailView):
         context['project_images'] = project_images
         context['can_update_operations'] = (
             can_update_non_infrastructure_operations(self.request.user)
+        )
+        context['can_confirm_completion'] = (
+            can_update_non_infrastructure_operations(self.request.user)
+            and project.project.completion_confirmation_status
+            == Project.CompletionConfirmationStatus.PENDING
+            and project.status != 'completed'
+        )
+        context['completion_confirmation_url'] = reverse(
+            'mayor_projects:completion_confirmation',
+            args=[project.pk],
         )
         context['can_manage_project'] = (
             is_system_admin(self.request.user)

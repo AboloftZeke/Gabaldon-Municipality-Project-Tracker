@@ -1,7 +1,10 @@
 from django.db import models
+from django.db import transaction
+from django.db.models import Max
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.core.validators import MaxValueValidator, MinValueValidator
 import uuid
 
 from .publication_workflow import PublicationStatus
@@ -63,6 +66,10 @@ class Address(models.Model):
 
 class Project(models.Model):
     """Base normalized project model for infrastructure and non-infrastructure records."""
+    class CompletionConfirmationStatus(models.TextChoices):
+        PENDING = 'pending', 'Pending confirmation'
+        DECLINED = 'declined', 'Declined'
+
     project_id = models.BigAutoField(primary_key=True)
     project_type = models.CharField(max_length=50, default='gallery')
     created_by_user = models.ForeignKey(
@@ -81,6 +88,19 @@ class Project(models.Model):
     )
     is_published = models.BooleanField(default=False)
     is_visible_to_public = models.BooleanField(default=False)
+    completion_confirmation_status = models.CharField(
+        max_length=20,
+        choices=CompletionConfirmationStatus.choices,
+        blank=True,
+        default='',
+    )
+    completion_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -89,9 +109,41 @@ class Project(models.Model):
         verbose_name = 'Project'
         verbose_name_plural = 'Projects'
         ordering = ['-created_at']
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(completion_percentage__isnull=True)
+                    | (
+                        models.Q(completion_percentage__gte=0)
+                        & models.Q(completion_percentage__lte=100)
+                    )
+                ),
+                name='project_completion_percentage_range',
+            ),
+        ]
 
     def __str__(self):
         return f'Project {self.project_id} ({self.project_type})'
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        if (
+            self.pk
+            and (
+                update_fields is None
+                or 'completion_percentage' in update_fields
+            )
+        ):
+            previous = type(self).objects.filter(pk=self.pk).values_list(
+                'completion_percentage',
+                flat=True,
+            ).first()
+            reported = self.completion_percentage
+            if previous is not None and (
+                reported is None or reported < previous
+            ):
+                self.completion_percentage = previous
+        return super().save(*args, **kwargs)
 
 
 class ProjectRevision(models.Model):
@@ -544,7 +596,7 @@ class NonInfrastructureProject(models.Model):
 
     def __str__(self):
         return self.title
-    
+
     STATUS_CHOICES = [
         ('planned', 'Planned'),
         ('ongoing', 'Ongoing'),
@@ -759,6 +811,7 @@ class ProjectInspection(models.Model):
         related_name='inspections'
     )
     inspection_date = models.DateField()
+    inspection_time = models.TimeField(null=True, blank=True)
     inspection_type = models.CharField(
         max_length=20,
         choices=INSPECTION_TYPE_CHOICES,
@@ -771,7 +824,11 @@ class ProjectInspection(models.Model):
         blank=True,
         related_name='inspections_done'
     )
-    completion_percentage = models.DecimalField(max_digits=5, decimal_places=2)
+    completion_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
     findings = models.TextField(blank=True, default='')
     remarks = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -780,9 +837,138 @@ class ProjectInspection(models.Model):
         db_table = 'system_project_inspection'
         verbose_name = 'Project Inspection'
         verbose_name_plural = 'Project Inspections'
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(completion_percentage__gte=0)
+                    & models.Q(completion_percentage__lte=100)
+                ),
+                name='project_inspection_completion_percentage_range',
+            ),
+            models.UniqueConstraint(
+                fields=('project', 'inspection_date'),
+                name='unique_project_inspection_date',
+            ),
+        ]
 
     def __str__(self):
         return f'Inspection {self.inspection_id}'
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        today = timezone.localdate()
+        if self.inspection_date:
+            if self.inspection_date > today:
+                errors['inspection_date'] = (
+                    'Inspection date cannot be in the future.'
+                )
+            elif (
+                self.inspection_date == today
+                and self.inspection_time
+                and self.inspection_time
+                > timezone.localtime().time().replace(tzinfo=None)
+            ):
+                errors['inspection_time'] = (
+                    'Inspection time cannot be in the future.'
+                )
+
+            base_date = self._project_base_date()
+            if base_date and self.inspection_date < base_date:
+                errors['inspection_date'] = (
+                    'Inspection date cannot be earlier than the project start date.'
+                )
+        if errors:
+            raise ValidationError(errors)
+
+    def _project_base_date(self):
+        if not self.project_id:
+            return None
+        if self.project.project_type == 'infrastructure':
+            return InfrastructureProject.objects.filter(
+                project_id=self.project_id,
+            ).values_list('planned_start_date', flat=True).first()
+        if self.project.project_type == 'non_infrastructure':
+            return NonInfrastructureProject.objects.filter(
+                project_id=self.project_id,
+            ).values_list('implementation_start_date', flat=True).first()
+        return None
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            Project.objects.select_for_update().get(pk=self.project_id)
+            previous_percentage = None
+            if self.pk:
+                previous_percentage = type(self).objects.filter(
+                    pk=self.pk,
+                ).values_list('completion_percentage', flat=True).first()
+            self.full_clean()
+            super().save(*args, **kwargs)
+            saved = type(self).objects.only(
+                'project_id',
+                'completion_percentage',
+            ).get(pk=self.pk)
+            _synchronize_project_completion(
+                saved.project_id,
+                saved.completion_percentage,
+                previous_percentage,
+            )
+
+
+def _synchronize_project_completion(
+    project_id,
+    reported_percentage,
+    previous_percentage=None,
+):
+    project = Project.objects.select_for_update().get(pk=project_id)
+    if project.project_type == 'infrastructure':
+        project_details = InfrastructureProject.objects.select_for_update().filter(
+            project_id=project_id,
+        ).first()
+    elif project.project_type == 'non_infrastructure':
+        project_details = NonInfrastructureProject.objects.select_for_update().filter(
+            project_id=project_id,
+        ).first()
+    else:
+        return
+    if project_details is None:
+        return
+
+    recorded_percentage = ProjectInspection.objects.filter(
+        project_id=project_id,
+        completion_percentage__gte=0,
+        completion_percentage__lte=100,
+    ).aggregate(highest=Max('completion_percentage'))['highest']
+    existing_percentages = [
+        percentage
+        for percentage in (
+            project.completion_percentage,
+            recorded_percentage,
+            previous_percentage,
+        )
+        if percentage is not None
+    ]
+    current_percentage = max(existing_percentages, default=None)
+    project.completion_percentage = (
+        current_percentage
+        if current_percentage is not None
+        else reported_percentage
+    )
+
+    if project_details.status == 'completed':
+        project.completion_confirmation_status = ''
+    elif (
+        reported_percentage == 100
+        and not project.completion_confirmation_status
+    ):
+        project.completion_confirmation_status = (
+            Project.CompletionConfirmationStatus.PENDING
+        )
+    project.save(update_fields=[
+        'completion_percentage',
+        'completion_confirmation_status',
+        'updated_at',
+    ])
 
 
 class InspectionEvidence(models.Model):

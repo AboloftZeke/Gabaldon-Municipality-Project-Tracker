@@ -40,11 +40,11 @@
                     <div><h3>Inspection Details</h3><p>Identify when and why the field inspection took place.</p></div>
                 </div>
                 <div class="form-grid">
-                    {% for field in form %}{% if field.name == 'inspection_type' or field.name == 'inspection_date' or field.name == 'completion_percentage' %}
+                    {% for field in form %}{% if field.name == 'inspection_type' or field.name == 'inspection_date' or field.name == 'inspection_time' or field.name == 'completion_percentage' %}
                     <div class="form-group">
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {{ field }}
-                        {% if field.name == 'completion_percentage' %}<small class="helper-text">Record the observed completion at this inspection. This does not set official physical progress.</small>{% endif %}
+                        {% if field.name == 'completion_percentage' %}<small class="helper-text">Record the project's cumulative completion. The project keeps its highest recorded percentage; this does not automatically change its official status.</small>{% endif %}
                         {% for error in field.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
                     </div>
                     {% endif %}{% endfor %}

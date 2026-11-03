@@ -10,6 +10,13 @@ urlpatterns = [
     path('<int:pk>/', views.NonInfrastructureProjectDetailView.as_view(), name='non_infrastructure_project_detail'),
     path('<int:pk>/edit/', views.NonInfrastructureProjectEditView.as_view(), name='non_infrastructure_project_update'),
     path('<int:pk>/operations/', views.NonInfrastructureOperationalUpdateView.as_view(), name='non_infrastructure_project_operations'),
+    path(
+        '<int:pk>/completion/confirm/',
+        views.ProjectCompletionConfirmationView.as_view(
+            project_type='non_infrastructure',
+        ),
+        name='completion_confirmation',
+    ),
     path('<int:pk>/progress-updates/create/', views.NonInfrastructureProgressUpdateCreateView.as_view(), name='non_infrastructure_progress_update_create'),
     path('<int:pk>/progress-updates/<int:update_pk>/', views.NonInfrastructureProgressUpdateDetailView.as_view(), name='non_infrastructure_progress_update_detail'),
     path('<int:pk>/progress-updates/<int:update_pk>/edit/', views.NonInfrastructureProgressUpdateEditView.as_view(), name='non_infrastructure_progress_update_edit'),

@@ -1,4 +1,6 @@
 from datetime import timedelta
+from datetime import datetime, time
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
@@ -17,12 +19,15 @@ class InspectionDateTests(TestCase):
         self.client.force_login(self.staff)
         self.today = timezone.localdate()
 
-    def post(self, days_ago, url=None):
-        return self.client.post(url or self.create_url, {
+    def post(self, days_ago, url=None, inspection_time=None):
+        data = {
             'inspection_date': (self.today - timedelta(days=days_ago)).isoformat(),
             'completion_percentage': '25', 'findings': 'Retained field observations',
             'remarks': 'Retained remarks',
-        })
+        }
+        if inspection_time is not None:
+            data['inspection_time'] = inspection_time
+        return self.client.post(url or self.create_url, data)
 
     def add(self, days_ago):
         return ProjectInspection.objects.create(
@@ -51,12 +56,11 @@ class InspectionDateTests(TestCase):
         self.add(20)
         self.assertEqual(self.post(19).status_code, 302)
 
-    def test_earlier_succeeding_inspection_is_rejected(self):
+    def test_historical_inspection_is_allowed_after_a_newer_inspection(self):
         self.add(20)
         response = self.post(21)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('later than the previous inspection date', response.context['form'].errors['inspection_date'][0])
-        self.assertEqual(self.infrastructure.project.inspections.count(), 1)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.infrastructure.project.inspections.count(), 2)
 
     def test_duplicate_date_rejected_even_for_nonlatest_record(self):
         self.add(20)
@@ -89,6 +93,53 @@ class InspectionDateTests(TestCase):
         latest = self.add(10)
         self.assertEqual(self.post(21, self.edit_url(latest)).status_code, 400)
         self.assertEqual(self.post(0, self.edit_url(latest)).status_code, 302)
+
+    def test_edit_cannot_move_a_record_onto_another_inspection_date(self):
+        first = self.add(20)
+        self.add(10)
+
+        response = self.post(10, self.edit_url(first))
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('already exists', response.context['form'].errors['inspection_date'][0])
+
+    def test_inspection_before_project_start_date_is_rejected(self):
+        start_date = self.infrastructure.planned_start_date
+        days_before_start = (self.today - start_date).days + 1
+
+        response = self.post(days_before_start)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('project start date', response.context['form'].errors['inspection_date'][0])
+
+    def test_project_start_date_is_allowed(self):
+        start_date = self.infrastructure.planned_start_date
+        days_before_start = (self.today - start_date).days
+
+        response = self.post(days_before_start)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            self.infrastructure.project.inspections.get().inspection_date,
+            start_date,
+        )
+
+    def test_future_inspection_time_is_rejected_in_project_timezone(self):
+        fixed_now = datetime.combine(self.today, time(10, 0))
+        with patch('apps.system.models.timezone.localtime', return_value=fixed_now):
+            response = self.post(0, inspection_time='10:01')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('inspection_time', response.context['form'].errors)
+
+    def test_historical_inspection_time_is_allowed(self):
+        response = self.post(1, inspection_time='09:15')
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            self.infrastructure.project.inspections.get().inspection_time,
+            time(9, 15),
+        )
 
     def test_other_project_dates_do_not_restrict_this_project(self):
         other = Project.objects.create(project_type='infrastructure', created_by_user=self.staff)

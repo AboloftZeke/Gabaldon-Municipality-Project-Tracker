@@ -751,6 +751,7 @@ class InfrastructureInspectionForm(forms.ModelForm):
         fields = (
             'inspection_type',
             'inspection_date',
+            'inspection_time',
             'completion_percentage',
             'findings',
             'remarks',
@@ -760,6 +761,7 @@ class InfrastructureInspectionForm(forms.ModelForm):
         )
         widgets = {
             'inspection_date': forms.DateInput(attrs={'type': 'date'}),
+            'inspection_time': forms.TimeInput(attrs={'type': 'time'}),
             'findings': forms.Textarea(attrs={'rows': 4}),
             'remarks': forms.Textarea(attrs={'rows': 4}),
         }
@@ -769,6 +771,8 @@ class InfrastructureInspectionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.project is None and self.instance.project_id:
             self.project = self.instance.project
+        elif self.project is not None and self.instance.project_id != self.project.pk:
+            self.instance.project = self.project
         self.fields['inspection_date'].widget.attrs['max'] = timezone.localdate().isoformat()
         evidence = (
             self.instance.evidence.all()
@@ -804,10 +808,6 @@ class InfrastructureInspectionForm(forms.ModelForm):
                 raise forms.ValidationError('Inspection date must be later than the previous inspection date.')
             if following and inspection_date >= following.inspection_date:
                 raise forms.ValidationError('Inspection date must be earlier than the following inspection date.')
-        else:
-            latest = others.order_by('-inspection_date').first()
-            if latest and inspection_date <= latest.inspection_date:
-                raise forms.ValidationError('The next inspection date must be later than the previous inspection date.')
         return inspection_date
 
     def _validate_uploads(

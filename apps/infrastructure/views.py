@@ -31,6 +31,7 @@ from apps.system.models import (
     Project,
     ProjectRevision,
 )
+from apps.system.completion_views import ProjectCompletionConfirmationView
 from apps.system.publication_service import (
     confirm_head_operational_information,
     create_head_operational_revision,
@@ -681,8 +682,21 @@ class ProjectDetailView(EngineeringOfficeRequiredMixin, DetailView):
 
         if infra and infra.project:
             context['has_publication_history'] = infra.project.revisions.exists()
+            context['project_completion_percentage'] = (
+                infra.project.completion_percentage
+            )
             context['can_update_operations'] = (
                 can_update_infrastructure_operations(self.request.user)
+            )
+            context['can_confirm_completion'] = (
+                can_update_infrastructure_operations(self.request.user)
+                and infra.project.completion_confirmation_status
+                == Project.CompletionConfirmationStatus.PENDING
+                and infra.status != 'completed'
+            )
+            context['completion_confirmation_url'] = reverse(
+                'engineering_projects:completion_confirmation',
+                args=[infra.pk],
             )
             context['can_manage_project'] = can_manage_infrastructure(
                 self.request.user,
