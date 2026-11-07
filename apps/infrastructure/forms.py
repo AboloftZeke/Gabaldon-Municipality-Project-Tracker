@@ -123,6 +123,19 @@ class MultipleFileField(forms.FileField):
         return cleaned
 
 
+class MultipleImageField(forms.ImageField):
+    def clean(self, data, initial=None):
+        if not isinstance(data, (list, tuple)):
+            data = [data]
+
+        cleaned = []
+        for item in data:
+            if item in self.empty_values:
+                continue
+            cleaned.append(super().clean(item, initial))
+        return cleaned
+
+
 class InfrastructureProjectForm(forms.Form):
     """Compatibility form writing to the normalized project tables."""
 
@@ -289,7 +302,7 @@ class InfrastructureProjectForm(forms.Form):
         min_value=0,
     )
 
-    project_images = MultipleFileField(
+    project_images = MultipleImageField(
         required=False,
         widget=MultipleFileInput(attrs={'accept': 'image/*'}),
     )
@@ -307,6 +320,7 @@ class InfrastructureProjectForm(forms.Form):
         super().__init__(*args, **kwargs)
         self._instance = instance
         self.existing_images = []
+        self.fields['project_images'].required = instance is None
 
         self.fields['category'].queryset = InfrastructureCategory.objects.filter(
             is_active=True
@@ -392,6 +406,12 @@ class InfrastructureProjectForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        uploads = cleaned_data.get('project_images') or []
+        if self._instance is None and not uploads:
+            self.add_error(
+                'project_images',
+                'Upload at least one project picture before creating the project.',
+            )
         category_obj = cleaned_data.get('category')
         other_category = (cleaned_data.get('other_category') or '').strip()
 

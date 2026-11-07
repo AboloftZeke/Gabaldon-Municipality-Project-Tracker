@@ -672,6 +672,34 @@ class ReportAccessTests(TestCase):
                 content = b''.join(response.streaming_content)
                 self.assertTrue(content.startswith(b'%PDF-'))
 
+    def test_head_report_detail_shows_two_actions_and_returns_to_office_reports(self):
+        cases = [
+            (('engineer', 'head'), ProjectReport.ReportType.INFRASTRUCTURE_SUMMARY,
+             'reports:infrastructure'),
+            (('mayor', 'head'), ProjectReport.ReportType.NON_INFRASTRUCTURE_SUMMARY,
+             'reports:non_infrastructure'),
+        ]
+        for assignment, report_type, destination in cases:
+            with self.subTest(assignment=assignment):
+                report = ProjectReport.objects.create(
+                    project=None,
+                    report_name=f'{report_type.label} report',
+                    report_type=report_type,
+                    file_url='reports/example.pdf',
+                )
+                self.client.force_login(self.users[assignment])
+                response = self.client.get(reverse(
+                    'reports:generated_report_detail', args=[report.report_id],
+                ))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'Open PDF', count=1)
+                self.assertContains(response, 'Back to Reports', count=1)
+                self.assertNotContains(response, 'Download PDF')
+                self.assertNotContains(response, 'Open for Printing')
+                back = self.client.get(reverse('reports:dashboard'))
+                self.assertEqual(back.status_code, 302)
+                self.assertEqual(back['Location'], reverse(destination))
+
     def test_generated_report_delivery_rejects_other_roles_and_office(self):
         self.client.force_login(self.users['engineer', 'head'])
         self.client.post(reverse(

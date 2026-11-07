@@ -10,6 +10,8 @@ from .models import InfrastructureProject, NonInfrastructureProject, NonInfrastr
 class OfficePublicationIntegrationTests(TestCase):
     def test_both_offices_publish_and_replace_only_approved_snapshots(self):
         from apps.infrastructure.tests import InfrastructureProjectFormTests
+        from apps.infrastructure.tests import project_picture as infra_picture
+        from apps.non_infrastructure.tests import project_picture as noninfra_picture
         fixture = InfrastructureProjectFormTests()
         fixture.setUp()
         category = NonInfrastructureCategory.objects.create(type_code='integration', type_name='Integration')
@@ -19,10 +21,15 @@ class OfficePublicationIntegrationTests(TestCase):
             ('mayor', NonInfrastructureProject, 'mayor_projects:non_infrastructure_project', 'title', {
                 'title': 'Community event', 'description': 'Integration program',
                 'category': category.pk, 'status': 'planned', 'proponent': 'Mayor Office',
-                'beneficiaries': '10', 'event_date': '2026-09-01', 'start_time': '08:00',
+                'beneficiaries': '10', 'event_date': '2026-09-01',
+                'implementation_start_date': '2026-09-01',
+                'implementation_end_date': '2026-09-01', 'start_time': '08:00',
                 'end_time': '09:00', 'venue_name': 'Plaza', 'barangay': 'bagting',
             }, 'public_non_infrastructure_project_detail'),
         ]:
+            payload['project_images'] = (
+                infra_picture() if office == 'engineer' else noninfra_picture()
+            )
             staff = User.objects.create_user(office + '-staff', is_staff=True)
             head = User.objects.create_user(office + '-head', is_staff=True)
             UserRole.objects.create(user=staff, department=office, role='staff')
@@ -34,6 +41,9 @@ class OfficePublicationIntegrationTests(TestCase):
             for version in [1, 2]:
                 title = f'{office} approved version {version}'
                 payload[title_key] = title
+                payload['project_images'] = (
+                    infra_picture() if office == 'engineer' else noninfra_picture()
+                )
                 self.client.force_login(staff)
                 self.assertEqual(self.client.post(reverse(prefix + '_update', args=[record.pk]), payload).status_code, 302)
                 if previous:

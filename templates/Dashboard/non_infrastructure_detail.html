@@ -47,7 +47,6 @@
       </div>
       <div class="public-detail__summary" aria-label="Program summary">
         <div class="summary-item"><span>Status</span><strong>{{ public_project.status_label|default:"N/A" }}</strong></div>
-        <div class="summary-item"><span>Beneficiaries</span><strong>{{ public_project.beneficiaries|default_if_none:"N/A" }}</strong></div>
         {% if public_project.implementation_start_date or public_project.implementation_end_date %}<div class="summary-item"><span>Implementation</span><strong>{{ public_project.implementation_start_date|date:"M j, Y"|default:"TBA" }} – {{ public_project.implementation_end_date|date:"M j, Y"|default:"TBA" }}</strong></div>{% endif %}
         {% if public_project.venue_name %}<div class="summary-item"><span>Venue</span><strong>{{ public_project.venue_name }}</strong></div>{% endif %}
       </div>
@@ -76,10 +75,11 @@
     </section>
     {% endif %}
 
-    {% if public_project.sponsored_by or public_project.target_beneficiaries or public_project.project_cost is not None or public_project.procurement_description %}
-    <section class="public-detail__section"><h2>Project-Specific Information</h2><div class="detail-grid">
-      {% if public_project.sponsored_by %}<div class="detail-item"><span>Sponsored By</span><strong>{{ public_project.sponsored_by }}</strong></div>{% endif %}
+    {% if public_project.beneficiaries is not None or public_project.target_beneficiaries or public_project.sponsored_by or public_project.project_cost is not None or public_project.procurement_description %}
+    <section class="public-detail__section"><h2>Project Specific Information</h2><div class="detail-grid">
+      {% if public_project.beneficiaries is not None %}<div class="detail-item"><span>Beneficiaries</span><strong>{{ public_project.beneficiaries }}</strong></div>{% endif %}
       {% if public_project.target_beneficiaries %}<div class="detail-item"><span>Beneficiary Type</span><strong>{{ public_project.target_beneficiaries }}</strong></div>{% endif %}
+      {% if public_project.sponsored_by %}<div class="detail-item"><span>Sponsored By</span><strong>{{ public_project.sponsored_by }}</strong></div>{% endif %}
       {% if public_project.procurement_description %}<div class="detail-item"><span>Procurement Description</span><strong>{{ public_project.procurement_description }}</strong></div>{% endif %}
       {% if public_project.quantity %}<div class="detail-item"><span>Quantity</span><strong>{{ public_project.quantity }}</strong></div>{% endif %}
       {% if public_project.project_cost is not None %}<div class="detail-item"><span>Project Cost</span><strong>{{ public_project.project_cost|peso }}</strong></div>{% endif %}

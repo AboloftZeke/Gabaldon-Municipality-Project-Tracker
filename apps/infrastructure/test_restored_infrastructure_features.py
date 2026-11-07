@@ -72,12 +72,16 @@ class InfrastructureRestoredFeatureTests(TestCase):
                 self.assertNotContains(response, '<label for="id_longitude">')
 
     def test_create_and_edit_persist_map_selected_coordinates(self):
+        from apps.infrastructure.tests import project_picture
+
+        payload = self.fixture.valid_data(
+            latitude='15.4541234',
+            longitude='121.3375123',
+        )
+        payload['project_images'] = project_picture()
         response = self.client.post(
             self.create_url,
-            self.fixture.valid_data(
-                latitude='15.4541234',
-                longitude='121.3375123',
-            ),
+            payload,
         )
         self.assertEqual(response.status_code, 302)
         created = self.infrastructure.__class__.objects.exclude(

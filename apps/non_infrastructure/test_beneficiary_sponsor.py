@@ -92,6 +92,14 @@ class BeneficiarySponsorTests(TestCase):
         self.assertContains(response, 'Farmers')
         self.assertNotContains(response, 'Private Draft Sponsor')
         self.assertNotContains(response, 'Unpublished Group')
+        content = response.content.decode()
+        beneficiaries_position = content.index('<span>Beneficiaries</span>')
+        beneficiary_type_position = content.index('<span>Beneficiary Type</span>')
+        sponsored_by_position = content.index('<span>Sponsored By</span>')
+        self.assertLess(beneficiaries_position, beneficiary_type_position)
+        self.assertLess(beneficiary_type_position, sponsored_by_position)
+        self.assertEqual(content.count('<span>Beneficiaries</span>'), 1)
+        self.assertIn('<h2>Project Specific Information</h2>', content)
         revision.refresh_from_db()
         self.assertEqual(revision.snapshot, original)
 
@@ -121,6 +129,7 @@ class BeneficiarySponsorTests(TestCase):
         payload = self.training_form(
             target_beneficiaries='Farmer cooperatives', sponsored_by='Initial Foundation',
         ).data.copy()
+        payload['project_images'] = fixtures.project_picture()
         self.assertEqual(self.client.post(reverse(
             'mayor_projects:non_infrastructure_project_create',
         ), payload).status_code, 302)
@@ -139,6 +148,7 @@ class BeneficiarySponsorTests(TestCase):
         }).status_code, 302)
         self.client.force_login(self.user)
         payload.update(target_beneficiaries='Barangay farmer cooperatives', sponsored_by='Corrected Foundation')
+        payload['project_images'] = fixtures.project_picture()
         self.assertEqual(self.client.post(reverse(
             'mayor_projects:non_infrastructure_project_update', args=[project.pk],
         ), payload).status_code, 302)

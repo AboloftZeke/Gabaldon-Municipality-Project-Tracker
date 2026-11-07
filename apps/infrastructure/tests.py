@@ -1,7 +1,9 @@
 from decimal import Decimal
+from io import BytesIO
 
 from django import forms
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
@@ -16,6 +18,15 @@ from apps.system.models import (
     ProjectInspection,
     UserRole,
 )
+
+
+def project_picture(name='project.png'):
+    from PIL import Image
+
+    image = Image.new('RGB', (1, 1), color='blue')
+    payload = BytesIO()
+    image.save(payload, format='PNG')
+    return SimpleUploadedFile(name, payload.getvalue(), content_type='image/png')
 
 
 class InfrastructureProjectFormTests(TestCase):
@@ -72,7 +83,10 @@ class InfrastructureProjectFormTests(TestCase):
         return data
 
     def create_project(self, **overrides):
-        form = InfrastructureProjectForm(data=self.valid_data(**overrides))
+        form = InfrastructureProjectForm(
+            data=self.valid_data(**overrides),
+            files={'project_images': [project_picture()]},
+        )
         self.assertTrue(form.is_valid(), form.errors)
         return form.save(user=self.user)
 
@@ -123,6 +137,8 @@ class InfrastructureProjectFormTests(TestCase):
         self.assertContains(response, 'data-wizard-next')
         self.assertContains(response, 'data-wizard-back')
         self.assertContains(response, 'data-wizard-submit')
+        self.assertRegex(response.content.decode(), r'name="project_images"[^>]* required')
+        self.assertContains(response, 'class="required-label">Required')
 
     def test_edit_form_renders_sections_and_existing_values(self):
         infrastructure = self.create_project()
@@ -154,11 +170,13 @@ class InfrastructureProjectFormTests(TestCase):
         )
         self.client.force_login(self.user)
         create_url = reverse('engineering_projects:project_create')
-        response = self.client.post(create_url, self.valid_data(
+        payload = self.valid_data(
             status='completed',
             physical_progress_percentage='100',
             cost_progress_percentage='100',
-        ))
+        )
+        payload['project_images'] = project_picture()
+        response = self.client.post(create_url, payload)
         self.assertEqual(response.status_code, 302)
         infrastructure = Project.objects.filter(
             created_by_user=self.user,
@@ -219,6 +237,33 @@ class InfrastructureProjectFormTests(TestCase):
             financial.actual_expenditure,
             Decimal('500000.00'),
         )
+        self.assertEqual(infra.project.images.count(), 1)
+
+    def test_create_requires_a_valid_project_picture(self):
+        form = InfrastructureProjectForm(data=self.valid_data())
+        self.assertFalse(form.is_valid())
+        self.assertIn('project_images', form.errors)
+        self.assertIn('at least one project picture', str(form.errors['project_images']))
+
+        invalid_form = InfrastructureProjectForm(
+            data=self.valid_data(),
+            files={'project_images': [SimpleUploadedFile(
+                'not-an-image.jpg', b'not an image', content_type='image/jpeg',
+            )]},
+        )
+        self.assertFalse(invalid_form.is_valid())
+        self.assertIn('project_images', invalid_form.errors)
+
+    def test_existing_pictureless_project_can_be_edited_without_reupload(self):
+        infrastructure = self.create_project()
+        infrastructure.project.images.all().delete()
+        form = InfrastructureProjectForm(
+            data=self.valid_data(title='Edited without a photo'),
+            instance=infrastructure,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save(user=self.user, instance=infrastructure)
+        self.assertEqual(infrastructure.project.images.count(), 0)
 
     def test_edit_form_preloads_normalized_relationships(self):
         infra = self.create_project()
@@ -430,6 +475,7 @@ class InfrastructureProjectFormTests(TestCase):
 
     def test_image_edit_deletes_selected_image_and_changes_cover(self):
         infra = self.create_project()
+        infra.project.images.all().delete()
         first = ProjectImage.objects.create(
             project=infra.project,
             image_url='https://example.com/first.jpg',

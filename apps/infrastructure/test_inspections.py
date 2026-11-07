@@ -487,7 +487,7 @@ class InfrastructureInspectionHistoryTests(TestCase):
         response = self.client.get(self.detail_url)
         self.assertContains(response, 'data-image-src="/media/projects/test/project.jpg"')
         self.assertContains(response, 'data-image-src="/media/inspections/test/inspection.jpg"')
-        self.assertContains(response, 'data-image-viewer-trigger', count=2)
+        self.assertContains(response, 'data-image-viewer-trigger', count=3)
         self.assertContains(response, 'data-image-viewer-image')
         self.assertContains(response, 'aria-label="Close image preview"')
         self.assertNotContains(response, 'href="/media/inspections/test/inspection.jpg" target="_blank"')

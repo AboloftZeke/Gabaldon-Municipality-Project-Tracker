@@ -1,3 +1,5 @@
+from io import BytesIO
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -14,6 +16,15 @@ from apps.system.models import (
     ProjectImage,
     UserRole,
 )
+
+
+def project_picture(name='program.png', color='green'):
+    from PIL import Image
+
+    image = Image.new('RGB', (1, 1), color=color)
+    payload = BytesIO()
+    image.save(payload, format='PNG')
+    return SimpleUploadedFile(name, payload.getvalue(), content_type='image/png')
 
 
 class NonInfrastructureProjectDashboardTests(TestCase):
@@ -90,7 +101,10 @@ class NonInfrastructureProjectFormTests(TestCase):
             'barangay': 'bagting',
         }
         data.update(overrides)
-        return NonInfrastructureProjectForm(data=data)
+        return NonInfrastructureProjectForm(
+            data=data,
+            files={'project_images': [project_picture()]},
+        )
 
     def test_create_form_renders_six_step_wizard(self):
         form = NonInfrastructureProjectForm()
@@ -138,6 +152,8 @@ class NonInfrastructureProjectFormTests(TestCase):
             content,
         )
         self.assertIn('data-wizard-submit', content)
+        self.assertRegex(content, r'name="project_images"[^>]* required')
+        self.assertIn('class="required-label">Required', content)
         self.assertIn('js/templates/projects/project_form.js', content)
 
     def test_edit_form_renders_wizard_with_existing_values_and_images(self):
@@ -199,8 +215,8 @@ class NonInfrastructureProjectFormTests(TestCase):
             },
             files={
                 'project_images': [
-                    SimpleUploadedFile('one.jpg', b'content-one', content_type='image/jpeg'),
-                    SimpleUploadedFile('two.jpg', b'content-two', content_type='image/jpeg'),
+                    project_picture('one.png', color='blue'),
+                    project_picture('two.png', color='red'),
                 ]
             },
         )
@@ -225,6 +241,54 @@ class NonInfrastructureProjectFormTests(TestCase):
             saved_urls[1],
         )
 
+    def test_create_requires_a_valid_project_picture_and_associates_it(self):
+        form = self.training_form()
+        form.files = {}
+        self.assertFalse(form.is_valid())
+        self.assertIn('project_images', form.errors)
+
+        invalid_form = self.training_form()
+        invalid_form.files = {'project_images': [SimpleUploadedFile(
+            'not-an-image.jpg', b'not an image', content_type='image/jpeg',
+        )]}
+        self.assertFalse(invalid_form.is_valid())
+        self.assertIn('project_images', invalid_form.errors)
+
+        valid_form = self.training_form()
+        self.assertTrue(valid_form.is_valid(), valid_form.errors)
+        created = valid_form.save(user=self.user)
+        self.assertEqual(created.project.images.count(), 1)
+        self.assertEqual(created.project.images.first().project_id, created.project_id)
+
+    def test_existing_pictureless_project_can_be_edited_and_existing_images_are_preserved(self):
+        pictureless = NonInfrastructureProject.objects.create(
+            project=Project.objects.create(project_type='non_infrastructure'),
+            title='Older Pictureless Program',
+            category=self.category,
+            implementation_start_date='2026-10-01',
+            implementation_end_date='2026-10-15',
+        )
+        form = NonInfrastructureProjectForm(
+            data=self.training_form(title='Edited Older Program').data,
+            instance=pictureless,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save(user=self.user, instance=pictureless)
+        self.assertEqual(pictureless.project.images.count(), 0)
+
+        existing = ProjectImage.objects.create(
+            project=pictureless.project,
+            image_url='https://example.com/kept.jpg',
+            is_cover=True,
+        )
+        edit_form = NonInfrastructureProjectForm(
+            data=self.training_form(title='Edited with existing picture').data,
+            instance=pictureless,
+        )
+        self.assertTrue(edit_form.is_valid(), edit_form.errors)
+        edit_form.save(user=self.user, instance=pictureless)
+        self.assertTrue(pictureless.project.images.filter(pk=existing.pk).exists())
+
     def test_form_rejects_end_time_before_start_time(self):
         form = NonInfrastructureProjectForm(data={
             'title': 'Community Program',
@@ -239,7 +303,7 @@ class NonInfrastructureProjectFormTests(TestCase):
             'end_time': '12:00',
             'venue_name': 'Municipal Hall',
             'barangay': 'bagting',
-        })
+        }, files={'project_images': [project_picture()]})
 
         self.assertFalse(form.is_valid())
         self.assertEqual(
@@ -261,7 +325,7 @@ class NonInfrastructureProjectFormTests(TestCase):
             'end_time': '13:00',
             'venue_name': 'Municipal Hall',
             'barangay': 'bagting',
-        })
+        }, files={'project_images': [project_picture()]})
 
         self.assertFalse(form.is_valid())
         self.assertEqual(
@@ -280,7 +344,7 @@ class NonInfrastructureProjectFormTests(TestCase):
             'implementation_start_date': '2026-10-01',
             'implementation_end_date': '2026-12-15',
             'barangay': 'bagting',
-        })
+        }, files={'project_images': [project_picture()]})
 
         self.assertTrue(form.is_valid(), form.errors)
         project = form.save(user=self.user)
@@ -374,7 +438,7 @@ class NonInfrastructureProjectFormTests(TestCase):
             'implementation_start_date': '2026-09-01',
             'implementation_end_date': '2026-09-02',
             'barangay': 'bagting',
-        })
+        }, files={'project_images': [project_picture()]})
 
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data['start_time'], None)
@@ -425,8 +489,8 @@ class NonInfrastructureProjectFormTests(TestCase):
             },
             files={
                 'project_images': [
-                    SimpleUploadedFile('new-one.jpg', b'content-one', content_type='image/jpeg'),
-                    SimpleUploadedFile('new-two.jpg', b'content-two', content_type='image/jpeg'),
+                    project_picture('new-one.png', color='blue'),
+                    project_picture('new-two.png', color='red'),
                 ]
             },
         )

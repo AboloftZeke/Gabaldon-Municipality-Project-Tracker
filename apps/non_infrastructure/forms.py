@@ -35,6 +35,19 @@ class MultipleFileField(forms.FileField):
         return cleaned
 
 
+class MultipleImageField(forms.ImageField):
+    def clean(self, data, initial=None):
+        if not isinstance(data, (list, tuple)):
+            data = [data]
+
+        cleaned = []
+        for item in data:
+            if item in self.empty_values:
+                continue
+            cleaned.append(super().clean(item, initial))
+        return cleaned
+
+
 class NonInfrastructureProgressUpdateForm(forms.Form):
     """Save a staff proposal and its evidence without changing official status."""
 
@@ -249,7 +262,7 @@ class NonInfrastructureProjectForm(forms.Form):
         widget=forms.TextInput(attrs={'readonly': 'readonly'}),
         disabled=True,
     )
-    project_images = MultipleFileField(
+    project_images = MultipleImageField(
         required=False,
         widget=MultipleFileInput(attrs={'accept': 'image/*'}),
     )
@@ -267,6 +280,7 @@ class NonInfrastructureProjectForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         super().__init__(*args, **kwargs)
+        self.fields['project_images'].required = self.instance is None
 
         self._ensure_categories_exist()
         self.fields['category'].queryset = NonInfrastructureCategory.objects.all().order_by('type_name')
@@ -331,6 +345,12 @@ class NonInfrastructureProjectForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        uploads = cleaned_data.get('project_images') or []
+        if self.instance is None and not uploads:
+            self.add_error(
+                'project_images',
+                'Upload at least one project picture before creating the project.',
+            )
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
 

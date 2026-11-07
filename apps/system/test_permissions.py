@@ -219,7 +219,11 @@ class ProjectCapabilityTests(TestCase):
                     request.user = user
 
     def test_staff_can_create_and_update_through_real_forms(self):
-        from apps.infrastructure.tests import InfrastructureProjectFormTests
+        from apps.infrastructure.tests import (
+            InfrastructureProjectFormTests,
+            project_picture as infra_picture,
+        )
+        from apps.non_infrastructure.tests import project_picture as noninfra_picture
         from .models import NonInfrastructureCategory
 
         # Reuse the established infrastructure valid-payload fixture.
@@ -230,13 +234,20 @@ class ProjectCapabilityTests(TestCase):
         noninfra_data = {
             'title': 'Staff program', 'description': 'Community event',
             'category': category.pk, 'status': 'planned',
-            'proponent': 'Mayor Office', 'beneficiaries': '10', 'event_date': '2026-09-01',
+            'proponent': 'Mayor Office', 'beneficiaries': '10',
+            'implementation_start_date': '2026-09-01',
+            'implementation_end_date': '2026-09-01',
+            'event_date': '2026-09-01',
             'start_time': '08:00', 'end_time': '09:00', 'venue_name': 'Plaza', 'barangay': 'bagting',
         }
         for office, data, model, title_field in [
             ('engineer', infra_data, InfrastructureProject, 'title'),
             ('mayor', noninfra_data, NonInfrastructureProject, 'title'),
         ]:
+            data['project_images'] = (
+                infra_picture()
+                if office == 'engineer' else noninfra_picture()
+            )
             self.client.force_login(self.accounts[office, 'staff'])
             response = self.client.post(self.urls(office)['create'], data)
             self.assertEqual(response.status_code, 302, getattr(response, 'context', None))
@@ -244,6 +255,10 @@ class ProjectCapabilityTests(TestCase):
             self.assertEqual(record.project.created_by_user, self.accounts[office, 'staff'])
             payload_title = 'title' if office == 'engineer' else 'title'
             data[payload_title] = 'Updated by Staff'
+            data['project_images'] = (
+                infra_picture()
+                if office == 'engineer' else noninfra_picture()
+            )
             prefix = 'engineering_projects:project' if office == 'engineer' else 'mayor_projects:non_infrastructure_project'
             response = self.client.post(reverse(prefix + '_update', args=[record.pk]), data)
             self.assertEqual(response.status_code, 302)

@@ -409,7 +409,7 @@
                 <div class="image-upload-text">
 
                     <span class="image-upload-title">
-                        Add project photos
+                        Add project photos{% if action == 'Create' %} <span class="required-indicator" aria-label="required">*</span><span class="required-label">Required</span>{% endif %}
                     </span>
 
                     <span class="image-upload-subtitle">
