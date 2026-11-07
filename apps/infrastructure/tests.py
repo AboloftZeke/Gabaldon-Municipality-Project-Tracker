@@ -161,6 +161,33 @@ class InfrastructureProjectFormTests(TestCase):
         self.assertContains(response, 'Road Improvement Project')
         self.assertContains(response, 'id="project-photos"')
 
+    def test_dashboard_hides_edit_only_for_published_projects(self):
+        infrastructure = self.create_project()
+        UserRole.objects.update_or_create(
+            user=self.user,
+            defaults={'department': 'engineer', 'role': 'staff'},
+        )
+        self.client.force_login(self.user)
+        dashboard_url = reverse('engineering_projects:project_dashboard')
+        edit_url = reverse(
+            'engineering_projects:project_update',
+            args=[infrastructure.pk],
+        )
+
+        unpublished = self.client.get(dashboard_url)
+        self.assertContains(unpublished, edit_url)
+        self.assertContains(unpublished, 'View')
+
+        Project.objects.filter(pk=infrastructure.project_id).update(
+            is_published=True,
+        )
+        published = self.client.get(dashboard_url)
+        self.assertNotContains(published, edit_url)
+        self.assertNotContains(published, '>Edit<')
+        self.assertContains(published, 'View')
+
+        self.assertEqual(self.client.get(edit_url).status_code, 200)
+
     def test_staff_creation_keeps_official_operational_values_for_head(self):
         self.user.is_staff = True
         self.user.save(update_fields=['is_staff'])

@@ -146,7 +146,7 @@
                                     View
                                 </a>
 
-                                {% if not account_navigation.is_head %}<a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}"
+                                {% if not account_navigation.is_head and not project.project.is_published %}<a href="{% url 'mayor_projects:non_infrastructure_project_update' project.pk %}"
                                    class="btn-small ui-button ui-button--subtle ui-button--small">
                                     Edit
                                 </a>{% endif %}

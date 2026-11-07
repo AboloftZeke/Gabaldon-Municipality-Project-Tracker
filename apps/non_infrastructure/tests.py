@@ -73,6 +73,42 @@ class NonInfrastructureProjectDashboardTests(TestCase):
                 html=True,
             )
 
+    def test_dashboard_hides_edit_only_for_published_projects(self):
+        user = get_user_model().objects.create_user(
+            username='mayor-readonly-test',
+            password='testpass123',
+        )
+        UserRole.objects.create(user=user, department='mayor', role='staff')
+        base_project = Project.objects.create(
+            project_type='non_infrastructure',
+            created_by_user=user,
+        )
+        project = NonInfrastructureProject.objects.create(
+            project=base_project,
+            title='Dashboard edit visibility program',
+            status='ongoing',
+        )
+        self.client.force_login(user)
+        dashboard_url = reverse(
+            'mayor_projects:non_infrastructure_project_dashboard',
+        )
+        edit_url = reverse(
+            'mayor_projects:non_infrastructure_project_update',
+            args=[project.pk],
+        )
+
+        unpublished = self.client.get(dashboard_url)
+        self.assertContains(unpublished, edit_url)
+        self.assertContains(unpublished, 'View')
+
+        Project.objects.filter(pk=base_project.pk).update(is_published=True)
+        published = self.client.get(dashboard_url)
+        self.assertNotContains(published, edit_url)
+        self.assertNotContains(published, '>Edit<')
+        self.assertContains(published, 'View')
+
+        self.assertEqual(self.client.get(edit_url).status_code, 200)
+
 
 class NonInfrastructureProjectFormTests(TestCase):
     def setUp(self):

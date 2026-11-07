@@ -168,7 +168,7 @@
                         </a>
 
 
-                        {% if not account_navigation.is_head %}<a
+                        {% if not account_navigation.is_head and not project.project.is_published %}<a
                             href="{% url 'engineering_projects:project_update' project.pk %}"
                             class="btn-small btn-edit ui-button ui-button--subtle ui-button--small"
                         >
