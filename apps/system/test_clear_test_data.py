@@ -218,15 +218,29 @@ class ClearTestDataCommandTests(TestCase):
 
     def test_unexpected_failure_rolls_back_deletions(self):
         def delete_then_fail(scope_name, scope):
-            ProjectRevision.objects.filter(
-                project_id__in=scope['project_ids'],
+            NonInfrastructureEvidence.objects.filter(
+                progress_update__non_infrastructure_id__in=scope[
+                    'non_infrastructure_ids'
+                ],
             ).delete()
             raise RuntimeError('simulated cleanup failure')
 
+        error_output = StringIO()
         with patch.object(Command, '_delete_scope', side_effect=delete_then_fail):
             with self.assertRaises(CommandError):
-                call_command('clear_test_data', '--non-infra', '--confirm', stdout=StringIO())
+                call_command(
+                    'clear_test_data',
+                    '--non-infra',
+                    '--confirm',
+                    stdout=StringIO(),
+                    stderr=error_output,
+                )
 
+        self.assertIn(
+            'Cleanup exception: RuntimeError: simulated cleanup failure',
+            error_output.getvalue(),
+        )
+        self.assertIn('Traceback (most recent call last)', error_output.getvalue())
         self.assertTrue(ProjectRevision.objects.filter(pk=self.revision.pk).exists())
         self.assertTrue(Project.objects.filter(pk=self.non_infrastructure_base.pk).exists())
         self.assertTrue(NonInfrastructureEvidence.objects.exists())
