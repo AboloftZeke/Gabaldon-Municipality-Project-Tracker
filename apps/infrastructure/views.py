@@ -37,6 +37,7 @@ from apps.system.publication_service import (
     create_head_operational_revision,
     publication_readiness,
     publication_state,
+    save_project_edit_revision,
     submit_project_for_review,
 )
 from apps.system.publication_workflow import PublicationStatus
@@ -1105,7 +1106,10 @@ class ProjectEditView(EngineerOnlyMixin, UpdateView):
     template_name = 'projects/project_form.html'
 
     def get_success_url(self):
-        return reverse('engineering_projects:project_list')
+        return reverse(
+            'engineering_projects:project_detail',
+            args=[self.object.pk],
+        )
 
     def get_queryset(self):
         return InfrastructureProject.objects.all()
@@ -1116,7 +1120,12 @@ class ProjectEditView(EngineerOnlyMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        infra = form.save(user=self.request.user, instance=self.get_object())
+        with transaction.atomic():
+            infra = form.save(
+                user=self.request.user,
+                instance=self.get_object(),
+            )
+            save_project_edit_revision(infra.project, self.request.user)
         self.object = infra
         return redirect(self.get_success_url())
 

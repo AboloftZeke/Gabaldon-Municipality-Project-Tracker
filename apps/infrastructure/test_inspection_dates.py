@@ -2,6 +2,7 @@ from datetime import timedelta
 from datetime import datetime, time
 from unittest.mock import patch
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -56,11 +57,45 @@ class InspectionDateTests(TestCase):
         self.add(20)
         self.assertEqual(self.post(19).status_code, 302)
 
-    def test_historical_inspection_is_allowed_after_a_newer_inspection(self):
+    def test_new_inspection_must_be_later_than_the_previous_inspection(self):
         self.add(20)
         response = self.post(21)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(self.infrastructure.project.inspections.count(), 2)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            'The next inspection date must be later than the previous inspection date.',
+            response.context['form'].errors['inspection_date'][0],
+        )
+        self.assertEqual(self.infrastructure.project.inspections.count(), 1)
+
+    def test_model_save_rejects_out_of_order_inspection_dates(self):
+        self.add(20)
+        with self.assertRaisesMessage(
+            ValidationError,
+            'The next inspection date must be later than the previous inspection date.',
+        ):
+            ProjectInspection.objects.create(
+                project=self.infrastructure.project,
+                inspection_date=self.today - timedelta(days=21),
+                completion_percentage=10,
+            )
+
+    def test_model_save_cannot_edit_a_date_outside_its_history_neighbours(self):
+        self.add(30)
+        middle = self.add(20)
+        self.add(10)
+        middle.inspection_date = self.today - timedelta(days=31)
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            'Changing this inspection date would make the inspection history inconsistent.',
+        ):
+            middle.save()
+
+        middle.refresh_from_db()
+        self.assertEqual(
+            middle.inspection_date,
+            self.today - timedelta(days=20),
+        )
 
     def test_duplicate_date_rejected_even_for_nonlatest_record(self):
         self.add(20)

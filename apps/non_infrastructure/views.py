@@ -24,6 +24,7 @@ from apps.system.publication_service import (
     confirm_head_operational_information,
     publication_readiness,
     publication_state,
+    save_project_edit_revision,
     submit_project_for_review,
 )
 from apps.system.publication_workflow import PublicationStatus
@@ -874,7 +875,10 @@ class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
     template_name = 'non_infrastructure/non_infrastructure_form.html'
 
     def get_success_url(self):
-        return reverse('mayor_projects:non_infrastructure_project_list')
+        return reverse(
+            'mayor_projects:non_infrastructure_project_detail',
+            args=[self.object.pk],
+        )
 
     def get_queryset(self):
         return NonInfrastructureProject.objects.select_related('project', 'address', 'category').prefetch_related(Prefetch('project__images', queryset=ProjectImage.objects.order_by('-is_cover', '-created_at')))
@@ -885,7 +889,12 @@ class NonInfrastructureProjectEditView(MayorsOfficeEditMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        non = form.save(user=self.request.user, instance=self.get_object())
+        with transaction.atomic():
+            non = form.save(
+                user=self.request.user,
+                instance=self.get_object(),
+            )
+            save_project_edit_revision(non.project, self.request.user)
         self.object = non
         return redirect(self.get_success_url())
 

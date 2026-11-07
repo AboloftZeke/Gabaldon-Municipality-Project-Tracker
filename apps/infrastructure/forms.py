@@ -814,20 +814,11 @@ class InfrastructureInspectionForm(forms.ModelForm):
             raise forms.ValidationError('Inspection date cannot be in the future.')
         if self.project is None:
             return inspection_date
-        others = self.project.inspections.exclude(pk=self.instance.pk)
-        if others.filter(inspection_date=inspection_date).exists():
-            raise forms.ValidationError('An inspection already exists for this project on this date.')
-        if self.instance.pk:
-            # Keep an edited record between its original chronological neighbours.
-            original_date = type(self.instance).objects.values_list(
-                'inspection_date', flat=True,
-            ).get(pk=self.instance.pk)
-            previous = others.filter(inspection_date__lt=original_date).order_by('-inspection_date').first()
-            following = others.filter(inspection_date__gt=original_date).order_by('inspection_date').first()
-            if previous and inspection_date <= previous.inspection_date:
-                raise forms.ValidationError('Inspection date must be later than the previous inspection date.')
-            if following and inspection_date >= following.inspection_date:
-                raise forms.ValidationError('Inspection date must be earlier than the following inspection date.')
+        date_error = self.instance.inspection_date_validation_error(
+            inspection_date,
+        )
+        if date_error:
+            raise forms.ValidationError(date_error)
         return inspection_date
 
     def _validate_uploads(

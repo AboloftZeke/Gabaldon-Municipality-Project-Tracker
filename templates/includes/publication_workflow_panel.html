@@ -22,7 +22,7 @@
     {% elif publication.status_key == 'approved' %}
         <p>Revision {{ publication.revision_number }} was approved and is waiting for the office Head to publish it.</p>
     {% elif publication.status_key == 'published' %}
-        <p>Revision {{ publication.revision_number }} is currently visible on the public dashboard.</p>
+        <p>Revision {{ publication.revision_number }} is currently visible on the public dashboard. Edits are saved as a private draft and remain unpublished until the office Head reviews and publishes them.</p>
     {% elif publication.status_key == 'rejected' %}
         <p>The latest submission was rejected. You may edit the project and submit a new revision.</p>
     {% elif publication.status_key == 'archived' %}

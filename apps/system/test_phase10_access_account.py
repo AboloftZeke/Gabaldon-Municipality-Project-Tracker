@@ -37,8 +37,9 @@ class InternalRouteAccessTests(TestCase):
             snapshot=build_project_publication_snapshot(mayor_base),
         )
         self.revision = ProjectRevision.objects.create(
-            project=infra_base, revision_number=1, status='pending_review',
+            project=infra_base, revision_number=1, status='published',
             snapshot=build_project_publication_snapshot(infra_base),
+            is_current_public=True,
         )
         self.update = NonInfrastructureProgressUpdate.objects.create(
             non_infrastructure=self.mayor,
@@ -148,8 +149,8 @@ class InternalRouteAccessTests(TestCase):
     def test_cross_office_and_head_staff_action_boundaries(self):
         routes = self.protected_routes()
         denied = {
-            self.mayor_staff: ('engineering_list', 'engineering_detail', 'engineering_create', 'engineering_operations', 'revision_queue', 'progress_review'),
-            self.engineer_staff: ('mayor_list', 'mayor_detail', 'mayor_create', 'mayor_operations', 'progress_create', 'progress_review', 'revision_review'),
+            self.mayor_staff: ('engineering_list', 'engineering_detail', 'engineering_create', 'engineering_edit', 'engineering_operations', 'revision_queue', 'progress_review'),
+            self.engineer_staff: ('mayor_list', 'mayor_detail', 'mayor_create', 'mayor_edit', 'mayor_operations', 'progress_create', 'progress_review', 'revision_review'),
             self.mayor_head: ('engineering_operations', 'engineering_inspection', 'engineering_submit', 'progress_create', 'progress_submit'),
             self.engineer_head: ('mayor_operations', 'mayor_create', 'mayor_submit', 'progress_approve', 'progress_apply', 'engineering_create'),
             self.admin: ('progress_create', 'progress_approve', 'progress_apply', 'engineering_operations', 'mayor_operations', 'revision_review'),
@@ -169,11 +170,13 @@ class InternalRouteAccessTests(TestCase):
             (self.admin, 'admin_dashboard'), (self.admin, 'user_create'),
             (self.admin, 'publication_lifecycle'),
             (self.engineer_staff, 'engineering_list'),
+            (self.engineer_staff, 'engineering_edit'),
             (self.engineer_staff, 'engineering_create'),
             (self.engineer_head, 'engineering_head_dashboard'),
             (self.engineer_head, 'revision_queue'),
             (self.engineer_head, 'infrastructure_report'),
             (self.mayor_staff, 'mayor_staff_dashboard'),
+            (self.mayor_staff, 'mayor_edit'),
             (self.mayor_head, 'mayor_head_dashboard'),
             (self.mayor_head, 'progress_queue'),
             (self.mayor_head, 'progress_review'),

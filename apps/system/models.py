@@ -873,6 +873,12 @@ class ProjectInspection(models.Model):
                     'Inspection time cannot be in the future.'
                 )
 
+            date_error = self.inspection_date_validation_error(
+                self.inspection_date,
+            )
+            if date_error:
+                errors['inspection_date'] = date_error
+
             base_date = self._project_base_date()
             if base_date and self.inspection_date < base_date:
                 errors['inspection_date'] = (
@@ -880,6 +886,53 @@ class ProjectInspection(models.Model):
                 )
         if errors:
             raise ValidationError(errors)
+
+    def inspection_date_validation_error(self, inspection_date):
+        if (
+            not self.project_id
+            or self.project.project_type != 'infrastructure'
+        ):
+            return None
+
+        others = type(self).objects.filter(
+            project_id=self.project_id,
+        ).exclude(pk=self.pk)
+        if others.filter(inspection_date=inspection_date).exists():
+            return (
+                'An inspection already exists for this project on the '
+                'selected date.'
+            )
+
+        if self.pk:
+            original_date = type(self).objects.values_list(
+                'inspection_date',
+                flat=True,
+            ).get(pk=self.pk)
+            previous = others.filter(
+                inspection_date__lt=original_date,
+            ).order_by('-inspection_date').first()
+            following = others.filter(
+                inspection_date__gt=original_date,
+            ).order_by('inspection_date').first()
+            if (
+                (previous and inspection_date <= previous.inspection_date)
+                or (following and inspection_date >= following.inspection_date)
+            ):
+                return (
+                    'Changing this inspection date would make the '
+                    'inspection history inconsistent.'
+                )
+        else:
+            previous = others.order_by(
+                '-inspection_date',
+                '-inspection_id',
+            ).first()
+            if previous and inspection_date <= previous.inspection_date:
+                return (
+                    'The next inspection date must be later than the '
+                    'previous inspection date.'
+                )
+        return None
 
     def _project_base_date(self):
         if not self.project_id:

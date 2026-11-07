@@ -50,7 +50,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.infrastructure.save()
         self.inspection = ProjectInspection.objects.create(
             project=self.infrastructure.project,
-            inspection_date=date.today(),
+            inspection_date=date.today() - timedelta(days=5),
             completion_percentage=Decimal('30'),
         )
         InspectionEvidence.objects.create(
@@ -192,7 +192,7 @@ class HeadOperationalUpdateTests(TestCase):
         )
 
     def test_head_can_link_multiple_project_inspections_without_copying_progress(self):
-        earlier_inspection = ProjectInspection.objects.create(
+        later_inspection = ProjectInspection.objects.create(
             project=self.infrastructure.project,
             inspection_date=date.today() - timedelta(days=2),
             inspection_type='progress',
@@ -200,20 +200,20 @@ class HeadOperationalUpdateTests(TestCase):
             inspected_by_user=self.users['engineer', 'staff'],
         )
         InspectionEvidence.objects.create(
-            inspection=earlier_inspection,
+            inspection=later_inspection,
             evidence_type='image',
-            original_name='earlier.jpg',
-            storage_name='inspections/test/earlier.jpg',
-            file_url='/media/inspections/test/earlier.jpg',
+            original_name='later.jpg',
+            storage_name='inspections/test/later.jpg',
+            file_url='/media/inspections/test/later.jpg',
         )
         self.client.force_login(self.users['engineer', 'head'])
 
         response = self.client.post(self.infra_url(), {
             'status': 'completed',
-            'physical_progress_percentage': '61',
+            'physical_progress_percentage': '60',
             'head_remarks': 'Supported by two field inspections.',
             'supporting_inspections': [
-                str(self.inspection.pk), str(earlier_inspection.pk),
+                str(self.inspection.pk), str(later_inspection.pk),
             ],
         })
 
@@ -221,16 +221,16 @@ class HeadOperationalUpdateTests(TestCase):
         update = InfrastructureProgressUpdate.objects.get()
         self.assertCountEqual(
             update.supporting_inspections.values_list('pk', flat=True),
-            [self.inspection.pk, earlier_inspection.pk],
+            [self.inspection.pk, later_inspection.pk],
         )
         self.infrastructure.refresh_from_db()
         self.assertEqual(
             self.infrastructure.physical_progress_percentage,
-            Decimal('61'),
+            Decimal('60'),
         )
         self.assertNotEqual(
             self.infrastructure.physical_progress_percentage,
-            earlier_inspection.completion_percentage,
+            later_inspection.completion_percentage,
         )
 
     def test_operational_form_rejects_inspection_from_another_project(self):
@@ -460,7 +460,11 @@ class HeadOperationalUpdateTests(TestCase):
             'engineering_projects:project_update',
             args=[self.infrastructure.pk],
         ), self.staff_payload)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.status_code,
+            302,
+            response.context['form'].errors if response.context else None,
+        )
         self.infrastructure.refresh_from_db()
         self.inspection.refresh_from_db()
         self.assertEqual(self.infrastructure.title, 'Changed by Engineering Staff')
@@ -481,6 +485,8 @@ class HeadOperationalUpdateTests(TestCase):
             'proponent': 'Municipal Office',
             'beneficiaries': '20',
             'event_date': '2026-09-01',
+            'implementation_start_date': '2026-09-01',
+            'implementation_end_date': '2026-09-02',
             'start_time': '08:00',
             'end_time': '09:00',
             'venue_name': 'Municipal Hall',

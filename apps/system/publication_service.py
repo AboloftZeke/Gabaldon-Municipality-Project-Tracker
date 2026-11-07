@@ -284,6 +284,62 @@ def create_publication_draft(project, actor):
 
 
 @transaction.atomic
+def save_project_edit_revision(project, actor):
+    """Keep edits to a published project in its private revision workflow."""
+    _require_authenticated(actor)
+    project_id = getattr(project, 'pk', project)
+    locked_project = Project.objects.select_for_update().get(pk=project_id)
+    _require_project_manager(locked_project, actor)
+    current_public = locked_project.revisions.select_for_update().filter(
+        status=PublicationStatus.PUBLISHED,
+        is_current_public=True,
+    ).first()
+    if current_public is None:
+        return None
+
+    active_revision = (
+        locked_project.revisions.select_for_update()
+        .filter(status__in=OPEN_REVISION_STATUSES)
+        .order_by('-revision_number')
+        .first()
+    )
+    if active_revision and active_revision.status not in {
+        PublicationStatus.DRAFT,
+        PublicationStatus.NEEDS_REVISION,
+    }:
+        return None
+
+    snapshot = build_project_publication_snapshot(locked_project)
+    if active_revision is not None:
+        active_revision.snapshot = snapshot
+        active_revision.source_updated_at = locked_project.updated_at
+        active_revision.save(update_fields=[
+            'snapshot',
+            'source_updated_at',
+            'updated_at',
+        ])
+        return active_revision
+
+    if compare_snapshots(snapshot, current_public.snapshot)['change_count'] == 0:
+        return None
+
+    latest_number = (
+        locked_project.revisions.aggregate(
+            highest=Max('revision_number'),
+        )['highest']
+        or 0
+    )
+    return ProjectRevision.objects.create(
+        project=locked_project,
+        revision_number=latest_number + 1,
+        status=PublicationStatus.DRAFT,
+        snapshot=snapshot,
+        source_updated_at=locked_project.updated_at,
+        previous_revision=current_public,
+    )
+
+
+@transaction.atomic
 def submit_publication_revision(revision, actor):
     """Refresh a draft from working data and submit it for office Head review."""
     _require_authenticated(actor)

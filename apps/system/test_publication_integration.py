@@ -39,13 +39,40 @@ class OfficePublicationIntegrationTests(TestCase):
             record = model.objects.order_by('-pk').first()
             previous = None
             for version in [1, 2]:
+                previous_snapshot = deepcopy(previous.snapshot) if previous else None
                 title = f'{office} approved version {version}'
                 payload[title_key] = title
                 payload['project_images'] = (
                     infra_picture() if office == 'engineer' else noninfra_picture()
                 )
                 self.client.force_login(staff)
-                self.assertEqual(self.client.post(reverse(prefix + '_update', args=[record.pk]), payload).status_code, 302)
+                detail_url = reverse(prefix + '_detail', args=[record.pk])
+                if previous is not None:
+                    self.assertContains(self.client.get(detail_url), 'Edit Project')
+                    self.assertContains(
+                        self.client.get(reverse(prefix + '_list')),
+                        reverse(prefix + '_update', args=[record.pk]),
+                    )
+                edit_response = self.client.post(
+                    reverse(prefix + '_update', args=[record.pk]),
+                    payload,
+                )
+                self.assertRedirects(edit_response, detail_url)
+                if previous is not None:
+                    edit_detail = self.client.get(detail_url)
+                    self.assertContains(edit_detail, 'saved as a draft')
+                    self.assertContains(edit_detail, 'Submit Updated Version')
+                    edit_revision = record.project.revisions.order_by(
+                        '-revision_number',
+                    ).first()
+                    self.assertEqual(edit_revision.status, 'draft')
+                    self.assertEqual(
+                        edit_revision.snapshot[
+                            'infrastructure' if office == 'engineer'
+                            else 'non_infrastructure'
+                        ]['title'],
+                        title,
+                    )
                 if previous:
                     self.client.logout()
                     public = self.client.get(reverse(public_route, args=[record.pk]))
@@ -133,4 +160,5 @@ class OfficePublicationIntegrationTests(TestCase):
                     previous.refresh_from_db()
                     self.assertEqual(previous.status, 'archived')
                     self.assertFalse(previous.is_current_public)
+                    self.assertEqual(previous.snapshot, previous_snapshot)
                 previous = revision
