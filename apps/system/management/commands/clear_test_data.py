@@ -1,3 +1,5 @@
+import traceback
+
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -63,14 +65,24 @@ class Command(BaseCommand):
         try:
             with transaction.atomic():
                 self._delete_scope(scope_name, scope)
-        except ProtectedError as exc:
-            raise CommandError(
-                'Cleanup stopped because a protected relationship prevented deletion. '
-                'No database changes were committed.'
-            ) from exc
         except Exception as exc:
+            self.stderr.write(
+                self.style.ERROR(
+                    f'Cleanup exception: {type(exc).__name__}: {exc}'
+                )
+            )
+            self.stderr.write(traceback.format_exc().rstrip())
+            if isinstance(exc, ProtectedError):
+                message = (
+                    'Cleanup stopped because a protected relationship prevented deletion. '
+                    'No database changes were committed.'
+                )
+            else:
+                message = (
+                    'Cleanup failed before completion. No database changes were committed.'
+                )
             raise CommandError(
-                'Cleanup failed before completion. No database changes were committed.'
+                message
             ) from exc
 
         self.stdout.write(self.style.SUCCESS('Test data cleanup completed successfully.'))
