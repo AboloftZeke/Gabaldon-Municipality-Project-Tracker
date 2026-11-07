@@ -452,6 +452,7 @@ class EngineeringDashboardView(StaffRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from apps.system.models import InfrastructureProject
+        from .dashboard_analytics import project_analytics
         
         user_projects = InfrastructureProject.objects.all()
         context['total_projects'] = user_projects.count()
@@ -459,6 +460,7 @@ class EngineeringDashboardView(StaffRequiredMixin, TemplateView):
             status='ongoing',
         ).count()
         context['completed_projects'] = user_projects.filter(status='completed').count()
+        context['project_analytics'] = project_analytics('infrastructure')
         
         return context
 
@@ -484,10 +486,14 @@ class MayorDashboardView(StaffRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from apps.system.models import NonInfrastructureProject
+        from .dashboard_analytics import project_analytics
         
         user_projects = NonInfrastructureProject.objects.all()
 
         context['total_projects'] = user_projects.count()
+        context['project_analytics'] = project_analytics(
+            'non_infrastructure',
+        )
 
         # Non-infrastructure projects no longer have a progress/status field
         # in the redesigned schema, so these cannot be calculated reliably.

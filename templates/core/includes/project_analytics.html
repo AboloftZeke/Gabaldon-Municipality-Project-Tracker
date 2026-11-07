@@ -1,0 +1,59 @@
+{% load static %}
+{{ project_analytics|json_script:"project-analytics-data" }}
+<section class="project-analytics" aria-labelledby="project-analytics-title">
+    <div class="project-analytics__heading">
+        <p class="project-analytics__eyebrow">Project Analytics</p>
+        <h2 id="project-analytics-title">Project Analytics</h2>
+        <p>Office-scoped figures from current project and publication records.</p>
+    </div>
+    <div class="project-analytics__grid">
+        <figure class="project-analytics__card project-analytics__card--wide ui-card">
+            <figcaption>
+                <h3>Projects Published by Month</h3>
+                <p>Projects counted once, at their first successful publication.</p>
+            </figcaption>
+            <div class="project-analytics__plot" data-chart="published_by_month">
+                <svg data-plot role="img" aria-label="Projects published by month"></svg>
+            </div>
+            {% if project_analytics.published_without_dates %}
+                <p class="project-analytics__note">
+                    {{ project_analytics.published_without_dates }} published project{{ project_analytics.published_without_dates|pluralize }} {{ project_analytics.published_without_dates|pluralize:"has,have" }} no publication date and {{ project_analytics.published_without_dates|pluralize:"is,are" }} not plotted.
+                </p>
+            {% endif %}
+        </figure>
+        <figure class="project-analytics__card ui-card">
+            <figcaption>
+                <h3>Projects by Status</h3>
+                <p>Delayed means not completed with an end date before today; all other unfinished projects are grouped as ongoing.</p>
+            </figcaption>
+            <div class="project-analytics__status">
+                <svg data-chart="status" role="img" aria-label="Project distribution by implementation status"></svg>
+                <ul class="project-analytics__legend" data-status-legend></ul>
+            </div>
+        </figure>
+        <figure class="project-analytics__card ui-card">
+            <figcaption>
+                <h3>Completed Projects Over Time</h3>
+                <p>{{ project_analytics.completion_date_source }}</p>
+            </figcaption>
+            <div class="project-analytics__plot" data-chart="completed_by_month">
+                <svg data-plot role="img" aria-label="Projects completed by month"></svg>
+            </div>
+            {% if project_analytics.completed_without_dates %}
+                <p class="project-analytics__note">
+                    {{ project_analytics.completed_without_dates }} completed project{{ project_analytics.completed_without_dates|pluralize }} {{ project_analytics.completed_without_dates|pluralize:"has,have" }} no reliable completion date and {{ project_analytics.completed_without_dates|pluralize:"is,are" }} not plotted.
+                </p>
+            {% endif %}
+        </figure>
+        <figure class="project-analytics__card project-analytics__card--wide ui-card">
+            <figcaption>
+                <h3>Projects by Barangay</h3>
+                <p>Counts include all 16 Gabaldon barangays, including those with no projects.</p>
+            </figcaption>
+            <div class="project-analytics__plot project-analytics__plot--barangays" data-chart="barangays">
+                <svg data-plot role="img" aria-label="Projects by barangay"></svg>
+            </div>
+        </figure>
+    </div>
+</section>
+<script defer src="{% static 'js/templates/core/project_analytics.js' %}"></script>

@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.views.generic import TemplateView, ListView
 
 from .models import NonInfrastructureProgressUpdate, ProjectRevision
+from .dashboard_analytics import project_analytics
 from .permissions import review_project_type
 from .publication_service import publication_readiness
 from .publication_views import OfficeHeadRequiredMixin, SuperuserRequiredMixin
@@ -38,6 +39,7 @@ class HeadDashboardView(OfficeHeadRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['project_analytics'] = project_analytics(self.project_type)
         revisions = ProjectRevision.objects.filter(
             project__project_type=self.project_type,
         ).select_related(

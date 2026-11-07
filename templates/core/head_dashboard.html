@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{% static 'css/components/publication_workflow.css' %}?v=20260821-1">
 <link rel="stylesheet" href="{% static 'css/templates/core/head_dashboard.css' %}?v=20260928-1">
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/mayor_evidence.css' %}">
+<link rel="stylesheet" href="{% static 'css/templates/core/project_analytics.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -29,6 +30,8 @@
             </a>
         {% endfor %}
     </nav>
+
+    {% include "core/includes/project_analytics.html" %}
 
     <section class="head-section head-section--attention" aria-labelledby="attention-heading">
         <div class="head-section__heading">
