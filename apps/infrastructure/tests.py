@@ -214,6 +214,16 @@ class InfrastructureProjectFormTests(TestCase):
                 args=[unpublished_infrastructure.pk],
             ),
         )
+        published_detail = self.client.get(reverse(
+            'engineering_projects:project_detail',
+            args=[published_infrastructure.pk],
+        ))
+        self.assertNotContains(published_detail, 'Edit Project')
+        unpublished_detail = self.client.get(reverse(
+            'engineering_projects:project_detail',
+            args=[unpublished_infrastructure.pk],
+        ))
+        self.assertContains(unpublished_detail, 'Edit Project')
         self.assertEqual(self.client.get(unpublished_edit_url).status_code, 200)
 
     def test_staff_creation_keeps_official_operational_values_for_head(self):

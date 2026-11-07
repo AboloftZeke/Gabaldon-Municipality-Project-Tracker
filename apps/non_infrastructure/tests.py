@@ -139,6 +139,16 @@ class NonInfrastructureProjectDashboardTests(TestCase):
                 args=[unpublished_project.pk],
             ),
         )
+        published_detail = self.client.get(reverse(
+            'mayor_projects:non_infrastructure_project_detail',
+            args=[published_project.pk],
+        ))
+        self.assertNotContains(published_detail, 'Edit Project')
+        unpublished_detail = self.client.get(reverse(
+            'mayor_projects:non_infrastructure_project_detail',
+            args=[unpublished_project.pk],
+        ))
+        self.assertContains(unpublished_detail, 'Edit Project')
         self.assertEqual(self.client.get(unpublished_edit_url).status_code, 200)
 
 
