@@ -1476,6 +1476,103 @@ class PublicDashboardInfrastructureDataSourceTests(TestCase):
         self.assertEqual(detail.status_code, 404)
 
 
+class PublicDashboardPublishedProjectsReadOnlyTests(TestCase):
+    def setUp(self):
+        self.engineering_staff = User.objects.create_user(
+            username='public-readonly-engineering-staff',
+            is_staff=True,
+        )
+        UserRole.objects.create(
+            user=self.engineering_staff,
+            department='engineer',
+            role='staff',
+        )
+        self.mayor_staff = User.objects.create_user(
+            username='public-readonly-mayor-staff',
+            is_staff=True,
+        )
+        UserRole.objects.create(
+            user=self.mayor_staff,
+            department='mayor',
+            role='staff',
+        )
+
+        infrastructure_project = Project.objects.create(
+            project_type='infrastructure',
+            created_by_user=self.engineering_staff,
+        )
+        self.infrastructure = InfrastructureProject.objects.create(
+            project=infrastructure_project,
+            title='Published Read-Only Infrastructure Project',
+            status='ongoing',
+        )
+        publish_current_snapshot(infrastructure_project)
+
+        non_infrastructure_project = Project.objects.create(
+            project_type='non_infrastructure',
+            created_by_user=self.mayor_staff,
+        )
+        self.non_infrastructure = NonInfrastructureProject.objects.create(
+            project=non_infrastructure_project,
+            title='Published Read-Only Community Program',
+            status='ongoing',
+        )
+        publish_current_snapshot(non_infrastructure_project)
+
+    def test_staff_public_dashboards_and_details_are_read_only(self):
+        public_pages = (
+            (
+                'infra',
+                self.infrastructure,
+                'Published Read-Only Infrastructure Project',
+                'public_infrastructure_project_detail',
+            ),
+            (
+                'noninfra',
+                self.non_infrastructure,
+                'Published Read-Only Community Program',
+                'public_non_infrastructure_project_detail',
+            ),
+        )
+        for staff in (self.engineering_staff, self.mayor_staff):
+            self.client.force_login(staff)
+            for project_type, project, title, detail_route in public_pages:
+                with self.subTest(
+                    staff=staff.username,
+                    project_type=project_type,
+                ):
+                    dashboard_url = reverse('public_dashboard')
+                    dashboard = self.client.get(
+                        dashboard_url,
+                        {'type': project_type},
+                    )
+                    self.assertEqual(dashboard.status_code, 200)
+                    self.assertContains(dashboard, title)
+                    self.assertNotContains(dashboard, 'Edit Project')
+                    self.assertNotContains(dashboard, '/edit/')
+                    self.assertEqual(
+                        self.client.post(
+                            dashboard_url,
+                            {'title': 'Attempted public edit'},
+                        ).status_code,
+                        405,
+                    )
+
+                    detail_url = reverse(detail_route, args=[project.pk])
+                    detail = self.client.get(detail_url)
+                    self.assertEqual(detail.status_code, 200)
+                    self.assertContains(detail, title)
+                    self.assertNotContains(detail, 'Edit Project')
+                    self.assertNotContains(detail, '/edit/')
+                    self.assertEqual(
+                        self.client.post(
+                            detail_url,
+                            {'title': 'Attempted public edit'},
+                        ).status_code,
+                        405,
+                    )
+
+
 class PublicDashboardNonInfrastructureStatusTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
