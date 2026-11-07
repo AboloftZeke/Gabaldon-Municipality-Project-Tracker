@@ -25,7 +25,9 @@
         svg.setAttribute('viewBox', viewBox);
         svg.setAttribute('preserveAspectRatio', 'xMinYMin meet');
         svg.setAttribute('aria-label', description);
-        svg.append(element('title')).textContent = description;
+        const title = element('title');
+        title.textContent = description;
+        svg.append(title);
     }
 
     function emptyState(svg, width, height, message) {
