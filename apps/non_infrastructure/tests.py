@@ -14,6 +14,7 @@ from apps.system.models import (
     NonInfrastructureProject,
     Project,
     ProjectImage,
+    ProjectRevision,
     UserRole,
 )
 
@@ -73,41 +74,72 @@ class NonInfrastructureProjectDashboardTests(TestCase):
                 html=True,
             )
 
-    def test_dashboard_hides_edit_only_for_published_projects(self):
+    def test_project_list_hides_edit_for_published_projects(self):
         user = get_user_model().objects.create_user(
             username='mayor-readonly-test',
             password='testpass123',
         )
         UserRole.objects.create(user=user, department='mayor', role='staff')
-        base_project = Project.objects.create(
+        published_base_project = Project.objects.create(
             project_type='non_infrastructure',
             created_by_user=user,
         )
-        project = NonInfrastructureProject.objects.create(
-            project=base_project,
-            title='Dashboard edit visibility program',
+        published_project = NonInfrastructureProject.objects.create(
+            project=published_base_project,
+            title='Published Dashboard Visibility Program',
             status='ongoing',
         )
+        Project.objects.filter(pk=published_base_project.pk).update(
+            is_published=True,
+        )
+        ProjectRevision.objects.create(
+            project=published_base_project,
+            revision_number=1,
+            status='published',
+            is_current_public=True,
+            snapshot={},
+        )
+        unpublished_base_project = Project.objects.create(
+            project_type='non_infrastructure',
+            created_by_user=user,
+        )
+        unpublished_project = NonInfrastructureProject.objects.create(
+            project=unpublished_base_project,
+            title='Unpublished Dashboard Visibility Program',
+            status='planned',
+        )
         self.client.force_login(user)
-        dashboard_url = reverse(
-            'mayor_projects:non_infrastructure_project_dashboard',
-        )
-        edit_url = reverse(
+        list_url = reverse('mayor_projects:non_infrastructure_project_list')
+        published_edit_url = reverse(
             'mayor_projects:non_infrastructure_project_update',
-            args=[project.pk],
+            args=[published_project.pk],
+        )
+        unpublished_edit_url = reverse(
+            'mayor_projects:non_infrastructure_project_update',
+            args=[unpublished_project.pk],
         )
 
-        unpublished = self.client.get(dashboard_url)
-        self.assertContains(unpublished, edit_url)
-        self.assertContains(unpublished, 'View')
-
-        Project.objects.filter(pk=base_project.pk).update(is_published=True)
-        published = self.client.get(dashboard_url)
-        self.assertNotContains(published, edit_url)
-        self.assertNotContains(published, '>Edit<')
-        self.assertContains(published, 'View')
-
-        self.assertEqual(self.client.get(edit_url).status_code, 200)
+        response = self.client.get(list_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Public: Published')
+        self.assertContains(response, 'class="btn-small btn-view', count=2)
+        self.assertNotContains(response, published_edit_url)
+        self.assertContains(response, unpublished_edit_url)
+        self.assertContains(
+            response,
+            reverse(
+                'mayor_projects:non_infrastructure_project_detail',
+                args=[published_project.pk],
+            ),
+        )
+        self.assertContains(
+            response,
+            reverse(
+                'mayor_projects:non_infrastructure_project_detail',
+                args=[unpublished_project.pk],
+            ),
+        )
+        self.assertEqual(self.client.get(unpublished_edit_url).status_code, 200)
 
 
 class NonInfrastructureProjectFormTests(TestCase):

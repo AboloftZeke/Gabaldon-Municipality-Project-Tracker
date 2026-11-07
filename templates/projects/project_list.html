@@ -144,7 +144,7 @@
                         <div class="project-actions project-card__actions ui-list-actions">
                             <a href="{% url 'engineering_projects:project_detail' project.pk %}" class="btn-small btn-view ui-button ui-button--primary ui-button--small">View</a>
                             {% if can_update_operations %}<a href="{% url 'engineering_projects:project_operations' project.pk %}" class="btn-small btn-edit project-card__action--wide ui-button ui-button--secondary ui-button--small">Update Status &amp; Progress</a>{% endif %}
-                            {% if not account_navigation.is_head %}<a href="{% url 'engineering_projects:project_update' project.pk %}" class="btn-small btn-edit ui-button ui-button--subtle ui-button--small">Edit</a>{% endif %}
+                            {% if not account_navigation.is_head and project.publication_state.status_key != 'published' %}<a href="{% url 'engineering_projects:project_update' project.pk %}" class="btn-small btn-edit ui-button ui-button--subtle ui-button--small">Edit</a>{% endif %}
                         </div>
                     </div>
                 </div>

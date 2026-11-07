@@ -16,6 +16,7 @@ from apps.system.models import (
     Project,
     ProjectImage,
     ProjectInspection,
+    ProjectRevision,
     UserRole,
 )
 
@@ -161,32 +162,59 @@ class InfrastructureProjectFormTests(TestCase):
         self.assertContains(response, 'Road Improvement Project')
         self.assertContains(response, 'id="project-photos"')
 
-    def test_dashboard_hides_edit_only_for_published_projects(self):
-        infrastructure = self.create_project()
+    def test_project_list_hides_edit_for_published_projects(self):
+        published_infrastructure = self.create_project(
+            title='Published infrastructure dashboard project',
+        )
+        unpublished_infrastructure = self.create_project(
+            title='Unpublished infrastructure dashboard project',
+        )
+        Project.objects.filter(
+            pk=published_infrastructure.project_id,
+        ).update(is_published=True)
+        ProjectRevision.objects.create(
+            project=published_infrastructure.project,
+            revision_number=1,
+            status='published',
+            is_current_public=True,
+            snapshot={},
+        )
         UserRole.objects.update_or_create(
             user=self.user,
             defaults={'department': 'engineer', 'role': 'staff'},
         )
         self.client.force_login(self.user)
-        dashboard_url = reverse('engineering_projects:project_dashboard')
-        edit_url = reverse(
+        list_url = reverse('engineering_projects:project_list')
+        published_edit_url = reverse(
             'engineering_projects:project_update',
-            args=[infrastructure.pk],
+            args=[published_infrastructure.pk],
+        )
+        unpublished_edit_url = reverse(
+            'engineering_projects:project_update',
+            args=[unpublished_infrastructure.pk],
         )
 
-        unpublished = self.client.get(dashboard_url)
-        self.assertContains(unpublished, edit_url)
-        self.assertContains(unpublished, 'View')
-
-        Project.objects.filter(pk=infrastructure.project_id).update(
-            is_published=True,
+        response = self.client.get(list_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Public: Published')
+        self.assertContains(response, 'class="btn-small btn-view', count=2)
+        self.assertNotContains(response, published_edit_url)
+        self.assertContains(response, unpublished_edit_url)
+        self.assertContains(
+            response,
+            reverse(
+                'engineering_projects:project_detail',
+                args=[published_infrastructure.pk],
+            ),
         )
-        published = self.client.get(dashboard_url)
-        self.assertNotContains(published, edit_url)
-        self.assertNotContains(published, '>Edit<')
-        self.assertContains(published, 'View')
-
-        self.assertEqual(self.client.get(edit_url).status_code, 200)
+        self.assertContains(
+            response,
+            reverse(
+                'engineering_projects:project_detail',
+                args=[unpublished_infrastructure.pk],
+            ),
+        )
+        self.assertEqual(self.client.get(unpublished_edit_url).status_code, 200)
 
     def test_staff_creation_keeps_official_operational_values_for_head(self):
         self.user.is_staff = True
