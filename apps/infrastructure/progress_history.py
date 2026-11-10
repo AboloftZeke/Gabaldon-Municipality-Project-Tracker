@@ -35,10 +35,42 @@ def record_progress_update(
             'Every supporting inspection must include inspection evidence.'
         )
 
+    latest_recorded_progress = InfrastructureProgressUpdate.objects.filter(
+        infrastructure=infrastructure,
+        new_physical_progress__isnull=False,
+    ).order_by(
+        '-created_at',
+        '-progress_update_id',
+    ).values_list('new_physical_progress', flat=True).first()
+    official_progress = max(
+        (
+            value
+            for value in (
+                previous_physical_progress,
+                latest_recorded_progress,
+            )
+            if value is not None
+        ),
+        default=None,
+    )
+    current_progress = infrastructure.physical_progress_percentage
+    if (
+        official_progress is not None
+        and (
+            current_progress is None
+            or current_progress < official_progress
+        )
+    ):
+        previous = format(official_progress.normalize(), 'f')
+        raise ValidationError(
+            'Physical progress cannot be lower than the previous official '
+            f'progress of {previous}%. Please enter a value equal to or '
+            f'greater than {previous}%.'
+        )
+
     if (
         previous_status == infrastructure.status
-        and previous_physical_progress
-        == infrastructure.physical_progress_percentage
+        and official_progress == current_progress
     ):
         return None
 
@@ -46,8 +78,8 @@ def record_progress_update(
         infrastructure=infrastructure,
         previous_official_status=previous_status or '',
         new_official_status=infrastructure.status or '',
-        previous_physical_progress=previous_physical_progress,
-        new_physical_progress=infrastructure.physical_progress_percentage,
+        previous_physical_progress=official_progress,
+        new_physical_progress=current_progress,
         head_remarks=(remarks or '').strip(),
         updated_by=actor,
     )

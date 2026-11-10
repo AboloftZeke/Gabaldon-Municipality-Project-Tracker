@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.db import IntegrityError, transaction
+from django.utils.dateparse import parse_date
 from django.utils.text import slugify
 from django.utils import timezone
 
@@ -17,6 +18,7 @@ from apps.system.models import (
     ImplementingOffice,
     InfrastructureCategory,
     InfrastructureProject,
+    InfrastructureProgressUpdate,
     InfrastructureSchedule,
     Project,
     ProjectImage,
@@ -744,7 +746,14 @@ class InfrastructureInspectionForm(forms.ModelForm):
         decimal_places=2,
         min_value=0,
         max_value=100,
-        widget=forms.NumberInput(attrs={'step': '0.01'}),
+        widget=forms.NumberInput(attrs={
+            'step': '0.01',
+            'data-completion-progress': '',
+        }),
+    )
+    completion_confirmation = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
     )
     inspection_photos = MultipleFileField(
         label='Inspection Photos',
@@ -793,6 +802,32 @@ class InfrastructureInspectionForm(forms.ModelForm):
             self.project = self.instance.project
         elif self.project is not None and self.instance.project_id != self.project.pk:
             self.instance.project = self.project
+        self.previous_progress = None
+        if (
+            self.project is not None
+            and self.project.project_type == 'infrastructure'
+        ):
+            submitted_date = (
+                parse_date(self.data.get('inspection_date', ''))
+                if self.is_bound
+                else None
+            )
+            baseline_date = submitted_date or (
+                self.instance.inspection_date
+                if self.instance.pk
+                else None
+            )
+            previous_inspection = self.instance.previous_inspection(
+                baseline_date,
+            )
+            if previous_inspection:
+                self.previous_progress = (
+                    previous_inspection.completion_percentage
+                )
+                if not self.is_bound and not self.instance.pk:
+                    self.initial['completion_percentage'] = (
+                        self.previous_progress
+                    )
         self.fields['inspection_date'].widget.attrs['max'] = timezone.localdate().isoformat()
         evidence = (
             self.instance.evidence.all()
@@ -807,6 +842,21 @@ class InfrastructureInspectionForm(forms.ModelForm):
             self.fields['evidence_to_remove'].choices = removal_choices
         else:
             self.fields.pop('evidence_to_remove')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if (
+            self.project is not None
+            and self.project.project_type == 'infrastructure'
+            and cleaned_data.get('completion_percentage') == Decimal('100')
+            and cleaned_data.get('completion_confirmation') != 'yes'
+        ):
+            self.add_error(
+                'completion_percentage',
+                'Confirm that the project is completed before submitting a '
+                '100% inspection.',
+            )
+        return cleaned_data
 
     def clean_inspection_date(self):
         inspection_date = self.cleaned_data['inspection_date']
@@ -898,7 +948,12 @@ class InfrastructureOperationalForm(forms.Form):
             'max': '100',
             'step': '5',
             'data-physical-progress-slider': '',
+            'data-completion-progress': '',
         }),
+    )
+    completion_confirmation = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
     )
     head_remarks = forms.CharField(
         label='Head Remarks',
@@ -922,6 +977,23 @@ class InfrastructureOperationalForm(forms.Form):
     ):
         self.instance = instance
         self.require_initial_values = require_initial_values
+        latest_recorded_progress = (
+            InfrastructureProgressUpdate.objects.filter(
+                infrastructure=instance,
+                new_physical_progress__isnull=False,
+            )
+            .order_by('-created_at', '-progress_update_id')
+            .values_list('new_physical_progress', flat=True)
+            .first()
+        )
+        recorded_progress = (
+            instance.physical_progress_percentage,
+            latest_recorded_progress,
+        )
+        self.previous_progress = max(
+            (value for value in recorded_progress if value is not None),
+            default=None,
+        )
         self.inspection = instance.project.inspections.order_by(
             '-inspection_date', '-created_at',
         ).first()
@@ -929,8 +1001,8 @@ class InfrastructureOperationalForm(forms.Form):
         initial.update({
             'status': instance.status,
             'physical_progress_percentage': (
-                instance.physical_progress_percentage
-                if instance.physical_progress_percentage is not None
+                self.previous_progress
+                if self.previous_progress is not None
                 else 0
             ),
         })
@@ -968,7 +1040,46 @@ class InfrastructureOperationalForm(forms.Form):
             raise forms.ValidationError(
                 'Physical progress must be in 5% increments.',
             )
+        if (
+            self.previous_progress is not None
+            and value < self.previous_progress
+        ):
+            previous = ProjectInspection._format_progress_percentage(
+                self.previous_progress,
+            )
+            raise forms.ValidationError(
+                'Physical progress cannot be lower than the previous official '
+                f'progress of {previous}%. Please enter a value equal to or '
+                f'greater than {previous}%.'
+            )
         return value
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if (
+            cleaned_data.get('physical_progress_percentage') == Decimal('100')
+            and cleaned_data.get('completion_confirmation') != 'yes'
+        ):
+            self.add_error(
+                'physical_progress_percentage',
+                'Confirm that the project is completed before submitting '
+                '100% physical progress.',
+            )
+        elif (
+            cleaned_data.get('physical_progress_percentage') == Decimal('100')
+            and self.instance.status != 'completed'
+        ):
+            if not is_valid_project_status_transition(
+                self.instance.status,
+                'completed',
+            ):
+                self.add_error(
+                    'status',
+                    self.STATUS_TRANSITION_ERROR,
+                )
+            else:
+                cleaned_data['status'] = 'completed'
+        return cleaned_data
 
     def clean_status(self):
         status = self.cleaned_data['status']

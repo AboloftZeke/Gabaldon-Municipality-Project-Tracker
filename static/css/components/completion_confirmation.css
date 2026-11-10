@@ -1,0 +1,49 @@
+.inspection-completion-dialog {
+    width: min(32rem, calc(100vw - 2rem));
+    padding: 0;
+    border: 1px solid #d7e2da;
+    border-radius: 14px;
+    color: #173d2a;
+    box-shadow: 0 20px 60px rgba(20, 45, 31, 0.24);
+}
+
+.inspection-completion-dialog::backdrop {
+    background: rgba(15, 30, 21, 0.52);
+}
+
+.inspection-completion-dialog__content {
+    padding: 1.5rem;
+}
+
+.inspection-completion-dialog__content h2,
+.inspection-completion-dialog__content h3 {
+    margin: 0;
+    color: #173d2a;
+}
+
+.inspection-completion-dialog__content p {
+    margin: 0.75rem 0 1.25rem;
+    color: #536158;
+}
+
+.inspection-completion-dialog__content .inspection-completion-dialog__note {
+    margin-top: -0.5rem;
+    font-size: 0.9rem;
+}
+
+.inspection-completion-dialog__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.65rem;
+}
+
+@media (max-width: 700px) {
+    .inspection-completion-dialog__actions {
+        flex-direction: column;
+    }
+
+    .inspection-completion-dialog__actions .ui-button {
+        width: 100%;
+    }
+}

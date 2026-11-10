@@ -410,19 +410,128 @@ class HeadOperationalUpdateTests(TestCase):
         )
         self.assertFalse(InfrastructureProgressUpdate.objects.exists())
 
-    def test_operational_update_accepts_zero_and_one_hundred_percent(self):
-        for progress in ('0', '100'):
+    def test_operational_update_cannot_decrease_and_confirms_completion(self):
+        for progress in ('25', '100'):
             with self.subTest(progress=progress):
+                data = {
+                    'status': 'ongoing',
+                    'physical_progress_percentage': progress,
+                    'supporting_inspections': [str(self.inspection.pk)],
+                }
+                if progress == '100':
+                    data['completion_confirmation'] = 'yes'
                 form = InfrastructureOperationalForm(
-                    {
-                        'status': 'ongoing',
-                        'physical_progress_percentage': progress,
-                        'supporting_inspections': [str(self.inspection.pk)],
-                    },
+                    data,
                     instance=self.infrastructure,
                 )
 
                 self.assertTrue(form.is_valid(), form.errors)
+                if progress == '100':
+                    self.assertEqual(form.cleaned_data['status'], 'completed')
+
+        rejected = InfrastructureOperationalForm(
+            {
+                'status': 'ongoing',
+                'physical_progress_percentage': '20',
+                'supporting_inspections': [str(self.inspection.pk)],
+            },
+            instance=self.infrastructure,
+        )
+        self.assertFalse(rejected.is_valid())
+        self.assertIn('physical_progress_percentage', rejected.errors)
+        self.assertIn(
+            'previous official progress of 25%',
+            rejected.errors['physical_progress_percentage'][0],
+        )
+
+    def test_latest_progress_update_remains_the_baseline_when_current_field_is_empty(self):
+        self.infrastructure.physical_progress_percentage = None
+        self.infrastructure.save(update_fields=[
+            'physical_progress_percentage',
+            'updated_at',
+        ])
+        InfrastructureProgressUpdate.objects.create(
+            infrastructure=self.infrastructure,
+            previous_official_status='ongoing',
+            new_official_status='ongoing',
+            previous_physical_progress=Decimal('25'),
+            new_physical_progress=Decimal('35'),
+            updated_by=self.users['engineer', 'head'],
+        )
+
+        form = InfrastructureOperationalForm(
+            instance=self.infrastructure,
+        )
+
+        self.assertEqual(form.previous_progress, Decimal('35'))
+        self.assertEqual(
+            form['physical_progress_percentage'].value(),
+            Decimal('35'),
+        )
+
+    def test_head_completion_confirmation_applies_completed_status(self):
+        self.client.force_login(self.users['engineer', 'head'])
+
+        response = self.client.post(self.infra_url(), {
+            'status': 'ongoing',
+            'physical_progress_percentage': '100',
+            'completion_confirmation': 'yes',
+            'head_remarks': 'Completion verified.',
+            'supporting_inspections': [str(self.inspection.pk)],
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.infrastructure.refresh_from_db()
+        self.assertEqual(self.infrastructure.status, 'completed')
+        progress_update = InfrastructureProgressUpdate.objects.get()
+        self.assertEqual(
+            progress_update.new_official_status,
+            'completed',
+        )
+        self.assertEqual(
+            progress_update.new_physical_progress,
+            Decimal('100'),
+        )
+
+    def test_head_cannot_submit_100_percent_without_confirmation(self):
+        self.client.force_login(self.users['engineer', 'head'])
+
+        response = self.client.post(self.infra_url(), {
+            'status': 'ongoing',
+            'physical_progress_percentage': '100',
+            'supporting_inspections': [str(self.inspection.pk)],
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            'physical_progress_percentage',
+            response.context['form'].errors,
+        )
+        self.infrastructure.refresh_from_db()
+        self.assertEqual(self.infrastructure.status, 'ongoing')
+        self.assertEqual(
+            self.infrastructure.physical_progress_percentage,
+            Decimal('25'),
+        )
+        self.assertFalse(InfrastructureProgressUpdate.objects.exists())
+
+    def test_progress_history_service_rejects_a_decrease(self):
+        self.infrastructure.physical_progress_percentage = Decimal('20')
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            'Physical progress cannot be lower than the previous official '
+            'progress of 25%.',
+        ):
+            record_progress_update(
+                self.infrastructure,
+                self.users['engineer', 'head'],
+                previous_status='ongoing',
+                previous_physical_progress=Decimal('25'),
+                supporting_inspections=[self.inspection],
+            )
+
+        self.assertFalse(InfrastructureProgressUpdate.objects.exists())
 
     def test_wrong_roles_are_denied_without_mutation(self):
         before = (

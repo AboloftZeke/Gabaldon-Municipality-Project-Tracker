@@ -44,7 +44,7 @@ class ProjectInspectionCompletionTests(TestCase):
         project = Project.objects.get(pk=self.infrastructure.project_id)
         return project.completion_percentage
 
-    def test_create_and_update_overwrite_cumulative_completion_without_adding(self):
+    def test_inspection_progress_cannot_decrease_and_equal_values_are_allowed(self):
         inspection = self.record(3, '20.00')
         self.assertEqual(
             self.project_completion(),
@@ -59,11 +59,40 @@ class ProjectInspectionCompletionTests(TestCase):
         )
 
         self.record(2, '70.00')
-        self.record(1, '60.00')
+        self.record(1, '70.00')
         self.assertEqual(
             self.project_completion(),
             Decimal('70.00'),
         )
+        with self.assertRaisesMessage(
+            ValidationError,
+            "Progress cannot be lower than the previous inspection's "
+            'recorded progress of 70%.',
+        ):
+            self.record(0, '60.00')
+
+    def test_edits_must_remain_between_adjacent_inspection_progress(self):
+        self.record(4, '20.00')
+        middle = self.record(3, '50.00')
+        self.record(2, '80.00')
+
+        middle.completion_percentage = Decimal('10.00')
+        with self.assertRaisesMessage(
+            ValidationError,
+            "Progress cannot be lower than the previous inspection's "
+            'recorded progress of 20%.',
+        ):
+            middle.save()
+
+        middle.completion_percentage = Decimal('90.00')
+        with self.assertRaisesMessage(
+            ValidationError,
+            "Progress cannot be higher than the following inspection's "
+            'recorded progress of 80%.',
+        ):
+            middle.save()
+        middle.refresh_from_db()
+        self.assertEqual(middle.completion_percentage, Decimal('50.00'))
 
     def test_completion_percentage_is_limited_to_zero_through_100(self):
         for value in ('-0.01', '100.01'):
@@ -82,7 +111,7 @@ class ProjectInspectionCompletionTests(TestCase):
 
     def test_historical_edit_delete_and_unrelated_edits_never_lower_completion(self):
         historical = self.record(4, '80.00', findings='Initial')
-        self.record(3, '75.00')
+        self.record(3, '85.00')
 
         historical.completion_percentage = Decimal('40.00')
         historical.findings = 'Updated historical note'
@@ -91,7 +120,7 @@ class ProjectInspectionCompletionTests(TestCase):
 
         self.assertEqual(
             self.project_completion(),
-            Decimal('80.00'),
+            Decimal('85.00'),
         )
 
         self.infrastructure.title = 'Updated title'
@@ -102,7 +131,7 @@ class ProjectInspectionCompletionTests(TestCase):
         base_project.save(update_fields=['completion_percentage'])
         self.assertEqual(
             self.project_completion(),
-            Decimal('80.00'),
+            Decimal('85.00'),
         )
         self.assertIsNone(self.infrastructure.physical_progress_percentage)
 
@@ -154,6 +183,59 @@ class ProjectInspectionCompletionTests(TestCase):
             '',
         )
         self.assertNotContains(self.client.get(self.detail_url), 'Confirm Project Completion')
+
+    def test_inspection_submission_requires_explicit_100_percent_confirmation(self):
+        self.client.force_login(self.staff)
+        self.record(2, '60.00')
+        create_url = reverse(
+            'engineering_projects:inspection_create',
+            args=[self.infrastructure.pk],
+        )
+
+        form_page = self.client.get(create_url)
+        self.assertContains(form_page, 'Previous recorded progress:')
+        self.assertContains(
+            form_page,
+            'Are you sure that the project is completed?',
+        )
+        self.assertContains(form_page, 'Yes, Complete Project')
+        self.assertContains(form_page, 'Cancel')
+        self.assertEqual(
+            form_page.context['form'].previous_progress,
+            Decimal('60.00'),
+        )
+        self.assertEqual(
+            form_page.context['form']['completion_percentage'].value(),
+            Decimal('60.00'),
+        )
+
+        payload = {
+            'inspection_date': self.today.isoformat(),
+            'completion_percentage': '100',
+            'findings': 'Final work inspected',
+        }
+        rejected = self.client.post(create_url, payload)
+        self.assertEqual(rejected.status_code, 400)
+        self.assertIn(
+            'Confirm that the project is completed',
+            rejected.context['form'].errors['completion_percentage'][0],
+        )
+        self.assertEqual(self.infrastructure.project.inspections.count(), 1)
+
+        accepted = self.client.post(create_url, {
+            **payload,
+            'completion_confirmation': 'yes',
+        })
+        self.assertEqual(accepted.status_code, 302)
+        self.infrastructure.refresh_from_db()
+        self.assertEqual(self.infrastructure.status, 'ongoing')
+        self.assertEqual(self.project_completion(), Decimal('100.00'))
+        self.assertEqual(
+            Project.objects.get(
+                pk=self.infrastructure.project_id,
+            ).completion_confirmation_status,
+            Project.CompletionConfirmationStatus.PENDING,
+        )
 
     def test_declining_keeps_100_and_existing_status_without_repeating_prompt(self):
         self.record(1, '100.00')
@@ -264,3 +346,15 @@ class ProjectInspectionCompletionTests(TestCase):
         )
         project.refresh_from_db()
         self.assertEqual(project.status, 'completed')
+        ProjectInspection.objects.create(
+            project=base_project,
+            inspection_date=self.today,
+            completion_percentage=Decimal('40.00'),
+            inspected_by_user=staff,
+        )
+        self.assertEqual(
+            ProjectInspection.objects.filter(
+                project=base_project,
+            ).order_by('-inspection_date').first().completion_percentage,
+            Decimal('40.00'),
+        )

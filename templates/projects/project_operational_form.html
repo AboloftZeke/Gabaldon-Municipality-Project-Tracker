@@ -6,6 +6,7 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/templates/core/operational_update.css' %}?v=20261014-infra-progress-slider">
 <link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
+<link rel="stylesheet" href="{% static 'css/components/completion_confirmation.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -29,8 +30,9 @@
         {% endif %}
     </header>
 
-    <form method="post" class="operational-form ui-form">
+    <form method="post" class="operational-form ui-form" data-completion-confirmation-form>
         {% csrf_token %}
+        {{ form.completion_confirmation }}
         {% if return_revision_id %}<input type="hidden" name="from_review" value="{{ return_revision_id }}">{% endif %}
 
         {% if form.non_field_errors %}
@@ -52,7 +54,7 @@
 
             <div class="operational-field-grid">
                 {% for field in form %}
-                    {% if field.name != 'supporting_inspections' %}
+                    {% if field.name != 'supporting_inspections' and field.name != 'completion_confirmation' %}
                     <div class="operational-field {% if field.name == 'head_remarks' %}operational-field--wide operational-field--remarks{% endif %}">
                         <label for="{{ field.id_for_label }}">
                             {% if field.name == 'status' %}Official Status{% elif field.name == 'physical_progress_percentage' %}Official Physical Progress{% else %}{{ field.label }}{% endif %}
@@ -61,7 +63,11 @@
                         {{ field }}
                         {% if field.name == 'physical_progress_percentage' %}
                             <output class="operational-progress-output" for="{{ field.id_for_label }}" data-physical-progress-output>{{ field.value|default:"0" }}%</output>
-                            <p class="operational-help">Actual Physical Progress is your official assessment of completed work. Use 5% increments from 0% to 100%.</p>
+                            {% if form.previous_progress is not None %}
+                            <p class="operational-help">Previous official progress: {{ form.previous_progress|floatformat:2 }}%. Progress cannot decrease. Use 5% increments up to 100%.</p>
+                            {% else %}
+                            <p class="operational-help">No previous official progress is recorded. Enter an initial value in 5% increments up to 100%.</p>
+                            {% endif %}
                         {% elif field.name == 'head_remarks' %}
                             <p class="operational-help">Add context for this official status or physical progress decision.</p>
                         {% endif %}
@@ -138,8 +144,20 @@
             <button type="submit" class="operational-button operational-button--primary ui-button ui-button--primary">Save Progress Update</button>
         </div>
     </form>
+    <dialog class="inspection-completion-dialog" data-completion-dialog aria-labelledby="operational-completion-title">
+        <div class="inspection-completion-dialog__content">
+            <h2 id="operational-completion-title">Confirm Project Completion</h2>
+            <p>Are you sure that the project is completed?</p>
+            <p class="inspection-completion-dialog__note">Confirming records 100% official progress and sets the status to Completed.</p>
+            <div class="inspection-completion-dialog__actions">
+                <button class="ui-button ui-button--primary" type="button" data-confirm-completion>Yes, Complete Project</button>
+                <button class="ui-button ui-button--secondary" type="button" data-cancel-completion>Cancel</button>
+            </div>
+        </div>
+    </dialog>
 </div>
 {% include 'includes/image_viewer.html' %}
 <script src="{% static 'js/components/image_viewer.js' %}" defer></script>
 <script src="{% static 'js/templates/projects/physical_progress_slider.js' %}" defer></script>
+<script src="{% static 'js/templates/projects/inspection_completion_confirmation.js' %}" defer></script>
 {% endblock %}

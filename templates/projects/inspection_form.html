@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_form.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/projects/inspection_form.css' %}?v=20260914-1">
+<link rel="stylesheet" href="{% static 'css/components/completion_confirmation.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
 {% endblock %}
 
@@ -29,8 +30,9 @@
             </div>
         </div>
 
-        <form method="post" enctype="multipart/form-data" novalidate class="ui-form">
+        <form method="post" enctype="multipart/form-data" novalidate class="ui-form" data-completion-confirmation-form>
             {% csrf_token %}
+            {{ form.completion_confirmation }}
             {% if form.non_field_errors %}
                 {% for error in form.non_field_errors %}<div class="error-message">{{ error }}</div>{% endfor %}
             {% endif %}
@@ -44,7 +46,13 @@
                     <div class="form-group">
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {{ field }}
-                        {% if field.name == 'completion_percentage' %}<small class="helper-text">Record the project's cumulative completion. The project keeps its highest recorded percentage; this does not automatically change its official status.</small>{% endif %}
+                        {% if field.name == 'completion_percentage' %}
+                            {% if form.previous_progress is not None %}
+                                <small class="helper-text">Previous recorded progress: <strong>{{ form.previous_progress|floatformat:2 }}%</strong>. Progress cannot decrease.</small>
+                            {% else %}
+                                <small class="helper-text">No previous inspection progress is recorded. Enter the initial cumulative progress.</small>
+                            {% endif %}
+                        {% endif %}
                         {% for error in field.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
                     </div>
                     {% endif %}{% endfor %}
@@ -117,11 +125,23 @@
                 <button class="btn btn-submit ui-button ui-button--primary" type="submit">Save Inspection</button>
             </div>
         </form>
+        <dialog class="inspection-completion-dialog" data-completion-dialog aria-labelledby="inspection-completion-title">
+            <div class="inspection-completion-dialog__content">
+                <h3 id="inspection-completion-title">Confirm Project Completion</h3>
+                <p>Are you sure that the project is completed?</p>
+                <p class="inspection-completion-dialog__note">The Engineering Head must still confirm the official status after this inspection is recorded.</p>
+                <div class="inspection-completion-dialog__actions">
+                    <button class="ui-button ui-button--primary" type="button" data-confirm-completion>Yes, Complete Project</button>
+                    <button class="ui-button ui-button--secondary" type="button" data-cancel-completion>Cancel</button>
+                </div>
+            </div>
+        </dialog>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script src="{% static 'js/templates/projects/inspection_evidence_preview.js' %}" defer></script>
+<script src="{% static 'js/templates/projects/inspection_completion_confirmation.js' %}" defer></script>
 <script src="{% static 'js/components/image_viewer.js' %}" defer></script>
 {% endblock %}

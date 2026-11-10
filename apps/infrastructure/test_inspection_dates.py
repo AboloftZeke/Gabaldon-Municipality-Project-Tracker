@@ -20,10 +20,10 @@ class InspectionDateTests(TestCase):
         self.client.force_login(self.staff)
         self.today = timezone.localdate()
 
-    def post(self, days_ago, url=None, inspection_time=None):
+    def post(self, days_ago, url=None, inspection_time=None, completion='25'):
         data = {
             'inspection_date': (self.today - timedelta(days=days_ago)).isoformat(),
-            'completion_percentage': '25', 'findings': 'Retained field observations',
+            'completion_percentage': completion, 'findings': 'Retained field observations',
             'remarks': 'Retained remarks',
         }
         if inspection_time is not None:
@@ -107,7 +107,10 @@ class InspectionDateTests(TestCase):
     def test_edit_unchanged_date_does_not_compare_against_itself(self):
         first = self.add(20)
         self.add(10)
-        self.assertEqual(self.post(20, self.edit_url(first)).status_code, 302)
+        self.assertEqual(
+            self.post(20, self.edit_url(first), completion='10').status_code,
+            302,
+        )
         first.refresh_from_db()
         self.assertEqual(first.remarks, 'Retained remarks')
 
@@ -118,22 +121,31 @@ class InspectionDateTests(TestCase):
         url = self.edit_url(middle)
         for days in (31, 30, 10, 9, -1):
             with self.subTest(days=days):
-                self.assertEqual(self.post(days, url).status_code, 400)
+                self.assertEqual(
+                    self.post(days, url, completion='10').status_code,
+                    400,
+                )
         middle.refresh_from_db()
         self.assertEqual(middle.inspection_date, self.today - timedelta(days=20))
-        self.assertEqual(self.post(15, url).status_code, 302)
+        self.assertEqual(self.post(15, url, completion='10').status_code, 302)
 
     def test_latest_edit_still_follows_previous(self):
         self.add(20)
         latest = self.add(10)
-        self.assertEqual(self.post(21, self.edit_url(latest)).status_code, 400)
-        self.assertEqual(self.post(0, self.edit_url(latest)).status_code, 302)
+        self.assertEqual(
+            self.post(21, self.edit_url(latest), completion='10').status_code,
+            400,
+        )
+        self.assertEqual(
+            self.post(0, self.edit_url(latest), completion='10').status_code,
+            302,
+        )
 
     def test_edit_cannot_move_a_record_onto_another_inspection_date(self):
         first = self.add(20)
         self.add(10)
 
-        response = self.post(10, self.edit_url(first))
+        response = self.post(10, self.edit_url(first), completion='10')
 
         self.assertEqual(response.status_code, 400)
         self.assertIn('already exists', response.context['form'].errors['inspection_date'][0])

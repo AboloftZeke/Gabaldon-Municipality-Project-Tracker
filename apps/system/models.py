@@ -854,6 +854,95 @@ class ProjectInspection(models.Model):
     def __str__(self):
         return f'Inspection {self.inspection_id}'
 
+    def previous_inspection(self, inspection_date=None):
+        if not self.project_id:
+            return None
+
+        inspections = type(self).objects.filter(
+            project_id=self.project_id,
+            completion_percentage__gte=0,
+            completion_percentage__lte=100,
+        ).exclude(pk=self.pk)
+        comparison_date = inspection_date or self.inspection_date
+        if comparison_date:
+            inspections = inspections.filter(
+                inspection_date__lt=comparison_date,
+            )
+        return inspections.order_by(
+            '-inspection_date',
+            '-inspection_id',
+        ).first()
+
+    @staticmethod
+    def _format_progress_percentage(value):
+        return format(value.normalize(), 'f')
+
+    def progress_percentage_validation_error(self):
+        if (
+            not self.project_id
+            or self.project.project_type != 'infrastructure'
+            or not self.inspection_date
+            or self.completion_percentage is None
+        ):
+            return None
+
+        inspections = type(self).objects.filter(
+            project_id=self.project_id,
+            completion_percentage__gte=0,
+            completion_percentage__lte=100,
+        ).exclude(pk=self.pk)
+        if self.pk:
+            original = type(self).objects.filter(pk=self.pk).values(
+                'inspection_date',
+                'completion_percentage',
+            ).first()
+            if (
+                original
+                and original['inspection_date'] == self.inspection_date
+                and original['completion_percentage']
+                == self.completion_percentage
+            ):
+                return None
+
+        previous = inspections.filter(
+            inspection_date__lt=self.inspection_date,
+        ).order_by(
+            '-inspection_date',
+            '-inspection_id',
+        ).first()
+        if (
+            previous
+            and self.completion_percentage < previous.completion_percentage
+        ):
+            previous_percentage = self._format_progress_percentage(
+                previous.completion_percentage,
+            )
+            return (
+                "Progress cannot be lower than the previous inspection's "
+                f'recorded progress of {previous_percentage}%. Please enter '
+                f'a value equal to or greater than {previous_percentage}%.'
+            )
+
+        following = inspections.filter(
+            inspection_date__gt=self.inspection_date,
+        ).order_by(
+            'inspection_date',
+            'inspection_id',
+        ).first()
+        if (
+            following
+            and self.completion_percentage > following.completion_percentage
+        ):
+            following_percentage = self._format_progress_percentage(
+                following.completion_percentage,
+            )
+            return (
+                "Progress cannot be higher than the following inspection's "
+                f'recorded progress of {following_percentage}%. Please enter '
+                f'a value equal to or lower than {following_percentage}%.'
+            )
+        return None
+
     def clean(self):
         super().clean()
         errors = {}
@@ -884,6 +973,9 @@ class ProjectInspection(models.Model):
                 errors['inspection_date'] = (
                     'Inspection date cannot be earlier than the project start date.'
                 )
+            progress_error = self.progress_percentage_validation_error()
+            if progress_error:
+                errors['completion_percentage'] = progress_error
         if errors:
             raise ValidationError(errors)
 
