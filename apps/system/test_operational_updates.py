@@ -104,7 +104,8 @@ class HeadOperationalUpdateTests(TestCase):
         )
         response = self.client.post(self.infra_url(), {
             'status': 'completed',
-            'physical_progress_percentage': '60',
+            'physical_progress_percentage': '100',
+            'completion_confirmation': 'yes',
             'head_remarks': 'Verified against the latest field report.',
             'supporting_inspections': [str(self.inspection.pk)],
             'title': 'Crafted ordinary-field change',
@@ -114,7 +115,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.infrastructure.refresh_from_db()
         self.inspection.refresh_from_db()
         self.assertEqual(self.infrastructure.status, 'completed')
-        self.assertEqual(self.infrastructure.physical_progress_percentage, Decimal('60'))
+        self.assertEqual(self.infrastructure.physical_progress_percentage, Decimal('100'))
         self.assertEqual(self.infrastructure.cost_progress_percentage, Decimal('20'))
         self.assertEqual(self.inspection.completion_percentage, Decimal('30'))
         self.assertEqual(self.infrastructure.title, before_title)
@@ -152,7 +153,7 @@ class HeadOperationalUpdateTests(TestCase):
         )
         self.assertEqual(
             progress_update.new_physical_progress,
-            Decimal('60'),
+            Decimal('100'),
         )
         self.assertEqual(
             progress_update.head_remarks,
@@ -210,7 +211,8 @@ class HeadOperationalUpdateTests(TestCase):
 
         response = self.client.post(self.infra_url(), {
             'status': 'completed',
-            'physical_progress_percentage': '60',
+            'physical_progress_percentage': '100',
+            'completion_confirmation': 'yes',
             'head_remarks': 'Supported by two field inspections.',
             'supporting_inspections': [
                 str(self.inspection.pk), str(later_inspection.pk),
@@ -226,12 +228,35 @@ class HeadOperationalUpdateTests(TestCase):
         self.infrastructure.refresh_from_db()
         self.assertEqual(
             self.infrastructure.physical_progress_percentage,
-            Decimal('60'),
+            Decimal('100'),
         )
         self.assertNotEqual(
             self.infrastructure.physical_progress_percentage,
             later_inspection.completion_percentage,
         )
+
+    def test_completed_status_requires_100_percent_physical_progress(self):
+        self.client.force_login(self.users['engineer', 'head'])
+
+        response = self.client.post(self.infra_url(), {
+            'status': 'completed',
+            'physical_progress_percentage': '95',
+            'supporting_inspections': [str(self.inspection.pk)],
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('status', response.context['form'].errors)
+        self.assertIn(
+            'must be 100%',
+            response.context['form'].errors['status'][0],
+        )
+        self.infrastructure.refresh_from_db()
+        self.assertEqual(self.infrastructure.status, 'ongoing')
+        self.assertEqual(
+            self.infrastructure.physical_progress_percentage,
+            Decimal('25'),
+        )
+        self.assertFalse(InfrastructureProgressUpdate.objects.exists())
 
     def test_operational_form_rejects_inspection_from_another_project(self):
         other_project = Project.objects.create(project_type='infrastructure')

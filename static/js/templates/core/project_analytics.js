@@ -61,10 +61,10 @@
         }
 
         const width = Math.max(640, labels.length * 52 + 72);
-        const height = 270;
+        const height = 310;
         const left = 38;
         const top = 14;
-        const bottom = 82;
+        const bottom = 64;
         const plotHeight = height - top - bottom;
         const plotWidth = width - left - 18;
         const maxValue = Math.max(1, ...values);
@@ -73,9 +73,14 @@
         resetSvg(svg, `0 0 ${width} ${height}`, description);
         svg.style.width = `${width}px`;
 
-        for (let tick = 0; tick <= 4; tick += 1) {
-            const value = Math.ceil(maxValue * tick / 4);
-            const y = top + plotHeight - (plotHeight * tick / 4);
+        const tickStep = Math.max(1, Math.ceil(maxValue / 4));
+        const ticks = [];
+        for (let value = 0; value < maxValue; value += tickStep) {
+            ticks.push(value);
+        }
+        ticks.push(maxValue);
+        ticks.forEach(value => {
+            const y = top + plotHeight - (plotHeight * value / maxValue);
             svg.append(element('line', {
                 x1: left, y1: y, x2: width - 8, y2: y,
                 stroke: colors.grid, 'stroke-width': 1,
@@ -86,7 +91,7 @@
             });
             label.textContent = value;
             svg.append(label);
-        }
+        });
 
         labels.forEach((label, index) => {
             const value = values[index] || 0;
@@ -104,8 +109,7 @@
             const monthLabel = element('text', {
                 x: left + index * step + step / 2,
                 y: height - 12,
-                transform: `rotate(-42 ${left + index * step + step / 2} ${height - 12})`,
-                'text-anchor': 'end',
+                'text-anchor': 'middle',
                 fill: colors.text,
                 'font-size': 10,
             });

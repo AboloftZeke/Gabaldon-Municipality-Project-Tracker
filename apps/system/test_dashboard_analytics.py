@@ -8,10 +8,12 @@ from django.utils import timezone
 from .models import (
     Address,
     InfrastructureProject,
+    InfrastructureProgressUpdate,
     InfrastructureSchedule,
     NonInfrastructureProgressUpdate,
     NonInfrastructureProject,
     Project,
+    ProjectInspection,
     ProjectRevision,
     UserRole,
 )
@@ -334,6 +336,64 @@ class ProjectDashboardAnalyticsTests(TestCase):
             {'Sep 2025': 1},
         )
         self.assertEqual(chart['completed_without_dates'], 1)
+
+    def test_completion_charts_fall_back_to_recorded_status_and_final_inspection_dates(self):
+        inspection_day = date(2025, 11, 3)
+        _, completed_infrastructure = self.make_infrastructure(
+            'Completed by recorded status', status='completed',
+        )
+        status_update = InfrastructureProgressUpdate.objects.create(
+            infrastructure=completed_infrastructure,
+            new_official_status='completed',
+            new_physical_progress=100,
+        )
+        InfrastructureProgressUpdate.objects.filter(
+            pk=status_update.pk,
+        ).update(created_at=timezone.make_aware(
+            datetime(2025, 10, 12, 9),
+        ))
+        _, inspected_infrastructure = self.make_infrastructure(
+            'Completed by final inspection', status='completed',
+        )
+        ProjectInspection.objects.create(
+            project=inspected_infrastructure.project,
+            inspection_date=inspection_day,
+            completion_percentage=100,
+        )
+
+        self.client.force_login(self.users['engineering_dashboard'])
+        response = self.client.get(reverse('engineering_dashboard'))
+        chart = response.context['project_analytics']
+
+        self.assertEqual(
+            dict(zip(
+                chart['completed_by_month']['labels'],
+                chart['completed_by_month']['values'],
+            )),
+            {'Oct 2025': 1, 'Nov 2025': 1},
+        )
+        self.assertEqual(chart['completed_without_dates'], 0)
+
+        _, completed_program = self.make_non_infrastructure(
+            'Completed program by final inspection',
+            status='completed',
+        )
+        ProjectInspection.objects.create(
+            project=completed_program.project,
+            inspection_date=inspection_day,
+            completion_percentage=100,
+        )
+        self.client.force_login(self.users['mayor_dashboard'])
+        response = self.client.get(reverse('mayor_dashboard'))
+        chart = response.context['project_analytics']
+        self.assertEqual(
+            dict(zip(
+                chart['completed_by_month']['labels'],
+                chart['completed_by_month']['values'],
+            )),
+            {'Nov 2025': 1},
+        )
+        self.assertEqual(chart['completed_without_dates'], 0)
 
     def test_dashboard_access_remains_scoped_by_office(self):
         self.client.force_login(self.users['mayor_dashboard'])

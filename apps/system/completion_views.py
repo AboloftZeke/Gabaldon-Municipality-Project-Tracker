@@ -119,6 +119,17 @@ class ProjectCompletionConfirmationView(
 
         if (
             self.project_type == 'infrastructure'
+            and project_details.physical_progress_percentage != 100
+        ):
+            messages.error(
+                request,
+                'Official physical progress must be 100% before a project '
+                'can be marked Completed.',
+            )
+            return self._success_url(project_details)
+
+        if (
+            self.project_type == 'infrastructure'
             and not is_valid_project_status_transition(
                 project_details.status,
                 'completed',

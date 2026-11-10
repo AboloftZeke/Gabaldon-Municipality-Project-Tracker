@@ -13,7 +13,7 @@ from django.utils import timezone
 from apps.non_infrastructure.forms import NonInfrastructureProgressUpdateForm
 from apps.system.models import (
     NonInfrastructureProgressUpdate, NonInfrastructureProject, Project,
-    ProjectRevision, UserRole,
+    ProjectInspection, ProjectRevision, UserRole,
 )
 from apps.system.publication_snapshots import build_project_publication_snapshot
 from apps.system.publication_workflow import PublicationStatus
@@ -226,6 +226,12 @@ class MayorEvidenceLifecycleTests(TestCase):
         self.publish(first_revision)
         first_snapshot = deepcopy(first_revision.snapshot)
 
+        ProjectInspection.objects.create(
+            project=self.base,
+            inspection_date=timezone.localdate(),
+            completion_percentage=100,
+            inspected_by_user=self.staff,
+        )
         second = self.create_draft(proposed='completed', names=('second.png',))
         self.submit(second)
         second_revision = self.approve_and_apply(second)

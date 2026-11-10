@@ -34,7 +34,7 @@
         <figure class="project-analytics__card ui-card">
             <figcaption>
                 <h3>Completed Projects Over Time</h3>
-                <p>{{ project_analytics.completion_date_source }}</p>
+                <p>Projects are dated using {{ project_analytics.completion_date_source|lower }}</p>
             </figcaption>
             <div class="project-analytics__plot" data-chart="completed_by_month">
                 <svg data-plot role="img" aria-label="Projects completed by month"></svg>

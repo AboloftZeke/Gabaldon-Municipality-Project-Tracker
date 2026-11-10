@@ -8,10 +8,12 @@ from django.utils import timezone
 
 from .choices import BARANGAY_CHOICES
 from .models import (
+    InfrastructureProgressUpdate,
     InfrastructureProject,
     InfrastructureSchedule,
     NonInfrastructureProgressUpdate,
     NonInfrastructureProject,
+    ProjectInspection,
     ProjectRevision,
 )
 
@@ -157,9 +159,39 @@ def _completion_dates(project_type):
             .annotate(completed_on=Min('actual_completion_date'))
             .values_list('infrastructure_id', 'completed_on')
         )
-        per_project = {}
-        for project_id, completed_on in dated:
-            per_project[project_id] = completed_on
+        per_project = {
+            project_id: completed_on
+            for project_id, completed_on in dated
+        }
+        status_changes = (
+            InfrastructureProgressUpdate.objects.filter(
+                infrastructure__project__project_type='infrastructure',
+                infrastructure__status='completed',
+                new_official_status='completed',
+            )
+            .values('infrastructure_id')
+            .annotate(completed_on=Min('created_at'))
+            .values_list('infrastructure_id', 'completed_on')
+        )
+        for project_id, completed_on in status_changes:
+            per_project.setdefault(project_id, completed_on)
+
+        final_inspections = (
+            ProjectInspection.objects.filter(
+                project__project_type='infrastructure',
+                project__infrastructure_project__status='completed',
+                completion_percentage=100,
+            )
+            .values('project__infrastructure_project__infrastructure_id')
+            .annotate(completed_on=Min('inspection_date'))
+            .values_list(
+                'project__infrastructure_project__infrastructure_id',
+                'completed_on',
+            )
+        )
+        for project_id, completed_on in final_inspections:
+            per_project.setdefault(project_id, completed_on)
+
         return list(per_project.values()), max(
             completed_count - len(per_project), 0,
         )
@@ -180,9 +212,25 @@ def _completion_dates(project_type):
         .annotate(completed_on=Min('applied_at'))
         .values_list('non_infrastructure_id', 'completed_on')
     )
-    per_project = {}
-    for project_id, completed_on in dated:
-        per_project[project_id] = completed_on
+    per_project = {
+        project_id: completed_on
+        for project_id, completed_on in dated
+    }
+    final_inspections = (
+        ProjectInspection.objects.filter(
+            project__project_type='non_infrastructure',
+            project__non_infrastructure_project__status='completed',
+            completion_percentage=100,
+        )
+        .values('project__non_infrastructure_project__non_infra_id')
+        .annotate(completed_on=Min('inspection_date'))
+        .values_list(
+            'project__non_infrastructure_project__non_infra_id',
+            'completed_on',
+        )
+    )
+    for project_id, completed_on in final_inspections:
+        per_project.setdefault(project_id, completed_on)
     return list(per_project.values()), max(
         completed_count - len(per_project), 0,
     )
@@ -216,8 +264,8 @@ def project_analytics(project_type):
         'completed_by_month': _monthly_series(completion_dates),
         'completed_without_dates': completed_without_dates,
         'completion_date_source': (
-            'Actual completion date from the infrastructure schedule.'
+            'the actual schedule date, official Completed status-change date, or final inspection date.'
             if project_type == 'infrastructure'
-            else 'Approved progress-update application date for the completion transition.'
+            else 'the approved Completed status-change date or final inspection date.'
         ),
     }

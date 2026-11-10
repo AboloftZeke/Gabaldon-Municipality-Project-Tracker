@@ -10,6 +10,11 @@ from apps.system.publication_service import create_head_operational_revision
 from apps.system.publication_workflow import PublicationStatus
 
 
+COMPLETION_PROGRESS_ERROR = (
+    'Project progress must be 100% before it can be marked Completed.'
+)
+
+
 @transaction.atomic
 def apply_approved_progress_update(update_id, actor):
     """Apply once; roll back the status if no operational revision can be made."""
@@ -48,6 +53,11 @@ def apply_approved_progress_update(update_id, actor):
         or update.proposed_status == project.status
     ):
         raise ValidationError('The proposed status must be a different valid project status.')
+    if (
+        update.proposed_status == 'completed'
+        and base_project.completion_percentage != 100
+    ):
+        raise ValidationError(COMPLETION_PROGRESS_ERROR)
     if not update.evidence.exists():
         raise ValidationError('Supporting evidence is required before applying this update.')
 

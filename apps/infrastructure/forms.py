@@ -934,6 +934,10 @@ class InfrastructureOperationalForm(forms.Form):
     STATUS_TRANSITION_ERROR = (
         'Project status cannot move backwards or change after completion.'
     )
+    COMPLETION_PROGRESS_ERROR = (
+        'Official physical progress must be 100% before a project can be '
+        'marked Completed.'
+    )
 
     status = forms.ChoiceField(
         label='Official Status',
@@ -942,6 +946,7 @@ class InfrastructureOperationalForm(forms.Form):
     physical_progress_percentage = forms.DecimalField(
         label='Physical Progress', max_digits=5, decimal_places=2,
         min_value=0, max_value=100, required=True,
+        help_text='A project can only be marked Completed at 100% physical progress.',
         widget=forms.NumberInput(attrs={
             'type': 'range',
             'min': '0',
@@ -1056,8 +1061,13 @@ class InfrastructureOperationalForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        progress = cleaned_data.get('physical_progress_percentage')
+        status = cleaned_data.get('status')
+        if status == 'completed' and progress != Decimal('100'):
+            self.add_error('status', self.COMPLETION_PROGRESS_ERROR)
+
         if (
-            cleaned_data.get('physical_progress_percentage') == Decimal('100')
+            progress == Decimal('100')
             and cleaned_data.get('completion_confirmation') != 'yes'
         ):
             self.add_error(
@@ -1066,7 +1076,7 @@ class InfrastructureOperationalForm(forms.Form):
                 '100% physical progress.',
             )
         elif (
-            cleaned_data.get('physical_progress_percentage') == Decimal('100')
+            progress == Decimal('100')
             and self.instance.status != 'completed'
         ):
             if not is_valid_project_status_transition(

@@ -171,6 +171,8 @@ class ProjectInspectionCompletionTests(TestCase):
         self.assertContains(detail, 'Yes, mark as Completed')
         self.assertContains(detail, 'No, not yet')
 
+        self.infrastructure.physical_progress_percentage = Decimal('100')
+        self.infrastructure.save(update_fields=['physical_progress_percentage'])
         response = self.client.post(self.confirm_url, {'decision': 'yes'})
 
         self.assertRedirects(response, self.detail_url)
@@ -183,6 +185,23 @@ class ProjectInspectionCompletionTests(TestCase):
             '',
         )
         self.assertNotContains(self.client.get(self.detail_url), 'Confirm Project Completion')
+
+    def test_completion_confirmation_requires_100_percent_official_progress(self):
+        self.record(1, '100.00')
+        self.client.force_login(self.head)
+
+        response = self.client.post(self.confirm_url, {'decision': 'yes'})
+
+        self.assertRedirects(response, self.detail_url)
+        self.infrastructure.refresh_from_db()
+        self.assertEqual(self.infrastructure.status, 'ongoing')
+        self.assertIsNone(self.infrastructure.physical_progress_percentage)
+        self.assertEqual(
+            Project.objects.get(
+                pk=self.infrastructure.project_id,
+            ).completion_confirmation_status,
+            Project.CompletionConfirmationStatus.PENDING,
+        )
 
     def test_inspection_submission_requires_explicit_100_percent_confirmation(self):
         self.client.force_login(self.staff)

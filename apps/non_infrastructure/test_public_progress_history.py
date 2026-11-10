@@ -13,7 +13,8 @@ from django.utils.formats import date_format
 from apps.non_infrastructure.progress_application import apply_approved_progress_update
 from apps.system.models import (
     NonInfrastructureEvidence, NonInfrastructureProgressUpdate,
-    NonInfrastructureProject, Project, ProjectRevision, UserRole,
+    NonInfrastructureProject, Project, ProjectInspection, ProjectRevision,
+    UserRole,
 )
 from apps.system.publication_service import publish_publication_revision
 from apps.system.publication_snapshots import build_project_publication_snapshot
@@ -110,6 +111,12 @@ class PublicMayorHistoryTests(TestCase):
         first, first_file = self.create_update()
         first_revision = apply_approved_progress_update(first.pk, self.head).publication_revision
         publish_publication_revision(first_revision, self.head)
+        ProjectInspection.objects.create(
+            project=self.base,
+            inspection_date=timezone.localdate(),
+            completion_percentage=100,
+            inspected_by_user=self.staff,
+        )
         second, second_file = self.create_update(
             previous='ongoing', proposed='completed', filename='finish.jpg',
         )

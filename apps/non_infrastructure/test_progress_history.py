@@ -12,7 +12,8 @@ from django.utils import timezone
 from apps.non_infrastructure.progress_application import apply_approved_progress_update
 from apps.system.models import (
     NonInfrastructureEvidence, NonInfrastructureProgressUpdate,
-    NonInfrastructureProject, Project, ProjectRevision, UserRole,
+    NonInfrastructureProject, Project, ProjectInspection, ProjectRevision,
+    UserRole,
 )
 from apps.system.publication_service import (
     create_head_operational_revision, publish_publication_revision,
@@ -145,6 +146,12 @@ class MayorPublicationHistoryTests(TestCase):
         first_snapshot = deepcopy(first_revision.snapshot)
         publish_publication_revision(first_revision, self.head)
 
+        ProjectInspection.objects.create(
+            project=self.base,
+            inspection_date=timezone.localdate(),
+            completion_percentage=100,
+            inspected_by_user=self.staff,
+        )
         second = self.progress_update(previous='ongoing', proposed='completed', files=('finish.pdf',))
         second_revision = apply_approved_progress_update(second.pk, self.head).publication_revision
         self.assertEqual(second_revision.revision_number, 3)

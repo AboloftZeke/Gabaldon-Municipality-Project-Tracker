@@ -1,6 +1,13 @@
 .inspection-completion-dialog {
+    position: fixed;
+    inset: 50% auto auto 50%;
+    transform: translate(-50%, -50%);
     width: min(32rem, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 2rem);
+    margin: 0;
     padding: 0;
+    overflow: auto;
     border: 1px solid #d7e2da;
     border-radius: 14px;
     color: #173d2a;

@@ -14,6 +14,7 @@ from apps.system.models import (
     NonInfrastructureProgressUpdate,
     NonInfrastructureProject,
     Project,
+    ProjectInspection,
     ProjectRevision,
     UserRole,
 )
@@ -133,6 +134,33 @@ class ApplyApprovedProgressUpdateTests(TestCase):
         self.assertEqual(self.client.get(self.public_detail_url).context['public_project']['status'], 'ongoing')
         self.assertContains(self.client.get(self.public_detail_url), 'support.pdf')
         self.assertContains(self.client.get(self.head_detail_url), 'Published')
+
+    def test_completed_status_requires_100_percent_recorded_progress(self):
+        self.update.proposed_status = 'completed'
+        self.update.save(update_fields=['proposed_status'])
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            'Project progress must be 100% before it can be marked Completed.',
+        ):
+            apply_approved_progress_update(self.update.pk, self.head)
+
+        self.assert_not_applied()
+
+    def test_completed_status_applies_at_100_percent_recorded_progress(self):
+        ProjectInspection.objects.create(
+            project=self.base,
+            inspection_date=timezone.localdate(),
+            completion_percentage=100,
+            inspected_by_user=self.staff,
+        )
+        self.update.proposed_status = 'completed'
+        self.update.save(update_fields=['proposed_status'])
+
+        apply_approved_progress_update(self.update.pk, self.head)
+
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.status, 'completed')
 
     def test_second_application_is_rejected_even_after_publication(self):
         apply_approved_progress_update(self.update.pk, self.head)
