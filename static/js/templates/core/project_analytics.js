@@ -8,8 +8,16 @@
         blue: '#2878b5',
         teal: '#159b8c',
         orange: '#e88a31',
+        muted: '#64748b',
         grid: '#e5ebe7',
         text: '#536158',
+    };
+    const statusColors = {
+        ongoing: colors.teal,
+        completed: colors.blue,
+        on_hold: colors.orange,
+        planned: colors.muted,
+        unspecified: colors.muted,
     };
 
     function element(name, attributes = {}) {
@@ -112,7 +120,6 @@
         const center = width / 2;
         const radius = 82;
         const innerRadius = 49;
-        const palette = [colors.teal, colors.blue, colors.orange];
         resetSvg(svg, `0 0 ${width} ${height}`, 'Project distribution by implementation status');
         svg.style.width = '100%';
         legend.replaceChildren();
@@ -125,7 +132,7 @@
             emptyState(svg, width, height, 'No projects');
         } else {
             let angle = -Math.PI / 2;
-            rows.forEach((row, index) => {
+            rows.forEach(row => {
                 if (!row.value) return;
                 const next = angle + (row.value / total) * Math.PI * 2;
                 const startX = center + radius * Math.cos(angle);
@@ -138,12 +145,13 @@
                 const innerEndY = center + innerRadius * Math.sin(next);
                 const isFullCircle = row.value === total;
                 const largeArc = next - angle > Math.PI ? 1 : 0;
+                const color = statusColors[row.key] || colors.muted;
                 if (isFullCircle) {
                     const circle = element('circle', {
                         cx: center,
                         cy: center,
                         r: radius,
-                        fill: palette[index % palette.length],
+                        fill: color,
                     });
                     const tip = element('title');
                     tip.textContent = `${row.label}: ${row.value} (100%)`;
@@ -155,7 +163,7 @@
                 } else {
                     const path = element('path', {
                         d: `M ${startX} ${startY} A ${radius} ${radius} 0 ${largeArc} 1 ${endX} ${endY} L ${innerEndX} ${innerEndY} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${innerStartX} ${innerStartY} Z`,
-                        fill: palette[index % palette.length],
+                        fill: color,
                         stroke: '#fff',
                         'stroke-width': 2,
                     });
@@ -178,11 +186,11 @@
             svg.append(totalText);
         }
 
-        rows.forEach((row, index) => {
+        rows.forEach(row => {
             const item = document.createElement('li');
             const swatch = document.createElement('span');
             swatch.className = 'project-analytics__legend-swatch';
-            swatch.style.backgroundColor = palette[index % palette.length];
+            swatch.style.backgroundColor = statusColors[row.key] || colors.muted;
             const label = document.createElement('span');
             label.textContent = row.label;
             const value = document.createElement('span');

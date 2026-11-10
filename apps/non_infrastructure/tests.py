@@ -62,10 +62,10 @@ class NonInfrastructureProjectDashboardTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['total_projects'], 6)
         self.assertEqual(response.context['planned_projects'], 1)
-        self.assertEqual(response.context['in_progress_projects'], 2)
+        self.assertEqual(response.context['ongoing_projects'], 2)
         self.assertEqual(response.context['completed_projects'], 3)
         self.assertContains(response, 'Planned')
-        self.assertContains(response, 'In Progress')
+        self.assertContains(response, 'Ongoing')
         self.assertContains(response, 'Completed')
         for count in expected_counts.values():
             self.assertContains(

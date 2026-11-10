@@ -118,7 +118,7 @@ class ProjectDashboardAnalyticsTests(TestCase):
         self.assertEqual(analytics['published_without_dates'], 0)
         self.assertEqual(
             [row['value'] for row in analytics['status']],
-            [0, 0, 0],
+            [0, 0, 0, 0],
         )
         self.assertEqual(
             [row['value'] for row in analytics['barangays']],
@@ -176,7 +176,7 @@ class ProjectDashboardAnalyticsTests(TestCase):
         self.assertEqual(mayor_counts['Jan 2025'], 1)
         self.assertNotIn('May 2024', mayor_counts)
 
-    def test_status_delay_and_barangay_counts_use_office_project_data(self):
+    def test_status_and_barangay_counts_use_recorded_office_project_data(self):
         today = timezone.localdate()
         self.make_infrastructure(
             'Current road',
@@ -191,6 +191,12 @@ class ProjectDashboardAnalyticsTests(TestCase):
             barangay='Calabasa',
         )
         self.make_infrastructure(
+            'Paused road',
+            status='on_hold',
+            end_date=today - timedelta(days=3),
+            barangay='Unknown',
+        )
+        self.make_infrastructure(
             'Finished road',
             status='completed',
             end_date=today - timedelta(days=5),
@@ -199,13 +205,21 @@ class ProjectDashboardAnalyticsTests(TestCase):
         self.make_non_infrastructure(
             'Mayor completed program', status='completed',
         )
+        self.make_non_infrastructure(
+            'Mayor planned program', status='planned',
+        )
 
         self.client.force_login(self.users['engineering_dashboard'])
         response = self.client.get(reverse('engineering_dashboard'))
         analytics = response.context['project_analytics']
         self.assertEqual(
             {row['key']: row['value'] for row in analytics['status']},
-            {'ongoing': 1, 'completed': 1, 'delayed': 1},
+            {
+                'ongoing': 2,
+                'on_hold': 1,
+                'completed': 1,
+                'unspecified': 0,
+            },
         )
         barangay_counts = {
             row['key']: row['value'] for row in analytics['barangays']
@@ -227,8 +241,45 @@ class ProjectDashboardAnalyticsTests(TestCase):
         }
         self.assertEqual(
             mayor_statuses,
-            {'ongoing': 0, 'completed': 1, 'delayed': 0},
+            {
+                'planned': 1,
+                'ongoing': 0,
+                'completed': 1,
+                'unspecified': 0,
+            },
         )
+        self.assertEqual(mayor_response.context['planned_projects'], 1)
+        self.assertEqual(mayor_response.context['ongoing_projects'], 0)
+        self.assertEqual(mayor_response.context['completed_projects'], 1)
+        self.assertEqual(mayor_response.context['total_projects'], 2)
+        self.assertEqual(
+            sum((
+                mayor_response.context['planned_projects'],
+                mayor_response.context['ongoing_projects'],
+                mayor_response.context['completed_projects'],
+            )),
+            mayor_response.context['total_projects'],
+        )
+        self.assertContains(mayor_response, '<h3>Ongoing</h3>', html=True)
+        self.assertNotContains(mayor_response, 'In Progress')
+
+    def test_status_chart_keeps_projects_with_unset_status_visible(self):
+        self.make_infrastructure('Unclassified legacy project', status=None)
+
+        self.client.force_login(self.users['engineering_dashboard'])
+        response = self.client.get(reverse('engineering_dashboard'))
+        analytics = response.context['project_analytics']
+
+        self.assertEqual(
+            {row['key']: row['value'] for row in analytics['status']},
+            {
+                'ongoing': 0,
+                'on_hold': 0,
+                'completed': 0,
+                'unspecified': 1,
+            },
+        )
+        self.assertEqual(analytics['status_project_count'], 1)
 
     def test_completion_charts_use_recorded_completion_events_only(self):
         completion_day = date(2025, 8, 14)

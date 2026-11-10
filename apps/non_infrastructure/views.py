@@ -148,7 +148,7 @@ class NonInfrastructureProjectDashboardView(MayorsOfficeRequiredMixin, TemplateV
             context['total_projects'] = user_projects.count()
 
             context['planned_projects'] = user_projects.filter(status='planned').count()
-            context['in_progress_projects'] = user_projects.filter(status='ongoing').count()
+            context['ongoing_projects'] = user_projects.filter(status='ongoing').count()
             context['completed_projects'] = user_projects.filter(status='completed').count()
 
             context['recent_projects'] = user_projects.order_by('-created_at')[:5]

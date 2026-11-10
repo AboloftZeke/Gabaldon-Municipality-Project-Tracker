@@ -16,9 +16,6 @@ from .models import (
 )
 
 
-STATUS_KEYS = ('ongoing', 'completed', 'delayed')
-
-
 def _month_key(value):
     if hasattr(value, 'date'):
         value = timezone.localtime(value).date()
@@ -79,7 +76,6 @@ def _project_records(project_type):
             ).select_related('project', 'address').values(
                 'infrastructure_id',
                 'status',
-                'planned_end_date',
                 'address__barangay',
             )
         )
@@ -89,14 +85,21 @@ def _project_records(project_type):
         ).select_related('project', 'address').values(
             'non_infra_id',
             'status',
-            'implementation_end_date',
             'address__barangay',
         )
     )
 
 
-def _status_and_barangay(records, project_type, today):
-    status_counts = Counter({key: 0 for key in STATUS_KEYS})
+def _status_and_barangay(records, project_type):
+    status_choices = (
+        InfrastructureProject.STATUS_CHOICES
+        if project_type == 'infrastructure'
+        else NonInfrastructureProject.STATUS_CHOICES
+    )
+    status_counts = Counter({key: 0 for key, _ in status_choices})
+    status_labels = dict(status_choices)
+    status_counts['unspecified'] = 0
+    status_labels['unspecified'] = 'Status not set'
     barangay_counts = Counter({code: 0 for code, _ in BARANGAY_CHOICES})
     barangay_keys = {}
     for code, label in BARANGAY_CHOICES:
@@ -104,20 +107,11 @@ def _status_and_barangay(records, project_type, today):
             barangay_keys[value.strip().casefold()] = code
     barangay_keys['north poblacion'] = 'bitulok'
 
-    end_date_key = (
-        'planned_end_date'
-        if project_type == 'infrastructure'
-        else 'implementation_end_date'
-    )
     status_project_count = 0
     for record in records:
         status_project_count += 1
-        if record['status'] == 'completed':
-            status_counts['completed'] += 1
-        elif record[end_date_key] and record[end_date_key] < today:
-            status_counts['delayed'] += 1
-        else:
-            status_counts['ongoing'] += 1
+        status = record['status']
+        status_counts[status if status in status_labels else 'unspecified'] += 1
 
         barangay = (record['address__barangay'] or '').strip().casefold()
         code = barangay_keys.get(barangay)
@@ -130,10 +124,10 @@ def _status_and_barangay(records, project_type, today):
         [
             {
                 'key': key,
-                'label': key.title(),
+                'label': status_labels[key],
                 'value': status_counts[key],
             }
-            for key in STATUS_KEYS
+            for key in status_labels
         ],
         [
             {
@@ -207,7 +201,6 @@ def project_analytics(project_type):
     statuses, barangays, project_count = _status_and_barangay(
         records,
         project_type,
-        today,
     )
     completion_dates, completed_without_dates = _completion_dates(project_type)
 

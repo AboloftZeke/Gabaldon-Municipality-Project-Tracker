@@ -495,11 +495,15 @@ class MayorDashboardView(StaffRequiredMixin, TemplateView):
             'non_infrastructure',
         )
 
-        # Non-infrastructure projects no longer have a progress/status field
-        # in the redesigned schema, so these cannot be calculated reliably.
-        context['planned_projects'] = 0
-        context['in_progress_projects'] = 0
-        context['completed_projects'] = 0
+        context['planned_projects'] = user_projects.filter(
+            status='planned',
+        ).count()
+        context['ongoing_projects'] = user_projects.filter(
+            status='ongoing',
+        ).count()
+        context['completed_projects'] = user_projects.filter(
+            status='completed',
+        ).count()
 
         from django.urls import reverse
         from .models import NonInfrastructureProgressUpdate, ProjectRevision
