@@ -244,6 +244,9 @@ class ProjectInspectionCompletionTests(TestCase):
         accepted = self.client.post(create_url, {
             **payload,
             'completion_confirmation': 'yes',
+            'inspection_photos': [
+                fixtures.InfrastructureInspectionHistoryTests.inspection_photo(),
+            ],
         })
         self.assertEqual(accepted.status_code, 302)
         self.infrastructure.refresh_from_db()

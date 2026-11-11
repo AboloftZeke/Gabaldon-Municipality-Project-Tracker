@@ -3,6 +3,7 @@ from datetime import datetime, time
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -25,6 +26,11 @@ class InspectionDateTests(TestCase):
             'inspection_date': (self.today - timedelta(days=days_ago)).isoformat(),
             'completion_percentage': completion, 'findings': 'Retained field observations',
             'remarks': 'Retained remarks',
+            'inspection_photos': [SimpleUploadedFile(
+                'inspection.jpg',
+                b'inspection-photo',
+                content_type='image/jpeg',
+            )],
         }
         if inspection_time is not None:
             data['inspection_time'] = inspection_time

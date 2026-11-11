@@ -20,6 +20,7 @@ from apps.system.models import (
     InfrastructureProject,
     InfrastructureProgressUpdate,
     InfrastructureSchedule,
+    InspectionEvidence,
     Project,
     ProjectImage,
     ProjectInspection,
@@ -845,6 +846,20 @@ class InfrastructureInspectionForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        photos = cleaned_data.get('inspection_photos') or ()
+        documents = cleaned_data.get('inspection_documents') or ()
+        evidence_to_remove = cleaned_data.get('evidence_to_remove') or ()
+        existing_evidence = (
+            self.instance.evidence.exclude(pk__in=evidence_to_remove)
+            if self.instance.pk
+            else InspectionEvidence.objects.none()
+        )
+        if not photos and not documents and not existing_evidence.exists():
+            self.add_error(
+                None,
+                'Attach at least one inspection photo or supporting PDF '
+                'before saving.',
+            )
         if (
             self.project is not None
             and self.project.project_type == 'infrastructure'

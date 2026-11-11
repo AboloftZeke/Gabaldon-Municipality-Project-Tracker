@@ -78,14 +78,14 @@
             <div class="fieldset inspection-form-section ui-form-section">
                 <div class="section-heading">
                     <span class="section-number">3</span>
-                    <div><h3>Supporting Evidence</h3><p>Attach field photos and optional PDF reports to this inspection record.</p></div>
+                    <div><h3>Supporting Evidence</h3><p>Attach at least one field photo or PDF report to save this inspection.</p></div>
                 </div>
                 <div class="inspection-upload-grid">
                     {% for field in form %}{% if field.name == 'inspection_photos' or field.name == 'inspection_documents' %}
                     <div class="form-group inspection-upload-card">
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {{ field }}
-                        {% if field.name == 'inspection_photos' %}<small class="helper-text">Select one or more JPG, PNG, GIF, or WebP photos, up to 10 MB each.</small>{% else %}<small class="helper-text">Select optional PDF inspection reports, up to 10 MB each.</small>{% endif %}
+                        {% if field.name == 'inspection_photos' %}<small class="helper-text">Select JPG, PNG, GIF, or WebP photos, up to 10 MB each.</small>{% else %}<small class="helper-text">Select PDF inspection reports, up to 10 MB each.</small>{% endif %}
                         {% for error in field.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
                     </div>
                     {% endif %}{% endfor %}

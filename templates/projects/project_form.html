@@ -617,6 +617,10 @@
                 });
 
                 projectForm.querySelectorAll('.error-message').forEach(function (message) {
+                    if (message.hidden || message.closest('[hidden]')) {
+                        return;
+                    }
+
                     const group = message.closest('.form-group');
                     if (!group) {
                         return;
@@ -970,5 +974,5 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
 <script src="{% static 'js/gis/infrastructure_location_picker.js' %}"></script>
-<script src="{% static 'js/templates/projects/project_form.js' %}"></script>
+<script src="{% static 'js/templates/projects/project_form.js' %}?v=20261111-1"></script>
 {% endblock %}

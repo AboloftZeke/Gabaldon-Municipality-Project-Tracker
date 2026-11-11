@@ -69,12 +69,21 @@ class InfrastructureInspectionHistoryTests(TestCase):
             args=[self.infrastructure.pk],
         )
 
+    @staticmethod
+    def inspection_photo():
+        return SimpleUploadedFile(
+            'inspection.jpg',
+            b'inspection-photo',
+            content_type='image/jpeg',
+        )
+
     def add_inspection(self, inspection_date, completion, findings):
         return self.client.post(self.create_url, {
             'inspection_date': inspection_date,
             'completion_percentage': completion,
             'findings': findings,
             'remarks': f'Remarks for {findings}',
+            'inspection_photos': [self.inspection_photo()],
         })
 
     def test_staff_adds_multiple_inspections_without_overwriting_history(self):
@@ -124,6 +133,7 @@ class InfrastructureInspectionHistoryTests(TestCase):
         self.assertContains(response, 'Inspection Details')
         self.assertContains(response, 'Field Observations')
         self.assertContains(response, 'Supporting Evidence')
+        self.assertContains(response, 'at least one field photo or PDF report')
         self.assertContains(response, 'No evidence attached yet')
         self.assertContains(response, 'data-selected-evidence')
         self.assertContains(
@@ -192,6 +202,7 @@ class InfrastructureInspectionHistoryTests(TestCase):
             'completion_percentage': '45.00',
             'findings': 'Second record updated',
             'remarks': 'Updated remarks',
+            'inspection_photos': [self.inspection_photo()],
         })
 
         self.assertRedirects(response, self.detail_url)
@@ -201,6 +212,47 @@ class InfrastructureInspectionHistoryTests(TestCase):
         self.assertEqual(first.completion_percentage, Decimal('20.00'))
         self.assertEqual(second.findings, 'Second record updated')
         self.assertEqual(second.completion_percentage, Decimal('45.00'))
+
+    def test_creating_inspection_requires_at_least_one_photo_or_pdf(self):
+        self.client.force_login(self.staff)
+        data = {
+            'inspection_date': '2026-06-01',
+            'completion_percentage': '35.00',
+            'findings': 'Foundation inspected',
+            'remarks': '',
+        }
+
+        response = self.client.post(self.create_url, data)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            'Attach at least one inspection photo or supporting PDF',
+            response.context['form'].non_field_errors()[0],
+        )
+        self.assertFalse(self.infrastructure.project.inspections.exists())
+
+    def test_creating_inspection_accepts_a_pdf_without_a_photo(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.post(self.create_url, {
+            'inspection_date': '2026-06-01',
+            'completion_percentage': '35.00',
+            'findings': 'Foundation inspected',
+            'remarks': '',
+            'inspection_documents': [SimpleUploadedFile(
+                'inspection-report.pdf',
+                b'%PDF-1.4 inspection report',
+                content_type='application/pdf',
+            )],
+        })
+
+        self.assertRedirects(response, self.detail_url)
+        inspection = self.infrastructure.project.inspections.get()
+        self.assertEqual(inspection.evidence.count(), 1)
+        self.assertEqual(
+            inspection.evidence.get().evidence_type,
+            'document',
+        )
 
     def test_non_staff_roles_cannot_add_or_edit_inspections(self):
         inspection = ProjectInspection.objects.create(
@@ -368,6 +420,45 @@ class InfrastructureInspectionHistoryTests(TestCase):
         self.assertTrue(inspection.evidence.filter(
             original_name='replacement.webp',
         ).exists())
+
+    def test_edit_cannot_remove_all_evidence_without_adding_a_replacement(self):
+        inspection = ProjectInspection.objects.create(
+            project=self.infrastructure.project,
+            inspection_type='routine',
+            inspection_date='2026-07-01',
+            inspected_by_user=self.staff,
+            completion_percentage=Decimal('60.00'),
+        )
+        evidence = InspectionEvidence.objects.create(
+            inspection=inspection,
+            evidence_type='image',
+            original_name='retain.jpg',
+            storage_name='inspections/test/retain.jpg',
+            file_url='/media/inspections/test/retain.jpg',
+            content_type='image/jpeg',
+            uploaded_by_user=self.staff,
+        )
+        update_url = reverse(
+            'engineering_projects:inspection_update',
+            args=[self.infrastructure.pk, inspection.pk],
+        )
+        self.client.force_login(self.staff)
+
+        response = self.client.post(update_url, {
+            'inspection_type': 'routine',
+            'inspection_date': '2026-07-01',
+            'completion_percentage': '60.00',
+            'findings': '',
+            'remarks': '',
+            'evidence_to_remove': [str(evidence.pk)],
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            'Attach at least one inspection photo or supporting PDF',
+            response.context['form'].non_field_errors()[0],
+        )
+        self.assertTrue(inspection.evidence.filter(pk=evidence.pk).exists())
 
     def test_invalid_evidence_types_are_rejected(self):
         self.client.force_login(self.staff)
