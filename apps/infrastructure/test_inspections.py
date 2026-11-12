@@ -132,6 +132,11 @@ class InfrastructureInspectionHistoryTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Inspection Details')
         self.assertContains(response, 'Field Observations')
+        self.assertContains(response, 'Record the inspection findings. This field is required.')
+        self.assertRegex(
+            response.content.decode(),
+            r'<textarea name="findings"[^>]*required',
+        )
         self.assertContains(response, 'Supporting Evidence')
         self.assertContains(response, 'at least one field photo or PDF report')
         self.assertContains(response, 'No evidence attached yet')
@@ -229,6 +234,21 @@ class InfrastructureInspectionHistoryTests(TestCase):
             'Attach at least one inspection photo or supporting PDF',
             response.context['form'].non_field_errors()[0],
         )
+        self.assertFalse(self.infrastructure.project.inspections.exists())
+
+    def test_creating_inspection_requires_findings_even_with_evidence(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.post(self.create_url, {
+            'inspection_date': '2026-06-01',
+            'completion_percentage': '35.00',
+            'findings': '   ',
+            'remarks': '',
+            'inspection_photos': [self.inspection_photo()],
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('findings', response.context['form'].errors)
         self.assertFalse(self.infrastructure.project.inspections.exists())
 
     def test_creating_inspection_accepts_a_pdf_without_a_photo(self):
@@ -399,7 +419,7 @@ class InfrastructureInspectionHistoryTests(TestCase):
             'inspection_type': 'routine',
             'inspection_date': '2026-07-01',
             'completion_percentage': '60.00',
-            'findings': '',
+            'findings': 'Replacement inspection photo attached.',
             'remarks': '',
             'evidence_to_remove': [str(first.pk)],
             'inspection_photos': [SimpleUploadedFile(

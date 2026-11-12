@@ -62,12 +62,12 @@
             <div class="fieldset inspection-form-section ui-form-section">
                 <div class="section-heading">
                     <span class="section-number">2</span>
-                    <div><h3>Field Observations</h3><p>Summarize what was observed and any context needed for later review.</p></div>
+                    <div><h3>Field Observations</h3><p>Record the inspection findings. This field is required.</p></div>
                 </div>
                 <div class="form-grid">
                     {% for field in form %}{% if field.name == 'findings' or field.name == 'remarks' %}
                     <div class="form-group full-span">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.name == 'findings' %} <span class="required-marker" aria-label="required">*</span>{% endif %}</label>
                         {{ field }}
                         {% for error in field.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
                     </div>

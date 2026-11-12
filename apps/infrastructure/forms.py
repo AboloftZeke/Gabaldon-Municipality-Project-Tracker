@@ -734,6 +734,10 @@ class InfrastructureInspectionForm(forms.ModelForm):
     DOCUMENT_EXTENSIONS = {'.pdf'}
     DOCUMENT_CONTENT_TYPES = {'application/pdf'}
     MAX_EVIDENCE_SIZE = 10 * 1024 * 1024
+    findings = forms.CharField(
+        required=True,
+        widget=forms.Textarea(attrs={'rows': 4}),
+    )
 
     inspection_type = forms.ChoiceField(
         label='Inspection Type',
