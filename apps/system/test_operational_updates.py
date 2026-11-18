@@ -413,6 +413,11 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertContains(detail, 'Update Status &amp; Progress')
         self.assertContains(detail, 'Financial &amp; Funding Information')
         self.assertContains(detail, 'Status &amp; Progress')
+        self.assertContains(detail, 'Entered Cost Progress')
+        self.assertContains(detail, 'Actual Physical Progress')
+        self.assertNotContains(detail, 'Expected / Scheduled Progress')
+        self.assertNotContains(detail, 'Variance (Actual vs Scheduled)')
+        self.assertNotContains(detail, 'Calculated Cost Progress')
 
     def test_operational_update_rejects_non_five_percent_progress(self):
         self.client.force_login(self.users['engineer', 'head'])

@@ -36,6 +36,7 @@
 }
 
 .operational-header {
+    display: block;
     margin-bottom: 1.25rem;
     padding: 1.7rem 1.85rem;
     border: 1px solid var(--operational-border);
