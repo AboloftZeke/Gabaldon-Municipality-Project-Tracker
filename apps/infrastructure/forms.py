@@ -830,9 +830,19 @@ class InfrastructureInspectionForm(forms.ModelForm):
                     previous_inspection.completion_percentage
                 )
                 if not self.is_bound and not self.instance.pk:
+                    next_progress = self.previous_progress + Decimal('0.01')
                     self.initial['completion_percentage'] = (
-                        self.previous_progress
+                        min(next_progress, Decimal('100'))
                     )
+                if self.previous_progress < Decimal('100'):
+                    minimum_progress = (
+                        self.previous_progress + Decimal('0.01')
+                    )
+                else:
+                    minimum_progress = Decimal('100')
+                self.fields['completion_percentage'].widget.attrs['min'] = (
+                    format(minimum_progress, 'f')
+                )
         self.fields['inspection_date'].widget.attrs['max'] = timezone.localdate().isoformat()
         evidence = (
             self.instance.evidence.all()
@@ -889,6 +899,36 @@ class InfrastructureInspectionForm(forms.ModelForm):
         if date_error:
             raise forms.ValidationError(date_error)
         return inspection_date
+
+    def clean_completion_percentage(self):
+        value = self.cleaned_data['completion_percentage']
+        if (
+            self.previous_progress is not None
+            and value == self.previous_progress
+        ):
+            previous_percentage = format(
+                self.previous_progress.normalize(),
+                'f',
+            )
+            raise forms.ValidationError(
+                "Progress cannot be the same as the previous inspection's "
+                f'recorded progress of {previous_percentage}%. Please enter '
+                f'a value greater than {previous_percentage}%.'
+            )
+        if (
+            self.previous_progress is not None
+            and value < self.previous_progress
+        ):
+            previous_percentage = format(
+                self.previous_progress.normalize(),
+                'f',
+            )
+            raise forms.ValidationError(
+                "Progress cannot be lower than the previous inspection's "
+                f'recorded progress of {previous_percentage}%. Please enter '
+                f'a value equal to or greater than {previous_percentage}%.'
+            )
+        return value
 
     def _validate_uploads(
         self,

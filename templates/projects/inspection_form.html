@@ -48,7 +48,7 @@
                         {{ field }}
                         {% if field.name == 'completion_percentage' %}
                             {% if form.previous_progress is not None %}
-                                <small class="helper-text">Previous recorded progress: <strong>{{ form.previous_progress|floatformat:2 }}%</strong>. Progress cannot decrease.</small>
+                                <small class="helper-text">Enter the project's total accumulated progress to date. Previous recorded progress: <strong>{{ form.previous_progress|floatformat:2 }}%</strong>. The new cumulative progress must be higher than the previous recorded progress.</small>
                             {% else %}
                                 <small class="helper-text">No previous inspection progress is recorded. Enter the initial cumulative progress.</small>
                             {% endif %}

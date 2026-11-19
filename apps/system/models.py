@@ -912,6 +912,18 @@ class ProjectInspection(models.Model):
         ).first()
         if (
             previous
+            and self.completion_percentage == previous.completion_percentage
+        ):
+            previous_percentage = self._format_progress_percentage(
+                previous.completion_percentage,
+            )
+            return (
+                "Progress cannot be the same as the previous inspection's "
+                f'recorded progress of {previous_percentage}%. Please enter '
+                f'a value greater than {previous_percentage}%.'
+            )
+        if (
+            previous
             and self.completion_percentage < previous.completion_percentage
         ):
             previous_percentage = self._format_progress_percentage(

@@ -44,7 +44,7 @@ class ProjectInspectionCompletionTests(TestCase):
         project = Project.objects.get(pk=self.infrastructure.project_id)
         return project.completion_percentage
 
-    def test_inspection_progress_cannot_decrease_and_equal_values_are_allowed(self):
+    def test_inspection_progress_cannot_decrease_or_match_previous(self):
         inspection = self.record(3, '20.00')
         self.assertEqual(
             self.project_completion(),
@@ -59,15 +59,21 @@ class ProjectInspectionCompletionTests(TestCase):
         )
 
         self.record(2, '70.00')
-        self.record(1, '70.00')
+        with self.assertRaisesMessage(
+            ValidationError,
+            "Progress cannot be the same as the previous inspection's "
+            'recorded progress of 70%.',
+        ):
+            self.record(1, '70.00')
+        self.record(1, '75.00')
         self.assertEqual(
             self.project_completion(),
-            Decimal('70.00'),
+            Decimal('75.00'),
         )
         with self.assertRaisesMessage(
             ValidationError,
             "Progress cannot be lower than the previous inspection's "
-            'recorded progress of 70%.',
+            'recorded progress of 75%.',
         ):
             self.record(0, '60.00')
 
@@ -93,6 +99,23 @@ class ProjectInspectionCompletionTests(TestCase):
             middle.save()
         middle.refresh_from_db()
         self.assertEqual(middle.completion_percentage, Decimal('50.00'))
+
+    def test_form_rejects_progress_equal_to_previous_inspection(self):
+        self.record(2, '60.00')
+        form = InfrastructureInspectionForm(
+            data={
+                'inspection_date': self.today.isoformat(),
+                'completion_percentage': '60.00',
+                'findings': 'No additional progress',
+            },
+            project=self.infrastructure.project,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn(
+            'cannot be the same as the previous inspection',
+            form.errors['completion_percentage'][0],
+        )
 
     def test_completion_percentage_is_limited_to_zero_through_100(self):
         for value in ('-0.01', '100.01'):
@@ -212,7 +235,15 @@ class ProjectInspectionCompletionTests(TestCase):
         )
 
         form_page = self.client.get(create_url)
+        self.assertContains(
+            form_page,
+            "Enter the project's total accumulated progress to date.",
+        )
         self.assertContains(form_page, 'Previous recorded progress:')
+        self.assertContains(
+            form_page,
+            'The new cumulative progress must be higher than the previous recorded progress.',
+        )
         self.assertContains(
             form_page,
             'Are you sure that the project is completed?',
@@ -225,7 +256,7 @@ class ProjectInspectionCompletionTests(TestCase):
         )
         self.assertEqual(
             form_page.context['form']['completion_percentage'].value(),
-            Decimal('60.00'),
+            Decimal('60.01'),
         )
 
         payload = {
@@ -278,7 +309,6 @@ class ProjectInspectionCompletionTests(TestCase):
             ).completion_confirmation_status,
             Project.CompletionConfirmationStatus.DECLINED,
         )
-        self.record(0, '100.00')
         self.assertNotContains(self.client.get(self.detail_url), 'Confirm Project Completion')
 
     def test_unauthorized_user_cannot_confirm_completion(self):
