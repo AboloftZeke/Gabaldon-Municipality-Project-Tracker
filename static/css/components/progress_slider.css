@@ -1,0 +1,27 @@
+.form-group input.progress-slider,
+.operational-field input.progress-slider {
+    width: 100%;
+    min-height: 1.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    accent-color: #1a5a3a;
+    cursor: pointer;
+}
+
+.form-group input.progress-slider:focus,
+.operational-field input.progress-slider:focus {
+    outline: 2px solid #1a5a3a;
+    outline-offset: 3px;
+    box-shadow: none;
+}
+
+.inspection-progress-output {
+    display: block;
+    color: #1a5a3a;
+    font-size: 1.2rem;
+    font-weight: 850;
+    line-height: 1.4;
+    text-align: center;
+}

@@ -86,6 +86,16 @@ class InfrastructureInspectionHistoryTests(TestCase):
             'inspection_photos': [self.inspection_photo()],
         })
 
+    def test_staff_inspection_progress_uses_five_percent_slider(self):
+        self.client.force_login(self.staff)
+        response = self.client.get(self.create_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'type="range"')
+        self.assertContains(response, 'step="5"')
+        self.assertContains(response, 'data-progress-slider')
+        self.assertContains(response, 'data-progress-output')
+
     def test_staff_adds_multiple_inspections_without_overwriting_history(self):
         self.client.force_login(self.staff)
 

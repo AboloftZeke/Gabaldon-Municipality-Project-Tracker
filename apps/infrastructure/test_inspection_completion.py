@@ -124,6 +124,29 @@ class ProjectInspectionCompletionTests(TestCase):
             form.errors['completion_percentage'][0],
         )
 
+    def test_progress_slider_starts_above_previous_and_below_following_inspection(self):
+        self.record(4, '20.00')
+        middle = self.record(3, '50.00')
+        self.record(2, '80.00')
+
+        form = InfrastructureInspectionForm(
+            project=self.infrastructure.project,
+            instance=middle,
+        )
+
+        self.assertEqual(
+            form.fields['completion_percentage'].widget.attrs['min'],
+            '25',
+        )
+        self.assertEqual(
+            form.fields['completion_percentage'].widget.attrs['max'],
+            '75',
+        )
+        self.assertEqual(
+            form.fields['completion_percentage'].widget.attrs['step'],
+            '5',
+        )
+
     def test_completion_percentage_is_limited_to_zero_through_100(self):
         for value in ('-0.01', '100.01'):
             with self.subTest(value=value):
@@ -242,14 +265,22 @@ class ProjectInspectionCompletionTests(TestCase):
         )
 
         form_page = self.client.get(create_url)
-        self.assertContains(
-            form_page,
-            "Enter the project's total accumulated progress to date.",
-        )
         self.assertContains(form_page, 'Previous recorded progress:')
         self.assertContains(
             form_page,
-            'The new cumulative progress must be higher than the previous recorded progress.',
+            'Choose a higher value in 5% increments.',
+        )
+        self.assertEqual(
+            form_page.context['form'].fields[
+                'completion_percentage'
+            ].widget.attrs['min'],
+            '65',
+        )
+        self.assertEqual(
+            form_page.context['form'].fields[
+                'completion_percentage'
+            ].widget.attrs['step'],
+            '5',
         )
         self.assertContains(
             form_page,
@@ -263,7 +294,7 @@ class ProjectInspectionCompletionTests(TestCase):
         )
         self.assertEqual(
             form_page.context['form']['completion_percentage'].value(),
-            Decimal('60.01'),
+            Decimal('65'),
         )
 
         payload = {

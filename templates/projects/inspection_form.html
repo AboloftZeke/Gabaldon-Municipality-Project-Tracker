@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{% static 'css/templates/non_infrastructure/non_infrastructure_form.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/projects/project_form.css' %}">
 <link rel="stylesheet" href="{% static 'css/templates/projects/inspection_form.css' %}?v=20260914-1">
+<link rel="stylesheet" href="{% static 'css/components/progress_slider.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/completion_confirmation.css' %}">
 <link rel="stylesheet" href="{% static 'css/components/image_viewer.css' %}">
 {% endblock %}
@@ -47,10 +48,11 @@
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {{ field }}
                         {% if field.name == 'completion_percentage' %}
+                            <output class="inspection-progress-output" for="{{ field.id_for_label }}" data-progress-output>{{ field.value|default:"0" }}%</output>
                             {% if form.previous_progress is not None %}
-                                <small class="helper-text">Enter the project's total accumulated progress to date. Previous recorded progress: <strong>{{ form.previous_progress|floatformat:2 }}%</strong>. The new cumulative progress must be higher than the previous recorded progress.</small>
+                                <small class="helper-text">Previous recorded progress: <strong>{{ form.previous_progress|floatformat:2 }}%</strong>. Choose a higher value in 5% increments.</small>
                             {% else %}
-                                <small class="helper-text">No previous inspection progress is recorded. Enter the initial cumulative progress.</small>
+                                <small class="helper-text">No previous inspection progress is recorded. Choose a value from 0% to 100% in 5% increments.</small>
                             {% endif %}
                         {% endif %}
                         {% for error in field.errors %}<div class="error-message">{{ error }}</div>{% endfor %}
@@ -142,6 +144,7 @@
 
 {% block extra_scripts %}
 <script src="{% static 'js/templates/projects/inspection_evidence_preview.js' %}" defer></script>
+<script src="{% static 'js/templates/projects/physical_progress_slider.js' %}" defer></script>
 <script src="{% static 'js/templates/projects/inspection_completion_confirmation.js' %}" defer></script>
 <script src="{% static 'js/components/image_viewer.js' %}" defer></script>
 {% endblock %}

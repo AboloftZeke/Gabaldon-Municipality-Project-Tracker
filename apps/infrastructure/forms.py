@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
 
 from django.db import IntegrityError, transaction
 from django.utils.dateparse import parse_date
@@ -726,6 +726,28 @@ class InfrastructureProjectForm(forms.Form):
         return infra
 
 
+def _progress_slider_minimum(previous_progress):
+    if previous_progress is None:
+        return Decimal('0')
+    return min(
+        Decimal('100'),
+        (
+            (previous_progress + Decimal('0.01')) / Decimal('5')
+        ).to_integral_value(rounding=ROUND_CEILING) * Decimal('5'),
+    )
+
+
+def _progress_slider_maximum(following_progress):
+    if following_progress is None:
+        return Decimal('100')
+    return max(
+        Decimal('0'),
+        (
+            (following_progress - Decimal('0.01')) / Decimal('5')
+        ).to_integral_value(rounding=ROUND_FLOOR) * Decimal('5'),
+    )
+
+
 class InfrastructureInspectionForm(forms.ModelForm):
     IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
     IMAGE_CONTENT_TYPES = {
@@ -752,7 +774,12 @@ class InfrastructureInspectionForm(forms.ModelForm):
         min_value=0,
         max_value=100,
         widget=forms.NumberInput(attrs={
-            'step': '0.01',
+            'type': 'range',
+            'min': '0',
+            'max': '100',
+            'step': '5',
+            'class': 'progress-slider',
+            'data-progress-slider': '',
             'data-completion-progress': '',
         }),
     )
@@ -808,6 +835,7 @@ class InfrastructureInspectionForm(forms.ModelForm):
         elif self.project is not None and self.instance.project_id != self.project.pk:
             self.instance.project = self.project
         self.previous_progress = None
+        self.following_progress = None
         if (
             self.project is not None
             and self.project.project_type == 'infrastructure'
@@ -829,20 +857,32 @@ class InfrastructureInspectionForm(forms.ModelForm):
                 self.previous_progress = (
                     previous_inspection.completion_percentage
                 )
-                if not self.is_bound and not self.instance.pk:
-                    next_progress = self.previous_progress + Decimal('0.01')
-                    self.initial['completion_percentage'] = (
-                        min(next_progress, Decimal('100'))
+            if baseline_date:
+                following_inspection = self.project.inspections.filter(
+                    inspection_date__gt=baseline_date,
+                ).exclude(
+                    pk=self.instance.pk,
+                ).order_by(
+                    'inspection_date',
+                    'inspection_id',
+                ).first()
+                if following_inspection:
+                    self.following_progress = (
+                        following_inspection.completion_percentage
                     )
-                if self.previous_progress < Decimal('100'):
-                    minimum_progress = (
-                        self.previous_progress + Decimal('0.01')
-                    )
-                else:
-                    minimum_progress = Decimal('100')
-                self.fields['completion_percentage'].widget.attrs['min'] = (
-                    format(minimum_progress, 'f')
-                )
+            minimum_progress = _progress_slider_minimum(
+                self.previous_progress,
+            )
+            maximum_progress = _progress_slider_maximum(
+                self.following_progress,
+            )
+            maximum_progress = max(minimum_progress, maximum_progress)
+            self.fields['completion_percentage'].widget.attrs.update({
+                'min': format(minimum_progress, 'f'),
+                'max': format(maximum_progress, 'f'),
+            })
+            if not self.is_bound and not self.instance.pk:
+                self.initial['completion_percentage'] = minimum_progress
         self.fields['inspection_date'].widget.attrs['max'] = timezone.localdate().isoformat()
         evidence = (
             self.instance.evidence.all()
@@ -928,6 +968,19 @@ class InfrastructureInspectionForm(forms.ModelForm):
                 f'progress of {previous_percentage}%. Please enter a higher '
                 'value.'
             )
+        if (
+            self.following_progress is not None
+            and value >= self.following_progress
+        ):
+            following_percentage = format(
+                self.following_progress.normalize(),
+                'f',
+            )
+            raise forms.ValidationError(
+                'Progress cannot be equal to or higher than the following '
+                f"inspection's recorded progress of {following_percentage}%. "
+                'Please enter a lower value.'
+            )
         return value
 
     def _validate_uploads(
@@ -1007,10 +1060,12 @@ class InfrastructureOperationalForm(forms.Form):
         min_value=0, max_value=100, required=True,
         help_text='A project can only be marked Completed at 100% physical progress.',
         widget=forms.NumberInput(attrs={
+            'type': 'range',
             'min': '0',
             'max': '100',
-            'step': '0.01',
-            'data-physical-progress-input': '',
+            'step': '5',
+            'class': 'progress-slider',
+            'data-progress-slider': '',
             'data-completion-progress': '',
         }),
     )
@@ -1070,19 +1125,12 @@ class InfrastructureOperationalForm(forms.Form):
             ),
         })
         super().__init__(*args, **kwargs)
-        if self.previous_progress is not None:
-            if self.previous_progress < Decimal('100'):
-                minimum_progress = self.previous_progress + Decimal('0.01')
-            else:
-                minimum_progress = Decimal('100.01')
-            self.fields['physical_progress_percentage'].widget.attrs['min'] = (
-                format(minimum_progress, 'f')
-            )
-            if not self.is_bound:
-                self.initial['physical_progress_percentage'] = min(
-                    minimum_progress,
-                    Decimal('100'),
-                )
+        minimum_progress = _progress_slider_minimum(self.previous_progress)
+        self.fields['physical_progress_percentage'].widget.attrs['min'] = (
+            format(minimum_progress, 'f')
+        )
+        if not self.is_bound and self.previous_progress is not None:
+            self.initial['physical_progress_percentage'] = minimum_progress
         self.fields['supporting_inspections'].required = (
             not require_initial_values
         )

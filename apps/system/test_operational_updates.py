@@ -391,10 +391,12 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Official Status')
         self.assertContains(response, 'Official Physical Progress')
-        self.assertContains(response, 'type="number"')
-        self.assertContains(response, 'min="25.01"')
+        self.assertContains(response, 'type="range"')
+        self.assertContains(response, 'min="30"')
         self.assertContains(response, 'max="100"')
-        self.assertContains(response, 'step="0.01"')
+        self.assertContains(response, 'step="5"')
+        self.assertContains(response, 'data-progress-slider')
+        self.assertContains(response, 'data-progress-output')
         self.assertContains(response, 'data-physical-progress-output')
         self.assertContains(response, 'The new progress must be greater')
         self.assertContains(response, 'Supporting Inspections')
@@ -514,7 +516,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertEqual(form.previous_progress, Decimal('35'))
         self.assertEqual(
             form['physical_progress_percentage'].value(),
-            Decimal('35.01'),
+            Decimal('40'),
         )
 
     def test_head_completion_confirmation_applies_completed_status(self):
