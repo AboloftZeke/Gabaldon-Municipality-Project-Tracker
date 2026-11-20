@@ -726,7 +726,7 @@ class InfrastructureProjectForm(forms.Form):
         return infra
 
 
-def _progress_slider_minimum(previous_progress):
+def _next_progress_slider_value(previous_progress):
     if previous_progress is None:
         return Decimal('0')
     return min(
@@ -870,19 +870,18 @@ class InfrastructureInspectionForm(forms.ModelForm):
                     self.following_progress = (
                         following_inspection.completion_percentage
                     )
-            minimum_progress = _progress_slider_minimum(
+            next_progress = _next_progress_slider_value(
                 self.previous_progress,
             )
             maximum_progress = _progress_slider_maximum(
                 self.following_progress,
             )
-            maximum_progress = max(minimum_progress, maximum_progress)
+            maximum_progress = max(next_progress, maximum_progress)
             self.fields['completion_percentage'].widget.attrs.update({
-                'min': format(minimum_progress, 'f'),
                 'max': format(maximum_progress, 'f'),
             })
             if not self.is_bound and not self.instance.pk:
-                self.initial['completion_percentage'] = minimum_progress
+                self.initial['completion_percentage'] = next_progress
         self.fields['inspection_date'].widget.attrs['max'] = timezone.localdate().isoformat()
         evidence = (
             self.instance.evidence.all()
@@ -1125,12 +1124,9 @@ class InfrastructureOperationalForm(forms.Form):
             ),
         })
         super().__init__(*args, **kwargs)
-        minimum_progress = _progress_slider_minimum(self.previous_progress)
-        self.fields['physical_progress_percentage'].widget.attrs['min'] = (
-            format(minimum_progress, 'f')
-        )
+        next_progress = _next_progress_slider_value(self.previous_progress)
         if not self.is_bound and self.previous_progress is not None:
-            self.initial['physical_progress_percentage'] = minimum_progress
+            self.initial['physical_progress_percentage'] = next_progress
         self.fields['supporting_inspections'].required = (
             not require_initial_values
         )

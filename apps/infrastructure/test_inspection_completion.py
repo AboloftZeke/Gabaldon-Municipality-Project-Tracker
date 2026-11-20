@@ -136,7 +136,7 @@ class ProjectInspectionCompletionTests(TestCase):
 
         self.assertEqual(
             form.fields['completion_percentage'].widget.attrs['min'],
-            '25',
+            0,
         )
         self.assertEqual(
             form.fields['completion_percentage'].widget.attrs['max'],
@@ -274,7 +274,7 @@ class ProjectInspectionCompletionTests(TestCase):
             form_page.context['form'].fields[
                 'completion_percentage'
             ].widget.attrs['min'],
-            '65',
+            0,
         )
         self.assertEqual(
             form_page.context['form'].fields[

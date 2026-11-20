@@ -392,7 +392,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertContains(response, 'Official Status')
         self.assertContains(response, 'Official Physical Progress')
         self.assertContains(response, 'type="range"')
-        self.assertContains(response, 'min="30"')
+        self.assertContains(response, 'min="0"')
         self.assertContains(response, 'max="100"')
         self.assertContains(response, 'step="5"')
         self.assertContains(response, 'data-progress-slider')
