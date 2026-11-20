@@ -1,16 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-physical-progress-slider]').forEach((slider) => {
+    document.querySelectorAll('[data-physical-progress-input]').forEach((input) => {
         const output = document.querySelector('[data-physical-progress-output]');
         if (!output) {
             return;
         }
 
         const updateOutput = () => {
-            output.value = `${slider.value}%`;
-            output.textContent = `${slider.value}%`;
+            const value = input.value.trim();
+            output.value = value === '' ? '' : `${value}%`;
+            output.textContent = value === '' ? '' : `${value}%`;
         };
 
-        slider.addEventListener('input', updateOutput);
+        input.addEventListener('input', updateOutput);
         updateOutput();
     });
 });

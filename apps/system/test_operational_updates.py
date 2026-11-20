@@ -165,7 +165,7 @@ class HeadOperationalUpdateTests(TestCase):
         )
         self.assertIsNotNone(progress_update.created_at)
 
-    def test_unchanged_status_and_progress_do_not_create_history(self):
+    def test_equal_status_and_progress_are_rejected(self):
         self.client.force_login(self.users['engineer', 'head'])
 
         response = self.client.post(self.infra_url(), {
@@ -175,7 +175,11 @@ class HeadOperationalUpdateTests(TestCase):
             'supporting_inspections': [str(self.inspection.pk)],
         })
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            'Progress must be greater',
+            response.context['form'].errors['physical_progress_percentage'][0],
+        )
         self.assertFalse(InfrastructureProgressUpdate.objects.exists())
         self.infrastructure.refresh_from_db()
         self.inspection.refresh_from_db()
@@ -387,12 +391,12 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Official Status')
         self.assertContains(response, 'Official Physical Progress')
-        self.assertContains(response, 'type="range"')
-        self.assertContains(response, 'min="0"')
+        self.assertContains(response, 'type="number"')
+        self.assertContains(response, 'min="25.01"')
         self.assertContains(response, 'max="100"')
-        self.assertContains(response, 'step="5"')
+        self.assertContains(response, 'step="0.01"')
         self.assertContains(response, 'data-physical-progress-output')
-        self.assertContains(response, '5% increments')
+        self.assertContains(response, 'The new progress must be greater')
         self.assertContains(response, 'Supporting Inspections')
         self.assertNotContains(response, 'Expected / Scheduled Progress')
         self.assertNotContains(response, 'Variance')
@@ -419,19 +423,33 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertNotContains(detail, 'Variance (Actual vs Scheduled)')
         self.assertNotContains(detail, 'Calculated Cost Progress')
 
-    def test_operational_update_rejects_non_five_percent_progress(self):
+    def test_operational_update_accepts_decimal_progress_and_rejects_equal_progress(self):
         self.client.force_login(self.users['engineer', 'head'])
 
-        response = self.client.post(self.infra_url(), {
-            'status': 'completed',
-            'physical_progress_percentage': '62',
+        accepted = InfrastructureOperationalForm(
+            {
+                'status': 'ongoing',
+                'physical_progress_percentage': '25.01',
+                'supporting_inspections': [str(self.inspection.pk)],
+            },
+            instance=self.infrastructure,
+        )
+        self.assertTrue(accepted.is_valid(), accepted.errors)
+
+        equal = self.client.post(self.infra_url(), {
+            'status': 'ongoing',
+            'physical_progress_percentage': '25.00',
             'supporting_inspections': [str(self.inspection.pk)],
         })
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(equal.status_code, 400)
         self.assertIn(
             'physical_progress_percentage',
-            response.context['form'].errors,
+            equal.context['form'].errors,
+        )
+        self.assertIn(
+            'Progress must be greater',
+            equal.context['form'].errors['physical_progress_percentage'][0],
         )
         self.infrastructure.refresh_from_db()
         self.assertEqual(
@@ -441,7 +459,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertFalse(InfrastructureProgressUpdate.objects.exists())
 
     def test_operational_update_cannot_decrease_and_confirms_completion(self):
-        for progress in ('25', '100'):
+        for progress in ('25.01', '100'):
             with self.subTest(progress=progress):
                 data = {
                     'status': 'ongoing',
@@ -470,7 +488,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertFalse(rejected.is_valid())
         self.assertIn('physical_progress_percentage', rejected.errors)
         self.assertIn(
-            'previous official progress of 25%',
+            'previous recorded progress of 25%',
             rejected.errors['physical_progress_percentage'][0],
         )
 
@@ -496,7 +514,7 @@ class HeadOperationalUpdateTests(TestCase):
         self.assertEqual(form.previous_progress, Decimal('35'))
         self.assertEqual(
             form['physical_progress_percentage'].value(),
-            Decimal('35'),
+            Decimal('35.01'),
         )
 
     def test_head_completion_confirmation_applies_completed_status(self):
@@ -550,7 +568,7 @@ class HeadOperationalUpdateTests(TestCase):
 
         with self.assertRaisesMessage(
             ValidationError,
-            'Physical progress cannot be lower than the previous official '
+            'Progress must be greater than the previous recorded '
             'progress of 25%.',
         ):
             record_progress_update(

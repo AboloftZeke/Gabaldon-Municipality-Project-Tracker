@@ -918,9 +918,9 @@ class ProjectInspection(models.Model):
                 previous.completion_percentage,
             )
             return (
-                "Progress cannot be the same as the previous inspection's "
-                f'recorded progress of {previous_percentage}%. Please enter '
-                f'a value greater than {previous_percentage}%.'
+                'Progress must be greater than the previous recorded '
+                f'progress of {previous_percentage}%. Please enter a higher '
+                'value.'
             )
         if (
             previous
@@ -930,9 +930,9 @@ class ProjectInspection(models.Model):
                 previous.completion_percentage,
             )
             return (
-                "Progress cannot be lower than the previous inspection's "
-                f'recorded progress of {previous_percentage}%. Please enter '
-                f'a value equal to or greater than {previous_percentage}%.'
+                'Progress must be greater than the previous recorded '
+                f'progress of {previous_percentage}%. Please enter a higher '
+                'value.'
             )
 
         following = inspections.filter(
@@ -943,15 +943,15 @@ class ProjectInspection(models.Model):
         ).first()
         if (
             following
-            and self.completion_percentage > following.completion_percentage
+            and self.completion_percentage >= following.completion_percentage
         ):
             following_percentage = self._format_progress_percentage(
                 following.completion_percentage,
             )
             return (
-                "Progress cannot be higher than the following inspection's "
-                f'recorded progress of {following_percentage}%. Please enter '
-                f'a value equal to or lower than {following_percentage}%.'
+                "Progress cannot be equal to or higher than the following "
+                f"inspection's recorded progress of {following_percentage}%. "
+                f'Please enter a lower value.'
             )
         return None
 

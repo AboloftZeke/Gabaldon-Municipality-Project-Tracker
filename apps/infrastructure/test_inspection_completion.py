@@ -61,8 +61,8 @@ class ProjectInspectionCompletionTests(TestCase):
         self.record(2, '70.00')
         with self.assertRaisesMessage(
             ValidationError,
-            "Progress cannot be the same as the previous inspection's "
-            'recorded progress of 70%.',
+            'Progress must be greater than the previous recorded '
+            'progress of 70%.',
         ):
             self.record(1, '70.00')
         self.record(1, '75.00')
@@ -72,8 +72,8 @@ class ProjectInspectionCompletionTests(TestCase):
         )
         with self.assertRaisesMessage(
             ValidationError,
-            "Progress cannot be lower than the previous inspection's "
-            'recorded progress of 75%.',
+            'Progress must be greater than the previous recorded '
+            'progress of 75%.',
         ):
             self.record(0, '60.00')
 
@@ -85,16 +85,23 @@ class ProjectInspectionCompletionTests(TestCase):
         middle.completion_percentage = Decimal('10.00')
         with self.assertRaisesMessage(
             ValidationError,
-            "Progress cannot be lower than the previous inspection's "
-            'recorded progress of 20%.',
+            'Progress must be greater than the previous recorded '
+            'progress of 20%.',
         ):
             middle.save()
 
         middle.completion_percentage = Decimal('90.00')
         with self.assertRaisesMessage(
             ValidationError,
-            "Progress cannot be higher than the following inspection's "
-            'recorded progress of 80%.',
+            'Progress cannot be equal to or higher than the following '
+            "inspection's recorded progress of 80%.",
+        ):
+            middle.save()
+        middle.completion_percentage = Decimal('80.00')
+        with self.assertRaisesMessage(
+            ValidationError,
+            'Progress cannot be equal to or higher than the following '
+            "inspection's recorded progress of 80%.",
         ):
             middle.save()
         middle.refresh_from_db()
@@ -113,7 +120,7 @@ class ProjectInspectionCompletionTests(TestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn(
-            'cannot be the same as the previous inspection',
+            'Progress must be greater',
             form.errors['completion_percentage'][0],
         )
 

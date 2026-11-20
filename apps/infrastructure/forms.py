@@ -911,9 +911,9 @@ class InfrastructureInspectionForm(forms.ModelForm):
                 'f',
             )
             raise forms.ValidationError(
-                "Progress cannot be the same as the previous inspection's "
-                f'recorded progress of {previous_percentage}%. Please enter '
-                f'a value greater than {previous_percentage}%.'
+                'Progress must be greater than the previous recorded '
+                f'progress of {previous_percentage}%. Please enter a higher '
+                'value.'
             )
         if (
             self.previous_progress is not None
@@ -924,9 +924,9 @@ class InfrastructureInspectionForm(forms.ModelForm):
                 'f',
             )
             raise forms.ValidationError(
-                "Progress cannot be lower than the previous inspection's "
-                f'recorded progress of {previous_percentage}%. Please enter '
-                f'a value equal to or greater than {previous_percentage}%.'
+                'Progress must be greater than the previous recorded '
+                f'progress of {previous_percentage}%. Please enter a higher '
+                'value.'
             )
         return value
 
@@ -1007,11 +1007,10 @@ class InfrastructureOperationalForm(forms.Form):
         min_value=0, max_value=100, required=True,
         help_text='A project can only be marked Completed at 100% physical progress.',
         widget=forms.NumberInput(attrs={
-            'type': 'range',
             'min': '0',
             'max': '100',
-            'step': '5',
-            'data-physical-progress-slider': '',
+            'step': '0.01',
+            'data-physical-progress-input': '',
             'data-completion-progress': '',
         }),
     )
@@ -1071,6 +1070,19 @@ class InfrastructureOperationalForm(forms.Form):
             ),
         })
         super().__init__(*args, **kwargs)
+        if self.previous_progress is not None:
+            if self.previous_progress < Decimal('100'):
+                minimum_progress = self.previous_progress + Decimal('0.01')
+            else:
+                minimum_progress = Decimal('100.01')
+            self.fields['physical_progress_percentage'].widget.attrs['min'] = (
+                format(minimum_progress, 'f')
+            )
+            if not self.is_bound:
+                self.initial['physical_progress_percentage'] = min(
+                    minimum_progress,
+                    Decimal('100'),
+                )
         self.fields['supporting_inspections'].required = (
             not require_initial_values
         )
@@ -1100,9 +1112,16 @@ class InfrastructureOperationalForm(forms.Form):
 
     def clean_physical_progress_percentage(self):
         value = self.cleaned_data['physical_progress_percentage']
-        if value % Decimal('5') != 0:
+        if (
+            self.previous_progress is not None
+            and value == self.previous_progress
+        ):
+            previous = ProjectInspection._format_progress_percentage(
+                self.previous_progress,
+            )
             raise forms.ValidationError(
-                'Physical progress must be in 5% increments.',
+                'Progress must be greater than the previous recorded '
+                f'progress of {previous}%. Please enter a higher value.'
             )
         if (
             self.previous_progress is not None
@@ -1112,9 +1131,8 @@ class InfrastructureOperationalForm(forms.Form):
                 self.previous_progress,
             )
             raise forms.ValidationError(
-                'Physical progress cannot be lower than the previous official '
-                f'progress of {previous}%. Please enter a value equal to or '
-                f'greater than {previous}%.'
+                'Progress must be greater than the previous recorded '
+                f'progress of {previous}%. Please enter a higher value.'
             )
         return value
 

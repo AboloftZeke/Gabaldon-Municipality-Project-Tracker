@@ -64,9 +64,9 @@
                         {% if field.name == 'physical_progress_percentage' %}
                             <output class="operational-progress-output" for="{{ field.id_for_label }}" data-physical-progress-output>{{ field.value|default:"0" }}%</output>
                             {% if form.previous_progress is not None %}
-                            <p class="operational-help">Previous official progress: {{ form.previous_progress|floatformat:2 }}%. Progress cannot decrease. Use 5% increments up to 100%.</p>
+                            <p class="operational-help">Previous official progress: {{ form.previous_progress|floatformat:2 }}%. The new progress must be greater than this value.</p>
                             {% else %}
-                            <p class="operational-help">No previous official progress is recorded. Enter an initial value in 5% increments up to 100%.</p>
+                            <p class="operational-help">No previous official progress is recorded. Enter an initial value from 0% to 100%.</p>
                             {% endif %}
                         {% elif field.name == 'head_remarks' %}
                             <p class="operational-help">Add context for this official status or physical progress decision.</p>

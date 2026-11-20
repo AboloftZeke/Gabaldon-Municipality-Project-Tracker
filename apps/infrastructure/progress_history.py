@@ -56,6 +56,16 @@ def record_progress_update(
     current_progress = infrastructure.physical_progress_percentage
     if (
         official_progress is not None
+        and current_progress is not None
+        and current_progress == official_progress
+    ):
+        previous = format(official_progress.normalize(), 'f')
+        raise ValidationError(
+            'Progress must be greater than the previous recorded '
+            f'progress of {previous}%. Please enter a higher value.'
+        )
+    if (
+        official_progress is not None
         and (
             current_progress is None
             or current_progress < official_progress
@@ -63,9 +73,8 @@ def record_progress_update(
     ):
         previous = format(official_progress.normalize(), 'f')
         raise ValidationError(
-            'Physical progress cannot be lower than the previous official '
-            f'progress of {previous}%. Please enter a value equal to or '
-            f'greater than {previous}%.'
+            'Progress must be greater than the previous recorded '
+            f'progress of {previous}%. Please enter a higher value.'
         )
 
     if (

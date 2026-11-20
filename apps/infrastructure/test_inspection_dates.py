@@ -40,7 +40,8 @@ class InspectionDateTests(TestCase):
         return ProjectInspection.objects.create(
             project=self.infrastructure.project,
             inspection_date=self.today - timedelta(days=days_ago),
-            completion_percentage=10, inspected_by_user=self.staff,
+            completion_percentage=40 - days_ago,
+            inspected_by_user=self.staff,
         )
 
     def edit_url(self, record):
@@ -48,7 +49,7 @@ class InspectionDateTests(TestCase):
 
     def test_antedated_first_inspection_and_today_are_allowed(self):
         self.assertEqual(self.post(20).status_code, 302)
-        self.assertEqual(self.post(0).status_code, 302)
+        self.assertEqual(self.post(0, completion='26').status_code, 302)
         self.assertEqual(self.infrastructure.project.inspections.count(), 2)
 
     def test_future_date_rejected_with_values_and_field_error_retained(self):
@@ -114,7 +115,7 @@ class InspectionDateTests(TestCase):
         first = self.add(20)
         self.add(10)
         self.assertEqual(
-            self.post(20, self.edit_url(first), completion='10').status_code,
+            self.post(20, self.edit_url(first), completion='25').status_code,
             302,
         )
         first.refresh_from_db()
@@ -133,7 +134,7 @@ class InspectionDateTests(TestCase):
                 )
         middle.refresh_from_db()
         self.assertEqual(middle.inspection_date, self.today - timedelta(days=20))
-        self.assertEqual(self.post(15, url, completion='10').status_code, 302)
+        self.assertEqual(self.post(15, url, completion='20').status_code, 302)
 
     def test_latest_edit_still_follows_previous(self):
         self.add(20)
@@ -143,7 +144,7 @@ class InspectionDateTests(TestCase):
             400,
         )
         self.assertEqual(
-            self.post(0, self.edit_url(latest), completion='10').status_code,
+            self.post(0, self.edit_url(latest), completion='35').status_code,
             302,
         )
 
